@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+passlib[bcrypt]
+google-generativeai
+psycopg2-binary
+pypdf
+python-dotenv
+python-multipart

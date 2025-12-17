@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=andrevitale
+      - POSTGRES_PASSWORD=palmeiras
+      - POSTGRES_DB=dados_analise
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:

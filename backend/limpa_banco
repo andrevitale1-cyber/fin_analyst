@@ -1,0 +1,29 @@
+import psycopg2
+
+# Configurações do seu banco
+DB_CONFIG = {
+    "host": "localhost",
+    "database": "dados_analise",
+    "user": "andrevitale",
+    "password": "palmeiras",
+    "port": "5432"
+}
+
+try:
+    print("Conectando ao banco de dados...")
+    conn = psycopg2.connect(**DB_CONFIG)
+    cur = conn.cursor()
+    
+    # Comando que apaga todos os usuários e zera o contador de ID
+    print("Apagando todos os usuários...")
+    cur.execute("TRUNCATE TABLE usuarios RESTART IDENTITY;")
+    
+    conn.commit()
+    print("✅ SUCESSO! Todos os usuários foram removidos.")
+    
+    cur.close()
+    conn.close()
+    
+except Exception as e:
+    print(f"❌ ERRO: {e}")
+    print("Dica: Verifique se o Docker Desktop está aberto e o banco rodando.")

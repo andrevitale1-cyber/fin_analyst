@@ -1,0 +1,50 @@
+// schema.prisma
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String    @id @default(uuid()) // ID único universal
+  email     String    @unique
+  password  String    // IMPORTANTE: Aqui salvamos o hash da senha, nunca a senha pura
+  name      String?
+  createdAt DateTime  @default(now())
+  
+  // Relacionamento: Um usuário tem várias análises
+  analyses  Analysis[]
+}
+
+model Analysis {
+  id        String   @id @default(uuid())
+  userId    String   // Chave estrangeira ligando ao usuário
+  
+  // Dados da Empresa
+  empresa   String
+  ano       Int
+  trimestre String   // Ex: "1T", "2T"
+  
+  // Notas Calculadas (Podem ser Float ou Int)
+  nota_final         Float
+  receita_nota       Float
+  lucro_nota         Float
+  divida_nota        Float
+  rentabilidade_nota Float
+  
+  // Dados Agregados
+  soma_total         Float
+  qtde_tri           Int
+  media              Float
+  
+  // Conteúdo Textual
+  tese_investimento  String   @db.Text // Permite textos longos
+  
+  createdAt DateTime @default(now())
+  
+  // Conexão com o User
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

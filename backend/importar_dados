@@ -1,0 +1,153 @@
+import pandas as pd
+import psycopg2
+import json
+import os
+import glob
+from datetime import datetime
+
+# --- CONFIGURAÇÕES DO BANCO ---
+DB_CONFIG = {
+    "host": "localhost",
+    "database": "dados_analise",
+    "user": "andrevitale",
+    "password": "palmeiras",
+    "port": "5432"
+}
+
+def conectar_banco():
+    try:
+        conn = psycopg2.connect(**DB_CONFIG)
+        return conn
+    except Exception as e:
+        print(f"❌ Erro de Conexão com o Banco: {e}")
+        return None
+
+def limpar_numero(valor):
+    """Converte textos como '4,5', 'R$ 1.000' ou '-' para float"""
+    if pd.isna(valor) or valor == '' or str(valor).strip() == '-':
+        return 0.0
+    if isinstance(valor, (int, float)):
+        return float(valor)
+    
+    s = str(valor).replace('R$', '').replace('%', '').strip()
+    s = s.replace('.', '') 
+    s = s.replace(',', '.')
+    
+    try:
+        return float(s)
+    except:
+        return 0.0
+
+def selecionar_arquivo():
+    # Procura qualquer arquivo .csv na pasta atual
+    arquivos = glob.glob("*.csv")
+    
+    if not arquivos:
+        print("\n❌ NENHUM ARQUIVO .CSV ENCONTRADO NA PASTA 'backend'!")
+        print(f"📂 Pasta atual: {os.getcwd()}")
+        print("👉 Dica: Salve sua planilha como CSV e coloque nesta pasta.")
+        return None
+
+    print("\n📂 Arquivos encontrados:")
+    for i, arq in enumerate(arquivos):
+        print(f"  [{i+1}] {arq}")
+    
+    if len(arquivos) == 1:
+        print(f"\n✅ Usando automaticamente: {arquivos[0]}")
+        return arquivos[0]
+    
+    while True:
+        try:
+            escolha = int(input("\nDigite o número do arquivo que deseja importar: "))
+            if 1 <= escolha <= len(arquivos):
+                return arquivos[escolha-1]
+            print("❌ Número inválido.")
+        except ValueError:
+            print("❌ Digite apenas o número.")
+
+def importar():
+    nome_arquivo = selecionar_arquivo()
+    if not nome_arquivo: return
+
+    print(f"\n🚀 Iniciando leitura de: {nome_arquivo}...")
+    
+    try:
+        # Tenta detectar separador (; ou ,) e encoding
+        try:
+            df = pd.read_csv(nome_arquivo, sep=';', encoding='utf-8')
+            if len(df.columns) < 2: 
+                 df = pd.read_csv(nome_arquivo, sep=',', encoding='utf-8')
+        except UnicodeDecodeError:
+            try:
+                df = pd.read_csv(nome_arquivo, sep=';', encoding='latin-1')
+            except:
+                 df = pd.read_csv(nome_arquivo, sep=',', encoding='latin-1')
+
+        # Padroniza colunas
+        df.columns = df.columns.str.strip().str.lower()
+        print(f"✅ Leitura OK! {len(df)} linhas encontradas.")
+        
+        # Conecta no banco
+        conn = conectar_banco()
+        if not conn: return
+        cur = conn.cursor()
+
+        count = 0
+        erros = 0
+        
+        for index, row in df.iterrows():
+            try:
+                # --- MAPEAMENTO INTELIGENTE ---
+                empresa = row.get('empresa') or row.get('nome') or row.get('ticker') or 'Desconhecida'
+                empresa = str(empresa).upper().strip()
+                
+                if empresa == 'DESCONHECIDA' or pd.isna(empresa) or empresa == 'EMPRESA':
+                    continue
+
+                ano_raw = row.get('ano')
+                ano = str(int(ano_raw)) if pd.notna(ano_raw) and str(ano_raw).replace('.','').isdigit() else str(datetime.now().year)
+                trimestre = str(row.get('trimestre', '1T')).upper()
+                
+                # Busca as notas nas colunas da planilha
+                nota_geral = limpar_numero(row.get('nota') or row.get('nota final') or row.get('score') or row.get('nota_final'))
+                receita = limpar_numero(row.get('receita') or row.get('receita_nota'))
+                lucro = limpar_numero(row.get('lucro') or row.get('lucro_nota') or row.get('margem'))
+                divida = limpar_numero(row.get('divida') or row.get('divida_nota') or row.get('alavancagem'))
+                roe = limpar_numero(row.get('roe') or row.get('rentabilidade') or row.get('rentabilidade_nota'))
+
+                # Monta o JSON
+                dados_json = {
+                    "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}" },
+                    "data": {
+                        "nota_geral": nota_geral,
+                        "receita_nota": receita,
+                        "lucro_nota": lucro,
+                        "divida_nota": divida,
+                        "rentabilidade_nota": roe,
+                        "tese_investimento": "Importado via Planilha CSV."
+                    },
+                    "analise_completa": f"Importado em {datetime.now().strftime('%d/%m/%Y')}."
+                }
+
+                # Salva no Banco
+                cur.execute(
+                    "INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json) VALUES (%s, %s, %s, NOW(), %s)",
+                    (empresa, ano, trimestre, json.dumps(dados_json))
+                )
+                count += 1
+                
+            except Exception as e:
+                print(f"  [AVISO] Linha {index}: {e}")
+                erros += 1
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        print(f"\n🏁 CONCLUÍDO! {count} itens importados. (Erros ignorados: {erros})")
+
+    except Exception as e:
+        print(f"❌ Erro crítico ao abrir arquivo: {e}")
+
+if __name__ == "__main__":
+    importar()
