@@ -135,7 +135,7 @@ export default function FinancialDashboard() {
 
   const fetchHistory = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/history");
+      const res = await fetch("https://api-finanalyzer.onrender.com//api/history");
       const data = await res.json();
       setHistoryList(data);
     } catch (error) {
@@ -145,7 +145,7 @@ export default function FinancialDashboard() {
 
   const fetchTableData = async () => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/table-data");
+      const res = await fetch("https://api-finanalyzer.onrender.com//api/table-data");
       const data = await res.json();
       setTableData(data);
     } catch (error) {
@@ -158,7 +158,7 @@ export default function FinancialDashboard() {
     if (!confirm("Tem certeza que deseja excluir esta análise?")) return;
 
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/history/${id}`, { method: 'DELETE' });
+      const res = await fetch(`https://api-finanalyzer.onrender.com//api/history/${id}`, { method: 'DELETE' });
       if (!res.ok) throw new Error("Erro ao deletar");
       
       fetchHistory();
@@ -181,7 +181,7 @@ export default function FinancialDashboard() {
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
 
-      const response = await fetch("http://127.0.0.1:8000/api/analyze", {
+      const response = await fetch("https://api-finanalyzer.onrender.com//api/analyze", {
         method: "POST",
         body: formData
       });
