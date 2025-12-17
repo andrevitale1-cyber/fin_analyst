@@ -18,15 +18,24 @@ load_dotenv()
 # --- CONFIGURAÇÕES GERAIS ---
 app = FastAPI(title="API Analisador Financeiro")
 
-# Configuração de CORS (Permite o Frontend acessar o Backend)
+# --- CONFIGURAÇÃO DO CORS (A CORREÇÃO ESTÁ AQUI) ---
+origins = [
+    "*",  # Libera acesso para QUALQUER site (Ideal para testar agora)
+    # Depois você pode restringir para: "https://fin-analyst-olive.vercel.app"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Permite GET, POST, PUT, DELETE, etc.
+    allow_headers=["*"],  # Permite todos os cabeçalhos
 )
+# ---------------------------------------------------
 
+@app.get("/")
+def read_root():
+    return {"message": "FinAnalyst Backend está Online 🚀"}
 # Segurança de Senha (Hash)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
