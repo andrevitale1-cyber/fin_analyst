@@ -22,13 +22,30 @@ const COLUMN_DEFINITIONS = [
   { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-bold' },
 ];
 
+// --- COMPONENTES AUXILIARES ---
+function NavItem({ icon, label, active = false, onClick }: any) {
+  return (
+    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+      {React.cloneElement(icon, { size: 20 })}<span className="font-medium text-sm">{label}</span>{active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+    </button>
+  );
+}
+
+// --- COMPONENTE PRINCIPAL ---
 export default function FinancialDashboard() {
   const router = useRouter();
+
+  // --- CORREÇÃO FINAL DA URL (SEM BARRA NO FINAL) ---
+  const API_BASE = "https://api-finanalyzer.onrender.com"; 
+
+  // ESTADOS
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [historyList, setHistoryList] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
+
+  // ESTADOS DE TABELA
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [showColumnMenu, setShowColumnMenu] = useState(false);
   const columnMenuRef = useRef<HTMLDivElement>(null);
@@ -44,9 +61,6 @@ export default function FinancialDashboard() {
   const [trimestre, setTrimestre] = useState("1T");
   const [file, setFile] = useState<File | null>(null);
 
-  // --- CORREÇÃO: URL DO BACKEND SEM BARRA DUPLA ---
-  const API_BASE = "https://api-finanalyzer.onrender.com"; 
-
   const columnDefsMap = useMemo(() => {
     return COLUMN_DEFINITIONS.reduce((acc, col) => {
       acc[col.key] = col;
@@ -61,10 +75,10 @@ export default function FinancialDashboard() {
     router.push('/login');
   };
 
-  // --- FUNÇÕES DE FETCH CORRIGIDAS ---
+  // --- CHAMADAS DE API CORRIGIDAS (USANDO API_BASE) ---
   const fetchHistory = async () => {
     try {
-      // Correção: Removeu a barra extra //api
+      // Correção: ${API_BASE}/api... (Evita barra dupla)
       const res = await fetch(`${API_BASE}/api/history`);
       const data = await res.json();
       setHistoryList(data);
@@ -128,7 +142,7 @@ export default function FinancialDashboard() {
     }
   };
 
-  // --- EFEITOS E RESTO DO CÓDIGO (DRAG & DROP, UI) MANTIDOS ---
+  // --- RESTO DO CÓDIGO (UI, DRAG & DROP) ---
   useEffect(() => {
     if (currentView === 'history') fetchHistory();
     if (currentView === 'table') fetchTableData();
@@ -156,7 +170,6 @@ export default function FinancialDashboard() {
   };
 
   const toggleColumn = (key: string) => setVisibleColumns(prev => ({ ...prev, [key]: !prev[key] }));
-
   const onDragStart = (index: number) => setDraggedItemIndex(index);
   const onDragEnter = (index: number) => {
     if (draggedItemIndex === null || draggedItemIndex === index) return;
@@ -223,7 +236,6 @@ export default function FinancialDashboard() {
           <span className="font-medium">Sair</span>
         </button>
       </aside>
-
       <main className="flex-1 overflow-y-auto p-8 relative">
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
@@ -354,15 +366,6 @@ export default function FinancialDashboard() {
           </div>
         )}
       </main>
-      <NavItem /> 
     </div>
-  );
-}
-
-function NavItem({ icon, label, active = false, onClick }: any) {
-  return (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-      {React.cloneElement(icon, { size: 20 })}<span className="font-medium text-sm">{label}</span>{active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
-    </button>
   );
 }
