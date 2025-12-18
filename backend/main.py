@@ -18,11 +18,8 @@ load_dotenv()
 # --- CONFIGURAÇÕES GERAIS ---
 app = FastAPI(title="API Analisador Financeiro")
 
-# --- CONFIGURAÇÃO DO CORS (A CORREÇÃO ESTÁ AQUI) ---
-origins = [
-    "*",  # Libera acesso para QUALQUER site (Ideal para testar agora)
-    # Depois você pode restringir para: "https://fin-analyst-olive.vercel.app"
-]
+# --- CONFIGURAÇÃO DO CORS ---
+origins = ["*"]  # Libera acesso total (Vercel -> Render)
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,13 +33,18 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {"message": "FinAnalyst Backend está Online 🚀"}
+
 # Segurança de Senha (Hash)
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Configuração do Gemini
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-2.5-flash') 
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-2.5-flash')
+else:
+    print("⚠️ AVISO: GEMINI_API_KEY não encontrada. A análise de IA falhará.")
+    model = None
 
 # --- CONEXÃO INTELIGENTE COM O BANCO DE DADOS ---
 def get_db_connection():
@@ -54,12 +56,12 @@ def get_db_connection():
             # Conexão Nuvem
             conn = psycopg2.connect(db_url, sslmode='require')
         else:
-            # Conexão Local (Docker no seu PC)
+            # Conexão Local (Docker no seu PC ou Fallback)
             conn = psycopg2.connect(
                 host="localhost",
                 database="dados_analise",
-                user="andrevitale",
-                password="palmeiras",
+                user="postgres", # Ajuste comum local
+                password="password", # Ajuste comum local
                 port="5432"
             )
         return conn
@@ -151,9 +153,10 @@ def parse_results(text):
         "tese_investimento": conclusao.replace('*', ''),
     }
 
-# --- ROTAS DE AUTENTICAÇÃO ---
+# --- ROTAS DE AUTENTICAÇÃO (CORRIGIDAS PARA /auth) ---
 
-@app.post("/api/register")
+# [CORREÇÃO] Mudou de /api/register para /auth/register para bater com o Frontend
+@app.post("/auth/register")
 def registrar_usuario(usuario: UsuarioRegister):
     conn = get_db_connection()
     cur = conn.cursor()
@@ -176,7 +179,8 @@ def registrar_usuario(usuario: UsuarioRegister):
         cur.close()
         conn.close()
 
-@app.post("/api/login")
+# [CORREÇÃO] Mudou de /api/login para /auth/login para bater com o Frontend (se houver)
+@app.post("/auth/login")
 def login_usuario(dados: UsuarioLogin):
     conn = get_db_connection()
     cur = conn.cursor()
@@ -189,6 +193,8 @@ def login_usuario(dados: UsuarioLogin):
             raise HTTPException(status_code=401, detail="Email ou senha incorretos.")
         
         return {"message": "Login OK", "usuario": {"id": usuario[0], "nome": usuario[1]}}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         cur.close()
         conn.close()
@@ -203,6 +209,10 @@ async def analyze_report(
     trimestre: str = Form(...)
 ):
     print(f"🔄 Iniciando análise: {empresa} - {trimestre}/{ano}")
+    
+    if not model:
+        raise HTTPException(status_code=500, detail="Erro de configuração: Chave API do Gemini não encontrada.")
+
     conn = None
     try:
         # 1. Ler o PDF
@@ -299,7 +309,6 @@ def get_table_data():
             empresa = row[0]
             
             # --- FUNÇÃO DE PROTEÇÃO ---
-            # Garante que textos como "4,5" ou "R$ 10" virem números (4.5, 10.0)
             def safe_float(val):
                 try:
                     if val is None or val == "": return 0.0
@@ -324,15 +333,18 @@ def get_table_data():
                 # Agrupa por empresa
                 if empresa not in grouped_data:
                     grouped_data[empresa] = {
+                        'id': empresa,
                         'empresa': empresa,
-                        'notas': [],
+                        'ano': data_content.get('ano', row[1]), # Fallback
+                        'trimestre': data_content.get('trimestre', row[2]),
                         'ultimo_ano': row[1],
                         'ultimo_trimestre': row[2],
                         'ultima_nota': nota_geral,
                         'last_receita': receita,
                         'last_lucro': lucro,
                         'last_divida': divida,
-                        'last_roe': roe
+                        'last_roe': roe,
+                        'notas': []
                     }
                 grouped_data[empresa]['notas'].append(nota_geral)
             except Exception as e:
