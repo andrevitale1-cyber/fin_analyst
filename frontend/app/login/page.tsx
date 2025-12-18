@@ -2,95 +2,96 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogIn } from 'lucide-react';
 
-export default function LoginPage() {
+export default function Login() {
   const router = useRouter();
-  const [formData, setFormData] = useState({ email: '', senha: '' });
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const API_URL = "https://api-finanalyzer.onrender.com";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
-      // Tenta fazer login na porta 8000 (Python)
-      const res = await fetch('http://localhost:8000/api/login', {
+      // --- CORREÇÃO AQUI: Rota correta /api/login ---
+      const res = await fetch(`${API_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+            email: formData.email,
+            senha: formData.password 
+        }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'Erro ao fazer login');
+      if (!res.ok) {
+        throw new Error(data.detail || 'Email ou senha incorretos');
+      }
 
-      // Salva o usuário no navegador
+      // Salva o usuário no navegador para manter logado
       localStorage.setItem('usuario', JSON.stringify(data.usuario));
       
-      // Manda para a Dashboard
-      router.push('/'); 
+      alert('Login realizado com sucesso!');
+      router.push('/'); // Manda para o Dashboard
     } catch (err: any) {
       setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0E1117] text-white">
-      <form onSubmit={handleSubmit} className="bg-[#161b22] p-8 rounded-2xl shadow-2xl border border-gray-800 w-96 animate-in fade-in zoom-in duration-500">
-        <div className="flex justify-center mb-6">
-          <div className="bg-blue-600 p-3 rounded-xl shadow-lg shadow-blue-900/20">
-            <LogIn size={32} className="text-white" />
-          </div>
-        </div>
-        
-        <h2 className="text-2xl font-bold mb-2 text-center">Bem-vindo de volta</h2>
-        <p className="text-gray-400 text-sm text-center mb-8">Faça login para acessar suas análises.</p>
+    <div className="flex min-h-screen items-center justify-center bg-black text-white">
+      <div className="w-full max-w-md p-8 bg-gray-900 rounded-lg border border-gray-800">
+        <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
         
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg mb-6 text-sm text-center">
+          <div className="mb-4 p-3 bg-red-900/50 border border-red-500 rounded text-red-200 text-sm">
             {error}
           </div>
         )}
 
-        <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+            <label className="block text-sm font-medium mb-1">Email</label>
             <input
-              name="email"
               type="email"
-              placeholder="seu@email.com"
-              className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
-              onChange={handleChange}
+              className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 outline-none"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
             />
           </div>
-
           <div>
-            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Senha</label>
+            <label className="block text-sm font-medium mb-1">Senha</label>
             <input
-              name="senha"
               type="password"
-              placeholder="••••••"
-              className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
-              onChange={handleChange}
+              className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 outline-none"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
             />
           </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded font-bold transition-colors disabled:opacity-50"
+          >
+            {loading ? 'Entrando...' : 'Entrar'}
+          </button>
+        </form>
+        <div className="mt-4 text-center text-sm">
+          <p className="text-gray-400">Não tem conta? <a href="/register" className="text-blue-400 hover:underline">Cadastre-se</a></p>
         </div>
-
-        <button type="submit" className="w-full mt-8 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20">
-          Entrar
-        </button>
-
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Não tem conta? <a href="/register" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">Crie uma aqui</a>
-        </p>
-      </form>
+      </div>
     </div>
   );
 }

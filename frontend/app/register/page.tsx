@@ -13,8 +13,8 @@ export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // URL FIXA para garantir a conexão (Depurar erro de variável)
-  const API_URL = "https://api-finanalyzer.onrender.com"; 
+  // URL Direta do seu Backend
+  const API_URL = "https://api-finanalyzer.onrender.com";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,26 +22,30 @@ export default function Register() {
     setLoading(true);
 
     try {
-      // Log para você ver no navegador (F12)
-      console.log(`Tentando registrar em: ${API_URL}/auth/register`);
-
-      const res = await fetch(`${API_URL}/auth/register`, {
+      // --- CORREÇÃO AQUI: Mudado de /auth/register para /api/register ---
+      console.log(`Enviando dados para: ${API_URL}/api/register`);
+      
+      const res = await fetch(`${API_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          nome: formData.name, // Backend espera "nome", não "name"
+          email: formData.email,
+          senha: formData.password // Backend espera "senha", não "password"
+        }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.detail || 'Erro ao registrar');
+        throw new Error(data.detail || 'Erro ao criar conta');
       }
 
-      alert('Conta criada com sucesso!');
+      alert('Conta criada com sucesso! Faça login.');
       router.push('/login'); 
     } catch (err: any) {
-      console.error("Erro completo:", err);
-      setError("Erro de conexão: O Backend pode estar 'dormindo' (Render Free). Tente de novo em 30 segundos.");
+      console.error("Erro no registro:", err);
+      setError(err.message || "Erro de conexão com o servidor.");
     } finally {
       setLoading(false);
     }
@@ -98,7 +102,7 @@ export default function Register() {
           </button>
         </form>
         <div className="mt-4 text-center text-sm">
-          <p className="text-gray-400">Já tem conta? <a href="/login" className="text-blue-400 hover:underline">Faca login</a></p>
+          <p className="text-gray-400">Já tem conta? <a href="/login" className="text-blue-400 hover:underline">Faça login</a></p>
         </div>
       </div>
     </div>
