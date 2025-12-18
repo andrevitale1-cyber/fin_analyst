@@ -21,7 +21,7 @@ export default function Login() {
 
     try {
       // --- CORREÇÃO AQUI: Rota correta /api/login ---
-      const res = await fetch(`${API_URL}/api/login`, {
+      const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

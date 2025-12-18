@@ -23,9 +23,9 @@ export default function Register() {
 
     try {
       // --- CORREÇÃO AQUI: Mudado de /auth/register para /api/register ---
-      console.log(`Enviando dados para: ${API_URL}/api/register`);
+      console.log(`Enviando dados para: ${API_URL}/auth/register`);
       
-      const res = await fetch(`${API_URL}/api/register`, {
+      const res = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
