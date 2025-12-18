@@ -35,12 +35,15 @@ function NavItem({ icon, label, active = false, onClick }: any) {
 export default function FinancialDashboard() {
   const router = useRouter();
 
-  // --- CORREÇÃO FINAL DA URL (SEM BARRA NO FINAL) ---
+  // --- CONFIGURAÇÃO DA API ---
   const API_BASE = "https://api-finanalyzer.onrender.com"; 
 
-  // ESTADOS
+  // ESTADOS GERAIS
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<any>(null); // --- NOVO: Estado do Usuário
+
+  // DADOS DA API
   const [result, setResult] = useState<any>(null);
   const [historyList, setHistoryList] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
@@ -56,10 +59,22 @@ export default function FinancialDashboard() {
     qtde_tri: true, media: true, last_analysed_quarter: true, receita_nota: false,
     lucro_nota: true, divida_nota: false, rentabilidade_nota: false
   });
+  
+  // FORMULÁRIO
   const [empresa, setEmpresa] = useState("");
   const [ano, setAno] = useState("");
   const [trimestre, setTrimestre] = useState("1T");
   const [file, setFile] = useState<File | null>(null);
+
+  // --- EFEITO 1: RECUPERAR USUÁRIO NO LOAD ---
+  useEffect(() => {
+    const storedUser = localStorage.getItem('usuario');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    } else {
+      router.push('/login'); // Chuta para login se não tiver usuário
+    }
+  }, [router]);
 
   const columnDefsMap = useMemo(() => {
     return COLUMN_DEFINITIONS.reduce((acc, col) => {
@@ -75,11 +90,13 @@ export default function FinancialDashboard() {
     router.push('/login');
   };
 
-  // --- CHAMADAS DE API CORRIGIDAS (USANDO API_BASE) ---
+  // --- CHAMADAS DE API CORRIGIDAS COM USER_ID ---
+  
   const fetchHistory = async () => {
+    if (!user) return; // Só busca se tiver usuário
     try {
-      // Correção: ${API_BASE}/api... (Evita barra dupla)
-      const res = await fetch(`${API_BASE}/api/history`);
+      // --- CORREÇÃO: Envia user_id na URL ---
+      const res = await fetch(`${API_BASE}/api/history?user_id=${user.id}`);
       const data = await res.json();
       setHistoryList(data);
     } catch (error) {
@@ -88,8 +105,10 @@ export default function FinancialDashboard() {
   };
 
   const fetchTableData = async () => {
+    if (!user) return; // Só busca se tiver usuário
     try {
-      const res = await fetch(`${API_BASE}/api/table-data`);
+      // --- CORREÇÃO: Envia user_id na URL ---
+      const res = await fetch(`${API_BASE}/api/table-data?user_id=${user.id}`);
       const data = await res.json();
       setTableData(data);
     } catch (error) {
@@ -115,6 +134,11 @@ export default function FinancialDashboard() {
       alert("Preencha todos os campos!");
       return;
     }
+    if (!user) {
+        alert("Erro de autenticação. Faça login novamente.");
+        return;
+    }
+
     setLoading(true);
     try {
       const formData = new FormData();
@@ -122,6 +146,9 @@ export default function FinancialDashboard() {
       formData.append("empresa", empresa);
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
+      
+      // --- CORREÇÃO: Envia o ID do usuário junto com o arquivo ---
+      formData.append("user_id", user.id); 
 
       const response = await fetch(`${API_BASE}/api/analyze`, {
         method: "POST",
@@ -142,10 +169,13 @@ export default function FinancialDashboard() {
     }
   };
 
-  // --- RESTO DO CÓDIGO (UI, DRAG & DROP) ---
+  // --- EFEITO 2: CARREGAR DADOS AO MUDAR DE TELA ---
   useEffect(() => {
-    if (currentView === 'history') fetchHistory();
-    if (currentView === 'table') fetchTableData();
+    if (user) { // Só carrega dados se o usuário estiver pronto
+        if (currentView === 'history') fetchHistory();
+        if (currentView === 'table') fetchTableData();
+    }
+    
     const handleClickOutside = (event: MouseEvent) => {
       if (columnMenuRef.current && !columnMenuRef.current.contains(event.target as Node)) {
         setShowColumnMenu(false);
@@ -153,7 +183,7 @@ export default function FinancialDashboard() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [currentView]);
+  }, [currentView, user]); // Adicionado 'user' nas dependências
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
