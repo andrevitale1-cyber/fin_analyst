@@ -201,14 +201,16 @@ def login_usuario(dados: UsuarioLogin):
 
 # --- ROTA DE ANÁLISE (O CÉREBRO DA IA) ---
 
+# --- ROTA DE ANÁLISE (ATUALIZADA COM USER_ID E PROMPT COMPLETO) ---
 @app.post("/api/analyze")
 async def analyze_report(
     file: UploadFile = File(...),
     empresa: str = Form(...),
     ano: str = Form(...),
-    trimestre: str = Form(...)
+    trimestre: str = Form(...),
+    user_id: int = Form(...) # <--- NOVO: Recebe o ID do usuário
 ):
-    print(f"🔄 Iniciando análise: {empresa} - {trimestre}/{ano}")
+    print(f"🔄 Iniciando análise para User {user_id}: {empresa} - {trimestre}/{ano}")
     
     if not model:
         raise HTTPException(status_code=500, detail="Erro de configuração: Chave API do Gemini não encontrada.")
@@ -275,12 +277,12 @@ async def analyze_report(
             "analise_completa": response.text
         }
 
-        # 5. Salvar no Banco
+        # 5. Salvar no Banco (AGORA COM USER_ID)
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json) VALUES (%s, %s, %s, NOW(), %s)",
-            (empresa, ano, trimestre, json.dumps(objeto_final))
+            "INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s)",
+            (empresa, ano, trimestre, json.dumps(objeto_final), user_id)
         )
         conn.commit()
         cur.close()
@@ -293,14 +295,14 @@ async def analyze_report(
     finally:
         if conn: conn.close()
 
-# --- ROTAS DE LEITURA (BLINDADAS PARA CSV E PDF) ---
-
+# --- ROTA DE LEITURA DA TABELA (FILTRADA POR USUÁRIO) ---
 @app.get("/api/table-data")
-def get_table_data():
+def get_table_data(user_id: int): # <--- NOVO: Filtra pelo ID
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT empresa, ano, trimestre, resultado_json FROM historico ORDER BY empresa, ano DESC, trimestre DESC")
+        # Adicionado WHERE user_id = %s
+        cur.execute("SELECT empresa, ano, trimestre, resultado_json FROM historico WHERE user_id = %s ORDER BY empresa, ano DESC, trimestre DESC", (user_id,))
         rows = cur.fetchall()
 
         grouped_data = {}
@@ -313,7 +315,6 @@ def get_table_data():
                 try:
                     if val is None or val == "": return 0.0
                     if isinstance(val, (int, float)): return float(val)
-                    # Limpeza pesada de string
                     clean = str(val).replace(',', '.').replace('R$', '').replace('%', '').strip()
                     return float(clean)
                 except:
@@ -323,19 +324,17 @@ def get_table_data():
                 conteudo = json.loads(row[3])
                 data_content = conteudo.get('data', {})
                 
-                # Lê as notas com proteção
                 nota_geral = safe_float(data_content.get('nota_geral'))
                 receita = safe_float(data_content.get('receita_nota'))
                 lucro = safe_float(data_content.get('lucro_nota'))
                 divida = safe_float(data_content.get('divida_nota'))
                 roe = safe_float(data_content.get('rentabilidade_nota'))
                 
-                # Agrupa por empresa
                 if empresa not in grouped_data:
                     grouped_data[empresa] = {
                         'id': empresa,
                         'empresa': empresa,
-                        'ano': data_content.get('ano', row[1]), # Fallback
+                        'ano': data_content.get('ano', row[1]),
                         'trimestre': data_content.get('trimestre', row[2]),
                         'ultimo_ano': row[1],
                         'ultimo_trimestre': row[2],
@@ -350,7 +349,6 @@ def get_table_data():
             except Exception as e:
                 continue
 
-        # Formata para o Frontend
         table_data = []
         for empresa, data in grouped_data.items():
             notas = data['notas']
@@ -382,12 +380,14 @@ def get_table_data():
         cur.close()
         conn.close()
 
+# --- ROTA DE HISTÓRICO (FILTRADA POR USUÁRIO) ---
 @app.get("/api/history")
-def get_history():
+def get_history(user_id: int): # <--- NOVO: Filtra pelo ID
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute("SELECT id, empresa, ano, trimestre, data_criacao, resultado_json FROM historico ORDER BY id DESC")
+        # Adicionado WHERE user_id = %s
+        cur.execute("SELECT id, empresa, ano, trimestre, data_criacao, resultado_json FROM historico WHERE user_id = %s ORDER BY id DESC", (user_id,))
         rows = cur.fetchall()
         
         lista = []
@@ -396,7 +396,6 @@ def get_history():
                 conteudo = json.loads(row[5])
                 data_content = conteudo.get('data', {})
                 
-                # Proteção para nota
                 nota_raw = data_content.get("nota_geral", 0)
                 try: 
                     if isinstance(nota_raw, str): nota = float(nota_raw.replace(',', '.'))
@@ -428,6 +427,22 @@ def delete_history_item(item_id: int):
         return {"message": "Deletado com sucesso"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+# --- ROTA TEMPORÁRIA PARA ARRUMAR O BANCO ---
+@app.get("/api/fix-database")
+def fix_database():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Adiciona a coluna user_id se ela não existir
+        cur.execute("ALTER TABLE historico ADD COLUMN IF NOT EXISTS user_id INTEGER;")
+        conn.commit()
+        return {"message": "Banco de dados atualizado com sucesso! Coluna user_id criada."}
+    except Exception as e:
+        return {"error": str(e)}
     finally:
         cur.close()
         conn.close()
