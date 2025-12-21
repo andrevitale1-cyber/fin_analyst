@@ -1,6 +1,6 @@
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, validator
 from passlib.context import CryptContext
 import google.generativeai as genai
 import psycopg2
@@ -83,7 +83,8 @@ def init_db():
                 ano TEXT,
                 trimestre TEXT,
                 data_criacao TEXT,
-                resultado_json TEXT
+                resultado_json TEXT,
+                user_id INTEGER
             );
         ''')
 
@@ -108,10 +109,25 @@ def init_db():
 init_db()
 
 # --- MODELOS DE DADOS (Pydantic) ---
+
 class UsuarioRegister(BaseModel):
     nome: str
     email: str
-    senha: str
+    # --- ATUALIZAÇÃO DE SEGURANÇA E CORREÇÃO DO ERRO 72 BYTES ---
+    senha: str = Field(..., min_length=8, max_length=72, description="Senha segura entre 8 e 72 caracteres")
+
+    @validator('senha')
+    def validar_complexidade(cls, v):
+        # Regras de mercado padrão
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('A senha deve conter pelo menos uma letra maiúscula.')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('A senha deve conter pelo menos uma letra minúscula.')
+        if not re.search(r'[0-9]', v):
+            raise ValueError('A senha deve conter pelo menos um número.')
+        if not re.search(r'[\W_]', v):
+            raise ValueError('A senha deve conter pelo menos um caractere especial (ex: !@#$).')
+        return v
 
 class UsuarioLogin(BaseModel):
     email: str
@@ -155,7 +171,6 @@ def parse_results(text):
 
 # --- ROTAS DE AUTENTICAÇÃO (CORRIGIDAS PARA /auth) ---
 
-# [CORREÇÃO] Mudou de /api/register para /auth/register para bater com o Frontend
 @app.post("/auth/register")
 def registrar_usuario(usuario: UsuarioRegister):
     conn = get_db_connection()
@@ -179,7 +194,6 @@ def registrar_usuario(usuario: UsuarioRegister):
         cur.close()
         conn.close()
 
-# [CORREÇÃO] Mudou de /api/login para /auth/login para bater com o Frontend (se houver)
 @app.post("/auth/login")
 def login_usuario(dados: UsuarioLogin):
     conn = get_db_connection()
@@ -201,14 +215,13 @@ def login_usuario(dados: UsuarioLogin):
 
 # --- ROTA DE ANÁLISE (O CÉREBRO DA IA) ---
 
-# --- ROTA DE ANÁLISE (ATUALIZADA COM USER_ID E PROMPT COMPLETO) ---
 @app.post("/api/analyze")
 async def analyze_report(
     file: UploadFile = File(...),
     empresa: str = Form(...),
     ano: str = Form(...),
     trimestre: str = Form(...),
-    user_id: int = Form(...) # <--- NOVO: Recebe o ID do usuário
+    user_id: int = Form(...) 
 ):
     print(f"🔄 Iniciando análise para User {user_id}: {empresa} - {trimestre}/{ano}")
     
@@ -277,7 +290,7 @@ async def analyze_report(
             "analise_completa": response.text
         }
 
-        # 5. Salvar no Banco (AGORA COM USER_ID)
+        # 5. Salvar no Banco
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
@@ -297,11 +310,10 @@ async def analyze_report(
 
 # --- ROTA DE LEITURA DA TABELA (FILTRADA POR USUÁRIO) ---
 @app.get("/api/table-data")
-def get_table_data(user_id: int): # <--- NOVO: Filtra pelo ID
+def get_table_data(user_id: int): 
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # Adicionado WHERE user_id = %s
         cur.execute("SELECT empresa, ano, trimestre, resultado_json FROM historico WHERE user_id = %s ORDER BY empresa, ano DESC, trimestre DESC", (user_id,))
         rows = cur.fetchall()
 
@@ -382,11 +394,10 @@ def get_table_data(user_id: int): # <--- NOVO: Filtra pelo ID
 
 # --- ROTA DE HISTÓRICO (FILTRADA POR USUÁRIO) ---
 @app.get("/api/history")
-def get_history(user_id: int): # <--- NOVO: Filtra pelo ID
+def get_history(user_id: int):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # Adicionado WHERE user_id = %s
         cur.execute("SELECT id, empresa, ano, trimestre, data_criacao, resultado_json FROM historico WHERE user_id = %s ORDER BY id DESC", (user_id,))
         rows = cur.fetchall()
         
