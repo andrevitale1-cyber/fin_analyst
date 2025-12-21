@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 pydantic
-passlib[bcrypt]
+bcrypt==3.2.2
+passlib==1.7.4
 google-generativeai
 psycopg2-binary
 pypdf
