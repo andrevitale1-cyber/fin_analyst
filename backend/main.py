@@ -236,15 +236,27 @@ async def analyze_report(
         
         # 2. O PROMPT COMPLETO (Instrução para o Gemini)
         prompt = f"""
-    Você é um analista sênior de Equity Research. Analise o resultado de: {empresa} ({trimestre}/{ano}).
+    **👨‍💼 Papel do Modelo:**
+Você é um Analista de Equity Research sênior, pragmático e focado em resultados. Sua análise deve ser concisa (aprox. 20 a 30 linhas de texto corrido + tópicos), balanceada, mas com foco na tese de investimento que justifica o "bottom line" (o lucro líquido) reportado pela companhia. Sua principal habilidade é desconstruir os números (operacional, financeiro, não recorrentes) para entender como a empresa chegou ao resultado final e qual narrativa (positiva ou negativa) ele suporta para o mercado.
+SEMPRE APRESENTE OS NUMEROS GAAP, E OS AJUSTADOS QUANDO NECESSARIO
 
-    ### REGRAS DE FORMATAÇÃO E ESTILO:
-    - Seja pragmático, direto e focado no "Bottom-line" (Lucro Líquido e Geração de Valor).
-    - NÃO use LaTeX. Escreva números como texto normal (ex: "Receita de 10 bilhões", "Margem de 20%").
-    - Use no máximo duas casas decimais.
-    - Se for banco/seguradora, ignore EBITDA e use métricas do setor (Margem Financeira, Índice de Basileia, etc).
+**🎯 Objetivo:**
+Gerar uma análise de resultados para o **{empresa}** referente ao **{trimestre}** de **{ano}**, que identifique as principais alavancas (positivas ou negativas) do trimestre. A análise deve ir além dos números principais, usando-os para construir a tese principal que o mercado irá repercutir.
 
-   **⚙️ Roteiro de Análise Estruturada:**
+**🧠 Calibração Setorial Mandatória (Etapa 0):**
+Antes de aplicar o roteiro, identifique o setor da empresa. O roteiro de análise deve ser adaptado:
+* **Empresas Não-Financeiras (Indústria, Varejo, Comm.):** Foco no EBITDA e na separação clara entre performance operacional (custos, despesas) e resultado financeiro (dívida).
+* **Empresas Financeiras (Bancos, Seguradoras, Holdings):**
+    * *Métrica de Rentabilidade:* Não use EBITDA. Utilize métricas específicas (ex: Resultado Operacional, Margem Financeira/NII, Índice Combinado para seguradoras).
+    * *Resultado Financeiro:* Reconheça que as receitas de investimentos/float são parte operacional do negócio.
+    * *Solvência:* Foque em índices regulatórios (ex: Basileia, Solvência).
+(NAO EXIBA ESSA ETAPA NA RESPOSTA)
+**📥 Fonte de Dados:**
+Utilize o texto fornecido abaixo (Release de Resultados/ITR).
+
+---
+
+**⚙️ Roteiro de Análise Estruturada:**
 
 **Seção 1: Análise da Performance Core (Top Line)**
 (Apresente a Receita Líquida ou Prêmios/Margem Financeira e sua variação YoY/QoQ. Desconstrua o crescimento por segmento ou unidade de negócio. O volume/preço ou mix ajudou? Conecte com o cenário macro se relevante.)
@@ -275,6 +287,7 @@ async def analyze_report(
 (Com base na sua conclusão e no outlook, atribua uma nota final EXATA.)
 **Nota Geral: X/5** (Adjetivo)
 *(Escala: 1 = Muito Ruim 🔴, 2 = Ruim 🟠, 3 = Regular 🟡, 4 = Bom 🟢, 5 = Excelente 🚀)*
+    
 
     ---
     DADOS DO RELEASE (Use apenas o relevante):
