@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // Importante para navegação interna otimizada
 
 export default function Login() {
   const router = useRouter();
@@ -20,7 +21,6 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // --- CORREÇÃO AQUI: Rota correta /api/login ---
       const res = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -33,14 +33,20 @@ export default function Login() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.detail || 'Email ou senha incorretos');
+        // Se for erro de validação (422) ou login (401)
+        const errorMessage = data.detail || 'Email ou senha incorretos';
+        // Se o erro for uma lista (comum no FastAPI/Pydantic), pegamos o primeiro msg
+        if (Array.isArray(errorMessage)) {
+             throw new Error(errorMessage[0].msg);
+        }
+        throw new Error(errorMessage);
       }
 
       // Salva o usuário no navegador para manter logado
       localStorage.setItem('usuario', JSON.stringify(data.usuario));
       
-      alert('Login realizado com sucesso!');
-      router.push('/'); // Manda para o Dashboard
+      // Opcional: Toast ou feedback visual aqui
+      router.push('/'); 
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -64,7 +70,7 @@ export default function Login() {
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
               type="email"
-              className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 outline-none"
+              className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 outline-none transition-colors"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               required
@@ -74,7 +80,9 @@ export default function Login() {
             <label className="block text-sm font-medium mb-1">Senha</label>
             <input
               type="password"
-              className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 outline-none"
+              // AQUI ESTÁ A PROTEÇÃO CONTRA O ERRO "72 BYTES"
+              maxLength={72} 
+              className="w-full p-2 rounded bg-gray-800 border border-gray-700 focus:border-blue-500 outline-none transition-colors"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required
@@ -83,13 +91,18 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded font-bold transition-colors disabled:opacity-50"
+            className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </button>
         </form>
         <div className="mt-4 text-center text-sm">
-          <p className="text-gray-400">Não tem conta? <a href="/register" className="text-blue-400 hover:underline">Cadastre-se</a></p>
+          <p className="text-gray-400">
+            Não tem conta?{' '}
+            <Link href="/register" className="text-blue-400 hover:underline">
+              Cadastre-se
+            </Link>
+          </p>
         </div>
       </div>
     </div>
