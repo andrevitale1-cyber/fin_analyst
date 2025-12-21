@@ -244,34 +244,37 @@ async def analyze_report(
     - Use no máximo duas casas decimais.
     - Se for banco/seguradora, ignore EBITDA e use métricas do setor (Margem Financeira, Índice de Basileia, etc).
 
-    ### ESTRUTURA OBRIGATÓRIA DE RESPOSTA:
+   **⚙️ Roteiro de Análise Estruturada:**
 
-    **Seção 1: Análise da Performance Core (Top Line)**
-    (Analise a Receita Líquida. Cresceu? Caiu? Foi preço ou volume? O mix de produtos ajudou?)
-    ...
-    **Nota Seção 1: X/5**
+**Seção 1: Análise da Performance Core (Top Line)**
+(Apresente a Receita Líquida ou Prêmios/Margem Financeira e sua variação YoY/QoQ. Desconstrua o crescimento por segmento ou unidade de negócio. O volume/preço ou mix ajudou? Conecte com o cenário macro se relevante.)
+...
+**Nota Seção 1: X/5**
 
-    **Seção 2: Análise da Rentabilidade e Eficiência**
-    (Analise EBITDA/Margens ou Resultado Operacional. Houve diluição de custos? Ganho de eficiência?)
-    ...
-    **Nota Seção 2: X/5**
+**Seção 2: Análise da Rentabilidade e Eficiência Operacional**
+(Apresente a métrica de rentabilidade adequada: EBITDA ou Resultado Operacional e sua variação. Analise a Margem correspondente. Decomponha a margem: O que pressionou ou aliviou os custos e despesas? Houve ganho de eficiência?)
+...
+**Nota Seção 2: X/5**
 
-    **Seção 3: Estrutura de Capital e Financeiro**
-    (Analise Dívida Líquida/EBITDA, Despesas Financeiras ou Solvência/Basileia para bancos).
-    ...
-    **Nota Seção 3: X/5**
+**Seção 3: Estrutura de Capital e Resultado Financeiro**
+(Para Não-Financeiras: Analise o peso da dívida, despesas com juros e alavancagem (Dívida Líq./EBITDA). Para Financeiras: Analise a solidez patrimonial, PDD (Provisão para Devedores Duvidosos) e índices de capital.)
+...
+**Nota Seção 3: X/5**
 
-    **Seção 4: Análise do Lucro Líquido (Bottom-Line)**
-    (Analise o Lucro Líquido. Foi limpo ou teve não-recorrentes? É sustentável?)
-    ...
-    **Nota Seção 4: X/5**
+**Seção 4: Análise do Lucro Líquido (Bottom-Line)**
+(Apresente o Lucro Líquido e sua variação. Identifique os Drivers conectando às seções anteriores. **Crucial:** Qualifique a qualidade do lucro. Foi limpo? Foi impulsionado por não-recorrentes (ex: créditos fiscais, venda de ativos) ou é um lucro operacional sustentável?)
+...
+**Nota Seção 4: X/5**
 
-    **Seção 5: Conclusão - Tese e Outlook**
-    (Sintetize: O resultado foi Bom, Neutro ou Ruim? Qual a perspectiva futura (Guidance)?)
+**Seção 5: Conclusão – Tese e Outlook (Perspectivas)**
+(Sintetize a análise de forma coesa em dois blocos:
+1.  **A Tese do Trimestre:** Resuma se o resultado foi bom, neutro ou ruim e o porquê, coloque os números para justificar
+2.  **Outlook e Guidance:** Analise o que a gestão falou sobre o futuro. O *guidance* (metas anuais) foi mantido, elevado ou revisado para baixo? O tom para os próximos trimestres é otimista ou cauteloso? O resultado atual facilita ou dificulta o atingimento das metas do ano?)
 
-    **Seção 6: Nota Final**
-    (Dê uma nota geral baseada na tese).
-    **Nota Geral: X/5**
+**Seção 6: Nota Final (Nota IA do Trimestre)**
+(Com base na sua conclusão e no outlook, atribua uma nota final EXATA.)
+**Nota Geral: X/5** (Adjetivo)
+*(Escala: 1 = Muito Ruim 🔴, 2 = Ruim 🟠, 3 = Regular 🟡, 4 = Bom 🟢, 5 = Excelente 🚀)*
 
     ---
     DADOS DO RELEASE (Use apenas o relevante):
