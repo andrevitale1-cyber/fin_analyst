@@ -4,14 +4,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   BarChart3, UploadCloud, Zap, ArrowRight, 
-  FileText, Layout, Database, Check, X 
+  FileText, Layout, Database, Check, X, CheckCircle2 
 } from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter(); 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
-  // --- EFEITO DE VERIFICAÇÃO ---
   useEffect(() => {
     const user = localStorage.getItem('usuario');
     if (user) {
@@ -83,7 +82,7 @@ export default function LandingPage() {
       {/* --- SEÇÃO: FUNCIONALIDADES (ZIG-ZAG) --- */}
       <div id="funcionalidades" className="flex flex-col gap-32 pb-32">
         
-        {/* BLOCO 1: UPLOAD (Texto Esquerda, Imagem Direita) */}
+        {/* BLOCO 1: UPLOAD */}
         <section className="relative">
           <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
             <div className="order-2 lg:order-1">
@@ -92,7 +91,7 @@ export default function LandingPage() {
               </div>
               <h2 className="text-4xl font-bold text-white mb-6">Upload Inteligente e Automático</h2>
               <p className="text-xl text-gray-400 leading-relaxed mb-8">
-                Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA identifica automaticamente a empresa, o trimestre e o ano do documento.
+                Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados. Nossa IA identifica automaticamente a empresa, o trimestre e o ano do documento.
               </p>
               <ul className="space-y-3 mb-8">
                 <ListItem>Suporte a PDFs de até 50MB</ListItem>
@@ -102,8 +101,9 @@ export default function LandingPage() {
             </div>
             <div className="order-1 lg:order-2 relative group">
               <div className="absolute inset-0 bg-blue-600/20 blur-[60px] rounded-full -z-10" />
+              {/* CAMINHO CORRIGIDO PARA .PNG */}
               <img 
-                src="/312shots_so.jpg" 
+                src="/demo-upload.png" 
                 alt="Tela de Upload" 
                 className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-blue-500/50"
               />
@@ -111,13 +111,14 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 2: RESULTADO (Imagem Esquerda, Texto Direita) */}
+        {/* BLOCO 2: RESULTADO */}
         <section className="relative">
           <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
             <div className="order-1 relative group">
               <div className="absolute inset-0 bg-green-600/20 blur-[60px] rounded-full -z-10" />
+              {/* CAMINHO CORRIGIDO PARA .PNG */}
               <img 
-                src="/991shots_so.jpg" 
+                src="/demo-result.png" 
                 alt="Tela de Resultado" 
                 className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-green-500/50"
               />
@@ -128,7 +129,7 @@ export default function LandingPage() {
               </div>
               <h2 className="text-4xl font-bold text-white mb-6">Análise Profunda e Score IA</h2>
               <p className="text-xl text-gray-400 leading-relaxed mb-8">
-                Não receba apenas números soltos. O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos (Receita, Lucro, Dívida, ROE) e escreve uma tese de investimento completa para você.
+                Não receba apenas números soltos. O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos e escreve uma tese de investimento completa para você.
               </p>
               <ul className="space-y-3 mb-8">
                 <ListItem>Score Fundamentalista (0 a 5)</ListItem>
@@ -139,7 +140,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 3: TABELA (Texto Esquerda, Imagem Direita) */}
+        {/* BLOCO 3: TABELA */}
         <section className="relative">
           <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
             <div className="order-2 lg:order-1">
@@ -148,7 +149,7 @@ export default function LandingPage() {
               </div>
               <h2 className="text-4xl font-bold text-white mb-6">Comparador de Ativos (Screener)</h2>
               <p className="text-xl text-gray-400 leading-relaxed mb-8">
-                Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro para encontrar as melhores oportunidades da sua carteira.
+                Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro para encontrar as melhores oportunidades.
               </p>
               <ul className="space-y-3 mb-8">
                 <ListItem>Colunas customizáveis</ListItem>
@@ -158,8 +159,9 @@ export default function LandingPage() {
             </div>
             <div className="order-1 lg:order-2 relative group">
               <div className="absolute inset-0 bg-purple-600/20 blur-[60px] rounded-full -z-10" />
+              {/* CAMINHO CORRIGIDO PARA .PNG */}
               <img 
-                src="/434shots_so.jpg" 
+                src="/demo-table.png" 
                 alt="Tabela Agregada" 
                 className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-purple-500/50"
               />
@@ -167,13 +169,14 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 4: HISTÓRICO (Imagem Esquerda, Texto Direita) */}
+        {/* BLOCO 4: HISTÓRICO */}
         <section className="relative">
           <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
             <div className="order-1 relative group">
               <div className="absolute inset-0 bg-yellow-600/20 blur-[60px] rounded-full -z-10" />
+              {/* CAMINHO CORRIGIDO PARA .PNG */}
               <img 
-                src="/76shots_so.jpg" 
+                src="/demo-history.png" 
                 alt="Histórico" 
                 className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-yellow-500/50"
               />
@@ -184,7 +187,7 @@ export default function LandingPage() {
               </div>
               <h2 className="text-4xl font-bold text-white mb-6">Histórico Completo na Nuvem</h2>
               <p className="text-xl text-gray-400 leading-relaxed mb-8">
-                Nunca mais perca um PDF. Todas as suas análises ficam salvas para sempre. Compare a evolução da nota da empresa trimestre a trimestre e veja se os fundamentos estão melhorando.
+                Todas as suas análises ficam salvas para sempre. Compare a evolução da nota da empresa trimestre a trimestre.
               </p>
               <ul className="space-y-3 mb-8">
                 <ListItem>Backup automático na nuvem</ListItem>
@@ -222,7 +225,6 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-start max-w-4xl mx-auto">
-            {/* CARD GRATUITO */}
             <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 hover:border-gray-600 transition-all h-full flex flex-col">
               <h3 className="text-3xl font-bold text-white mb-2">Gratuito</h3>
               <p className="text-gray-400 text-base mb-8">Pra quem se vira com pouquíssimos dados...</p>
@@ -239,7 +241,6 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* CARD PREMIUM */}
             <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
               {billingCycle === 'yearly' && (
                 <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
@@ -291,7 +292,6 @@ export default function LandingPage() {
   );
 }
 
-// Subcomponentes
 function Feature({ text, active = false, disabled = false }: any) {
   return (
     <li className="flex items-center gap-3">
@@ -315,6 +315,3 @@ function ListItem({ children }: { children: React.ReactNode }) {
     </li>
   );
 }
-
-// Icone extra para usar nos ListItems
-import { CheckCircle2 } from "lucide-react";
