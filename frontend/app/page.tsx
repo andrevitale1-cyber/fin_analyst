@@ -79,110 +79,118 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- SEÇÃO: FUNCIONALIDADES (SEM MOLDURAS) --- */}
-      <div id="funcionalidades" className="flex flex-col gap-32 pb-32">
+      {/* --- SEÇÃO: FUNCIONALIDADES (LAYOUT EXPANDIDO) --- */}
+      <div id="funcionalidades" className="flex flex-col gap-32 pb-32 overflow-hidden">
         
-        {/* BLOCO 1: UPLOAD */}
+        {/* BLOCO 1: UPLOAD (Texto 40% | Imagem 60%) */}
         <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+          <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[40%_60%] gap-12 items-center">
+            
+            {/* Texto */}
             <div className="order-2 lg:order-1">
               <div className="w-14 h-14 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30">
                 <UploadCloud className="text-blue-400 w-7 h-7" />
               </div>
-              <h2 className="text-4xl font-bold text-white mb-6">Upload Inteligente e Automático</h2>
-              <p className="text-xl text-gray-400 leading-relaxed mb-8">
-                Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados. Nossa IA identifica automaticamente a empresa, o trimestre e o ano do documento.
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Upload Inteligente</h2>
+              <p className="text-lg text-gray-400 leading-relaxed mb-6">
+                Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA identifica automaticamente a empresa, o trimestre e o ano.
               </p>
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3">
                 <ListItem>Suporte a PDFs de até 50MB</ListItem>
                 <ListItem>Identificação automática de tickers</ListItem>
                 <ListItem>Processamento em nuvem ultra-rápido</ListItem>
               </ul>
             </div>
             
-            {/* IMAGEM LIMPA - SEM BORDA */}
-            <div className="order-1 lg:order-2 relative group">
-              {/* Glow traseiro apenas para destacar do fundo preto */}
-              <div className="absolute inset-0 bg-blue-600/10 blur-[80px] rounded-full -z-10" />
+            {/* IMAGEM EXPANDIDA - Ocupa todo o espaço */}
+            <div className="order-1 lg:order-2 w-full">
+              {/* Glow de fundo */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-600/10 blur-[90px] rounded-full -z-10" />
               <img 
                 src="/demo-upload.png" 
                 alt="Tela de Upload" 
-                className="w-full h-auto rounded-xl shadow-2xl" 
+                className="w-full h-auto object-contain drop-shadow-2xl" 
+                // Removemos bordas e rounded excessivo para maximizar a visão
               />
             </div>
+
           </div>
         </section>
 
-        {/* BLOCO 2: RESULTADO */}
+        {/* BLOCO 2: RESULTADO (Imagem 60% | Texto 40%) */}
         <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-            {/* IMAGEM LIMPA - SEM BORDA */}
-            <div className="order-1 relative group">
-              <div className="absolute inset-0 bg-green-600/10 blur-[80px] rounded-full -z-10" />
+          <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[60%_40%] gap-12 items-center">
+            
+            {/* IMAGEM EXPANDIDA */}
+            <div className="order-1 w-full">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-green-600/10 blur-[90px] rounded-full -z-10" />
               <img 
                 src="/demo-result.png" 
                 alt="Tela de Resultado" 
-                className="w-full h-auto rounded-xl shadow-2xl"
+                className="w-full h-auto object-contain drop-shadow-2xl"
               />
             </div>
             
+            {/* Texto */}
             <div className="order-2">
               <div className="w-14 h-14 bg-green-600/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/30">
                 <FileText className="text-green-400 w-7 h-7" />
               </div>
-              <h2 className="text-4xl font-bold text-white mb-6">Análise Profunda e Score IA</h2>
-              <p className="text-xl text-gray-400 leading-relaxed mb-8">
-                Não receba apenas números soltos. O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos e escreve uma tese de investimento completa para você.
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Análise Profunda e Score</h2>
+              <p className="text-lg text-gray-400 leading-relaxed mb-6">
+                Não receba apenas números soltos. O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos e escreve uma tese de investimento completa.
               </p>
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3">
                 <ListItem>Score Fundamentalista (0 a 5)</ListItem>
                 <ListItem>Indicadores visuais coloridos</ListItem>
                 <ListItem>Tese descritiva gerada por IA</ListItem>
               </ul>
             </div>
+
           </div>
         </section>
 
-        {/* BLOCO 3: TABELA */}
+        {/* BLOCO 3: TABELA (Texto 40% | Imagem 60%) */}
         <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+          <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[40%_60%] gap-12 items-center">
+            
             <div className="order-2 lg:order-1">
               <div className="w-14 h-14 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30">
                 <Layout className="text-purple-400 w-7 h-7" />
               </div>
-              <h2 className="text-4xl font-bold text-white mb-6">Comparador de Ativos (Screener)</h2>
-              <p className="text-xl text-gray-400 leading-relaxed mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Comparador de Ativos</h2>
+              <p className="text-lg text-gray-400 leading-relaxed mb-6">
                 Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro para encontrar as melhores oportunidades.
               </p>
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3">
                 <ListItem>Colunas customizáveis</ListItem>
                 <ListItem>Ordenação inteligente</ListItem>
                 <ListItem>Comparação lado a lado</ListItem>
               </ul>
             </div>
             
-            {/* IMAGEM LIMPA - SEM BORDA */}
-            <div className="order-1 lg:order-2 relative group">
-              <div className="absolute inset-0 bg-purple-600/10 blur-[80px] rounded-full -z-10" />
+            <div className="order-1 lg:order-2 w-full">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-purple-600/10 blur-[90px] rounded-full -z-10" />
               <img 
                 src="/demo-table.png" 
                 alt="Tabela Agregada" 
-                className="w-full h-auto rounded-xl shadow-2xl"
+                className="w-full h-auto object-contain drop-shadow-2xl"
               />
             </div>
+
           </div>
         </section>
 
-        {/* BLOCO 4: HISTÓRICO */}
+        {/* BLOCO 4: HISTÓRICO (Imagem 60% | Texto 40%) */}
         <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-            {/* IMAGEM LIMPA - SEM BORDA */}
-            <div className="order-1 relative group">
-              <div className="absolute inset-0 bg-yellow-600/10 blur-[80px] rounded-full -z-10" />
+          <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[60%_40%] gap-12 items-center">
+            
+            <div className="order-1 w-full">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-yellow-600/10 blur-[90px] rounded-full -z-10" />
               <img 
                 src="/demo-history.png" 
                 alt="Histórico" 
-                className="w-full h-auto rounded-xl shadow-2xl"
+                className="w-full h-auto object-contain drop-shadow-2xl"
               />
             </div>
             
@@ -190,16 +198,17 @@ export default function LandingPage() {
               <div className="w-14 h-14 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/30">
                 <Database className="text-yellow-400 w-7 h-7" />
               </div>
-              <h2 className="text-4xl font-bold text-white mb-6">Histórico Completo na Nuvem</h2>
-              <p className="text-xl text-gray-400 leading-relaxed mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Histórico Completo</h2>
+              <p className="text-lg text-gray-400 leading-relaxed mb-6">
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da nota da empresa trimestre a trimestre.
               </p>
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3">
                 <ListItem>Backup automático na nuvem</ListItem>
                 <ListItem>Acesso rápido a relatórios antigos</ListItem>
                 <ListItem>Exclusão e gerenciamento fácil</ListItem>
               </ul>
             </div>
+
           </div>
         </section>
 
