@@ -79,12 +79,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- SEÇÃO: FUNCIONALIDADES (ZIG-ZAG) --- */}
+      {/* --- SEÇÃO: FUNCIONALIDADES (SEM MOLDURAS) --- */}
       <div id="funcionalidades" className="flex flex-col gap-32 pb-32">
         
         {/* BLOCO 1: UPLOAD */}
         <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
             <div className="order-2 lg:order-1">
               <div className="w-14 h-14 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30">
                 <UploadCloud className="text-blue-400 w-7 h-7" />
@@ -99,13 +99,15 @@ export default function LandingPage() {
                 <ListItem>Processamento em nuvem ultra-rápido</ListItem>
               </ul>
             </div>
+            
+            {/* IMAGEM LIMPA - SEM BORDA */}
             <div className="order-1 lg:order-2 relative group">
-              <div className="absolute inset-0 bg-blue-600/20 blur-[60px] rounded-full -z-10" />
-              {/* CAMINHO CORRIGIDO PARA .PNG */}
+              {/* Glow traseiro apenas para destacar do fundo preto */}
+              <div className="absolute inset-0 bg-blue-600/10 blur-[80px] rounded-full -z-10" />
               <img 
                 src="/demo-upload.png" 
                 alt="Tela de Upload" 
-                className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-blue-500/50"
+                className="w-full h-auto rounded-xl shadow-2xl" 
               />
             </div>
           </div>
@@ -113,16 +115,17 @@ export default function LandingPage() {
 
         {/* BLOCO 2: RESULTADO */}
         <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+            {/* IMAGEM LIMPA - SEM BORDA */}
             <div className="order-1 relative group">
-              <div className="absolute inset-0 bg-green-600/20 blur-[60px] rounded-full -z-10" />
-              {/* CAMINHO CORRIGIDO PARA .PNG */}
+              <div className="absolute inset-0 bg-green-600/10 blur-[80px] rounded-full -z-10" />
               <img 
                 src="/demo-result.png" 
                 alt="Tela de Resultado" 
-                className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-green-500/50"
+                className="w-full h-auto rounded-xl shadow-2xl"
               />
             </div>
+            
             <div className="order-2">
               <div className="w-14 h-14 bg-green-600/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/30">
                 <FileText className="text-green-400 w-7 h-7" />
@@ -142,7 +145,7 @@ export default function LandingPage() {
 
         {/* BLOCO 3: TABELA */}
         <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
             <div className="order-2 lg:order-1">
               <div className="w-14 h-14 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30">
                 <Layout className="text-purple-400 w-7 h-7" />
@@ -157,13 +160,14 @@ export default function LandingPage() {
                 <ListItem>Comparação lado a lado</ListItem>
               </ul>
             </div>
+            
+            {/* IMAGEM LIMPA - SEM BORDA */}
             <div className="order-1 lg:order-2 relative group">
-              <div className="absolute inset-0 bg-purple-600/20 blur-[60px] rounded-full -z-10" />
-              {/* CAMINHO CORRIGIDO PARA .PNG */}
+              <div className="absolute inset-0 bg-purple-600/10 blur-[80px] rounded-full -z-10" />
               <img 
                 src="/demo-table.png" 
                 alt="Tabela Agregada" 
-                className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-purple-500/50"
+                className="w-full h-auto rounded-xl shadow-2xl"
               />
             </div>
           </div>
@@ -171,16 +175,17 @@ export default function LandingPage() {
 
         {/* BLOCO 4: HISTÓRICO */}
         <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+            {/* IMAGEM LIMPA - SEM BORDA */}
             <div className="order-1 relative group">
-              <div className="absolute inset-0 bg-yellow-600/20 blur-[60px] rounded-full -z-10" />
-              {/* CAMINHO CORRIGIDO PARA .PNG */}
+              <div className="absolute inset-0 bg-yellow-600/10 blur-[80px] rounded-full -z-10" />
               <img 
                 src="/demo-history.png" 
                 alt="Histórico" 
-                className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-yellow-500/50"
+                className="w-full h-auto rounded-xl shadow-2xl"
               />
             </div>
+            
             <div className="order-2">
               <div className="w-14 h-14 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/30">
                 <Database className="text-yellow-400 w-7 h-7" />
@@ -225,6 +230,7 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-start max-w-4xl mx-auto">
+            {/* CARD GRATUITO */}
             <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 hover:border-gray-600 transition-all h-full flex flex-col">
               <h3 className="text-3xl font-bold text-white mb-2">Gratuito</h3>
               <p className="text-gray-400 text-base mb-8">Pra quem se vira com pouquíssimos dados...</p>
@@ -241,6 +247,7 @@ export default function LandingPage() {
               </Link>
             </div>
 
+            {/* CARD PREMIUM */}
             <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
               {billingCycle === 'yearly' && (
                 <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
