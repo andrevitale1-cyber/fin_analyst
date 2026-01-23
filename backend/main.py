@@ -286,7 +286,8 @@ async def analyze_report(
     - NÃO use LaTeX. Escreva números como texto normal (ex: "Receita de 10 bilhões", "Margem de 20%").
     - Use no máximo duas casas decimais.
     - Se for banco/seguradora, ignore EBITDA e use métricas do setor (Margem Financeira, Índice de Basileia, etc).
-
+    - AS NOTAS DEVEM SER DADAS APENAS COM NÚMEROS INTEIROS (1,2,3,4,5)
+    
     ### ESTRUTURA OBRIGATÓRIA DE RESPOSTA:
 
     **Seção 1: Análise da Performance Core (Top Line)**
