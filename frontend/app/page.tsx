@@ -26,6 +26,8 @@ export default function LandingPage() {
       {/* --- NAVBAR --- */}
       <nav className="border-b border-gray-800 bg-[#0E1117]/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          
+          {/* --- LADO ESQUERDO: LOGO --- */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
               <BarChart3 className="text-white w-6 h-6" />
@@ -35,17 +37,27 @@ export default function LandingPage() {
             </span>
           </div>
 
+          {/* --- LADO DIREITO: MENUS E BOTÕES --- */}
           <div className="flex items-center gap-4">
+            
+            {/* Link Preços (NOVO) */}
+            <Link href="/pricing" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
+              Preços
+            </Link>
+
+            {/* Link Entrar */}
             <Link href="/login" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Entrar
             </Link>
+
+            {/* Botão Começar */}
             <Link href="/register" className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20 hover:scale-105">
               Começar Grátis
             </Link>
           </div>
+
         </div>
       </nav>
-
       {/* --- HERO SECTION --- */}
       <section className="relative pt-20 pb-32 overflow-hidden">
         {/* Efeito de fundo */}

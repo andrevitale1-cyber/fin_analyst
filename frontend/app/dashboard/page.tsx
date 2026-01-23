@@ -5,7 +5,7 @@ import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Activity, LogOut, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
-  GripVertical, Eye, EyeOff, Settings2, X
+  GripVertical, Eye, EyeOff, Settings2, X, Zap
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
@@ -76,7 +76,7 @@ export default function FinancialDashboard() {
     }
   }, [router]);
 
-  // --- NOVA FUNÇÃO: FORMATAR DATA (ADICIONADA AQUI) ---
+  // --- NOVA FUNÇÃO: FORMATAR DATA ---
   const formatarData = (dataString: string) => {
     if (!dataString) return "-";
     try {
@@ -107,12 +107,11 @@ export default function FinancialDashboard() {
     router.push('/login');
   };
 
-  // --- CHAMADAS DE API CORRIGIDAS COM USER_ID ---
+  // --- CHAMADAS DE API ---
   
   const fetchHistory = async () => {
     if (!user) return; // Só busca se tiver usuário
     try {
-      // --- CORREÇÃO: Envia user_id na URL ---
       const res = await fetch(`${API_BASE}/api/history?user_id=${user.id}`);
       const data = await res.json();
       setHistoryList(data);
@@ -124,7 +123,6 @@ export default function FinancialDashboard() {
   const fetchTableData = async () => {
     if (!user) return; // Só busca se tiver usuário
     try {
-      // --- CORREÇÃO: Envia user_id na URL ---
       const res = await fetch(`${API_BASE}/api/table-data?user_id=${user.id}`);
       const data = await res.json();
       setTableData(data);
@@ -163,8 +161,6 @@ export default function FinancialDashboard() {
       formData.append("empresa", empresa);
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
-      
-      // --- CORREÇÃO: Envia o ID do usuário junto com o arquivo ---
       formData.append("user_id", user.id); 
 
       const response = await fetch(`${API_BASE}/api/analyze`, {
@@ -188,7 +184,7 @@ export default function FinancialDashboard() {
 
   // --- EFEITO 2: CARREGAR DADOS AO MUDAR DE TELA ---
   useEffect(() => {
-    if (user) { // Só carrega dados se o usuário estiver pronto
+    if (user) { 
         if (currentView === 'history') fetchHistory();
         if (currentView === 'table') fetchTableData();
     }
@@ -200,7 +196,7 @@ export default function FinancialDashboard() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [currentView, user]); // Adicionado 'user' nas dependências
+  }, [currentView, user]); 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
@@ -264,7 +260,9 @@ export default function FinancialDashboard() {
 
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
-      <aside className="w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col justify-between p-6 z-20">
+      <aside className="w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 z-20">
+        
+        {/* --- MENU SUPERIOR --- */}
         <div>
           <div className="flex items-center gap-3 mb-10 px-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
@@ -278,11 +276,30 @@ export default function FinancialDashboard() {
             <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => setCurrentView('history')} />
           </nav>
         </div>
+
+        {/* --- NOVO BLOCO: CTA PARA PREMIUM --- */}
+        {/* Usei mt-auto para empurrar este bloco e o botão Sair para o rodapé */}
+        <div className="mt-auto mb-6 px-2">
+          <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/10 border border-blue-500/30 p-4 rounded-xl">
+            <div className="flex items-center gap-2 mb-2 text-blue-200 font-bold text-sm">
+              <Zap size={16} className="text-yellow-400 fill-yellow-400" /> Premium
+            </div>
+            <p className="text-xs text-gray-400 mb-3">Desbloqueie análises ilimitadas e tabelas.</p>
+            <button 
+              onClick={() => router.push('/pricing')}
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors shadow-lg"
+            >
+              Fazer Upgrade
+            </button>
+          </div>
+        </div>
+
         <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer">
           <LogOut size={20} className="group-hover:text-red-400 transition-colors" />
           <span className="font-medium">Sair</span>
         </button>
       </aside>
+      
       <main className="flex-1 overflow-y-auto p-8 relative">
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
@@ -351,13 +368,12 @@ export default function FinancialDashboard() {
             <header className="flex items-center justify-between mb-8"><div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
             <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
               <table className="w-full text-left border-collapse">
-                <thead><tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500"><th className="py-5 px-6 font-semibold">Empresa</th><th className="py-5 px-6 font-semibold">Período</th><th className="py-5 px-6 font-semibold">Data</th><th className="py-5 px-6 text-center font-semibold">Score</th><th className="py-5 px-6 text-center font-semibold">Ações</th></tr></thead>
+                <thead><tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500"><th className="py-5 px-6 font-semibold">Empresa</th><th className="py-5 px-6 font-semibold">Período</th><th className="py-5 px-6 font-semibold">Data</th><th className="py-5 px-6 text-center font-semibold">Score</th><th className="py-5 px-6 text-right font-semibold">Ações</th></tr></thead>
                 <tbody className="divide-y divide-gray-800">
                   {historyList.map((item: any) => (
                     <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { setResult(item.conteudo); setEmpresa(item.empresa); setCurrentView('result'); }}>
                       <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-gray-200">{item.empresa}</span></div></td>
                       <td className="py-4 px-6 text-gray-400">{item.periodo}</td>
-                      {/* AQUI ESTÁ A DATA ATUALIZADA */}
                       <td className="py-4 px-6 text-gray-500 text-sm">{formatarData(item.data)}</td>
                       <td className="py-4 px-6 text-center"><span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold ${item.nota >= 4 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : item.nota >= 3 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>{item.nota}</span></td>
                       <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">Detalhes <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
