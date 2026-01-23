@@ -41,7 +41,7 @@ export default function FinancialDashboard() {
   // ESTADOS GERAIS
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null); // --- NOVO: Estado do Usuário
+  const [user, setUser] = useState<any>(null);
 
   // DADOS DA API
   const [result, setResult] = useState<any>(null);
@@ -72,11 +72,11 @@ export default function FinancialDashboard() {
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     } else {
-      router.push('/login'); // Chuta para login se não tiver usuário
+      router.push('/login');
     }
   }, [router]);
 
-  // --- NOVA FUNÇÃO: FORMATAR DATA ---
+  // --- FUNÇÃO: FORMATAR DATA ---
   const formatarData = (dataString: string) => {
     if (!dataString) return "-";
     try {
@@ -108,9 +108,8 @@ export default function FinancialDashboard() {
   };
 
   // --- CHAMADAS DE API ---
-  
   const fetchHistory = async () => {
-    if (!user) return; // Só busca se tiver usuário
+    if (!user) return;
     try {
       const res = await fetch(`${API_BASE}/api/history?user_id=${user.id}`);
       const data = await res.json();
@@ -121,7 +120,7 @@ export default function FinancialDashboard() {
   };
 
   const fetchTableData = async () => {
-    if (!user) return; // Só busca se tiver usuário
+    if (!user) return;
     try {
       const res = await fetch(`${API_BASE}/api/table-data?user_id=${user.id}`);
       const data = await res.json();
@@ -158,7 +157,8 @@ export default function FinancialDashboard() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("empresa", empresa);
+      // Força salvar em maiúsculo também na hora do envio, por garantia
+      formData.append("empresa", empresa.toUpperCase());
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
       formData.append("user_id", user.id); 
@@ -182,7 +182,7 @@ export default function FinancialDashboard() {
     }
   };
 
-  // --- EFEITO 2: CARREGAR DADOS AO MUDAR DE TELA ---
+  // --- EFEITO 2: CARREGAR DADOS ---
   useEffect(() => {
     if (user) { 
         if (currentView === 'history') fetchHistory();
@@ -249,6 +249,9 @@ export default function FinancialDashboard() {
   };
 
   const renderCellContent = (item: any, key: string, colDef: any) => {
+    // --- CORREÇÃO: EMPRESA SEMPRE EM MAIÚSCULO NA TABELA ---
+    if (key === 'empresa') return <span className={`${colDef.color || 'text-white'} font-bold`}>{item[key]?.toString().toUpperCase()}</span>;
+
     if (key === 'trimestre') return <span className="bg-blue-900/30 text-blue-300 py-1 px-2 rounded text-xs font-bold border border-blue-500/20">{item[key]}</span>;
     if (key === 'media') return <span className={`px-2 py-1 rounded font-bold ${item.media >= 4 ? 'text-green-400' : 'text-yellow-400'}`}>{item[key]}</span>;
     if (key.includes('nota') || key === 'nota_final') {
@@ -277,8 +280,7 @@ export default function FinancialDashboard() {
           </nav>
         </div>
 
-        {/* --- NOVO BLOCO: CTA PARA PREMIUM --- */}
-        {/* Usei mt-auto para empurrar este bloco e o botão Sair para o rodapé */}
+        {/* --- BLOCO: CTA PARA PREMIUM --- */}
         <div className="mt-auto mb-6 px-2">
           <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/10 border border-blue-500/30 p-4 rounded-xl">
             <div className="flex items-center gap-2 mb-2 text-blue-200 font-bold text-sm">
@@ -372,7 +374,7 @@ export default function FinancialDashboard() {
                 <tbody className="divide-y divide-gray-800">
                   {historyList.map((item: any) => (
                     <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { setResult(item.conteudo); setEmpresa(item.empresa); setCurrentView('result'); }}>
-                      <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-gray-200">{item.empresa}</span></div></td>
+                      <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-gray-200">{item.empresa?.toUpperCase()}</span></div></td>
                       <td className="py-4 px-6 text-gray-400">{item.periodo}</td>
                       <td className="py-4 px-6 text-gray-500 text-sm">{formatarData(item.data)}</td>
                       <td className="py-4 px-6 text-center"><span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold ${item.nota >= 4 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : item.nota >= 3 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>{item.nota}</span></td>
@@ -394,7 +396,7 @@ export default function FinancialDashboard() {
                 <div className="text-center mb-12"><h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Nova Análise Financeira</h1><p className="text-gray-400 text-lg">Carregue o relatório trimestral (PDF) para processamento via IA.</p></div>
                 <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-8 shadow-2xl relative overflow-hidden group hover:border-gray-700 transition-colors duration-500">
                   <div className="grid grid-cols-3 gap-6 mb-8">
-                    <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa</label><input type="text" placeholder="Ex: Apple" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={empresa} onChange={(e) => setEmpresa(e.target.value)} /></div>
+                    <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa</label><input type="text" placeholder="Ex: Apple" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all uppercase" value={empresa} onChange={(e) => setEmpresa(e.target.value)} /></div>
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ano</label><input type="text" placeholder="2025" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={ano} onChange={(e) => setAno(e.target.value)} /></div>
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trimestre</label><select className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">1º Trimestre</option><option value="2T">2º Trimestre</option><option value="3T">3º Trimestre</option><option value="4T">4º Trimestre</option></select></div>
                   </div>
@@ -414,7 +416,7 @@ export default function FinancialDashboard() {
               <button onClick={handleDownload} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all"><Download size={18} /> Baixar Relatório</button>
             </div>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
-              <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-5xl font-bold text-white mb-2">{result.metadata?.empresa}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
+              <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
               <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800"><div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : 'text-amber-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span></div></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
