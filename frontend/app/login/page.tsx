@@ -46,7 +46,7 @@ export default function Login() {
       localStorage.setItem('usuario', JSON.stringify(data.usuario));
       
       // Opcional: Toast ou feedback visual aqui
-      router.push('/'); 
+      router.push('/dashboard'); 
     } catch (err: any) {
       setError(err.message);
     } finally {

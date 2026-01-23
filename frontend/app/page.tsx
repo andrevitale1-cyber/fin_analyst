@@ -1,5 +1,6 @@
 "use client";
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   BarChart3, UploadCloud, Zap, ShieldCheck, ArrowRight, 
@@ -7,6 +8,18 @@ import {
 } from "lucide-react";
 
 export default function LandingPage() {
+  const router = useRouter(); 
+
+  // --- EFEITO DE VERIFICAÇÃO ---
+  useEffect(() => {
+    // Verifica se tem usuário salvo no navegador
+    const user = localStorage.getItem('usuario');
+    if (user) {
+      router.push('/dashboard'); // Se tiver logado, manda pro painel
+    }
+  }, [router]);
+
+  // ... O resto do código continua igual aqui para baixo ...
   return (
     <div className="min-h-screen bg-[#0E1117] text-gray-100 font-sans selection:bg-blue-500/30">
       
