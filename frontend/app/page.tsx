@@ -1,21 +1,21 @@
 "use client";
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   BarChart3, UploadCloud, Zap, ShieldCheck, ArrowRight, 
-  CheckCircle2, TrendingUp, FileText, Search, Layout, Database 
+  CheckCircle2, TrendingUp, FileText, Search, Layout, Database, Check, X 
 } from "lucide-react";
 
 export default function LandingPage() {
   const router = useRouter(); 
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   // --- EFEITO DE VERIFICAÇÃO ---
   useEffect(() => {
-    // Verifica se tem usuário salvo no navegador
     const user = localStorage.getItem('usuario');
     if (user) {
-      router.push('/dashboard'); // Se tiver logado, manda pro painel
+      router.push('/dashboard'); 
     }
   }, [router]);
 
@@ -35,7 +35,7 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link href="/pricing" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
+            <Link href="#planos" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Preços
             </Link>
             <Link href="/login" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
@@ -70,15 +70,15 @@ export default function LandingPage() {
             <Link href="/register" className="w-full md:w-auto bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2">
               Criar Conta Grátis <ArrowRight size={20} />
             </Link>
-            <Link href="#galeria" className="w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg text-gray-300 border border-gray-700 hover:border-gray-500 hover:text-white transition-all">
+            <Link href="#funcionalidades" className="w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg text-gray-300 border border-gray-700 hover:border-gray-500 hover:text-white transition-all">
               Ver Funcionalidades
             </Link>
           </div>
         </div>
       </section>
 
-      {/* --- GALERIA DE FUNCIONALIDADES (NOVO) --- */}
-      <section id="galeria" className="py-20 bg-[#0d1117] border-y border-gray-800">
+      {/* --- GALERIA DE FUNCIONALIDADES (GRID 2x2) --- */}
+      <section id="funcionalidades" className="py-20 bg-[#0d1117] border-y border-gray-800">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Por dentro da Plataforma</h2>
@@ -87,55 +87,52 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 gap-12">
             
-            {/* Feature 1: Upload */}
+            {/* Feature 1 */}
             <div className="space-y-4 group">
-              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20">
-                <img src="/demo-upload.jpg" alt="Tela de Upload" className="w-full h-auto transform transition-transform duration-700 group-hover:scale-105" />
+              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20 bg-[#161b22] aspect-video flex items-center justify-center relative">
+                 {/* Fallback caso a imagem quebre: mostramos um ícone */}
+                 <div className="absolute inset-0 flex items-center justify-center text-gray-700 bg-[#161b22] -z-10">Imagem não encontrada</div>
+                 <img src="/demo-upload.jpg" alt="Upload" className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" onError={(e) => e.currentTarget.style.display = 'none'} />
               </div>
               <div className="px-2">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <UploadCloud className="text-blue-500" /> 1. Upload Simples
-                </h3>
-                <p className="text-gray-400 mt-2">Basta arrastar o PDF do relatório. O sistema identifica automaticamente a empresa, ano e trimestre.</p>
+                <h3 className="text-2xl font-bold text-white flex items-center gap-2"><UploadCloud className="text-blue-500" /> 1. Upload Simples</h3>
+                <p className="text-gray-400 mt-2">Basta arrastar o PDF do relatório. O sistema identifica automaticamente a empresa.</p>
               </div>
             </div>
 
-            {/* Feature 2: Resultado */}
+            {/* Feature 2 */}
             <div className="space-y-4 group">
-              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20">
-                <img src="/demo-result.jpg" alt="Tela de Resultado" className="w-full h-auto transform transition-transform duration-700 group-hover:scale-105" />
+              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20 bg-[#161b22] aspect-video flex items-center justify-center relative">
+                 <div className="absolute inset-0 flex items-center justify-center text-gray-700 bg-[#161b22] -z-10">Imagem não encontrada</div>
+                 <img src="/demo-result.jpg" alt="Resultado" className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" onError={(e) => e.currentTarget.style.display = 'none'} />
               </div>
               <div className="px-2">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <FileText className="text-green-500" /> 2. Análise Profunda
-                </h3>
-                <p className="text-gray-400 mt-2">Receba um Score de 0 a 5, indicadores visuais (Receita, Margem, Dívida) e uma tese escrita pela IA.</p>
+                <h3 className="text-2xl font-bold text-white flex items-center gap-2"><FileText className="text-green-500" /> 2. Análise Profunda</h3>
+                <p className="text-gray-400 mt-2">Receba um Score de 0 a 5, indicadores visuais e tese de investimento.</p>
               </div>
             </div>
 
-            {/* Feature 3: Tabela */}
+            {/* Feature 3 */}
             <div className="space-y-4 group">
-              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20">
-                <img src="/demo-table.jpg" alt="Tabela Agregada" className="w-full h-auto transform transition-transform duration-700 group-hover:scale-105" />
+              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20 bg-[#161b22] aspect-video flex items-center justify-center relative">
+                 <div className="absolute inset-0 flex items-center justify-center text-gray-700 bg-[#161b22] -z-10">Imagem não encontrada</div>
+                 <img src="/demo-table.jpg" alt="Tabela" className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" onError={(e) => e.currentTarget.style.display = 'none'} />
               </div>
               <div className="px-2">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <Layout className="text-purple-500" /> 3. Comparação Inteligente
-                </h3>
-                <p className="text-gray-400 mt-2">Visualize todas as suas empresas em uma única tabela. Ordene por nota, lucro ou receita para encontrar as melhores.</p>
+                <h3 className="text-2xl font-bold text-white flex items-center gap-2"><Layout className="text-purple-500" /> 3. Comparação</h3>
+                <p className="text-gray-400 mt-2">Visualize todas as suas empresas em uma única tabela customizável.</p>
               </div>
             </div>
 
-            {/* Feature 4: Histórico */}
+            {/* Feature 4 */}
             <div className="space-y-4 group">
-              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20">
-                <img src="/demo-history.jpg" alt="Histórico Detalhado" className="w-full h-auto transform transition-transform duration-700 group-hover:scale-105" />
+              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20 bg-[#161b22] aspect-video flex items-center justify-center relative">
+                 <div className="absolute inset-0 flex items-center justify-center text-gray-700 bg-[#161b22] -z-10">Imagem não encontrada</div>
+                 <img src="/demo-history.jpg" alt="Histórico" className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" onError={(e) => e.currentTarget.style.display = 'none'} />
               </div>
               <div className="px-2">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <Database className="text-yellow-500" /> 4. Histórico Completo
-                </h3>
-                <p className="text-gray-400 mt-2">Seus dados ficam salvos. Acesse relatórios antigos e compare a evolução das notas ao longo do tempo.</p>
+                <h3 className="text-2xl font-bold text-white flex items-center gap-2"><Database className="text-yellow-500" /> 4. Histórico</h3>
+                <p className="text-gray-400 mt-2">Seus dados ficam salvos para sempre. Compare a evolução das notas.</p>
               </div>
             </div>
 
@@ -143,18 +140,78 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- CTA FINAL --- */}
-      <section className="py-32 px-6 text-center relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-indigo-600/10 blur-[100px] rounded-full -z-10" />
-        
-        <h2 className="text-4xl md:text-5xl font-bold text-white mb-8">Pronto para investir melhor?</h2>
-        <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
-          Pare de perder tempo lendo documentos burocráticos. Deixe a tecnologia trabalhar para você.
-        </p>
-        <Link href="/register" className="inline-block bg-white text-gray-900 px-10 py-5 rounded-2xl font-bold text-xl hover:bg-gray-100 hover:scale-105 transition-all shadow-2xl">
-          Criar Conta Gratuita
-        </Link>
-        <p className="mt-6 text-sm text-gray-500">Não requer cartão de crédito • Cancelamento a qualquer momento</p>
+      {/* --- SEÇÃO DE PLANOS (IDÊNTICO À REFERÊNCIA) --- */}
+      <section id="planos" className="py-24 relative overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
+              Um único plano. <br />
+              O site mais completo para o investidor.
+            </h2>
+            
+            {/* Toggle Switch */}
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <span className={`text-sm font-bold cursor-pointer ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('monthly')}>Mensal</span>
+              <button 
+                onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
+                className="w-16 h-8 bg-gray-800 rounded-full p-1 relative transition-colors hover:bg-gray-700"
+              >
+                <div className={`w-6 h-6 bg-blue-500 rounded-full transition-transform duration-300 shadow-md ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-0'}`} />
+              </button>
+              <span className={`text-sm font-bold cursor-pointer ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('yearly')}>Anual</span>
+            </div>
+            {billingCycle === 'yearly' && <p className="text-green-400 text-xs font-bold mt-2 animate-pulse">2 MESES GRÁTIS NO ANUAL</p>}
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 items-start">
+            
+            {/* CARD GRATUITO */}
+            <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 hover:border-gray-600 transition-all">
+              <h3 className="text-2xl font-bold text-white mb-2">Gratuito</h3>
+              <p className="text-gray-400 text-sm mb-8">Pra quem se vira com pouquíssimos dados...</p>
+              
+              <ul className="space-y-4 mb-8">
+                <Feature text="1 Análise de IA por dia" />
+                <Feature text="Upload limitado (5MB)" />
+                <Feature text="Acesso ao histórico simples" />
+                <Feature text="Suporte por email" />
+                <Feature text="Sem tabela comparativa" disabled />
+              </ul>
+
+              <Link href="/register" className="block w-full text-center py-4 rounded-xl border border-gray-700 text-white font-bold hover:bg-gray-800 transition-all">
+                Criar conta grátis
+              </Link>
+            </div>
+
+            {/* CARD PREMIUM */}
+            <div className="bg-[#0f131a] border border-blue-500/50 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/20 transform hover:-translate-y-1 transition-all duration-300">
+              <div className="absolute -top-3 right-8 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                {billingCycle === 'yearly' ? '2 Meses Off' : 'Mais Popular'}
+              </div>
+
+              <h3 className="text-2xl font-bold text-blue-400 mb-2">Premium</h3>
+              <div className="flex items-end gap-1 mb-2">
+                <span className="text-4xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 49' : 'R$ 490'}</span>
+                <span className="text-gray-500 mb-1">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-8">Para quem quer realmente evoluir como investidor!</p>
+              
+              <ul className="space-y-4 mb-8">
+                <Feature text="Análises de IA Ilimitadas" active />
+                <Feature text="Upload de arquivos grandes (50MB+)" active />
+                <Feature text="Histórico de dados ilimitado" active />
+                <Feature text="Tabela Comparativa Customizável" active />
+                <Feature text="Prioridade no processamento" active />
+              </ul>
+
+              <Link href="/pricing" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all">
+                Assinar Agora
+              </Link>
+              <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
+            </div>
+
+          </div>
+        </div>
       </section>
 
       {/* --- FOOTER --- */}
@@ -172,10 +229,25 @@ export default function LandingPage() {
           <div className="flex gap-6">
             <a href="#" className="text-gray-500 hover:text-white transition-colors">Termos</a>
             <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacidade</a>
-            <a href="#" className="text-gray-500 hover:text-white transition-colors">Contato</a>
           </div>
         </div>
       </footer>
     </div>
+  );
+}
+
+// Componente auxiliar para a lista de features
+function Feature({ text, active = false, disabled = false }: any) {
+  return (
+    <li className="flex items-center gap-3">
+      {disabled ? (
+        <div className="p-0.5 rounded-full bg-gray-800 text-gray-500"><X size={14} /></div>
+      ) : (
+        <div className={`p-0.5 rounded-full ${active ? 'bg-blue-500 text-white' : 'bg-green-500/20 text-green-500'}`}>
+          <Check size={14} />
+        </div>
+      )}
+      <span className={disabled ? 'text-gray-600 line-through' : 'text-gray-300'}>{text}</span>
+    </li>
   );
 }
