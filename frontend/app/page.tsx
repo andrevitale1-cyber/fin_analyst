@@ -35,6 +35,9 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4">
+            <Link href="#funcionalidades" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
+              Funcionalidades
+            </Link>
             <Link href="#planos" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Preços
             </Link>
@@ -49,7 +52,8 @@ export default function LandingPage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <section className="relative pt-20 pb-20 overflow-hidden">
+      <section className="relative pt-24 pb-32 overflow-hidden">
+        {/* Glow de fundo */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full -z-10" />
 
         <div className="max-w-5xl mx-auto px-6 text-center">
@@ -77,61 +81,100 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- GALERIA DE FUNCIONALIDADES (GRID 2x2) --- */}
+      {/* --- GALERIA BENTO GRID (Estilo Bolha/Fundo) --- */}
       <section id="funcionalidades" className="py-20 bg-[#0d1117] border-y border-gray-800">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Por dentro da Plataforma</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">Interface limpa, rápida e focada na tomada de decisão.</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Poderoso. Simples. Visual.</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">Tudo o que você precisa em uma única tela.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12">
+          <div className="grid md:grid-cols-2 gap-6">
             
-            {/* Feature 1 */}
-            <div className="space-y-4 group">
-              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20 bg-[#161b22] aspect-video flex items-center justify-center relative">
-                 <img src="/demo-upload.jpg" alt="Upload" className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" onError={(e) => e.currentTarget.style.display = 'none'} />
-                 <div className="absolute inset-0 flex items-center justify-center text-gray-600 text-sm -z-10">Imagem 'demo-upload.jpg' não encontrada na pasta public</div>
+            {/* CARD 1: UPLOAD */}
+            <div className="group relative overflow-hidden rounded-[2rem] border border-gray-800 bg-[#161b22] h-[400px] transition-all hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-900/10">
+              {/* Imagem de Fundo (Bolha) */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/demo-upload.jpg" 
+                  alt="Upload" 
+                  className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105 opacity-60 group-hover:opacity-40"
+                  onError={(e) => e.currentTarget.style.display = 'none'} 
+                />
+                {/* Degradê para o texto ficar legível */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/80 to-transparent" />
               </div>
-              <div className="px-2">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2"><UploadCloud className="text-blue-500" /> 1. Upload Simples</h3>
-                <p className="text-gray-400 mt-2">Basta arrastar o PDF do relatório. O sistema identifica automaticamente a empresa.</p>
-              </div>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="space-y-4 group">
-              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20 bg-[#161b22] aspect-video flex items-center justify-center relative">
-                 <img src="/demo-result.jpg" alt="Resultado" className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" onError={(e) => e.currentTarget.style.display = 'none'} />
-                 <div className="absolute inset-0 flex items-center justify-center text-gray-600 text-sm -z-10">Imagem 'demo-result.jpg' não encontrada na pasta public</div>
-              </div>
-              <div className="px-2">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2"><FileText className="text-green-500" /> 2. Análise Profunda</h3>
-                <p className="text-gray-400 mt-2">Receba um Score de 0 a 5, indicadores visuais e tese de investimento.</p>
-              </div>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="space-y-4 group">
-              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20 bg-[#161b22] aspect-video flex items-center justify-center relative">
-                 <img src="/demo-table.jpg" alt="Tabela" className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" onError={(e) => e.currentTarget.style.display = 'none'} />
-                 <div className="absolute inset-0 flex items-center justify-center text-gray-600 text-sm -z-10">Imagem 'demo-table.jpg' não encontrada na pasta public</div>
-              </div>
-              <div className="px-2">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2"><Layout className="text-purple-500" /> 3. Comparação</h3>
-                <p className="text-gray-400 mt-2">Visualize todas as suas empresas em uma única tabela customizável.</p>
+              
+              {/* Texto Flutuante */}
+              <div className="absolute bottom-0 left-0 p-8 z-10">
+                <div className="w-12 h-12 bg-blue-600/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-blue-500/30">
+                  <UploadCloud className="text-blue-400 w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">1. Upload Inteligente</h3>
+                <p className="text-gray-400 leading-relaxed">Arraste o PDF. Nossa IA detecta automaticamente a empresa, o trimestre e organiza tudo para você.</p>
               </div>
             </div>
 
-            {/* Feature 4 */}
-            <div className="space-y-4 group">
-              <div className="rounded-2xl overflow-hidden border border-gray-800 shadow-2xl transition-all duration-500 group-hover:border-blue-500/50 group-hover:shadow-blue-900/20 bg-[#161b22] aspect-video flex items-center justify-center relative">
-                 <img src="/demo-history.jpg" alt="Histórico" className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105" onError={(e) => e.currentTarget.style.display = 'none'} />
-                 <div className="absolute inset-0 flex items-center justify-center text-gray-600 text-sm -z-10">Imagem 'demo-history.jpg' não encontrada na pasta public</div>
+            {/* CARD 2: RESULTADO */}
+            <div className="group relative overflow-hidden rounded-[2rem] border border-gray-800 bg-[#161b22] h-[400px] transition-all hover:border-green-500/50 hover:shadow-2xl hover:shadow-green-900/10">
+              <div className="absolute inset-0">
+                <img 
+                  src="/demo-result.jpg" 
+                  alt="Resultado" 
+                  className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105 opacity-60 group-hover:opacity-40"
+                  onError={(e) => e.currentTarget.style.display = 'none'} 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/80 to-transparent" />
               </div>
-              <div className="px-2">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2"><Database className="text-yellow-500" /> 4. Histórico</h3>
-                <p className="text-gray-400 mt-2">Seus dados ficam salvos para sempre. Compare a evolução das notas.</p>
+              
+              <div className="absolute bottom-0 left-0 p-8 z-10">
+                <div className="w-12 h-12 bg-green-600/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-green-500/30">
+                  <FileText className="text-green-400 w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">2. Análise Profunda</h3>
+                <p className="text-gray-400 leading-relaxed">Score de 0 a 5, indicadores visuais de saúde financeira e uma tese de investimento escrita por IA.</p>
+              </div>
+            </div>
+
+            {/* CARD 3: TABELA */}
+            <div className="group relative overflow-hidden rounded-[2rem] border border-gray-800 bg-[#161b22] h-[400px] transition-all hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-900/10">
+              <div className="absolute inset-0">
+                <img 
+                  src="/demo-table.jpg" 
+                  alt="Tabela" 
+                  className="h-full w-full object-cover object-left-top transition-transform duration-700 group-hover:scale-105 opacity-60 group-hover:opacity-40"
+                  onError={(e) => e.currentTarget.style.display = 'none'} 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/80 to-transparent" />
+              </div>
+              
+              <div className="absolute bottom-0 left-0 p-8 z-10">
+                <div className="w-12 h-12 bg-purple-600/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-purple-500/30">
+                  <Layout className="text-purple-400 w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">3. Comparador de Ativos</h3>
+                <p className="text-gray-400 leading-relaxed">Compare empresas lado a lado. Ordene por Nota, Lucro ou Receita para encontrar as melhores oportunidades.</p>
+              </div>
+            </div>
+
+            {/* CARD 4: HISTÓRICO */}
+            <div className="group relative overflow-hidden rounded-[2rem] border border-gray-800 bg-[#161b22] h-[400px] transition-all hover:border-yellow-500/50 hover:shadow-2xl hover:shadow-yellow-900/10">
+              <div className="absolute inset-0">
+                <img 
+                  src="/demo-history.jpg" 
+                  alt="Histórico" 
+                  className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105 opacity-60 group-hover:opacity-40"
+                  onError={(e) => e.currentTarget.style.display = 'none'} 
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/80 to-transparent" />
+              </div>
+              
+              <div className="absolute bottom-0 left-0 p-8 z-10">
+                <div className="w-12 h-12 bg-yellow-600/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-yellow-500/30">
+                  <Database className="text-yellow-400 w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-bold text-white mb-2">4. Histórico Completo</h3>
+                <p className="text-gray-400 leading-relaxed">Nunca mais perca uma análise. Seus dados ficam salvos na nuvem para você comparar a evolução trimestral.</p>
               </div>
             </div>
 
@@ -139,13 +182,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- SEÇÃO DE PLANOS (IDÊNTICO À REFERÊNCIA) --- */}
+      {/* --- SEÇÃO DE PLANOS --- */}
       <section id="planos" className="py-24 relative bg-[#0E1117]">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
               Um único plano. <br />
-              O site mais completo com todos os dados que qualquer investidor precisa.
+              O site mais completo para o investidor.
             </h2>
             
             {/* Toggle Switch */}
@@ -159,7 +202,7 @@ export default function LandingPage() {
               </button>
               <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('yearly')}>Anual</span>
             </div>
-            {/* Aviso de desconto flutuando se for anual */}
+            {/* Aviso de desconto */}
             <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-2`}>
                <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-3 py-1 rounded-full">2 MESES GRÁTIS</span>
             </div>
@@ -188,7 +231,6 @@ export default function LandingPage() {
 
             {/* CARD PREMIUM */}
             <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-              {/* Badge 2 Meses Grátis no topo do card (Visível só no anual) */}
               {billingCycle === 'yearly' && (
                 <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
                   2 Meses Grátis no Anual
