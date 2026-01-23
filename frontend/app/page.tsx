@@ -53,7 +53,6 @@ export default function LandingPage() {
 
       {/* --- HERO SECTION --- */}
       <section className="relative pt-24 pb-32 overflow-hidden">
-        {/* Glow de fundo */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full -z-10" />
 
         <div className="max-w-5xl mx-auto px-6 text-center">
@@ -81,109 +80,125 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- GALERIA BENTO GRID (Estilo Bolha/Fundo) --- */}
-      <section id="funcionalidades" className="py-20 bg-[#0d1117] border-y border-gray-800">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Poderoso. Simples. Visual.</h2>
-            <p className="text-gray-400 max-w-2xl mx-auto">Tudo o que você precisa em uma única tela.</p>
+      {/* --- SEÇÃO: FUNCIONALIDADES (ZIG-ZAG) --- */}
+      <div id="funcionalidades" className="flex flex-col gap-32 pb-32">
+        
+        {/* BLOCO 1: UPLOAD (Texto Esquerda, Imagem Direita) */}
+        <section className="relative">
+          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+            <div className="order-2 lg:order-1">
+              <div className="w-14 h-14 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30">
+                <UploadCloud className="text-blue-400 w-7 h-7" />
+              </div>
+              <h2 className="text-4xl font-bold text-white mb-6">Upload Inteligente e Automático</h2>
+              <p className="text-xl text-gray-400 leading-relaxed mb-8">
+                Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA identifica automaticamente a empresa, o trimestre e o ano do documento.
+              </p>
+              <ul className="space-y-3 mb-8">
+                <ListItem>Suporte a PDFs de até 50MB</ListItem>
+                <ListItem>Identificação automática de tickers</ListItem>
+                <ListItem>Processamento em nuvem ultra-rápido</ListItem>
+              </ul>
+            </div>
+            <div className="order-1 lg:order-2 relative group">
+              <div className="absolute inset-0 bg-blue-600/20 blur-[60px] rounded-full -z-10" />
+              <img 
+                src="/312shots_so.jpg" 
+                alt="Tela de Upload" 
+                className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-blue-500/50"
+              />
+            </div>
           </div>
+        </section>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            
-            {/* CARD 1: UPLOAD */}
-            <div className="group relative overflow-hidden rounded-[2rem] border border-gray-800 bg-[#161b22] h-[400px] transition-all hover:border-blue-500/50 hover:shadow-2xl hover:shadow-blue-900/10">
-              {/* Imagem de Fundo (Bolha) */}
-              <div className="absolute inset-0">
-                <img 
-                  src="/demo-upload.jpg" 
-                  alt="Upload" 
-                  className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105 opacity-60 group-hover:opacity-40"
-                  onError={(e) => e.currentTarget.style.display = 'none'} 
-                />
-                {/* Degradê para o texto ficar legível */}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/80 to-transparent" />
-              </div>
-              
-              {/* Texto Flutuante */}
-              <div className="absolute bottom-0 left-0 p-8 z-10">
-                <div className="w-12 h-12 bg-blue-600/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-blue-500/30">
-                  <UploadCloud className="text-blue-400 w-6 h-6" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">1. Upload Inteligente</h3>
-                <p className="text-gray-400 leading-relaxed">Arraste o PDF. Nossa IA detecta automaticamente a empresa, o trimestre e organiza tudo para você.</p>
-              </div>
+        {/* BLOCO 2: RESULTADO (Imagem Esquerda, Texto Direita) */}
+        <section className="relative">
+          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+            <div className="order-1 relative group">
+              <div className="absolute inset-0 bg-green-600/20 blur-[60px] rounded-full -z-10" />
+              <img 
+                src="/991shots_so.jpg" 
+                alt="Tela de Resultado" 
+                className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-green-500/50"
+              />
             </div>
-
-            {/* CARD 2: RESULTADO */}
-            <div className="group relative overflow-hidden rounded-[2rem] border border-gray-800 bg-[#161b22] h-[400px] transition-all hover:border-green-500/50 hover:shadow-2xl hover:shadow-green-900/10">
-              <div className="absolute inset-0">
-                <img 
-                  src="/demo-result.jpg" 
-                  alt="Resultado" 
-                  className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105 opacity-60 group-hover:opacity-40"
-                  onError={(e) => e.currentTarget.style.display = 'none'} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/80 to-transparent" />
+            <div className="order-2">
+              <div className="w-14 h-14 bg-green-600/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/30">
+                <FileText className="text-green-400 w-7 h-7" />
               </div>
-              
-              <div className="absolute bottom-0 left-0 p-8 z-10">
-                <div className="w-12 h-12 bg-green-600/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-green-500/30">
-                  <FileText className="text-green-400 w-6 h-6" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">2. Análise Profunda</h3>
-                <p className="text-gray-400 leading-relaxed">Score de 0 a 5, indicadores visuais de saúde financeira e uma tese de investimento escrita por IA.</p>
-              </div>
+              <h2 className="text-4xl font-bold text-white mb-6">Análise Profunda e Score IA</h2>
+              <p className="text-xl text-gray-400 leading-relaxed mb-8">
+                Não receba apenas números soltos. O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos (Receita, Lucro, Dívida, ROE) e escreve uma tese de investimento completa para você.
+              </p>
+              <ul className="space-y-3 mb-8">
+                <ListItem>Score Fundamentalista (0 a 5)</ListItem>
+                <ListItem>Indicadores visuais coloridos</ListItem>
+                <ListItem>Tese descritiva gerada por IA</ListItem>
+              </ul>
             </div>
-
-            {/* CARD 3: TABELA */}
-            <div className="group relative overflow-hidden rounded-[2rem] border border-gray-800 bg-[#161b22] h-[400px] transition-all hover:border-purple-500/50 hover:shadow-2xl hover:shadow-purple-900/10">
-              <div className="absolute inset-0">
-                <img 
-                  src="/demo-table.jpg" 
-                  alt="Tabela" 
-                  className="h-full w-full object-cover object-left-top transition-transform duration-700 group-hover:scale-105 opacity-60 group-hover:opacity-40"
-                  onError={(e) => e.currentTarget.style.display = 'none'} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/80 to-transparent" />
-              </div>
-              
-              <div className="absolute bottom-0 left-0 p-8 z-10">
-                <div className="w-12 h-12 bg-purple-600/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-purple-500/30">
-                  <Layout className="text-purple-400 w-6 h-6" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">3. Comparador de Ativos</h3>
-                <p className="text-gray-400 leading-relaxed">Compare empresas lado a lado. Ordene por Nota, Lucro ou Receita para encontrar as melhores oportunidades.</p>
-              </div>
-            </div>
-
-            {/* CARD 4: HISTÓRICO */}
-            <div className="group relative overflow-hidden rounded-[2rem] border border-gray-800 bg-[#161b22] h-[400px] transition-all hover:border-yellow-500/50 hover:shadow-2xl hover:shadow-yellow-900/10">
-              <div className="absolute inset-0">
-                <img 
-                  src="/demo-history.jpg" 
-                  alt="Histórico" 
-                  className="h-full w-full object-cover object-top transition-transform duration-700 group-hover:scale-105 opacity-60 group-hover:opacity-40"
-                  onError={(e) => e.currentTarget.style.display = 'none'} 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/80 to-transparent" />
-              </div>
-              
-              <div className="absolute bottom-0 left-0 p-8 z-10">
-                <div className="w-12 h-12 bg-yellow-600/20 backdrop-blur-md rounded-2xl flex items-center justify-center mb-4 border border-yellow-500/30">
-                  <Database className="text-yellow-400 w-6 h-6" />
-                </div>
-                <h3 className="text-2xl font-bold text-white mb-2">4. Histórico Completo</h3>
-                <p className="text-gray-400 leading-relaxed">Nunca mais perca uma análise. Seus dados ficam salvos na nuvem para você comparar a evolução trimestral.</p>
-              </div>
-            </div>
-
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* BLOCO 3: TABELA (Texto Esquerda, Imagem Direita) */}
+        <section className="relative">
+          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+            <div className="order-2 lg:order-1">
+              <div className="w-14 h-14 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30">
+                <Layout className="text-purple-400 w-7 h-7" />
+              </div>
+              <h2 className="text-4xl font-bold text-white mb-6">Comparador de Ativos (Screener)</h2>
+              <p className="text-xl text-gray-400 leading-relaxed mb-8">
+                Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro para encontrar as melhores oportunidades da sua carteira.
+              </p>
+              <ul className="space-y-3 mb-8">
+                <ListItem>Colunas customizáveis</ListItem>
+                <ListItem>Ordenação inteligente</ListItem>
+                <ListItem>Comparação lado a lado</ListItem>
+              </ul>
+            </div>
+            <div className="order-1 lg:order-2 relative group">
+              <div className="absolute inset-0 bg-purple-600/20 blur-[60px] rounded-full -z-10" />
+              <img 
+                src="/434shots_so.jpg" 
+                alt="Tabela Agregada" 
+                className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-purple-500/50"
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* BLOCO 4: HISTÓRICO (Imagem Esquerda, Texto Direita) */}
+        <section className="relative">
+          <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
+            <div className="order-1 relative group">
+              <div className="absolute inset-0 bg-yellow-600/20 blur-[60px] rounded-full -z-10" />
+              <img 
+                src="/76shots_so.jpg" 
+                alt="Histórico" 
+                className="rounded-3xl border border-gray-800 shadow-2xl transition-transform duration-700 hover:scale-[1.02] hover:border-yellow-500/50"
+              />
+            </div>
+            <div className="order-2">
+              <div className="w-14 h-14 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/30">
+                <Database className="text-yellow-400 w-7 h-7" />
+              </div>
+              <h2 className="text-4xl font-bold text-white mb-6">Histórico Completo na Nuvem</h2>
+              <p className="text-xl text-gray-400 leading-relaxed mb-8">
+                Nunca mais perca um PDF. Todas as suas análises ficam salvas para sempre. Compare a evolução da nota da empresa trimestre a trimestre e veja se os fundamentos estão melhorando.
+              </p>
+              <ul className="space-y-3 mb-8">
+                <ListItem>Backup automático na nuvem</ListItem>
+                <ListItem>Acesso rápido a relatórios antigos</ListItem>
+                <ListItem>Exclusão e gerenciamento fácil</ListItem>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+      </div>
 
       {/* --- SEÇÃO DE PLANOS --- */}
-      <section id="planos" className="py-24 relative bg-[#0E1117]">
+      <section id="planos" className="py-24 relative bg-[#0d1117] border-t border-gray-800">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
@@ -191,7 +206,6 @@ export default function LandingPage() {
               O site mais completo para o investidor.
             </h2>
             
-            {/* Toggle Switch */}
             <div className="flex items-center justify-center gap-4 mt-8">
               <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('monthly')}>Mensal</span>
               <button 
@@ -202,19 +216,16 @@ export default function LandingPage() {
               </button>
               <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('yearly')}>Anual</span>
             </div>
-            {/* Aviso de desconto */}
             <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-2`}>
                <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-3 py-1 rounded-full">2 MESES GRÁTIS</span>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-start max-w-4xl mx-auto">
-            
             {/* CARD GRATUITO */}
             <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 hover:border-gray-600 transition-all h-full flex flex-col">
               <h3 className="text-3xl font-bold text-white mb-2">Gratuito</h3>
               <p className="text-gray-400 text-base mb-8">Pra quem se vira com pouquíssimos dados...</p>
-              
               <ul className="space-y-4 mb-8 flex-1">
                 <Feature text="1 Análise de IA por dia" active />
                 <Feature text="Upload limitado (5MB)" active />
@@ -223,7 +234,6 @@ export default function LandingPage() {
                 <Feature text="Sem tabela comparativa" disabled />
                 <Feature text="Sem prioridade de fila" disabled />
               </ul>
-
               <Link href="/register" className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 hover:border-gray-500 transition-all mt-auto">
                 Criar conta grátis
               </Link>
@@ -236,14 +246,12 @@ export default function LandingPage() {
                   2 Meses Grátis no Anual
                 </div>
               )}
-
               <h3 className="text-2xl font-bold text-blue-400 mb-2">Premium</h3>
               <div className="flex items-end gap-1 mb-2">
                 <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 49' : 'R$ 490'}</span>
                 <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
               </div>
               <p className="text-gray-400 text-sm mb-8">Para quem quer realmente evoluir como investidor!</p>
-              
               <ul className="space-y-4 mb-8 flex-1">
                 <Feature text="Análises de IA Ilimitadas" active />
                 <Feature text="Upload de arquivos grandes (50MB+)" active />
@@ -252,13 +260,11 @@ export default function LandingPage() {
                 <Feature text="Prioridade no processamento" active />
                 <Feature text="Acesso antecipado a novas features" active />
               </ul>
-
               <Link href="/pricing" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto">
                 Assinar Agora
               </Link>
               <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
             </div>
-
           </div>
         </div>
       </section>
@@ -285,7 +291,7 @@ export default function LandingPage() {
   );
 }
 
-// Componente auxiliar para a lista de features
+// Subcomponentes
 function Feature({ text, active = false, disabled = false }: any) {
   return (
     <li className="flex items-center gap-3">
@@ -300,3 +306,15 @@ function Feature({ text, active = false, disabled = false }: any) {
     </li>
   );
 }
+
+function ListItem({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex items-center gap-3 text-gray-300">
+      <CheckCircle2 size={18} className="text-blue-500" />
+      <span>{children}</span>
+    </li>
+  );
+}
+
+// Icone extra para usar nos ListItems
+import { CheckCircle2 } from "lucide-react";
