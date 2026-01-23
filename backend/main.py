@@ -9,8 +9,11 @@ import json
 import re
 import io
 import asyncio
+import stripe
 from pypdf import PdfReader
 from dotenv import load_dotenv
+
+stripe.api_key = os.getenv("STRIPE_API_KEY")
 
 # Carrega variáveis de ambiente (para rodar localmente)
 load_dotenv()
@@ -29,6 +32,46 @@ app.add_middleware(
     allow_headers=["*"],  # Permite todos os cabeçalhos
 )
 # ---------------------------------------------------
+
+# --- ROTA: CRIAR LINK DE PAGAMENTO ---
+@app.post("/api/create-checkout")
+def create_checkout(dados: dict):
+    user_id = dados.get("user_id")
+    
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[
+                {
+                    'price': os.getenv("STRIPE_PRICE_ID"), # ID que você pegou no site do Stripe
+                    'quantity': 1,
+                },
+            ],
+            mode='subscription',
+            success_url='https://seu-site.vercel.app/dashboard?success=true',
+            cancel_url='https://seu-site.vercel.app/pricing?canceled=true',
+            client_reference_id=str(user_id), # Para sabermos quem pagou depois
+        )
+        return {"url": checkout_session.url}
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=500, detail="Erro ao criar pagamento")
+
+# --- ROTA TEMPORÁRIA: ATIVAR PLANO (SIMPLIFICADA) ---
+# O jeito certo é usar Webhooks, mas para começar rápido:
+@app.post("/api/activate-pro-temp")
+def activate_pro(dados: dict):
+    # ATENÇÃO: Em produção real, isso deve ser protegido ou feito via Webhook do Stripe
+    user_id = dados.get("user_id")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("UPDATE usuarios SET plano = 'pro' WHERE id = %s", (user_id,))
+        conn.commit()
+        return {"message": "Plano ativado!"}
+    finally:
+        cur.close()
+        conn.close()
 
 @app.get("/")
 def read_root():
@@ -464,3 +507,19 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     # '0.0.0.0' é essencial para funcionar no Docker e no Render
     uvicorn.run(app, host="0.0.0.0", port=port)
+@app.get("/api/fix-database-plans")
+def fix_database_plans():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # 'free' ou 'pro'
+        cur.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS plano TEXT DEFAULT 'free';")
+        # Data que o plano expira
+        cur.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS plano_expira TIMESTAMP;") 
+        conn.commit()
+        return {"message": "Tabela preparada para assinaturas!"}
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        cur.close()
+        conn.close()
