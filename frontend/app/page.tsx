@@ -1,333 +1,159 @@
 "use client";
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  BarChart3, UploadCloud, Zap, ArrowRight, 
-  FileText, Layout, Database, Check, X, CheckCircle2 
-} from "lucide-react";
+import { BarChart3, Loader2, AlertCircle } from "lucide-react";
 
-export default function LandingPage() {
-  const router = useRouter(); 
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+export default function RegisterPage() {
+  const router = useRouter();
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  useEffect(() => {
-    const user = localStorage.getItem('usuario');
-    if (user) {
-      router.push('/dashboard'); 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      // Tenta conectar na Nuvem. Se quiser local, troque por http://127.0.0.1:8000/api/register
+      const res = await fetch('https://api-finanalyzer.onrender.com/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, email, senha: password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Sucesso!
+        alert("Conta criada com sucesso! Faça login para continuar.");
+        router.push('/login');
+      } else {
+        setError(data.detail || "Erro ao criar conta. Este email já pode estar em uso.");
+      }
+    } catch (err) {
+      setError("Erro de conexão com o servidor. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
-  }, [router]);
+  };
 
   return (
-    <div className="min-h-screen bg-[#0E1117] text-gray-100 font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#0E1117] flex flex-col items-center justify-center p-4 font-sans">
       
-      {/* --- NAVBAR --- */}
-      <nav className="border-b border-gray-800 bg-[#0E1117]/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-              <BarChart3 className="text-white w-6 h-6" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight text-white">
-              FinAnalyzer <span className="text-blue-500">.AI</span>
-            </span>
+      {/* 1. LOGO (Fora do Card, centralizado) */}
+      <div className="mb-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <Link href="/" className="inline-flex items-center gap-2 mb-2 group">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20 group-hover:scale-110 transition-transform">
+            <BarChart3 className="text-white w-6 h-6" />
           </div>
-
-          <div className="flex items-center gap-4">
-            <Link href="#funcionalidades" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
-              Funcionalidades
-            </Link>
-            <Link href="#planos" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
-              Preços
-            </Link>
-            <Link href="/login" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
-              Entrar
-            </Link>
-            <Link href="/register" className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20 hover:scale-105">
-              Começar Grátis
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* --- HERO SECTION --- */}
-      <section className="relative pt-24 pb-32 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full -z-10" />
-
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-400 text-sm font-bold mb-8 animate-in fade-in slide-in-from-bottom-4">
-            <Zap size={16} /> Nova IA v2.0 disponível
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-8 leading-tight">
-            Analise Ações em <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Segundos, não Horas.</span>
-          </h1>
-          
-          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Abandone a leitura manual de PDFs. Nossa IA lê os balanços, interpreta os dados e entrega uma tese de investimento pronta.
-          </p>
-
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-            <Link href="/register" className="w-full md:w-auto bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2">
-              Criar Conta Grátis <ArrowRight size={20} />
-            </Link>
-            <Link href="#funcionalidades" className="w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg text-gray-300 border border-gray-700 hover:border-gray-500 hover:text-white transition-all">
-              Ver Funcionalidades
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* --- SEÇÃO: FUNCIONALIDADES (LAYOUT EXPANDIDO) --- */}
-      <div id="funcionalidades" className="flex flex-col gap-32 pb-32 overflow-hidden">
-        
-        {/* BLOCO 1: UPLOAD (Texto 40% | Imagem 60%) */}
-        <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[40%_60%] gap-12 items-center">
-            
-            {/* Texto */}
-            <div className="order-2 lg:order-1">
-              <div className="w-14 h-14 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30">
-                <UploadCloud className="text-blue-400 w-7 h-7" />
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Upload Inteligente</h2>
-              <p className="text-lg text-gray-400 leading-relaxed mb-6">
-                Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA identifica automaticamente a empresa, o trimestre e o ano.
-              </p>
-              <ul className="space-y-3">
-                <ListItem>Suporte a PDFs de até 50MB</ListItem>
-                <ListItem>Identificação automática de tickers</ListItem>
-                <ListItem>Processamento em nuvem ultra-rápido</ListItem>
-              </ul>
-            </div>
-            
-            {/* IMAGEM EXPANDIDA - Ocupa todo o espaço */}
-            <div className="order-1 lg:order-2 w-full">
-              {/* Glow de fundo */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-600/10 blur-[90px] rounded-full -z-10" />
-              <img 
-                src="/demo-upload.png" 
-                alt="Tela de Upload" 
-                className="w-full h-auto object-contain drop-shadow-2xl" 
-                // Removemos bordas e rounded excessivo para maximizar a visão
-              />
-            </div>
-
-          </div>
-        </section>
-
-        {/* BLOCO 2: RESULTADO (Imagem 60% | Texto 40%) */}
-        <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[60%_40%] gap-12 items-center">
-            
-            {/* IMAGEM EXPANDIDA */}
-            <div className="order-1 w-full">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-green-600/10 blur-[90px] rounded-full -z-10" />
-              <img 
-                src="/demo-result.png" 
-                alt="Tela de Resultado" 
-                className="w-full h-auto object-contain drop-shadow-2xl"
-              />
-            </div>
-            
-            {/* Texto */}
-            <div className="order-2">
-              <div className="w-14 h-14 bg-green-600/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/30">
-                <FileText className="text-green-400 w-7 h-7" />
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Análise Profunda e Score</h2>
-              <p className="text-lg text-gray-400 leading-relaxed mb-6">
-                Não receba apenas números soltos. O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos e escreve uma tese de investimento completa.
-              </p>
-              <ul className="space-y-3">
-                <ListItem>Score Fundamentalista (0 a 5)</ListItem>
-                <ListItem>Indicadores visuais coloridos</ListItem>
-                <ListItem>Tese descritiva gerada por IA</ListItem>
-              </ul>
-            </div>
-
-          </div>
-        </section>
-
-        {/* BLOCO 3: TABELA (Texto 40% | Imagem 60%) */}
-        <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[40%_60%] gap-12 items-center">
-            
-            <div className="order-2 lg:order-1">
-              <div className="w-14 h-14 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30">
-                <Layout className="text-purple-400 w-7 h-7" />
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Comparador de Ativos</h2>
-              <p className="text-lg text-gray-400 leading-relaxed mb-6">
-                Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro para encontrar as melhores oportunidades.
-              </p>
-              <ul className="space-y-3">
-                <ListItem>Colunas customizáveis</ListItem>
-                <ListItem>Ordenação inteligente</ListItem>
-                <ListItem>Comparação lado a lado</ListItem>
-              </ul>
-            </div>
-            
-            <div className="order-1 lg:order-2 w-full">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-purple-600/10 blur-[90px] rounded-full -z-10" />
-              <img 
-                src="/demo-table.png" 
-                alt="Tabela Agregada" 
-                className="w-full h-auto object-contain drop-shadow-2xl"
-              />
-            </div>
-
-          </div>
-        </section>
-
-        {/* BLOCO 4: HISTÓRICO (Imagem 60% | Texto 40%) */}
-        <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[60%_40%] gap-12 items-center">
-            
-            <div className="order-1 w-full">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-yellow-600/10 blur-[90px] rounded-full -z-10" />
-              <img 
-                src="/demo-history.png" 
-                alt="Histórico" 
-                className="w-full h-auto object-contain drop-shadow-2xl"
-              />
-            </div>
-            
-            <div className="order-2">
-              <div className="w-14 h-14 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/30">
-                <Database className="text-yellow-400 w-7 h-7" />
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Histórico Completo</h2>
-              <p className="text-lg text-gray-400 leading-relaxed mb-6">
-                Todas as suas análises ficam salvas para sempre. Compare a evolução da nota da empresa trimestre a trimestre.
-              </p>
-              <ul className="space-y-3">
-                <ListItem>Backup automático na nuvem</ListItem>
-                <ListItem>Acesso rápido a relatórios antigos</ListItem>
-                <ListItem>Exclusão e gerenciamento fácil</ListItem>
-              </ul>
-            </div>
-
-          </div>
-        </section>
-
+          <span className="text-2xl font-bold tracking-tight text-white">
+            FinAnalyzer <span className="text-blue-500">.AI</span>
+          </span>
+        </Link>
       </div>
 
-      {/* --- SEÇÃO DE PLANOS --- */}
-      <section id="planos" className="py-24 relative bg-[#0d1117] border-t border-gray-800">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-              Um único plano. <br />
-              O site mais completo para o investidor.
-            </h2>
-            
-            <div className="flex items-center justify-center gap-4 mt-8">
-              <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('monthly')}>Mensal</span>
-              <button 
-                onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-                className="w-16 h-8 bg-gray-800 rounded-full p-1 relative transition-colors hover:bg-gray-700"
-              >
-                <div className={`w-6 h-6 bg-blue-500 rounded-full transition-transform duration-300 shadow-md ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-0'}`} />
-              </button>
-              <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('yearly')}>Anual</span>
-            </div>
-            <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-2`}>
-               <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-3 py-1 rounded-full">2 MESES GRÁTIS</span>
-            </div>
+      {/* 2. CARD DE CADASTRO */}
+      <div className="w-full max-w-md bg-[#161b22] border border-gray-800 rounded-2xl shadow-2xl p-8 animate-in zoom-in-95 duration-500">
+        
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-white mb-2">Crie sua Conta</h1>
+          <p className="text-gray-400 text-sm">
+            Teste gratuitamente a IA que simplifica seus investimentos.
+          </p>
+        </div>
+
+        <form onSubmit={handleRegister} className="space-y-4">
+          
+          {/* Input Nome */}
+          <div>
+            <input 
+              type="text" 
+              placeholder="Seu Nome Completo" 
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              className="w-full bg-[#0d1117] border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-600"
+              required
+            />
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 items-start max-w-4xl mx-auto">
-            {/* CARD GRATUITO */}
-            <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 hover:border-gray-600 transition-all h-full flex flex-col">
-              <h3 className="text-3xl font-bold text-white mb-2">Gratuito</h3>
-              <p className="text-gray-400 text-base mb-8">Pra quem se vira com pouquíssimos dados...</p>
-              <ul className="space-y-4 mb-8 flex-1">
-                <Feature text="1 Análise de IA por dia" active />
-                <Feature text="Upload limitado (5MB)" active />
-                <Feature text="Acesso ao histórico simples" active />
-                <Feature text="Suporte por email" active />
-                <Feature text="Sem tabela comparativa" disabled />
-                <Feature text="Sem prioridade de fila" disabled />
-              </ul>
-              <Link href="/register" className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 hover:border-gray-500 transition-all mt-auto">
-                Criar conta grátis
-              </Link>
-            </div>
+          {/* Input Email */}
+          <div>
+            <input 
+              type="email" 
+              placeholder="Seu Melhor Email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-[#0d1117] border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-600"
+              required
+            />
+          </div>
 
-            {/* CARD PREMIUM */}
-            <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-              {billingCycle === 'yearly' && (
-                <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
-                  2 Meses Grátis no Anual
-                </div>
-              )}
-              <h3 className="text-2xl font-bold text-blue-400 mb-2">Premium</h3>
-              <div className="flex items-end gap-1 mb-2">
-                <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 49' : 'R$ 490'}</span>
-                <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
-              </div>
-              <p className="text-gray-400 text-sm mb-8">Para quem quer realmente evoluir como investidor!</p>
-              <ul className="space-y-4 mb-8 flex-1">
-                <Feature text="Análises de IA Ilimitadas" active />
-                <Feature text="Upload de arquivos grandes (50MB+)" active />
-                <Feature text="Histórico de dados ilimitado" active />
-                <Feature text="Tabela Comparativa Customizável" active />
-                <Feature text="Prioridade no processamento" active />
-                <Feature text="Acesso antecipado a novas features" active />
-              </ul>
-              <Link href="/pricing" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto">
-                Assinar Agora
-              </Link>
-              <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
-            </div>
+          {/* Input Senha */}
+          <div>
+            <input 
+              type="password" 
+              placeholder="Crie uma Senha Forte" 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-[#0d1117] border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all placeholder:text-gray-600"
+              required
+            />
+          </div>
+
+          {/* Área de Erro */}
+          <div className="text-red-400 text-xs font-medium min-h-[20px] flex items-center gap-1 justify-center">
+             {error && <><AlertCircle size={12} /> {error}</>}
+          </div>
+
+          {/* Botão Criar Conta */}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            {loading ? <Loader2 className="animate-spin" size={20} /> : "Criar Conta Grátis"}
+          </button>
+        </form>
+
+        {/* Divisor 'OU' */}
+        <div className="relative my-8">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-gray-700"></span>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-[#161b22] px-2 text-gray-500 font-medium">OU</span>
           </div>
         </div>
-      </section>
 
-      {/* --- FOOTER --- */}
-      <footer className="border-t border-gray-800 py-12 bg-[#0E1117]">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
-              <BarChart3 className="text-gray-400 w-5 h-5" />
-            </div>
-            <span className="text-lg font-bold text-gray-300">FinAnalyzer.AI</span>
-          </div>
-          <div className="text-gray-500 text-sm">
-            © 2026 FinAnalyzer Inc. Todos os direitos reservados.
-          </div>
-          <div className="flex gap-6">
-            <a href="#" className="text-gray-500 hover:text-white transition-colors">Termos</a>
-            <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacidade</a>
-          </div>
+        {/* Botão Google */}
+        <button 
+          type="button"
+          className="w-full bg-white hover:bg-gray-100 text-gray-900 font-bold py-3 rounded-lg border border-gray-200 transition-all flex items-center justify-center gap-3"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26z" fill="#FBBC05" />
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+          </svg>
+          Cadastrar com Google
+        </button>
+
+        {/* Footer */}
+        <div className="mt-8 text-center border-t border-gray-800 pt-6">
+          <p className="text-gray-500 text-sm">
+            Já tem uma conta?{' '}
+            <Link href="/login" className="text-blue-400 font-bold hover:text-blue-300 transition-colors">
+              Fazer Login
+            </Link>
+          </p>
         </div>
-      </footer>
+
+      </div>
     </div>
-  );
-}
-
-function Feature({ text, active = false, disabled = false }: any) {
-  return (
-    <li className="flex items-center gap-3">
-      {disabled ? (
-        <div className="p-0.5 rounded-full border border-gray-600 text-gray-500"><X size={12} /></div>
-      ) : (
-        <div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30">
-          <Check size={12} />
-        </div>
-      )}
-      <span className={`text-base ${disabled ? 'text-gray-600 line-through' : 'text-gray-300'}`}>{text}</span>
-    </li>
-  );
-}
-
-function ListItem({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex items-center gap-3 text-gray-300">
-      <CheckCircle2 size={18} className="text-blue-500" />
-      <span>{children}</span>
-    </li>
   );
 }
