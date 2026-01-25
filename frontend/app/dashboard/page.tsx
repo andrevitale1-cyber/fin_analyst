@@ -5,7 +5,7 @@ import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Activity, LogOut, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
-  GripVertical, Eye, EyeOff, Settings2, X, Zap
+  GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
@@ -22,11 +22,46 @@ const COLUMN_DEFINITIONS = [
   { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-bold' },
 ];
 
-// --- COMPONENTES AUXILIARES ---
-function NavItem({ icon, label, active = false, onClick }: any) {
+// --- COMPONENTE MODAL DE UPGRADE (NOVO) ---
+function UpgradeModal({ onClose, router }: { onClose: () => void, router: any }) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-      {React.cloneElement(icon, { size: 20 })}<span className="font-medium text-sm">{label}</span>{active && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-[#161b22] border border-blue-500/30 rounded-2xl p-8 max-w-md w-full text-center relative shadow-2xl shadow-blue-900/20 scale-100 animate-in zoom-in-95 duration-200">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
+          <X size={20} />
+        </button>
+        
+        <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Lock className="text-blue-400 w-8 h-8" />
+        </div>
+        
+        <h2 className="text-2xl font-bold text-white mb-2">Funcionalidade Premium</h2>
+        <p className="text-gray-400 mb-8 leading-relaxed">
+          Esta funcionalidade é exclusiva para assinantes. Faça o upgrade para desbloquear Tabelas, Downloads e Análises Ilimitadas.
+        </p>
+        
+        <button 
+          onClick={() => router.push('/pricing')}
+          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20 mb-3"
+        >
+          Quero ser Premium
+        </button>
+        <button onClick={onClose} className="text-sm text-gray-500 hover:text-white transition-colors">
+          Talvez depois
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// --- COMPONENTES AUXILIARES ---
+function NavItem({ icon, label, active = false, onClick, isLocked = false }: any) {
+  return (
+    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+      {React.cloneElement(icon, { size: 20 })}
+      <span className="font-medium text-sm">{label}</span>
+      {isLocked && <Lock size={14} className="ml-auto text-gray-600 group-hover:text-blue-400" />}
+      {active && !isLocked && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
     </button>
   );
 }
@@ -34,21 +69,22 @@ function NavItem({ icon, label, active = false, onClick }: any) {
 // --- COMPONENTE PRINCIPAL ---
 export default function FinancialDashboard() {
   const router = useRouter();
-
-  // --- CONFIGURAÇÃO DA API ---
   const API_BASE = "https://api-finanalyzer.onrender.com"; 
 
-  // ESTADOS GERAIS
+  // ESTADOS
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
+  
+  // ESTADO DO MODAL DE UPGRADE
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  // DADOS DA API
+  // DADOS
   const [result, setResult] = useState<any>(null);
   const [historyList, setHistoryList] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
 
-  // ESTADOS DE TABELA
+  // TABELA
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [showColumnMenu, setShowColumnMenu] = useState(false);
   const columnMenuRef = useRef<HTMLDivElement>(null);
@@ -66,7 +102,6 @@ export default function FinancialDashboard() {
   const [trimestre, setTrimestre] = useState("1T");
   const [file, setFile] = useState<File | null>(null);
 
-  // --- EFEITO 1: RECUPERAR USUÁRIO NO LOAD ---
   useEffect(() => {
     const storedUser = localStorage.getItem('usuario');
     if (storedUser) {
@@ -76,21 +111,19 @@ export default function FinancialDashboard() {
     }
   }, [router]);
 
-  // --- FUNÇÃO: FORMATAR DATA ---
+  // --- VERIFICAÇÃO DE PLANO ---
+  // Se o backend não retornar 'plano', assumimos que é 'gratuito' (segurança no front)
+  const isPremium = useMemo(() => user?.plano === 'premium', [user]);
+
   const formatarData = (dataString: string) => {
     if (!dataString) return "-";
     try {
       const data = new Date(dataString);
       return new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
       }).format(data);
-    } catch (e) {
-      return dataString;
-    }
+    } catch (e) { return dataString; }
   };
 
   const columnDefsMap = useMemo(() => {
@@ -107,16 +140,13 @@ export default function FinancialDashboard() {
     router.push('/login');
   };
 
-  // --- CHAMADAS DE API ---
   const fetchHistory = async () => {
     if (!user) return;
     try {
       const res = await fetch(`${API_BASE}/api/history?user_id=${user.id}`);
       const data = await res.json();
       setHistoryList(data);
-    } catch (error) {
-      console.error("Erro ao buscar histórico", error);
-    }
+    } catch (error) { console.error("Erro histórico", error); }
   };
 
   const fetchTableData = async () => {
@@ -125,39 +155,37 @@ export default function FinancialDashboard() {
       const res = await fetch(`${API_BASE}/api/table-data?user_id=${user.id}`);
       const data = await res.json();
       setTableData(data);
-    } catch (error) {
-      console.error("Erro ao buscar dados da tabela", error);
-    }
+    } catch (error) { console.error("Erro tabela", error); }
   };
 
   const handleDelete = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
-    if (!confirm("Tem certeza que deseja excluir esta análise?")) return;
+    if (!confirm("Tem certeza?")) return;
     try {
       const res = await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error("Erro ao deletar");
+      if (!res.ok) throw new Error("Erro delete");
       fetchHistory();
       fetchTableData();
-    } catch (error) {
-      alert("Erro ao excluir item.");
+    } catch (error) { alert("Erro ao excluir."); }
+  };
+
+  // --- LÓGICA DE NAVEGAÇÃO COM RESTRIÇÃO ---
+  const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
+    if (view === 'table' && !isPremium) {
+      setShowUpgradeModal(true); // Bloqueia Tabela se não for Premium
+    } else {
+      setCurrentView(view);
     }
   };
 
   const handleAnalyze = async () => {
-    if (!file || !empresa || !ano) {
-      alert("Preencha todos os campos!");
-      return;
-    }
-    if (!user) {
-        alert("Erro de autenticação. Faça login novamente.");
-        return;
-    }
+    if (!file || !empresa || !ano) { alert("Preencha tudo!"); return; }
+    if (!user) { alert("Logue novamente."); return; }
 
     setLoading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-      // Força salvar em maiúsculo também na hora do envio, por garantia
       formData.append("empresa", empresa.toUpperCase());
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
@@ -168,7 +196,14 @@ export default function FinancialDashboard() {
         body: formData
       });
 
-      if (!response.ok) throw new Error("Erro na requisição");
+      if (response.status === 403) {
+        // Se o backend retornar 403 (Forbidden), é porque estourou o limite
+        setLoading(false);
+        setShowUpgradeModal(true);
+        return;
+      }
+
+      if (!response.ok) throw new Error("Erro API");
       const data = await response.json();
       setResult(data);
       setCurrentView('result');
@@ -182,21 +217,17 @@ export default function FinancialDashboard() {
     }
   };
 
-  // --- EFEITO 2: CARREGAR DADOS ---
   useEffect(() => {
     if (user) { 
         if (currentView === 'history') fetchHistory();
-        if (currentView === 'table') fetchTableData();
+        if (currentView === 'table' && isPremium) fetchTableData();
     }
-    
-    const handleClickOutside = (event: MouseEvent) => {
-      if (columnMenuRef.current && !columnMenuRef.current.contains(event.target as Node)) {
-        setShowColumnMenu(false);
-      }
+    const handleClickOutside = (e: MouseEvent) => {
+      if (columnMenuRef.current && !columnMenuRef.current.contains(e.target as Node)) setShowColumnMenu(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [currentView, user]); 
+  }, [currentView, user, isPremium]); 
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
@@ -204,11 +235,8 @@ export default function FinancialDashboard() {
 
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
-    if (sortConfig && sortConfig.key === key) {
-      direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
-    } else if (['media', 'soma_total', 'qtde_tri', 'nota_final', 'ano'].includes(key)) {
-      direction = 'desc';
-    }
+    if (sortConfig && sortConfig.key === key) direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
+    else if (['media', 'soma_total', 'qtde_tri', 'nota_final', 'ano'].includes(key)) direction = 'desc';
     setSortConfig({ key, direction });
   };
 
@@ -217,9 +245,9 @@ export default function FinancialDashboard() {
   const onDragEnter = (index: number) => {
     if (draggedItemIndex === null || draggedItemIndex === index) return;
     const newOrder = [...columnOrder];
-    const draggedItem = newOrder[draggedItemIndex];
+    const item = newOrder[draggedItemIndex];
     newOrder.splice(draggedItemIndex, 1);
-    newOrder.splice(index, 0, draggedItem);
+    newOrder.splice(index, 0, item);
     setColumnOrder(newOrder);
     setDraggedItemIndex(index);
   };
@@ -234,14 +262,18 @@ export default function FinancialDashboard() {
     });
   }, [tableData, sortConfig]);
 
+  // --- BLOQUEIO DE DOWNLOAD ---
   const handleDownload = () => {
+    if (!isPremium) {
+      setShowUpgradeModal(true);
+      return;
+    }
     if (!result) return;
     const r = result;
-    const data = r.data || {};
     const meta = r.metadata || {};
-    const conteudoPrincipal = r.analise_completa ? r.analise_completa : `RESUMO DA TESE:\n${data.tese_investimento || 'Sem dados.'}`;
-    const relatorioTexto = `RELATÓRIO DE ANÁLISE FINANCEIRA - IA\nEmpresa: ${meta.empresa}\nPeríodo: ${meta.periodo}\n\n${conteudoPrincipal}`;
-    const blob = new Blob([relatorioTexto], { type: "text/plain;charset=utf-8" });
+    const conteudoPrincipal = r.analise_completa ? r.analise_completa : `RESUMO DA TESE:\n${r.data?.tese_investimento || 'Sem dados.'}`;
+    const text = `RELATÓRIO DE ANÁLISE FINANCEIRA - IA\nEmpresa: ${meta.empresa}\nPeríodo: ${meta.periodo}\n\n${conteudoPrincipal}`;
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = `Relatorio_${meta.empresa}.txt`;
@@ -249,9 +281,7 @@ export default function FinancialDashboard() {
   };
 
   const renderCellContent = (item: any, key: string, colDef: any) => {
-    // --- CORREÇÃO: EMPRESA SEMPRE EM MAIÚSCULO NA TABELA ---
     if (key === 'empresa') return <span className={`${colDef.color || 'text-white'} font-bold`}>{item[key]?.toString().toUpperCase()}</span>;
-
     if (key === 'trimestre') return <span className="bg-blue-900/30 text-blue-300 py-1 px-2 rounded text-xs font-bold border border-blue-500/20">{item[key]}</span>;
     if (key === 'media') return <span className={`px-2 py-1 rounded font-bold ${item.media >= 4 ? 'text-green-400' : 'text-yellow-400'}`}>{item[key]}</span>;
     if (key.includes('nota') || key === 'nota_final') {
@@ -263,9 +293,11 @@ export default function FinancialDashboard() {
 
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
+      
+      {/* --- MODAL DE UPGRADE --- */}
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} router={router} />}
+
       <aside className="w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 z-20">
-        
-        {/* --- MENU SUPERIOR --- */}
         <div>
           <div className="flex items-center gap-3 mb-10 px-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
@@ -274,29 +306,30 @@ export default function FinancialDashboard() {
             <span className="text-xl font-bold tracking-tight text-white">FinAnalyzer <span className="text-blue-500">.AI</span></span>
           </div>
           <nav className="space-y-2">
-            <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => setCurrentView('dashboard')} />
-            <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => setCurrentView('table')} />
-            <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => setCurrentView('history')} />
+            <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} />
+            {/* Ícone de Cadeado na Tabela se não for Premium */}
+            <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} />
+            <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} />
           </nav>
         </div>
 
-        {/* --- BLOCO: CTA PARA PREMIUM --- */}
-        <div className="mt-auto mb-6 px-2">
-          <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/10 border border-blue-500/30 p-4 rounded-xl">
-            <div className="flex items-center gap-2 mb-2 text-blue-200 font-bold text-sm">
-              <Zap size={16} className="text-yellow-400 fill-yellow-400" /> Premium
+        {/* Banner Premium (Só aparece se for Free) */}
+        {!isPremium && (
+          <div className="mt-auto mb-6 px-2">
+            <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/10 border border-blue-500/30 p-4 rounded-xl">
+              <div className="flex items-center gap-2 mb-2 text-blue-200 font-bold text-sm">
+                <Zap size={16} className="text-yellow-400 fill-yellow-400" /> Premium
+              </div>
+              <p className="text-xs text-gray-400 mb-3">Desbloqueie tabelas e downloads.</p>
+              <button onClick={() => router.push('/pricing')} className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors shadow-lg">Fazer Upgrade</button>
             </div>
-            <p className="text-xs text-gray-400 mb-3">Desbloqueie análises ilimitadas e tabelas.</p>
-            <button 
-              onClick={() => router.push('/pricing')}
-              className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors shadow-lg"
-            >
-              Fazer Upgrade
-            </button>
           </div>
-        </div>
+        )}
+        
+        {/* Espaçador se for Premium para empurrar o Sair para baixo */}
+        {isPremium && <div className="mt-auto" />}
 
-        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer">
+        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer mt-4">
           <LogOut size={20} className="group-hover:text-red-400 transition-colors" />
           <span className="font-medium">Sair</span>
         </button>
@@ -413,14 +446,18 @@ export default function FinancialDashboard() {
           <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
             <div className="flex justify-between items-center mb-10">
               <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
-              <button onClick={handleDownload} className="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all"><Download size={18} /> Baixar Relatório</button>
+              
+              {/* Botão de Download com Cadeado se for Free */}
+              <button onClick={handleDownload} className={`px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${isPremium ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}>
+                {isPremium ? <Download size={18} /> : <Lock size={18} />} Baixar Relatório
+              </button>
             </div>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
               <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
               <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800"><div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : 'text-amber-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span></div></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-              {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "Rentabilidade", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
+              {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "ROE", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
                 <div key={idx} className="bg-[#161b22] border border-gray-800 p-6 rounded-2xl hover:border-gray-700 transition-all duration-300">
                   <div className="flex items-center justify-between mb-4"><span className="text-gray-400 text-sm font-medium">{item.label}</span><div className="bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
                   <div className="flex items-end gap-2"><span className="text-3xl font-bold text-white">{item.val}</span><span className="text-gray-600 text-sm mb-1">/5</span></div>
