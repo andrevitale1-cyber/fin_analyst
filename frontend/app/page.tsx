@@ -56,7 +56,6 @@ export default function LandingPage() {
 
         <div className="max-w-5xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-400 text-sm font-bold mb-8 animate-in fade-in slide-in-from-bottom-4">
-            <Zap size={16} /> Nova IA v2.0 disponível
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-8 leading-tight">
