@@ -214,7 +214,7 @@ def parse_results(text):
 
 # --- ROTAS DE AUTENTICAÇÃO (CORRIGIDAS PARA /auth) ---
 
-@app.post("/api/register")
+@app.post("/auth/register")
 def registrar_usuario(usuario: UsuarioRegister):
     conn = get_db_connection()
     cur = conn.cursor()
