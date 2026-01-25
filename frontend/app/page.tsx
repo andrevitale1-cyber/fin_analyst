@@ -56,8 +56,6 @@ export default function LandingPage() {
 
         <div className="max-w-5xl mx-auto px-6 text-center">
           
-          {/* (REMOVIDO: O badge 'Nova IA v2.0 disponível' foi retirado daqui) */}
-          
           <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-8 leading-tight">
             Analise Ações em <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Segundos, não Horas.</span>
@@ -213,7 +211,6 @@ export default function LandingPage() {
                 <Feature text="Upload de arquivos ilimitado" active />
                 <Feature text="Acesso ao histórico simples" active />
                 <Feature text="Suporte por email" active />
-                {/* Bloqueios */}
                 <Feature text="Download do Relatório PDF" disabled />
                 <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
@@ -255,22 +252,41 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- FOOTER --- */}
-      <footer className="border-t border-gray-800 py-12 bg-[#0E1117]">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
-              <BarChart3 className="text-gray-400 w-5 h-5" />
+      {/* --- FOOTER & DISCLAIMERS --- */}
+      <footer className="border-t border-gray-800 bg-[#0E1117] pt-16 pb-8">
+        <div className="max-w-7xl mx-auto px-6">
+          
+          {/* Logo e Links Principais */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
+                <BarChart3 className="text-gray-400 w-5 h-5" />
+              </div>
+              <span className="text-lg font-bold text-gray-300">FinAnalyzer.AI</span>
             </div>
-            <span className="text-lg font-bold text-gray-300">FinAnalyzer.AI</span>
+            
+            <div className="flex gap-6">
+              <a href="#" className="text-gray-500 hover:text-white transition-colors">Termos</a>
+              <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacidade</a>
+              <a href="#" className="text-gray-500 hover:text-white transition-colors">Contato</a>
+            </div>
           </div>
-          <div className="text-gray-500 text-sm">
-            © 2026 FinAnalyzer Inc. Todos os direitos reservados.
+
+          {/* ÁREA DE DISCLAIMER */}
+          <div className="border-t border-gray-800 pt-8 text-xs text-gray-600 space-y-4 text-justify leading-relaxed">
+             <p>
+               <strong className="text-gray-500">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-500">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-500">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
+             </p>
+
+             <p className="opacity-70">
+               Disclaimers de Dados: © 2026 Os dados fundamentalistas de empresas Americanas ("Stocks / REITs") são fornecidos pela Fiscal.ai, atualizados diariamente. Cotações de ativos Brasileiros ("Ações / FIIs") são fornecidos pela © 2026 Enfoque Informações Financeiras LTDA, cotações de ativos Americanos ("Stocks / REITs") são fornecidos pela © 2026 Intrinio Inc. e atualizados diariamente. Dados de moedas (Forex) são fornecidos pela © 2026 apilayer Data Products GmbH ("Currencylayer"), atualizados diariamente. Outros dados embutidos nas páginas das empresas tem origem direta dos sistemas dos órgãos regulatórios como CVM / SEC, como também podem ser obtidos de comunicados oficiais das empresas em questão. O FinAnalyzer não se responsabiliza pela precisão/completude ou integridade das informações apresentadas.
+             </p>
+
+             <p className="text-center pt-4 opacity-50">
+               © 2026 FinAnalyzer Inc. Todos os direitos reservados.
+             </p>
           </div>
-          <div className="flex gap-6">
-            <a href="#" className="text-gray-500 hover:text-white transition-colors">Termos</a>
-            <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacidade</a>
-          </div>
+
         </div>
       </footer>
     </div>
