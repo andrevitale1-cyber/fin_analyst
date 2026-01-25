@@ -1,7 +1,11 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Check, X, Zap, ArrowRight, Loader2 } from 'lucide-react';
+import { Check, X, Zap, ArrowRight, Loader2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+
+// 🔴 1. COLE SEU LINK DO STRIPE AQUI 🔴
+// Vá no Stripe > Catálogo > Links de Pagamento > Criar > Copie a URL (começa com https://buy.stripe.com/...)
+const STRIPE_MONTHLY_URL = "https://buy.stripe.com/test_28E28s5vV5J43eX0H78ww00"; 
 
 export default function PricingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
@@ -14,34 +18,33 @@ export default function PricingPage() {
     if (stored) setUser(JSON.parse(stored));
   }, []);
 
-  const handleSubscribe = async () => {
-    if (!user) {
-      router.push('/login');
+  const handleSubscribe = () => {
+    setLoading(true);
+    
+    // Verifica se o link foi configurado
+    if (STRIPE_MONTHLY_URL.includes("https://buy.stripe.com/test_28E28s5vV5J43eX0H78ww00")) {
+      alert("Você precisa configurar o Link do Stripe no código (app/pricing/page.tsx)!");
+      setLoading(false);
       return;
     }
-    
-    setLoading(true);
-    try {
-      const res = await fetch('https://api-finanalyzer.onrender.com/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: user.id })
-      });
-      
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url; // Redireciona para o Stripe
-      }
-    } catch (error) {
-      alert("Erro ao conectar com pagamento.");
-    } finally {
-      setLoading(false);
-    }
+
+    // Abre o checkout do Stripe em outra aba
+    window.open(STRIPE_MONTHLY_URL, '_blank');
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-[#0E1117] text-white font-sans py-20 px-4">
-      <div className="max-w-7xl mx-auto text-center mb-16">
+    <div className="min-h-screen bg-[#0E1117] text-white font-sans py-10 px-4 relative">
+      
+      {/* Botão de Voltar */}
+      <button 
+        onClick={() => router.push('/')} 
+        className="absolute top-6 left-6 flex items-center gap-2 text-gray-500 hover:text-white transition-colors"
+      >
+        <ArrowLeft size={20} /> Voltar
+      </button>
+
+      <div className="max-w-7xl mx-auto text-center mb-16 mt-10">
         <h1 className="text-4xl md:text-5xl font-bold mb-6">
           Um único plano. <br />
           <span className="text-blue-500">Tudo o que você precisa.</span>
@@ -50,7 +53,7 @@ export default function PricingPage() {
           Sem pegadinhas. Escolha evoluir como investidor com a ajuda da IA.
         </p>
 
-        {/* Toggle Mensal/Anual */}
+        {/* Toggle Mensal/Anual (Visual apenas, pois o link é fixo por enquanto) */}
         <div className="flex items-center justify-center gap-4 mt-8">
           <span className={`text-sm font-bold ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`}>Mensal</span>
           <button 
@@ -66,7 +69,7 @@ export default function PricingPage() {
       <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
         
         {/* CARD GRATUITO */}
-        <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 flex flex-col">
+        <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 flex flex-col hover:border-gray-700 transition-colors">
           <div className="mb-8">
             <h3 className="text-xl font-bold text-white mb-2">Gratuito</h3>
             <p className="text-gray-400 text-sm">Para testar e conhecer a ferramenta.</p>
@@ -74,20 +77,25 @@ export default function PricingPage() {
           <div className="text-3xl font-bold mb-8">R$ 0<span className="text-sm text-gray-500 font-normal">/mês</span></div>
           
           <ul className="space-y-4 mb-8 flex-1">
-            <FeatureItem text="1 Análise de IA por dia" />
-            <FeatureItem text="Acesso ao Histórico Básico" />
-            <FeatureItem text="Upload de PDFs até 5MB" />
-            <FeatureItem text="Suporte via Email" />
-            <FeatureItem text="Sem acesso a Tabela Comparativa" no />
+            {/* Informações Atualizadas */}
+            <FeatureItem text="5 Análises de IA por semana" active />
+            <FeatureItem text="Upload de Arquivos Ilimitado" active />
+            <FeatureItem text="Acesso ao Histórico Simples" active />
+            <FeatureItem text="Suporte via Email" active />
+            <FeatureItem text="Sem Download de PDF" no />
+            <FeatureItem text="Sem Tabela Comparativa" no />
           </ul>
 
-          <button className="w-full py-4 rounded-xl border border-gray-700 text-white font-bold hover:bg-gray-800 transition-all">
-            Já estou usando
+          <button 
+            onClick={() => router.push('/dashboard')}
+            className="w-full py-4 rounded-xl border border-gray-700 text-white font-bold hover:bg-gray-800 transition-all"
+          >
+            Continuar no Grátis
           </button>
         </div>
 
         {/* CARD PREMIUM */}
-        <div className="bg-gradient-to-b from-blue-900/20 to-[#161b22] border border-blue-500/50 rounded-3xl p-8 flex flex-col relative overflow-hidden">
+        <div className="bg-gradient-to-b from-blue-900/20 to-[#161b22] border border-blue-500/50 rounded-3xl p-8 flex flex-col relative overflow-hidden transform hover:-translate-y-1 transition-all duration-300 shadow-2xl shadow-blue-900/10">
           <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">MAIS POPULAR</div>
           
           <div className="mb-8">
@@ -98,7 +106,7 @@ export default function PricingPage() {
           </div>
 
           <div className="text-4xl font-bold mb-8 text-white">
-            {billingCycle === 'monthly' ? 'R$ 49' : 'R$ 490'}
+            {billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}
             <span className="text-sm text-gray-400 font-normal">
               {billingCycle === 'monthly' ? '/mês' : '/ano'}
             </span>
@@ -106,10 +114,11 @@ export default function PricingPage() {
           
           <ul className="space-y-4 mb-8 flex-1">
             <FeatureItem text="Análises de IA Ilimitadas" active />
-            <FeatureItem text="Upload de PDFs grandes (50MB+)" active />
-            <FeatureItem text="Acesso à Tabela Comparativa" active />
+            <FeatureItem text="Upload Ilimitado" active />
+            <FeatureItem text="Download do Relatório em PDF" active />
+            <FeatureItem text="Tabela Comparativa Completa" active />
             <FeatureItem text="Prioridade no processamento" active />
-            <FeatureItem text="Novas features em primeira mão" active />
+            <FeatureItem text="Histórico Vitalício" active />
           </ul>
 
           <button 

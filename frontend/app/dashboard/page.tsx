@@ -8,6 +8,10 @@ import {
   GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check
 } from "lucide-react";
 
+// --- CONFIGURAÇÃO: LINK DO STRIPE ---
+// 🔴 COLOQUE SEU LINK DE PAGAMENTO DO STRIPE AQUI 🔴
+const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/test_28E28s5vV5J43eX0H78ww00"; 
+
 // --- CONFIGURAÇÃO DAS COLUNAS ---
 const COLUMN_DEFINITIONS = [
   { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-white font-bold' },
@@ -22,13 +26,22 @@ const COLUMN_DEFINITIONS = [
   { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-bold' },
 ];
 
-// --- COMPONENTE MODAL DE UPGRADE (PREÇO ATUALIZADO) ---
-function UpgradeModal({ onClose, router }: { onClose: () => void, router: any }) {
+// --- COMPONENTE MODAL DE UPGRADE ---
+function UpgradeModal({ onClose }: { onClose: () => void }) {
+  
+  const handleCheckout = () => {
+    // Redireciona para o Stripe em uma nova aba
+    if (STRIPE_CHECKOUT_URL.includes("https://buy.stripe.com/test_28E28s5vV5J43eX0H78ww00")) {
+      alert("Configure o link do Stripe no código (app/dashboard/page.tsx)!");
+    } else {
+      window.open(STRIPE_CHECKOUT_URL, '_blank');
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-[#161b22] border border-blue-500/30 rounded-2xl p-0 max-w-4xl w-full flex flex-col md:flex-row overflow-hidden shadow-2xl shadow-blue-900/20 scale-100 animate-in zoom-in-95 duration-200 relative">
         
-        {/* Botão Fechar no Canto */}
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50">
           <X size={24} />
         </button>
@@ -50,7 +63,6 @@ function UpgradeModal({ onClose, router }: { onClose: () => void, router: any })
             <li className="flex items-center gap-3 text-gray-500 line-through"><X size={16} /> Sem Tabela Comparativa</li>
           </ul>
           
-          {/* BOTÃO VOLTAR AO DASHBOARD */}
           <button 
             onClick={onClose} 
             className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all"
@@ -59,7 +71,7 @@ function UpgradeModal({ onClose, router }: { onClose: () => void, router: any })
           </button>
         </div>
 
-        {/* LADO DIREITO: PREMIUM (R$ 29) */}
+        {/* LADO DIREITO: PREMIUM */}
         <div className="md:w-1/2 p-8 bg-blue-900/10 relative flex flex-col justify-center">
           <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">MAIS POPULAR</div>
           <div className="mb-6">
@@ -77,7 +89,7 @@ function UpgradeModal({ onClose, router }: { onClose: () => void, router: any })
             <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Prioridade na Fila</li>
           </ul>
           <button 
-            onClick={() => router.push('/pricing')}
+            onClick={handleCheckout}
             className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20"
           >
             Assinar Agora
@@ -110,8 +122,6 @@ export default function FinancialDashboard() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
-  
-  // ESTADO DO MODAL DE UPGRADE
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // DADOS
@@ -146,7 +156,6 @@ export default function FinancialDashboard() {
     }
   }, [router]);
 
-  // --- VERIFICAÇÃO DE PLANO ---
   const isPremium = useMemo(() => user?.plano === 'premium', [user]);
 
   const formatarData = (dataString: string) => {
@@ -215,22 +224,16 @@ export default function FinancialDashboard() {
     if (!file || !empresa || !ano) { alert("Preencha tudo!"); return; }
     if (!user) { alert("Logue novamente."); return; }
 
-    // --- CONTADOR FRONTEND (SIMULAÇÃO DE BLOQUEIO) ---
-    // Isso garante o bloqueio visual mesmo sem o backend estar 100% pronto.
+    // BLOQUEIO FRONTEND (SIMULAÇÃO)
     if (!isPremium) {
-        // Pega contagem do LocalStorage (ou inicia em 0)
         const countKey = `analise_count_${user.id}`;
         const currentCount = parseInt(localStorage.getItem(countKey) || '0');
-
         if (currentCount >= 5) {
-            setShowUpgradeModal(true); // Bloqueia e mostra o modal
+            setShowUpgradeModal(true);
             return;
         }
-        
-        // Se passar, incrementa o contador (simulando uso)
         localStorage.setItem(countKey, (currentCount + 1).toString());
     }
-    // --------------------------------------------------
 
     setLoading(true);
     try {
@@ -246,7 +249,6 @@ export default function FinancialDashboard() {
         body: formData
       });
 
-      // Se o backend retornar 403 (Limite Atingido), bloqueamos também
       if (response.status === 403) {
         setLoading(false);
         setShowUpgradeModal(true);
@@ -312,7 +314,6 @@ export default function FinancialDashboard() {
     });
   }, [tableData, sortConfig]);
 
-  // --- BLOQUEIO DE DOWNLOAD ---
   const handleDownload = () => {
     if (!isPremium) {
       setShowUpgradeModal(true);
@@ -344,8 +345,7 @@ export default function FinancialDashboard() {
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
       
-      {/* --- MODAL DE UPGRADE --- */}
-      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} router={router} />}
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
 
       <aside className="w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 z-20">
         <div>
@@ -369,7 +369,8 @@ export default function FinancialDashboard() {
                 <Zap size={16} className="text-yellow-400 fill-yellow-400" /> Premium
               </div>
               <p className="text-xs text-gray-400 mb-3">Desbloqueie tabelas e downloads.</p>
-              <button onClick={() => router.push('/pricing')} className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors shadow-lg">Fazer Upgrade</button>
+              {/* ATUALIZADO: Agora abre o modal ao invés de ir para /pricing */}
+              <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors shadow-lg">Fazer Upgrade</button>
             </div>
           </div>
         )}
