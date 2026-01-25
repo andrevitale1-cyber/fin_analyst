@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  BarChart3, UploadCloud, Zap, ArrowRight, 
+  BarChart3, UploadCloud, ArrowRight, 
   FileText, Layout, Database, Check, X, CheckCircle2 
 } from "lucide-react";
 
@@ -55,8 +55,8 @@ export default function LandingPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full -z-10" />
 
         <div className="max-w-5xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-900/30 border border-blue-500/30 text-blue-400 text-sm font-bold mb-8 animate-in fade-in slide-in-from-bottom-4">
-          </div>
+          
+          {/* (REMOVIDO: O badge 'Nova IA v2.0 disponível' foi retirado daqui) */}
           
           <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-8 leading-tight">
             Analise Ações em <br />
@@ -213,7 +213,7 @@ export default function LandingPage() {
                 <Feature text="Upload de arquivos ilimitado" active />
                 <Feature text="Acesso ao histórico simples" active />
                 <Feature text="Suporte por email" active />
-                {/* Itens Restritos */}
+                {/* Bloqueios */}
                 <Feature text="Download do Relatório PDF" disabled />
                 <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
