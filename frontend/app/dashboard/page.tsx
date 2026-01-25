@@ -5,7 +5,7 @@ import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Activity, LogOut, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
-  GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock
+  GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
@@ -22,33 +22,68 @@ const COLUMN_DEFINITIONS = [
   { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-bold' },
 ];
 
-// --- COMPONENTE MODAL DE UPGRADE (NOVO) ---
+// --- COMPONENTE MODAL DE UPGRADE (PREÇO ATUALIZADO) ---
 function UpgradeModal({ onClose, router }: { onClose: () => void, router: any }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-[#161b22] border border-blue-500/30 rounded-2xl p-8 max-w-md w-full text-center relative shadow-2xl shadow-blue-900/20 scale-100 animate-in zoom-in-95 duration-200">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors">
-          <X size={20} />
-        </button>
+      <div className="bg-[#161b22] border border-blue-500/30 rounded-2xl p-0 max-w-4xl w-full flex flex-col md:flex-row overflow-hidden shadow-2xl shadow-blue-900/20 scale-100 animate-in zoom-in-95 duration-200 relative">
         
-        <div className="w-16 h-16 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Lock className="text-blue-400 w-8 h-8" />
+        {/* Botão Fechar no Canto */}
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50">
+          <X size={24} />
+        </button>
+
+        {/* LADO ESQUERDO: GRÁTIS */}
+        <div className="md:w-1/2 p-8 bg-[#0d1117] border-r border-gray-800 flex flex-col justify-center relative">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2">Gratuito</h2>
+            <p className="text-gray-400 text-sm">Seu plano atual.</p>
+          </div>
+          <div className="mb-8">
+             <span className="text-4xl font-bold text-white">R$ 0</span>
+             <span className="text-gray-500">/mês</span>
+          </div>
+          <ul className="space-y-4 mb-8">
+            <li className="flex items-center gap-3 text-gray-300"><Check size={16} className="text-green-500" /> 5 Análises por semana</li>
+            <li className="flex items-center gap-3 text-gray-300"><Check size={16} className="text-green-500" /> Upload Ilimitado</li>
+            <li className="flex items-center gap-3 text-gray-500 line-through"><X size={16} /> Sem Download de PDF</li>
+            <li className="flex items-center gap-3 text-gray-500 line-through"><X size={16} /> Sem Tabela Comparativa</li>
+          </ul>
+          
+          {/* BOTÃO VOLTAR AO DASHBOARD */}
+          <button 
+            onClick={onClose} 
+            className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all"
+          >
+            Continuar no Plano Grátis
+          </button>
         </div>
-        
-        <h2 className="text-2xl font-bold text-white mb-2">Funcionalidade Premium</h2>
-        <p className="text-gray-400 mb-8 leading-relaxed">
-          Esta funcionalidade é exclusiva para assinantes. Faça o upgrade para desbloquear Tabelas, Downloads e Análises Ilimitadas.
-        </p>
-        
-        <button 
-          onClick={() => router.push('/pricing')}
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20 mb-3"
-        >
-          Quero ser Premium
-        </button>
-        <button onClick={onClose} className="text-sm text-gray-500 hover:text-white transition-colors">
-          Talvez depois
-        </button>
+
+        {/* LADO DIREITO: PREMIUM (R$ 29) */}
+        <div className="md:w-1/2 p-8 bg-blue-900/10 relative flex flex-col justify-center">
+          <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">MAIS POPULAR</div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Premium <Zap size={20} className="text-yellow-400 fill-yellow-400"/></h2>
+            <p className="text-blue-200 text-sm">Para investir de verdade.</p>
+          </div>
+          <div className="mb-8">
+             <span className="text-4xl font-bold text-white">R$ 29</span>
+             <span className="text-gray-400">/mês</span>
+          </div>
+          <ul className="space-y-4 mb-8">
+            <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Análises Ilimitadas</li>
+            <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Download de PDF Completo</li>
+            <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Tabela Comparativa</li>
+            <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Prioridade na Fila</li>
+          </ul>
+          <button 
+            onClick={() => router.push('/pricing')}
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20"
+          >
+            Assinar Agora
+          </button>
+        </div>
+
       </div>
     </div>
   );
@@ -112,7 +147,6 @@ export default function FinancialDashboard() {
   }, [router]);
 
   // --- VERIFICAÇÃO DE PLANO ---
-  // Se o backend não retornar 'plano', assumimos que é 'gratuito' (segurança no front)
   const isPremium = useMemo(() => user?.plano === 'premium', [user]);
 
   const formatarData = (dataString: string) => {
@@ -169,10 +203,9 @@ export default function FinancialDashboard() {
     } catch (error) { alert("Erro ao excluir."); }
   };
 
-  // --- LÓGICA DE NAVEGAÇÃO COM RESTRIÇÃO ---
   const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
     if (view === 'table' && !isPremium) {
-      setShowUpgradeModal(true); // Bloqueia Tabela se não for Premium
+      setShowUpgradeModal(true); 
     } else {
       setCurrentView(view);
     }
@@ -181,6 +214,23 @@ export default function FinancialDashboard() {
   const handleAnalyze = async () => {
     if (!file || !empresa || !ano) { alert("Preencha tudo!"); return; }
     if (!user) { alert("Logue novamente."); return; }
+
+    // --- CONTADOR FRONTEND (SIMULAÇÃO DE BLOQUEIO) ---
+    // Isso garante o bloqueio visual mesmo sem o backend estar 100% pronto.
+    if (!isPremium) {
+        // Pega contagem do LocalStorage (ou inicia em 0)
+        const countKey = `analise_count_${user.id}`;
+        const currentCount = parseInt(localStorage.getItem(countKey) || '0');
+
+        if (currentCount >= 5) {
+            setShowUpgradeModal(true); // Bloqueia e mostra o modal
+            return;
+        }
+        
+        // Se passar, incrementa o contador (simulando uso)
+        localStorage.setItem(countKey, (currentCount + 1).toString());
+    }
+    // --------------------------------------------------
 
     setLoading(true);
     try {
@@ -196,8 +246,8 @@ export default function FinancialDashboard() {
         body: formData
       });
 
+      // Se o backend retornar 403 (Limite Atingido), bloqueamos também
       if (response.status === 403) {
-        // Se o backend retornar 403 (Forbidden), é porque estourou o limite
         setLoading(false);
         setShowUpgradeModal(true);
         return;
@@ -211,7 +261,7 @@ export default function FinancialDashboard() {
       fetchTableData();
     } catch (error) {
       console.error(error);
-      alert("Erro na análise.");
+      alert("Erro na análise. Verifique o arquivo.");
     } finally {
       setLoading(false);
     }
@@ -307,13 +357,11 @@ export default function FinancialDashboard() {
           </div>
           <nav className="space-y-2">
             <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} />
-            {/* Ícone de Cadeado na Tabela se não for Premium */}
             <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} />
             <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} />
           </nav>
         </div>
 
-        {/* Banner Premium (Só aparece se for Free) */}
         {!isPremium && (
           <div className="mt-auto mb-6 px-2">
             <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/10 border border-blue-500/30 p-4 rounded-xl">
@@ -326,7 +374,6 @@ export default function FinancialDashboard() {
           </div>
         )}
         
-        {/* Espaçador se for Premium para empurrar o Sair para baixo */}
         {isPremium && <div className="mt-auto" />}
 
         <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer mt-4">
