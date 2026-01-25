@@ -79,14 +79,12 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- SEÇÃO: FUNCIONALIDADES (LAYOUT EXPANDIDO) --- */}
+      {/* --- SEÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col gap-32 pb-32 overflow-hidden">
         
-        {/* BLOCO 1: UPLOAD (Texto 40% | Imagem 60%) */}
+        {/* BLOCO 1: UPLOAD */}
         <section className="relative">
           <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[40%_60%] gap-12 items-center">
-            
-            {/* Texto */}
             <div className="order-2 lg:order-1">
               <div className="w-14 h-14 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30">
                 <UploadCloud className="text-blue-400 w-7 h-7" />
@@ -96,49 +94,32 @@ export default function LandingPage() {
                 Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA identifica automaticamente a empresa, o trimestre e o ano.
               </p>
               <ul className="space-y-3">
-                <ListItem>Suporte a PDFs de até 50MB</ListItem>
+                <ListItem>Sem limite de tamanho de arquivo</ListItem>
                 <ListItem>Identificação automática de tickers</ListItem>
                 <ListItem>Processamento em nuvem ultra-rápido</ListItem>
               </ul>
             </div>
-            
-            {/* IMAGEM EXPANDIDA - Ocupa todo o espaço */}
             <div className="order-1 lg:order-2 w-full">
-              {/* Glow de fundo */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-600/10 blur-[90px] rounded-full -z-10" />
-              <img 
-                src="/demo-upload.png" 
-                alt="Tela de Upload" 
-                className="w-full h-auto object-contain drop-shadow-2xl" 
-                // Removemos bordas e rounded excessivo para maximizar a visão
-              />
+              <img src="/demo-upload.png" alt="Tela de Upload" className="w-full h-auto object-contain drop-shadow-2xl" />
             </div>
-
           </div>
         </section>
 
-        {/* BLOCO 2: RESULTADO (Imagem 60% | Texto 40%) */}
+        {/* BLOCO 2: RESULTADO */}
         <section className="relative">
           <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[60%_40%] gap-12 items-center">
-            
-            {/* IMAGEM EXPANDIDA */}
             <div className="order-1 w-full">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-green-600/10 blur-[90px] rounded-full -z-10" />
-              <img 
-                src="/demo-result.png" 
-                alt="Tela de Resultado" 
-                className="w-full h-auto object-contain drop-shadow-2xl"
-              />
+              <img src="/demo-result.png" alt="Tela de Resultado" className="w-full h-auto object-contain drop-shadow-2xl" />
             </div>
-            
-            {/* Texto */}
             <div className="order-2">
               <div className="w-14 h-14 bg-green-600/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/30">
                 <FileText className="text-green-400 w-7 h-7" />
               </div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Análise Profunda e Score</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Análise Profunda</h2>
               <p className="text-lg text-gray-400 leading-relaxed mb-6">
-                Não receba apenas números soltos. O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos e escreve uma tese de investimento completa.
+                O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos e escreve uma tese de investimento completa.
               </p>
               <ul className="space-y-3">
                 <ListItem>Score Fundamentalista (0 a 5)</ListItem>
@@ -146,21 +127,19 @@ export default function LandingPage() {
                 <ListItem>Tese descritiva gerada por IA</ListItem>
               </ul>
             </div>
-
           </div>
         </section>
 
-        {/* BLOCO 3: TABELA (Texto 40% | Imagem 60%) */}
+        {/* BLOCO 3: TABELA */}
         <section className="relative">
           <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[40%_60%] gap-12 items-center">
-            
             <div className="order-2 lg:order-1">
               <div className="w-14 h-14 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30">
                 <Layout className="text-purple-400 w-7 h-7" />
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Comparador de Ativos</h2>
               <p className="text-lg text-gray-400 leading-relaxed mb-6">
-                Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro para encontrar as melhores oportunidades.
+                Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro.
               </p>
               <ul className="space-y-3">
                 <ListItem>Colunas customizáveis</ListItem>
@@ -168,32 +147,20 @@ export default function LandingPage() {
                 <ListItem>Comparação lado a lado</ListItem>
               </ul>
             </div>
-            
             <div className="order-1 lg:order-2 w-full">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-purple-600/10 blur-[90px] rounded-full -z-10" />
-              <img 
-                src="/demo-table.png" 
-                alt="Tabela Agregada" 
-                className="w-full h-auto object-contain drop-shadow-2xl"
-              />
+              <img src="/demo-table.png" alt="Tabela Agregada" className="w-full h-auto object-contain drop-shadow-2xl" />
             </div>
-
           </div>
         </section>
 
-        {/* BLOCO 4: HISTÓRICO (Imagem 60% | Texto 40%) */}
+        {/* BLOCO 4: HISTÓRICO */}
         <section className="relative">
           <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[60%_40%] gap-12 items-center">
-            
             <div className="order-1 w-full">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-yellow-600/10 blur-[90px] rounded-full -z-10" />
-              <img 
-                src="/demo-history.png" 
-                alt="Histórico" 
-                className="w-full h-auto object-contain drop-shadow-2xl"
-              />
+              <img src="/demo-history.png" alt="Histórico" className="w-full h-auto object-contain drop-shadow-2xl" />
             </div>
-            
             <div className="order-2">
               <div className="w-14 h-14 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/30">
                 <Database className="text-yellow-400 w-7 h-7" />
@@ -208,10 +175,8 @@ export default function LandingPage() {
                 <ListItem>Exclusão e gerenciamento fácil</ListItem>
               </ul>
             </div>
-
           </div>
         </section>
-
       </div>
 
       {/* --- SEÇÃO DE PLANOS --- */}
@@ -242,15 +207,18 @@ export default function LandingPage() {
             {/* CARD GRATUITO */}
             <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 hover:border-gray-600 transition-all h-full flex flex-col">
               <h3 className="text-3xl font-bold text-white mb-2">Gratuito</h3>
-              <p className="text-gray-400 text-base mb-8">Pra quem se vira com pouquíssimos dados...</p>
+              <p className="text-gray-400 text-base mb-8">Para começar a analisar sem custo.</p>
+              
               <ul className="space-y-4 mb-8 flex-1">
-                <Feature text="1 Análise de IA por dia" active />
-                <Feature text="Upload limitado (5MB)" active />
+                <Feature text="5 Análises por semana" active />
+                <Feature text="Upload de arquivos ilimitado" active />
                 <Feature text="Acesso ao histórico simples" active />
                 <Feature text="Suporte por email" active />
-                <Feature text="Sem tabela comparativa" disabled />
-                <Feature text="Sem prioridade de fila" disabled />
+                {/* Itens Restritos */}
+                <Feature text="Download do Relatório PDF" disabled />
+                <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
+
               <Link href="/register" className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 hover:border-gray-500 transition-all mt-auto">
                 Criar conta grátis
               </Link>
@@ -265,19 +233,21 @@ export default function LandingPage() {
               )}
               <h3 className="text-2xl font-bold text-blue-400 mb-2">Premium</h3>
               <div className="flex items-end gap-1 mb-2">
-                <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 49' : 'R$ 490'}</span>
+                <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
                 <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
               </div>
               <p className="text-gray-400 text-sm mb-8">Para quem quer realmente evoluir como investidor!</p>
+              
               <ul className="space-y-4 mb-8 flex-1">
                 <Feature text="Análises de IA Ilimitadas" active />
-                <Feature text="Upload de arquivos grandes (50MB+)" active />
-                <Feature text="Histórico de dados ilimitado" active />
+                <Feature text="Download do Relatório PDF Completo" active />
                 <Feature text="Tabela Comparativa Customizável" active />
-                <Feature text="Prioridade no processamento" active />
-                <Feature text="Acesso antecipado a novas features" active />
+                <Feature text="Upload de arquivos ilimitado" active />
+                <Feature text="Histórico de dados ilimitado" active />
+                <Feature text="Prioridade máxima na fila" active />
               </ul>
-              <Link href="/pricing" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto">
+
+              <Link href="/register" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto">
                 Assinar Agora
               </Link>
               <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
@@ -308,6 +278,7 @@ export default function LandingPage() {
   );
 }
 
+// Subcomponentes
 function Feature({ text, active = false, disabled = false }: any) {
   return (
     <li className="flex items-center gap-3">
@@ -318,7 +289,7 @@ function Feature({ text, active = false, disabled = false }: any) {
           <Check size={12} />
         </div>
       )}
-      <span className={`text-base ${disabled ? 'text-gray-600 line-through' : 'text-gray-300'}`}>{text}</span>
+      <span className={`text-base ${disabled ? 'text-gray-500 line-through' : 'text-gray-300'}`}>{text}</span>
     </li>
   );
 }
