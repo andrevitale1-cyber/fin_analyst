@@ -211,6 +211,7 @@ export default function LandingPage() {
                 <Feature text="Upload de arquivos ilimitado" active />
                 <Feature text="Acesso ao histórico simples" active />
                 <Feature text="Suporte por email" active />
+                {/* Bloqueios */}
                 <Feature text="Download do Relatório PDF" disabled />
                 <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
@@ -272,17 +273,15 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* ÁREA DE DISCLAIMER */}
-          <div className="border-t border-gray-800 pt-8 text-xs text-gray-600 space-y-4 text-justify leading-relaxed">
+          {/* ÁREA DE DISCLAIMER - TEXTO MAIS CLARO */}
+          <div className="border-t border-gray-800 pt-8 text-xs text-gray-400 space-y-4 text-justify leading-relaxed">
              <p>
-               <strong className="text-gray-500">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-500">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-500">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
+               <strong className="text-gray-200">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
              </p>
 
-             <p className="opacity-70">
-               Disclaimers de Dados: © 2026 Os dados fundamentalistas de empresas Americanas ("Stocks / REITs") são fornecidos pela Fiscal.ai, atualizados diariamente. Cotações de ativos Brasileiros ("Ações / FIIs") são fornecidos pela © 2026 Enfoque Informações Financeiras LTDA, cotações de ativos Americanos ("Stocks / REITs") são fornecidos pela © 2026 Intrinio Inc. e atualizados diariamente. Dados de moedas (Forex) são fornecidos pela © 2026 apilayer Data Products GmbH ("Currencylayer"), atualizados diariamente. Outros dados embutidos nas páginas das empresas tem origem direta dos sistemas dos órgãos regulatórios como CVM / SEC, como também podem ser obtidos de comunicados oficiais das empresas em questão. O FinAnalyzer não se responsabiliza pela precisão/completude ou integridade das informações apresentadas.
-             </p>
+             {/* Parágrafo de Disclaimers de Dados foi removido conforme solicitado */}
 
-             <p className="text-center pt-4 opacity-50">
+             <p className="text-center pt-4 text-gray-500">
                © 2026 FinAnalyzer Inc. Todos os direitos reservados.
              </p>
           </div>
