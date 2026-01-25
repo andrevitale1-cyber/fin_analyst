@@ -29,13 +29,9 @@ const COLUMN_DEFINITIONS = [
 // --- COMPONENTE MODAL DE UPGRADE ---
 function UpgradeModal({ onClose }: { onClose: () => void }) {
   
-  const handleCheckout = () => {
-    // Redireciona para o Stripe em uma nova aba
-    if (STRIPE_CHECKOUT_URL.includes("https://buy.stripe.com/test_28E28s5vV5J43eX0H78ww00")) {
-      alert("Configure o link do Stripe no código (app/dashboard/page.tsx)!");
-    } else {
-      window.open(STRIPE_CHECKOUT_URL, '_blank');
-    }
+    const handleCheckout = () => {
+    // Abre direto, sem verificação, já que você já colocou o link certo
+    window.open(STRIPE_CHECKOUT_URL, '_blank');
   };
 
   return (
