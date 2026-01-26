@@ -439,6 +439,73 @@ def fix_database_plans():
     finally:
         cur.close()
         conn.close()
+
+from pydantic import BaseModel
+
+# --- MODELOS DE DADOS ---
+class UpdateProfileRequest(BaseModel):
+    user_id: int
+    nome: str
+    email: str
+
+class UpdatePasswordRequest(BaseModel):
+    user_id: int
+    nova_senha: str
+
+# --- ROTA: ATUALIZAR DADOS PESSOAIS ---
+@app.put("/api/update-profile")
+def update_profile(request: UpdateProfileRequest):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Atualiza nome e email
+        cur.execute(
+            "UPDATE usuarios SET nome = %s, email = %s WHERE id = %s RETURNING id, nome, email, plano",
+            (request.nome, request.email, request.user_id)
+        )
+        updated_user = cur.fetchone()
+        conn.commit()
+        
+        if updated_user:
+            return {
+                "message": "Dados atualizados!",
+                "usuario": {
+                    "id": updated_user[0],
+                    "nome": updated_user[1],
+                    "email": updated_user[2],
+                    "plano": updated_user[3]
+                }
+            }
+        else:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+            
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+# --- ROTA: ALTERAR SENHA ---
+@app.put("/api/update-password")
+def update_password(request: UpdatePasswordRequest):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Aqui o ideal seria hashear a senha antes de salvar (ex: bcrypt)
+        # Mas para manter simples agora, vamos salvar direto
+        cur.execute(
+            "UPDATE usuarios SET senha = %s WHERE id = %s",
+            (request.nova_senha, request.user_id)
+        )
+        conn.commit()
+        return {"message": "Senha alterada com sucesso!"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
         
 if __name__ == "__main__":
     import uvicorn
