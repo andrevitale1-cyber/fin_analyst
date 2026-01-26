@@ -2,23 +2,81 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Settings, User, Mail, Lock, CreditCard, Save, ChevronLeft, Loader2, LogOut } from "lucide-react";
+import { 
+  Settings, User, Mail, Lock, CreditCard, Save, ChevronLeft, 
+  Loader2, LogOut, Eye, EyeOff, X, Check, Zap 
+} from "lucide-react";
 
+// --- URL DO STRIPE (Mesma do Dashboard) ---
+const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/test_28E28s5vV5J43eX0H78ww00"; 
+
+// --- COMPONENTE MODAL DE UPGRADE (Reutilizado) ---
+function UpgradeModal({ onClose }: { onClose: () => void }) {
+  const handleCheckout = () => {
+    window.open(STRIPE_CHECKOUT_URL, '_blank');
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-[#161b22] border border-blue-500/30 rounded-2xl p-0 max-w-4xl w-full flex flex-col md:flex-row overflow-hidden shadow-2xl shadow-blue-900/20 scale-100 animate-in zoom-in-95 duration-200 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50"><X size={24} /></button>
+
+        {/* LADO ESQUERDO: GRÁTIS */}
+        <div className="md:w-1/2 p-8 bg-[#0d1117] border-r border-gray-800 flex flex-col justify-center relative">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2">Gratuito</h2>
+            <p className="text-gray-400 text-sm">Para começar a analisar sem custo.</p>
+          </div>
+          <ul className="space-y-4 mb-8 text-sm">
+            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> 5 Análises por semana</li>
+            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Upload de arquivos ilimitado</li>
+            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Acesso ao histórico simples</li>
+            <li className="flex items-center gap-3 text-gray-500 line-through"><div className="p-0.5 rounded-full border border-gray-700 text-gray-600"><X size={14} /></div> Download do Relatório PDF</li>
+          </ul>
+          <button onClick={onClose} className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all">Continuar no Plano Grátis</button>
+        </div>
+
+        {/* LADO DIREITO: PREMIUM */}
+        <div className="md:w-1/2 p-8 bg-blue-900/10 relative flex flex-col justify-center">
+          <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">MAIS POPULAR</div>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Premium <Zap size={20} className="text-yellow-400 fill-yellow-400"/></h2>
+            <div className="flex items-end gap-1">
+               <span className="text-4xl font-bold text-white">R$ 29</span>
+               <span className="text-gray-400 text-sm mb-1">/mês</span>
+            </div>
+          </div>
+          <ul className="space-y-4 mb-8 text-sm">
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Análises de IA Ilimitadas</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Download do Relatório PDF</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Tabela Comparativa Customizável</li>
+          </ul>
+          <button onClick={handleCheckout} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20">Assinar Agora</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- COMPONENTE PRINCIPAL ---
 export default function ProfilePage() {
   const router = useRouter();
   
-  // Estados para armazenar os dados
+  // Estados de Dados
   const [user, setUser] = useState<any>(null);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   
+  // Estados de Senha
   const [novaSenha, setNovaSenha] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // <--- NOVO
   
+  // Estados de Interface
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingPassword, setLoadingPassword] = useState(false);
-  const [msg, setMsg] = useState({ text: "", type: "" }); // type: 'success' or 'error'
+  const [msg, setMsg] = useState({ text: "", type: "" });
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false); // <--- NOVO
 
-  // Carrega dados do LocalStorage ao abrir
   useEffect(() => {
     const storedUser = localStorage.getItem('usuario');
     if (storedUser) {
@@ -31,7 +89,6 @@ export default function ProfilePage() {
     }
   }, [router]);
 
-  // Função para salvar dados pessoais
   const handleUpdateProfile = async () => {
     setLoadingProfile(true);
     setMsg({ text: "", type: "" });
@@ -46,7 +103,6 @@ export default function ProfilePage() {
       const data = await res.json();
 
       if (res.ok) {
-        // Atualiza o LocalStorage com os novos dados
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
         setUser(data.usuario);
         setMsg({ text: "Dados atualizados com sucesso!", type: "success" });
@@ -60,7 +116,6 @@ export default function ProfilePage() {
     }
   };
 
-  // Função para trocar senha
   const handleUpdatePassword = async () => {
     if (!novaSenha) return;
     setLoadingPassword(true);
@@ -95,7 +150,10 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#0E1117] p-6 font-sans text-gray-100">
       
-      {/* Header com botão voltar */}
+      {/* MODAL DE UPGRADE */}
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
+
+      {/* Header */}
       <div className="max-w-4xl mx-auto mb-8 flex justify-between items-center">
         <Link href="/dashboard" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
           <ChevronLeft size={20} />
@@ -107,8 +165,6 @@ export default function ProfilePage() {
       </div>
 
       <div className="max-w-4xl mx-auto">
-        
-        {/* Título da Página */}
         <div className="flex items-center gap-4 mb-8">
           <div className="p-3 bg-[#161b22] rounded-xl border border-gray-800">
             <Settings className="text-blue-500 w-8 h-8" />
@@ -119,7 +175,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Mensagens de Sucesso/Erro */}
         {msg.text && (
           <div className={`mb-6 p-4 rounded-lg border ${msg.type === 'success' ? 'bg-green-900/20 border-green-800 text-green-400' : 'bg-red-900/20 border-red-800 text-red-400'}`}>
             {msg.text}
@@ -136,41 +191,25 @@ export default function ProfilePage() {
               <label className="block text-sm font-medium text-gray-400 mb-2">Nome Completo</label>
               <div className="relative">
                 <User className="absolute left-3 top-3 text-gray-600" size={18} />
-                <input 
-                  type="text" 
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  className="w-full bg-[#0d1117] border border-gray-700 text-white pl-10 pr-4 py-2.5 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                />
+                <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} className="w-full bg-[#0d1117] border border-gray-700 text-white pl-10 pr-4 py-2.5 rounded-lg focus:outline-none focus:border-blue-500 transition-all"/>
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 text-gray-600" size={18} />
-                <input 
-                  type="email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-[#0d1117] border border-gray-700 text-white pl-10 pr-4 py-2.5 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
-                />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-[#0d1117] border border-gray-700 text-white pl-10 pr-4 py-2.5 rounded-lg focus:outline-none focus:border-blue-500 transition-all"/>
               </div>
             </div>
           </div>
-
           <div className="mt-6 flex justify-end">
-            <button 
-              onClick={handleUpdateProfile}
-              disabled={loadingProfile}
-              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-            >
-              {loadingProfile ? <Loader2 className="animate-spin" size={18}/> : <Save size={18} />}
-              Salvar Alterações
+            <button onClick={handleUpdateProfile} disabled={loadingProfile} className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50">
+              {loadingProfile ? <Loader2 className="animate-spin" size={18}/> : <Save size={18} />} Salvar Alterações
             </button>
           </div>
         </section>
 
-        {/* SEÇÃO 2: Senha */}
+        {/* SEÇÃO 2: Senha (COM OLHO) */}
         <section className="bg-[#161b22] border border-gray-800 rounded-2xl p-6 mb-6">
           <h2 className="text-xl font-semibold mb-1">Senha</h2>
           <p className="text-sm text-gray-500 mb-6">Defina uma nova senha para acessar sua conta.</p>
@@ -180,27 +219,31 @@ export default function ProfilePage() {
             <div className="relative">
               <Lock className="absolute left-3 top-3 text-gray-600" size={18} />
               <input 
-                type="password" 
+                type={showPassword ? "text" : "password"} // <--- ALTERNA O TIPO
                 placeholder="********"
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
-                className="w-full bg-[#0d1117] border border-gray-700 text-white pl-10 pr-4 py-2.5 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
+                className="w-full bg-[#0d1117] border border-gray-700 text-white pl-10 pr-12 py-2.5 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
               />
+              {/* BOTÃO DO OLHO */}
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-500 hover:text-white transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
             </div>
           </div>
 
           <div className="mt-6">
-            <button 
-              onClick={handleUpdatePassword}
-              disabled={loadingPassword || !novaSenha}
-              className="bg-[#21262d] hover:bg-[#30363d] text-white border border-gray-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
-            >
+            <button onClick={handleUpdatePassword} disabled={loadingPassword || !novaSenha} className="bg-[#21262d] hover:bg-[#30363d] text-white border border-gray-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50">
               {loadingPassword ? <Loader2 className="animate-spin" size={18}/> : "Definir nova senha"}
             </button>
           </div>
         </section>
 
-        {/* SEÇÃO 3: Premium */}
+        {/* SEÇÃO 3: Premium (COM AÇÃO) */}
         <section className="bg-gradient-to-r from-[#161b22] to-[#0d1117] border border-blue-900/30 rounded-2xl p-6 relative overflow-hidden">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
@@ -215,13 +258,15 @@ export default function ProfilePage() {
                 : "Faça o upgrade para desbloquear análises ilimitadas e relatórios avançados."}
             </p>
 
-            <button className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-blue-900/20 transition-all flex items-center gap-2">
+            {/* BOTÃO AGORA ABRE O MODAL */}
+            <button 
+              onClick={() => setShowUpgradeModal(true)} 
+              className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-blue-900/20 transition-all flex items-center gap-2"
+            >
               <CreditCard size={18} />
               {user.plano === 'premium' ? "Gerenciar Assinatura" : "Virar Premium"}
             </button>
           </div>
-          
-          {/* Efeito de fundo */}
           <div className="absolute right-0 top-0 h-full w-1/3 bg-blue-600/5 blur-[80px] pointer-events-none"></div>
         </section>
 
