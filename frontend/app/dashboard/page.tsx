@@ -1,11 +1,13 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // <--- IMPORTAÇÃO ADICIONADA
 import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Activity, LogOut, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
-  GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check
+  GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check,
+  Settings // <--- ÍCONE ADICIONADO
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DO STRIPE ---
@@ -381,10 +383,23 @@ export default function FinancialDashboard() {
         
         {isPremium && <div className="mt-auto" />}
 
-        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer mt-4">
-          <LogOut size={20} className="group-hover:text-red-400 transition-colors" />
-          <span className="font-medium">Sair</span>
-        </button>
+        {/* --- RODAPÉ COM CONTA E SAIR --- */}
+        <div className="mt-4 pt-4 border-t border-gray-800 space-y-2">
+            {/* BOTÃO MINHA CONTA */}
+            <Link 
+                href="/profile" 
+                className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer"
+            >
+                <Settings size={20} className="group-hover:text-blue-400 transition-colors" />
+                <span className="font-medium">Minha Conta</span>
+            </Link>
+
+            {/* BOTÃO SAIR */}
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer">
+                <LogOut size={20} className="group-hover:text-red-400 transition-colors" />
+                <span className="font-medium">Sair</span>
+            </button>
+        </div>
       </aside>
       
       <main className="flex-1 overflow-y-auto p-8 relative">
