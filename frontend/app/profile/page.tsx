@@ -7,10 +7,10 @@ import {
   Loader2, LogOut, Eye, EyeOff, X, Check, Zap 
 } from "lucide-react";
 
-// --- URL DO STRIPE (Mesma do Dashboard) ---
+// --- URL DO STRIPE ---
 const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/test_28E28s5vV5J43eX0H78ww00"; 
 
-// --- COMPONENTE MODAL DE UPGRADE (Reutilizado) ---
+// --- COMPONENTE MODAL DE UPGRADE (VERSÃO COMPLETA IGUAL À FOTO 2) ---
 function UpgradeModal({ onClose }: { onClose: () => void }) {
   const handleCheckout = () => {
     window.open(STRIPE_CHECKOUT_URL, '_blank');
@@ -27,38 +27,53 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
             <h2 className="text-2xl font-bold text-white mb-2">Gratuito</h2>
             <p className="text-gray-400 text-sm">Para começar a analisar sem custo.</p>
           </div>
+          
           <ul className="space-y-4 mb-8 text-sm">
             <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> 5 Análises por semana</li>
             <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Upload de arquivos ilimitado</li>
             <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Acesso ao histórico simples</li>
+            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Suporte por email</li>
+            
             <li className="flex items-center gap-3 text-gray-500 line-through"><div className="p-0.5 rounded-full border border-gray-700 text-gray-600"><X size={14} /></div> Download do Relatório PDF</li>
+            <li className="flex items-center gap-3 text-gray-500 line-through"><div className="p-0.5 rounded-full border border-gray-700 text-gray-600"><X size={14} /></div> Tabela Comparativa de Ativos</li>
           </ul>
+          
           <button onClick={onClose} className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all">Continuar no Plano Grátis</button>
         </div>
 
-        {/* LADO DIREITO: PREMIUM */}
+        {/* LADO DIREITO: PREMIUM (IGUAL FOTO 2) */}
         <div className="md:w-1/2 p-8 bg-blue-900/10 relative flex flex-col justify-center">
           <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">MAIS POPULAR</div>
+          
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Premium <Zap size={20} className="text-yellow-400 fill-yellow-400"/></h2>
             <div className="flex items-end gap-1">
                <span className="text-4xl font-bold text-white">R$ 29</span>
                <span className="text-gray-400 text-sm mb-1">/mês</span>
             </div>
+            {/* TEXTO QUE FALTAVA NA VERSÃO ANTERIOR */}
+            <p className="text-blue-200 text-xs mt-2">Para quem quer realmente evoluir como investidor!</p>
           </div>
+          
+          {/* LISTA COMPLETA IGUAL FOTO 2 */}
           <ul className="space-y-4 mb-8 text-sm">
             <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Análises de IA Ilimitadas</li>
-            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Download do Relatório PDF</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Download do Relatório PDF Completo</li>
             <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Tabela Comparativa Customizável</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Upload de arquivos ilimitado</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Histórico de dados ilimitado</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Prioridade máxima na fila</li>
           </ul>
+          
           <button onClick={handleCheckout} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20">Assinar Agora</button>
+          <p className="text-center text-[10px] text-gray-500 mt-3">Cancele quando quiser.</p>
         </div>
       </div>
     </div>
   );
 }
 
-// --- COMPONENTE PRINCIPAL ---
+// --- COMPONENTE PRINCIPAL DA PÁGINA ---
 export default function ProfilePage() {
   const router = useRouter();
   
@@ -69,13 +84,13 @@ export default function ProfilePage() {
   
   // Estados de Senha
   const [novaSenha, setNovaSenha] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // <--- NOVO
+  const [showPassword, setShowPassword] = useState(false);
   
   // Estados de Interface
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [loadingPassword, setLoadingPassword] = useState(false);
   const [msg, setMsg] = useState({ text: "", type: "" });
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false); // <--- NOVO
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('usuario');
@@ -131,7 +146,7 @@ export default function ProfilePage() {
         setMsg({ text: "Senha alterada com sucesso!", type: "success" });
         setNovaSenha("");
       } else {
-        setMsg({ text: "Erro ao alterar senha.", type: "error" });
+        setMsg({ text: "Erro ao alterar senha. Verifique sua conexão.", type: "error" });
       }
     } catch (error) {
       setMsg({ text: "Erro de conexão.", type: "error" });
@@ -150,7 +165,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[#0E1117] p-6 font-sans text-gray-100">
       
-      {/* MODAL DE UPGRADE */}
+      {/* MODAL DE UPGRADE ATIVADO PELO BOTÃO ABAIXO */}
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
 
       {/* Header */}
@@ -209,7 +224,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* SEÇÃO 2: Senha (COM OLHO) */}
+        {/* SEÇÃO 2: Senha (COM BOTÃO DE VER SENHA) */}
         <section className="bg-[#161b22] border border-gray-800 rounded-2xl p-6 mb-6">
           <h2 className="text-xl font-semibold mb-1">Senha</h2>
           <p className="text-sm text-gray-500 mb-6">Defina uma nova senha para acessar sua conta.</p>
@@ -219,13 +234,12 @@ export default function ProfilePage() {
             <div className="relative">
               <Lock className="absolute left-3 top-3 text-gray-600" size={18} />
               <input 
-                type={showPassword ? "text" : "password"} // <--- ALTERNA O TIPO
+                type={showPassword ? "text" : "password"} // Alterna entre texto e senha
                 placeholder="********"
                 value={novaSenha}
                 onChange={(e) => setNovaSenha(e.target.value)}
                 className="w-full bg-[#0d1117] border border-gray-700 text-white pl-10 pr-12 py-2.5 rounded-lg focus:outline-none focus:border-blue-500 transition-all"
               />
-              {/* BOTÃO DO OLHO */}
               <button 
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -243,7 +257,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* SEÇÃO 3: Premium (COM AÇÃO) */}
+        {/* SEÇÃO 3: Premium (ABRE O MODAL COMPLETO) */}
         <section className="bg-gradient-to-r from-[#161b22] to-[#0d1117] border border-blue-900/30 rounded-2xl p-6 relative overflow-hidden">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
@@ -258,7 +272,6 @@ export default function ProfilePage() {
                 : "Faça o upgrade para desbloquear análises ilimitadas e relatórios avançados."}
             </p>
 
-            {/* BOTÃO AGORA ABRE O MODAL */}
             <button 
               onClick={() => setShowUpgradeModal(true)} 
               className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-blue-900/20 transition-all flex items-center gap-2"
