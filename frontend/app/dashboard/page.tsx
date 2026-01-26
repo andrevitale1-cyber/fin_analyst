@@ -38,26 +38,48 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
 
         {/* LADO ESQUERDO: GRÁTIS */}
         <div className="md:w-1/2 p-8 bg-[#0d1117] border-r border-gray-800 flex flex-col justify-center relative">
-          <div className="mb-6"><h2 className="text-2xl font-bold text-white mb-2">Gratuito</h2><p className="text-gray-400 text-sm">Seu limite foi atingido.</p></div>
-          <div className="mb-8"><span className="text-4xl font-bold text-white">R$ 0</span><span className="text-gray-500">/mês</span></div>
-          <ul className="space-y-4 mb-8">
-            <li className="flex items-center gap-3 text-gray-300"><Check size={16} className="text-green-500" /> 5 Análises por semana</li>
-            <li className="flex items-center gap-3 text-gray-500 line-through"><X size={16} /> Sem Download de PDF</li>
-            <li className="flex items-center gap-3 text-gray-500 line-through"><X size={16} /> Sem Tabela Comparativa</li>
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2">Gratuito</h2>
+            <p className="text-gray-400 text-sm">Para começar a analisar sem custo.</p>
+          </div>
+          
+          <ul className="space-y-4 mb-8 text-sm">
+            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> 5 Análises por semana</li>
+            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Upload de arquivos ilimitado</li>
+            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Acesso ao histórico simples</li>
+            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Suporte por email</li>
+            
+            <li className="flex items-center gap-3 text-gray-500 line-through"><div className="p-0.5 rounded-full border border-gray-700 text-gray-600"><X size={14} /></div> Download do Relatório PDF</li>
+            <li className="flex items-center gap-3 text-gray-500 line-through"><div className="p-0.5 rounded-full border border-gray-700 text-gray-600"><X size={14} /></div> Tabela Comparativa de Ativos</li>
           </ul>
-          <button onClick={onClose} className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all">Entendi, manter Grátis</button>
+          
+          <button onClick={onClose} className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all">Continuar no Plano Grátis</button>
         </div>
 
         {/* LADO DIREITO: PREMIUM */}
         <div className="md:w-1/2 p-8 bg-blue-900/10 relative flex flex-col justify-center">
           <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">MAIS POPULAR</div>
-          <div className="mb-6"><h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Premium <Zap size={20} className="text-yellow-400 fill-yellow-400"/></h2><p className="text-blue-200 text-sm">Desbloqueie tudo agora.</p></div>
-          <div className="mb-8"><span className="text-4xl font-bold text-white">R$ 29</span><span className="text-gray-400">/mês</span></div>
-          <ul className="space-y-4 mb-8">
-            <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Análises Ilimitadas</li>
-            <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Download e Tabelas</li>
+          
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Premium <Zap size={20} className="text-yellow-400 fill-yellow-400"/></h2>
+            <div className="flex items-end gap-1">
+               <span className="text-4xl font-bold text-white">R$ 29</span>
+               <span className="text-gray-400 text-sm mb-1">/mês</span>
+            </div>
+            <p className="text-blue-200 text-xs mt-2">Para quem quer realmente evoluir como investidor!</p>
+          </div>
+          
+          <ul className="space-y-4 mb-8 text-sm">
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Análises de IA Ilimitadas</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Download do Relatório PDF Completo</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Tabela Comparativa Customizável</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Upload de arquivos ilimitado</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Histórico de dados ilimitado</li>
+            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Prioridade máxima na fila</li>
           </ul>
+          
           <button onClick={handleCheckout} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20">Assinar Agora</button>
+          <p className="text-center text-[10px] text-gray-500 mt-3">Cancele quando quiser.</p>
         </div>
       </div>
     </div>
@@ -128,7 +150,6 @@ export default function FinancialDashboard() {
         const oneWeek = 7 * 24 * 60 * 60 * 1000;
 
         if (!savedDate || (now - parseInt(savedDate)) > oneWeek) {
-          // Passou 1 semana ou é novo: Reseta
           localStorage.setItem(usageKey, '0');
           localStorage.setItem(dateKey, now.toString());
           setUsageCount(0);
@@ -277,8 +298,18 @@ export default function FinancialDashboard() {
   const sortedTableData = useMemo(() => {
     if (!sortConfig) return tableData;
     return [...tableData].sort((a, b) => {
-      if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+      const valA = a[sortConfig.key];
+      const valB = b[sortConfig.key];
+
+      // Tenta converter para número para ordenação correta (ex: "10" > "2")
+      const numA = Number(valA);
+      const numB = Number(valB);
+      if (!isNaN(numA) && !isNaN(numB)) {
+        return sortConfig.direction === 'asc' ? numA - numB : numB - numA;
+      }
+
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
   }, [tableData, sortConfig]);
