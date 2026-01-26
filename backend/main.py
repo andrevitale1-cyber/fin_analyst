@@ -422,6 +422,24 @@ def delete_history(item_id: int):
         cur.close()
         conn.close()
 
+# --- ROTA PARA CORRIGIR O BANCO (ADICIONAR PLANOS) ---
+@app.get("/api/fix-database-plans")
+def fix_database_plans():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Cria a coluna 'plano' se não existir
+        cur.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS plano TEXT DEFAULT 'free';")
+        # Cria a coluna 'plano_expira' se não existir
+        cur.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS plano_expira TIMESTAMP;") 
+        conn.commit()
+        return {"message": "Sucesso! Tabela atualizada com colunas de plano."}
+    except Exception as e:
+        return {"error": f"Erro ao atualizar banco: {str(e)}"}
+    finally:
+        cur.close()
+        conn.close()
+        
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 10000))
