@@ -15,6 +15,8 @@ import urllib.parse
 from pypdf import PdfReader
 from dotenv import load_dotenv
 from fastapi_sso.sso.google import GoogleSSO 
+from fastapi import FastAPI, HTTPException, Request # Certifique-se que HTTPException está aqui
+from pydantic import BaseModel
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -442,7 +444,6 @@ def fix_database_plans():
 
 from pydantic import BaseModel
 
-# --- MODELOS DE DADOS ---
 class UpdateProfileRequest(BaseModel):
     user_id: int
     nome: str
@@ -455,9 +456,10 @@ class UpdatePasswordRequest(BaseModel):
 # --- ROTA: ATUALIZAR DADOS PESSOAIS ---
 @app.put("/api/update-profile")
 def update_profile(request: UpdateProfileRequest):
-    conn = get_db_connection()
-    cur = conn.cursor()
     try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
         # Atualiza nome e email
         cur.execute(
             "UPDATE usuarios SET nome = %s, email = %s WHERE id = %s RETURNING id, nome, email, plano",
@@ -465,6 +467,8 @@ def update_profile(request: UpdateProfileRequest):
         )
         updated_user = cur.fetchone()
         conn.commit()
+        cur.close()
+        conn.close()
         
         if updated_user:
             return {
@@ -480,33 +484,31 @@ def update_profile(request: UpdateProfileRequest):
             raise HTTPException(status_code=404, detail="Usuário não encontrado")
             
     except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cur.close()
-        conn.close()
+        print(f"ERRO UPDATE PROFILE: {e}") # Isso vai mostrar o erro real no log
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 # --- ROTA: ALTERAR SENHA ---
 @app.put("/api/update-password")
 def update_password(request: UpdatePasswordRequest):
-    conn = get_db_connection()
-    cur = conn.cursor()
     try:
-        # Aqui o ideal seria hashear a senha antes de salvar (ex: bcrypt)
-        # Mas para manter simples agora, vamos salvar direto
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Atualiza a senha
         cur.execute(
             "UPDATE usuarios SET senha = %s WHERE id = %s",
             (request.nova_senha, request.user_id)
         )
         conn.commit()
-        return {"message": "Senha alterada com sucesso!"}
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
         cur.close()
         conn.close()
         
+        return {"message": "Senha alterada com sucesso!"}
+
+    except Exception as e:
+        print(f"ERRO UPDATE PASSWORD: {e}") # Isso vai mostrar o erro real no log
+        raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
 if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 10000))
