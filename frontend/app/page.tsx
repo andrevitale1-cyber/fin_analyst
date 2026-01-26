@@ -4,8 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   BarChart3, UploadCloud, ArrowRight, 
-  FileText, Layout, Database, Check, X, CheckCircle2, Zap,
-  DollarSign, Percent, AlertCircle, TrendingUp
+  FileText, Layout, Database, Check, X, CheckCircle2 
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -104,52 +103,12 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 2: RESULTADO (AGORA COM CÓDIGO NÍTIDO) */}
+        {/* BLOCO 2: RESULTADO */}
         <section className="relative">
           <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[60%_40%] gap-12 items-center">
             <div className="order-1 w-full">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-green-600/10 blur-[90px] rounded-full -z-10" />
-              
-              {/* --- MOCKUP DE CÓDIGO (Substituindo a Imagem) --- */}
-              <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-6 shadow-2xl relative overflow-hidden transform hover:scale-[1.02] transition-transform duration-500">
-                {/* Header do Card */}
-                <div className="flex justify-between items-start mb-6">
-                    <div>
-                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Relatório de Análise</p>
-                        <h3 className="text-4xl font-bold text-white mb-1">TSMC</h3>
-                        <p className="text-blue-400 font-bold text-sm">4T/2025</p>
-                    </div>
-                    <div className="text-right">
-                        <div className="inline-flex items-center gap-1 bg-green-500/10 border border-green-500/20 text-green-400 px-3 py-1 rounded-lg text-xs font-bold mb-1">
-                            SCORE IA
-                        </div>
-                        <div className="text-3xl font-bold text-white">5<span className="text-sm text-gray-600">/5</span></div>
-                    </div>
-                </div>
-
-                {/* Grid de Métricas */}
-                <div className="grid grid-cols-4 gap-3 mb-6">
-                    <MockupMetric label="Receita" val="5" icon={<DollarSign size={12} />} color="bg-green-500" />
-                    <MockupMetric label="Margem" val="5" icon={<Percent size={12} />} color="bg-green-500" />
-                    <MockupMetric label="Dívida" val="4" icon={<AlertCircle size={12} />} color="bg-green-500" />
-                    <MockupMetric label="Rentab." val="5" icon={<TrendingUp size={12} />} color="bg-green-500" />
-                </div>
-
-                {/* Tese de Investimento (Texto Nítido) */}
-                <div className="bg-[#0d1117] rounded-xl p-4 border border-gray-800/50">
-                    <div className="flex items-center gap-2 text-blue-400 font-bold text-sm mb-3">
-                        <FileText size={16} /> Tese de Investimento
-                    </div>
-                    <p className="text-xs text-gray-400 leading-relaxed mb-3">
-                        <strong className="text-gray-300">Conclusão:</strong> A TSMC provou ser a principal beneficiária da infraestrutura de IA. O crescimento de 35% no lucro líquido demonstra um fosso competitivo (moat) extremamente forte.
-                    </p>
-                    <p className="text-xs text-gray-400 leading-relaxed">
-                        <strong className="text-gray-300">Riscos:</strong> Tensões geopolíticas continuam sendo o principal fator de desconto, mas os fundamentos operacionais estão impecáveis.
-                    </p>
-                </div>
-              </div>
-              {/* ----------------------------------------------- */}
-
+              <img src="/demo-result.png" alt="Tela de Resultado" className="w-full h-auto object-contain drop-shadow-2xl" />
             </div>
             <div className="order-2">
               <div className="w-14 h-14 bg-green-600/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/30">
@@ -191,6 +150,30 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* BLOCO 4: HISTÓRICO */}
+        <section className="relative">
+          <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[60%_40%] gap-12 items-center">
+            <div className="order-1 w-full">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-yellow-600/10 blur-[90px] rounded-full -z-10" />
+              <img src="/demo-history.png" alt="Histórico" className="w-full h-auto object-contain drop-shadow-2xl" />
+            </div>
+            <div className="order-2">
+              <div className="w-14 h-14 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/30">
+                <Database className="text-yellow-400 w-7 h-7" />
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Histórico Completo</h2>
+              <p className="text-lg text-gray-400 leading-relaxed mb-6">
+                Todas as suas análises ficam salvas para sempre. Compare a evolução da nota da empresa trimestre a trimestre.
+              </p>
+              <ul className="space-y-3">
+                <ListItem>Backup automático na nuvem</ListItem>
+                <ListItem>Acesso rápido a relatórios antigos</ListItem>
+                <ListItem>Exclusão e gerenciamento fácil</ListItem>
+              </ul>
+            </div>
+          </div>
+        </section>
       </div>
 
       {/* --- SEÇÃO DE PLANOS --- */}
@@ -212,13 +195,12 @@ export default function LandingPage() {
               </button>
               <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('yearly')}>Anual</span>
             </div>
-            <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-2 text-center`}>
+            <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-2`}>
                <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-3 py-1 rounded-full">2 MESES GRÁTIS</span>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 items-start max-w-4xl mx-auto">
-            
             {/* CARD GRATUITO */}
             <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 hover:border-gray-600 transition-all h-full flex flex-col">
               <h3 className="text-3xl font-bold text-white mb-2">Gratuito</h3>
@@ -229,6 +211,7 @@ export default function LandingPage() {
                 <Feature text="Upload de arquivos ilimitado" active />
                 <Feature text="Acesso ao histórico simples" active />
                 <Feature text="Suporte por email" active />
+                {/* Bloqueios */}
                 <Feature text="Download do Relatório PDF" disabled />
                 <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
@@ -242,11 +225,9 @@ export default function LandingPage() {
             <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
               {billingCycle === 'yearly' && (
                 <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
-                  2 Meses Grátis
+                  2 Meses Grátis no Anual
                 </div>
               )}
-              <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">MAIS POPULAR</div>
-
               <h3 className="text-2xl font-bold text-blue-400 mb-2">Premium</h3>
               <div className="flex items-end gap-1 mb-2">
                 <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
@@ -276,6 +257,7 @@ export default function LandingPage() {
       <footer className="border-t border-gray-800 bg-[#0E1117] pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-6">
           
+          {/* Logo e Links Principais */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
@@ -291,10 +273,13 @@ export default function LandingPage() {
             </div>
           </div>
 
+          {/* ÁREA DE DISCLAIMER - TEXTO MAIS CLARO */}
           <div className="border-t border-gray-800 pt-8 text-xs text-gray-400 space-y-4 text-justify leading-relaxed">
              <p>
                <strong className="text-gray-200">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
              </p>
+
+             {/* Parágrafo de Disclaimers de Dados foi removido conforme solicitado */}
 
              <p className="text-center pt-4 text-gray-500">
                © 2026 FinAnalyzer Inc. Todos os direitos reservados.
@@ -307,35 +292,14 @@ export default function LandingPage() {
   );
 }
 
-// --- SUBCOMPONENTES ---
-
-function MockupMetric({ label, val, icon, color }: any) {
-    return (
-        <div className="bg-[#0d1117] p-3 rounded-lg border border-gray-800 flex flex-col justify-between h-20">
-            <div className="flex justify-between items-center text-gray-500">
-                <span className="text-[10px] uppercase font-bold">{label}</span>
-                {icon}
-            </div>
-            <div>
-                <div className="flex items-end gap-1 mb-1">
-                    <span className="text-lg font-bold text-white leading-none">{val}</span>
-                    <span className="text-[10px] text-gray-600 mb-0.5">/5</span>
-                </div>
-                <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden">
-                    <div className={`h-full ${color}`} style={{width: '100%'}}></div>
-                </div>
-            </div>
-        </div>
-    )
-}
-
+// Subcomponentes
 function Feature({ text, active = false, disabled = false }: any) {
   return (
     <li className="flex items-center gap-3">
       {disabled ? (
         <div className="p-0.5 rounded-full border border-gray-600 text-gray-500"><X size={12} /></div>
       ) : (
-        <div className={`p-0.5 rounded-full ${active ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/10 text-green-500 border border-green-500/30'}`}>
+        <div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30">
           <Check size={12} />
         </div>
       )}
