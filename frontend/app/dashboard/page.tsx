@@ -1,13 +1,14 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // <--- IMPORTAÇÃO ADICIONADA
+import Link from 'next/link';
+import { useUser, UserButton } from "@clerk/nextjs"; // <--- CLERK IMPORTADO
 import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
-  BarChart3, TrendingUp, DollarSign, Percent, Activity, LogOut, Loader2,
+  BarChart3, TrendingUp, DollarSign, Percent, Activity, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
   GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check,
-  Settings // <--- ÍCONE ADICIONADO
+  Settings
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DO STRIPE ---
@@ -102,11 +103,11 @@ function NavItem({ icon, label, active = false, onClick, isLocked = false }: any
 // --- COMPONENTE PRINCIPAL ---
 export default function FinancialDashboard() {
   const router = useRouter();
+  const { user, isLoaded } = useUser(); // <--- CLERK: PEGA O USUÁRIO AQUI
   const API_BASE = "https://api-finanalyzer.onrender.com"; 
 
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   
   // Contadores
@@ -134,37 +135,37 @@ export default function FinancialDashboard() {
   const [trimestre, setTrimestre] = useState("1T");
   const [file, setFile] = useState<File | null>(null);
 
+  // --- CONTROLE DE PLANO (TEMPORÁRIO ATÉ INTEGRAR O BACKEND) ---
+  // O backend vai nos dizer se o usuário é premium via API em breve.
+  // Por enquanto, assumimos Free.
+  const isPremium = false; 
+
   useEffect(() => {
-    const storedUser = localStorage.getItem('usuario');
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      
-      // --- LÓGICA DE CONTAGEM E RESET SEMANAL ---
-      if (parsedUser.plano !== 'premium') {
-        const usageKey = `usage_${parsedUser.id}`;
-        const dateKey = `usage_date_${parsedUser.id}`;
-        
-        const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
-        const savedDate = localStorage.getItem(dateKey);
-        
-        const now = Date.now();
-        const oneWeek = 7 * 24 * 60 * 60 * 1000;
-
-        if (!savedDate || (now - parseInt(savedDate)) > oneWeek) {
-          localStorage.setItem(usageKey, '0');
-          localStorage.setItem(dateKey, now.toString());
-          setUsageCount(0);
-        } else {
-          setUsageCount(savedCount);
-        }
-      }
-    } else {
-      router.push('/login');
+    // Redireciona se não estiver logado
+    if (isLoaded && !user) {
+      router.push('/sign-in'); // Redireciona para o login do Clerk
     }
-  }, [router]);
 
-  const isPremium = useMemo(() => user?.plano === 'premium', [user]);
+    if (user) {
+      // Lógica de contagem local (ainda válida para UX imediata)
+      const usageKey = `usage_${user.id}`;
+      const dateKey = `usage_date_${user.id}`;
+      
+      const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
+      const savedDate = localStorage.getItem(dateKey);
+      
+      const now = Date.now();
+      const oneWeek = 7 * 24 * 60 * 60 * 1000;
+
+      if (!savedDate || (now - parseInt(savedDate)) > oneWeek) {
+        localStorage.setItem(usageKey, '0');
+        localStorage.setItem(dateKey, now.toString());
+        setUsageCount(0);
+      } else {
+        setUsageCount(savedCount);
+      }
+    }
+  }, [isLoaded, user, router]);
 
   const formatarData = (dataString: string) => {
     if (!dataString) return "-";
@@ -177,14 +178,14 @@ export default function FinancialDashboard() {
   const columnDefsMap = useMemo(() => COLUMN_DEFINITIONS.reduce((acc, col) => { acc[col.key] = col; return acc; }, {} as any), []);
   const visibleCount = useMemo(() => Object.values(visibleColumns).filter(Boolean).length, [visibleColumns]);
 
-  const handleLogout = () => { localStorage.removeItem('usuario'); router.push('/login'); };
-
   const fetchHistory = async () => {
     if (!user) return;
     try {
       const res = await fetch(`${API_BASE}/api/history?user_id=${user.id}`);
-      const data = await res.json();
-      setHistoryList(data);
+      if (res.ok) {
+        const data = await res.json();
+        setHistoryList(data);
+      }
     } catch (error) { console.error("Erro histórico", error); }
   };
 
@@ -192,8 +193,10 @@ export default function FinancialDashboard() {
     if (!user) return;
     try {
       const res = await fetch(`${API_BASE}/api/table-data?user_id=${user.id}`);
-      const data = await res.json();
-      setTableData(data);
+      if (res.ok) {
+        const data = await res.json();
+        setTableData(data);
+      }
     } catch (error) { console.error("Erro tabela", error); }
   };
 
@@ -217,7 +220,6 @@ export default function FinancialDashboard() {
     if (!file || !empresa || !ano) { alert("Preencha tudo!"); return; }
     if (!user) { alert("Logue novamente."); return; }
 
-    // --- BLOQUEIO RÍGIDO NO FRONTEND ---
     if (!isPremium && usageCount >= WEEKLY_LIMIT) {
       setShowUpgradeModal(true);
       return;
@@ -230,7 +232,7 @@ export default function FinancialDashboard() {
       formData.append("empresa", empresa.toUpperCase());
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
-      formData.append("user_id", user.id); 
+      formData.append("user_id", user.id); // <--- ID DO CLERK (TEXTO)
 
       const response = await fetch(`${API_BASE}/api/analyze`, { method: "POST", body: formData });
 
@@ -242,7 +244,6 @@ export default function FinancialDashboard() {
 
       if (!response.ok) throw new Error("Erro API");
       
-      // Sucesso: Incrementa contador se não for premium
       if (!isPremium) {
         const newCount = usageCount + 1;
         setUsageCount(newCount);
@@ -256,7 +257,7 @@ export default function FinancialDashboard() {
       fetchTableData();
     } catch (error) {
       console.error(error);
-      alert("Erro na análise.");
+      alert("Erro na análise. (O backend precisa ser atualizado para o Clerk)");
     } finally {
       setLoading(false);
     }
@@ -302,14 +303,11 @@ export default function FinancialDashboard() {
     return [...tableData].sort((a, b) => {
       const valA = a[sortConfig.key];
       const valB = b[sortConfig.key];
-
-      // Tenta converter para número para ordenação correta (ex: "10" > "2")
       const numA = Number(valA);
       const numB = Number(valB);
       if (!isNaN(numA) && !isNaN(numB)) {
         return sortConfig.direction === 'asc' ? numA - numB : numB - numA;
       }
-
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
       if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
@@ -339,6 +337,9 @@ export default function FinancialDashboard() {
     return <span className={`${colDef.color || 'text-gray-300'}`}>{item[key]}</span>;
   };
 
+  // Se não carregou o Clerk ainda, mostra loading
+  if (!isLoaded) return <div className="flex h-screen items-center justify-center bg-[#0E1117]"><Loader2 className="animate-spin text-blue-500" /></div>;
+
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
@@ -358,7 +359,6 @@ export default function FinancialDashboard() {
           </nav>
         </div>
 
-        {/* --- CONTADOR DE ANÁLISES (VISUAL NOVO) --- */}
         {!isPremium && (
           <div className="mt-auto mb-6 px-2">
             <div className="bg-[#161b22] border border-gray-800 p-4 rounded-xl mb-4">
@@ -383,9 +383,9 @@ export default function FinancialDashboard() {
         
         {isPremium && <div className="mt-auto" />}
 
-        {/* --- RODAPÉ COM CONTA E SAIR --- */}
+        {/* --- RODAPÉ COM CONTA CLERK --- */}
         <div className="mt-4 pt-4 border-t border-gray-800 space-y-2">
-            {/* BOTÃO MINHA CONTA */}
+            {/* BOTÃO MINHA CONTA (Leva para o Profile do Clerk) */}
             <Link 
                 href="/profile" 
                 className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer"
@@ -394,16 +394,17 @@ export default function FinancialDashboard() {
                 <span className="font-medium">Minha Conta</span>
             </Link>
 
-            {/* BOTÃO SAIR */}
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer">
-                <LogOut size={20} className="group-hover:text-red-400 transition-colors" />
-                <span className="font-medium">Sair</span>
-            </button>
+            {/* BOTÃO DE USUÁRIO DO CLERK (SUBSTITUI O LOGOUT MANUAL) */}
+            <div className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer">
+               {/* O UserButton já tem logout embutido */}
+               <UserButton afterSignOutUrl="/"/>
+               <span className="font-medium">Gerenciar Sessão</span>
+            </div>
         </div>
       </aside>
       
       <main className="flex-1 overflow-y-auto p-8 relative">
-        {/* Lógica de renderização das views */}
+        {/* Lógica de renderização das views (Mantida igual) */}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
             {/* ... Conteúdo da Tabela ... */}
@@ -463,7 +464,7 @@ export default function FinancialDashboard() {
                   </tbody>
                 </table>
               </div>
-              {sortedTableData.length === 0 && <div className="p-12 text-center text-gray-500">Nenhuma análise disponível.</div>}
+              {sortedTableData.length === 0 && <div className="p-12 text-center text-gray-500">Nenhuma análise disponível (Conecte o Backend atualizado).</div>}
             </div>
           </div>
         )}
