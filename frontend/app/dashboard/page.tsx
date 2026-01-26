@@ -8,8 +8,7 @@ import {
   GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check
 } from "lucide-react";
 
-// --- CONFIGURAÇÃO: LINK DO STRIPE ---
-// 🔴 COLOQUE SEU LINK DE PAGAMENTO DO STRIPE AQUI 🔴
+// --- CONFIGURAÇÃO DO STRIPE ---
 const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/test_28E28s5vV5J43eX0H78ww00"; 
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
@@ -28,76 +27,43 @@ const COLUMN_DEFINITIONS = [
 
 // --- COMPONENTE MODAL DE UPGRADE ---
 function UpgradeModal({ onClose }: { onClose: () => void }) {
-  
-    const handleCheckout = () => {
-    // Abre direto, sem verificação, já que você já colocou o link certo
+  const handleCheckout = () => {
     window.open(STRIPE_CHECKOUT_URL, '_blank');
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-[#161b22] border border-blue-500/30 rounded-2xl p-0 max-w-4xl w-full flex flex-col md:flex-row overflow-hidden shadow-2xl shadow-blue-900/20 scale-100 animate-in zoom-in-95 duration-200 relative">
-        
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50">
-          <X size={24} />
-        </button>
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50"><X size={24} /></button>
 
         {/* LADO ESQUERDO: GRÁTIS */}
         <div className="md:w-1/2 p-8 bg-[#0d1117] border-r border-gray-800 flex flex-col justify-center relative">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">Gratuito</h2>
-            <p className="text-gray-400 text-sm">Seu plano atual.</p>
-          </div>
-          <div className="mb-8">
-             <span className="text-4xl font-bold text-white">R$ 0</span>
-             <span className="text-gray-500">/mês</span>
-          </div>
+          <div className="mb-6"><h2 className="text-2xl font-bold text-white mb-2">Gratuito</h2><p className="text-gray-400 text-sm">Seu limite foi atingido.</p></div>
+          <div className="mb-8"><span className="text-4xl font-bold text-white">R$ 0</span><span className="text-gray-500">/mês</span></div>
           <ul className="space-y-4 mb-8">
             <li className="flex items-center gap-3 text-gray-300"><Check size={16} className="text-green-500" /> 5 Análises por semana</li>
-            <li className="flex items-center gap-3 text-gray-300"><Check size={16} className="text-green-500" /> Upload Ilimitado</li>
             <li className="flex items-center gap-3 text-gray-500 line-through"><X size={16} /> Sem Download de PDF</li>
             <li className="flex items-center gap-3 text-gray-500 line-through"><X size={16} /> Sem Tabela Comparativa</li>
           </ul>
-          
-          <button 
-            onClick={onClose} 
-            className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all"
-          >
-            Continuar no Plano Grátis
-          </button>
+          <button onClick={onClose} className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all">Entendi, manter Grátis</button>
         </div>
 
         {/* LADO DIREITO: PREMIUM */}
         <div className="md:w-1/2 p-8 bg-blue-900/10 relative flex flex-col justify-center">
           <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">MAIS POPULAR</div>
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Premium <Zap size={20} className="text-yellow-400 fill-yellow-400"/></h2>
-            <p className="text-blue-200 text-sm">Para investir de verdade.</p>
-          </div>
-          <div className="mb-8">
-             <span className="text-4xl font-bold text-white">R$ 29</span>
-             <span className="text-gray-400">/mês</span>
-          </div>
+          <div className="mb-6"><h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Premium <Zap size={20} className="text-yellow-400 fill-yellow-400"/></h2><p className="text-blue-200 text-sm">Desbloqueie tudo agora.</p></div>
+          <div className="mb-8"><span className="text-4xl font-bold text-white">R$ 29</span><span className="text-gray-400">/mês</span></div>
           <ul className="space-y-4 mb-8">
             <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Análises Ilimitadas</li>
-            <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Download de PDF Completo</li>
-            <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Tabela Comparativa</li>
-            <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Prioridade na Fila</li>
+            <li className="flex items-center gap-3 text-white"><Check size={16} className="text-blue-400" /> Download e Tabelas</li>
           </ul>
-          <button 
-            onClick={handleCheckout}
-            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20"
-          >
-            Assinar Agora
-          </button>
+          <button onClick={handleCheckout} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20">Assinar Agora</button>
         </div>
-
       </div>
     </div>
   );
 }
 
-// --- COMPONENTES AUXILIARES ---
 function NavItem({ icon, label, active = false, onClick, isLocked = false }: any) {
   return (
     <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
@@ -114,18 +80,20 @@ export default function FinancialDashboard() {
   const router = useRouter();
   const API_BASE = "https://api-finanalyzer.onrender.com"; 
 
-  // ESTADOS
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  
+  // Contadores
+  const [usageCount, setUsageCount] = useState(0);
+  const WEEKLY_LIMIT = 5;
 
-  // DADOS
   const [result, setResult] = useState<any>(null);
   const [historyList, setHistoryList] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
 
-  // TABELA
+  // Tabela e Filtros
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [showColumnMenu, setShowColumnMenu] = useState(false);
   const columnMenuRef = useRef<HTMLDivElement>(null);
@@ -137,7 +105,6 @@ export default function FinancialDashboard() {
     lucro_nota: true, divida_nota: false, rentabilidade_nota: false
   });
   
-  // FORMULÁRIO
   const [empresa, setEmpresa] = useState("");
   const [ano, setAno] = useState("");
   const [trimestre, setTrimestre] = useState("1T");
@@ -146,7 +113,29 @@ export default function FinancialDashboard() {
   useEffect(() => {
     const storedUser = localStorage.getItem('usuario');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      setUser(parsedUser);
+      
+      // --- LÓGICA DE CONTAGEM E RESET SEMANAL ---
+      if (parsedUser.plano !== 'premium') {
+        const usageKey = `usage_${parsedUser.id}`;
+        const dateKey = `usage_date_${parsedUser.id}`;
+        
+        const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
+        const savedDate = localStorage.getItem(dateKey);
+        
+        const now = Date.now();
+        const oneWeek = 7 * 24 * 60 * 60 * 1000;
+
+        if (!savedDate || (now - parseInt(savedDate)) > oneWeek) {
+          // Passou 1 semana ou é novo: Reseta
+          localStorage.setItem(usageKey, '0');
+          localStorage.setItem(dateKey, now.toString());
+          setUsageCount(0);
+        } else {
+          setUsageCount(savedCount);
+        }
+      }
     } else {
       router.push('/login');
     }
@@ -158,26 +147,14 @@ export default function FinancialDashboard() {
     if (!dataString) return "-";
     try {
       const data = new Date(dataString);
-      return new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-      }).format(data);
+      return new Intl.DateTimeFormat('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric'}).format(data);
     } catch (e) { return dataString; }
   };
 
-  const columnDefsMap = useMemo(() => {
-    return COLUMN_DEFINITIONS.reduce((acc, col) => {
-      acc[col.key] = col;
-      return acc;
-    }, {} as Record<string, typeof COLUMN_DEFINITIONS[0]>);
-  }, []);
-
+  const columnDefsMap = useMemo(() => COLUMN_DEFINITIONS.reduce((acc, col) => { acc[col.key] = col; return acc; }, {} as any), []);
   const visibleCount = useMemo(() => Object.values(visibleColumns).filter(Boolean).length, [visibleColumns]);
 
-  const handleLogout = () => {
-    localStorage.removeItem('usuario');
-    router.push('/login');
-  };
+  const handleLogout = () => { localStorage.removeItem('usuario'); router.push('/login'); };
 
   const fetchHistory = async () => {
     if (!user) return;
@@ -209,26 +186,18 @@ export default function FinancialDashboard() {
   };
 
   const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
-    if (view === 'table' && !isPremium) {
-      setShowUpgradeModal(true); 
-    } else {
-      setCurrentView(view);
-    }
+    if (view === 'table' && !isPremium) setShowUpgradeModal(true);
+    else setCurrentView(view);
   };
 
   const handleAnalyze = async () => {
     if (!file || !empresa || !ano) { alert("Preencha tudo!"); return; }
     if (!user) { alert("Logue novamente."); return; }
 
-    // BLOQUEIO FRONTEND (SIMULAÇÃO)
-    if (!isPremium) {
-        const countKey = `analise_count_${user.id}`;
-        const currentCount = parseInt(localStorage.getItem(countKey) || '0');
-        if (currentCount >= 5) {
-            setShowUpgradeModal(true);
-            return;
-        }
-        localStorage.setItem(countKey, (currentCount + 1).toString());
+    // --- BLOQUEIO RÍGIDO NO FRONTEND ---
+    if (!isPremium && usageCount >= WEEKLY_LIMIT) {
+      setShowUpgradeModal(true);
+      return;
     }
 
     setLoading(true);
@@ -240,10 +209,7 @@ export default function FinancialDashboard() {
       formData.append("trimestre", trimestre);
       formData.append("user_id", user.id); 
 
-      const response = await fetch(`${API_BASE}/api/analyze`, {
-        method: "POST",
-        body: formData
-      });
+      const response = await fetch(`${API_BASE}/api/analyze`, { method: "POST", body: formData });
 
       if (response.status === 403) {
         setLoading(false);
@@ -252,6 +218,14 @@ export default function FinancialDashboard() {
       }
 
       if (!response.ok) throw new Error("Erro API");
+      
+      // Sucesso: Incrementa contador se não for premium
+      if (!isPremium) {
+        const newCount = usageCount + 1;
+        setUsageCount(newCount);
+        localStorage.setItem(`usage_${user.id}`, newCount.toString());
+      }
+
       const data = await response.json();
       setResult(data);
       setCurrentView('result');
@@ -259,7 +233,7 @@ export default function FinancialDashboard() {
       fetchTableData();
     } catch (error) {
       console.error(error);
-      alert("Erro na análise. Verifique o arquivo.");
+      alert("Erro na análise.");
     } finally {
       setLoading(false);
     }
@@ -284,7 +258,6 @@ export default function FinancialDashboard() {
   const handleSort = (key: string) => {
     let direction: 'asc' | 'desc' = 'asc';
     if (sortConfig && sortConfig.key === key) direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
-    else if (['media', 'soma_total', 'qtde_tri', 'nota_final', 'ano'].includes(key)) direction = 'desc';
     setSortConfig({ key, direction });
   };
 
@@ -311,15 +284,10 @@ export default function FinancialDashboard() {
   }, [tableData, sortConfig]);
 
   const handleDownload = () => {
-    if (!isPremium) {
-      setShowUpgradeModal(true);
-      return;
-    }
+    if (!isPremium) { setShowUpgradeModal(true); return; }
     if (!result) return;
-    const r = result;
-    const meta = r.metadata || {};
-    const conteudoPrincipal = r.analise_completa ? r.analise_completa : `RESUMO DA TESE:\n${r.data?.tese_investimento || 'Sem dados.'}`;
-    const text = `RELATÓRIO DE ANÁLISE FINANCEIRA - IA\nEmpresa: ${meta.empresa}\nPeríodo: ${meta.periodo}\n\n${conteudoPrincipal}`;
+    const meta = result.metadata || {};
+    const text = `RELATÓRIO: ${meta.empresa}\n${result.analise_completa || result.data?.tese_investimento}`;
     const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -340,7 +308,6 @@ export default function FinancialDashboard() {
 
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
-      
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
 
       <aside className="w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 z-20">
@@ -358,16 +325,26 @@ export default function FinancialDashboard() {
           </nav>
         </div>
 
+        {/* --- CONTADOR DE ANÁLISES (VISUAL NOVO) --- */}
         {!isPremium && (
           <div className="mt-auto mb-6 px-2">
-            <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/10 border border-blue-500/30 p-4 rounded-xl">
-              <div className="flex items-center gap-2 mb-2 text-blue-200 font-bold text-sm">
-                <Zap size={16} className="text-yellow-400 fill-yellow-400" /> Premium
+            <div className="bg-[#161b22] border border-gray-800 p-4 rounded-xl mb-4">
+              <div className="flex justify-between text-xs mb-2">
+                <span className="text-gray-400">Análises Semanais</span>
+                <span className={`font-bold ${usageCount >= 5 ? 'text-red-400' : 'text-white'}`}>{usageCount}/{WEEKLY_LIMIT}</span>
               </div>
-              <p className="text-xs text-gray-400 mb-3">Desbloqueie tabelas e downloads.</p>
-              {/* ATUALIZADO: Agora abre o modal ao invés de ir para /pricing */}
-              <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-lg transition-colors shadow-lg">Fazer Upgrade</button>
+              <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-500 ${usageCount >= 5 ? 'bg-red-500' : 'bg-blue-500'}`} 
+                  style={{ width: `${Math.min((usageCount / WEEKLY_LIMIT) * 100, 100)}%` }} 
+                />
+              </div>
+              {usageCount >= 5 && <p className="text-xs text-red-400 mt-2 font-medium">Limite atingido.</p>}
             </div>
+
+            <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+              <Zap size={14} className="text-yellow-300 fill-yellow-300" /> Seja Premium
+            </button>
           </div>
         )}
         
@@ -380,8 +357,10 @@ export default function FinancialDashboard() {
       </aside>
       
       <main className="flex-1 overflow-y-auto p-8 relative">
+        {/* Lógica de renderização das views */}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
+            {/* ... Conteúdo da Tabela ... */}
             <header className="flex items-center justify-between mb-8">
               <div><h1 className="text-3xl font-bold text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-400 mt-1">Visão consolidada do desempenho das empresas.</p></div>
               <div className="relative" ref={columnMenuRef}>
@@ -394,11 +373,11 @@ export default function FinancialDashboard() {
                     <div className="p-2 max-h-[400px] overflow-y-auto space-y-1">
                       <p className="px-2 py-1 text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">Arraste para reordenar</p>
                       {columnOrder.map((colKey, index) => {
-                        const colDef = columnDefsMap[colKey];
+                        const col = columnDefsMap[colKey];
                         const isVisible = visibleColumns[colKey];
                         return (
                           <div key={colKey} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onClick={() => toggleColumn(colKey)} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border border-transparent ${draggedItemIndex === index ? 'bg-blue-900/20 border-blue-500/50 opacity-50' : 'hover:bg-white/5 hover:border-gray-700'}`}>
-                            <div className="flex items-center gap-3"><div className="cursor-grab text-gray-600 hover:text-gray-300"><GripVertical size={16} /></div><span className={`text-sm font-medium ${isVisible ? 'text-gray-200' : 'text-gray-500'}`}>{colDef.label}</span></div>
+                            <div className="flex items-center gap-3"><div className="cursor-grab text-gray-600 hover:text-gray-300"><GripVertical size={16} /></div><span className={`text-sm font-medium ${isVisible ? 'text-gray-200' : 'text-gray-500'}`}>{col.label}</span></div>
                             <div className={`p-1.5 rounded-lg transition-colors ${isVisible ? 'bg-blue-500/10 text-blue-400' : 'bg-gray-800 text-gray-600'}`}>{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}</div>
                           </div>
                         );
@@ -419,7 +398,7 @@ export default function FinancialDashboard() {
                         const isDragging = draggedItemIndex === index;
                         return (
                           <th key={col.key} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onDragOver={(e) => e.preventDefault()} onClick={() => handleSort(col.key)} className={`py-3 px-3 font-semibold transition-all relative group select-none cursor-grab active:cursor-grabbing ${col.color || ''} ${col.minWidth || ''} ${isDragging ? 'opacity-30 bg-blue-500/10 border-2 border-dashed border-blue-500' : 'hover:bg-white/5'}`} style={{ textAlign: col.align as any }}>
-                            <div className={`flex items-center gap-2 ${col.align === 'center' ? 'justify-center' : ''}`}><GripVertical size={12} className="text-gray-700 group-hover:text-gray-400 transition-colors opacity-0 group-hover:opacity-100" />{col.label}{sortConfig?.key === col.key ? (sortConfig.direction === 'asc' ? <ArrowUp size={12} className="text-blue-400"/> : <ArrowDown size={12} className="text-blue-400"/>) : <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-30 transition-opacity"/>}</div>
+                            <div className={`flex items-center gap-2 ${col.align === 'center' ? 'justify-center' : ''}`}><GripVertical size={12} className="text-gray-700 group-hover:text-gray-400 transition-colors opacity-0 group-hover:opacity-100" />{col.label}{sortConfig?.key === col.key ? (sortConfig?.direction === 'asc' ? <ArrowUp size={12} className="text-blue-400"/> : <ArrowDown size={12} className="text-blue-400"/>) : <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-30 transition-opacity"/>}</div>
                           </th>
                         );
                       })}
@@ -444,6 +423,7 @@ export default function FinancialDashboard() {
         )}
         {currentView === 'history' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
+            {/* ... Conteúdo do Histórico ... */}
             <header className="flex items-center justify-between mb-8"><div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
             <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
               <table className="w-full text-left border-collapse">
@@ -488,10 +468,10 @@ export default function FinancialDashboard() {
         )}
         {currentView === 'result' && result && (
           <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
+            {/* ... Conteúdo do Resultado ... */}
             <div className="flex justify-between items-center mb-10">
               <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
               
-              {/* Botão de Download com Cadeado se for Free */}
               <button onClick={handleDownload} className={`px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${isPremium ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}>
                 {isPremium ? <Download size={18} /> : <Lock size={18} />} Baixar Relatório
               </button>
