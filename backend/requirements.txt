@@ -9,3 +9,4 @@ pypdf
 python-dotenv
 python-multipart
 stripe
+fastapi-sso==0.7.0
