@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
-  BarChart3, UploadCloud, ArrowRight, 
-  FileText, Layout, Database, Check, X, CheckCircle2 
+  ChartColumn, CloudUpload, ArrowRight, 
+  FileText, LayoutTemplate, Database, Check, X, CircleCheck 
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -18,7 +18,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-              <BarChart3 className="text-white w-6 h-6" />
+              <ChartColumn className="text-white w-6 h-6" />
             </div>
             <span className="text-2xl font-bold tracking-tight text-white">
               FinAnalyzer <span className="text-blue-500">.AI</span>
@@ -77,7 +77,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[40%_60%] gap-12 items-center">
             <div className="order-2 lg:order-1">
               <div className="w-14 h-14 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30">
-                <UploadCloud className="text-blue-400 w-7 h-7" />
+                <CloudUpload className="text-blue-400 w-7 h-7" />
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Upload Inteligente</h2>
               <p className="text-lg text-gray-400 leading-relaxed mb-6">
@@ -125,7 +125,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 lg:grid lg:grid-cols-[40%_60%] gap-12 items-center">
             <div className="order-2 lg:order-1">
               <div className="w-14 h-14 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30">
-                <Layout className="text-purple-400 w-7 h-7" />
+                <LayoutTemplate className="text-purple-400 w-7 h-7" />
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Comparador de Ativos</h2>
               <p className="text-lg text-gray-400 leading-relaxed mb-6">
@@ -254,7 +254,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
-                <BarChart3 className="text-gray-400 w-5 h-5" />
+              <ChartColumn className="text-gray-400 w-5 h-5" />
               </div>
               <span className="text-lg font-bold text-gray-300">FinAnalyzer.AI</span>
             </div>
@@ -302,7 +302,7 @@ function Feature({ text, active = false, disabled = false }: any) {
 function ListItem({ children }: { children: React.ReactNode }) {
   return (
     <li className="flex items-center gap-3 text-gray-300">
-      <CheckCircle2 size={18} className="text-blue-500" />
+      <CircleCheck size={18} className="text-blue-500" />
       <span>{children}</span>
     </li>
   );
