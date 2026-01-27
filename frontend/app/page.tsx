@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
-  ChartColumn, CloudUpload, ArrowRight, 
+  BarChart3, CloudUpload, ArrowRight, 
   FileText, LayoutTemplate, Database, Check, X, CircleCheck 
 } from "lucide-react";
 
@@ -18,7 +18,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-              <ChartColumn className="text-white w-6 h-6" />
+              <BarChart3 className="text-white w-6 h-6" />
             </div>
             <span className="text-2xl font-bold tracking-tight text-white">
               FinAnalyzer <span className="text-blue-500">.AI</span>
@@ -254,7 +254,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
-              <ChartColumn className="text-gray-400 w-5 h-5" />
+              <BarChart3 className="text-gray-400 w-5 h-5" />
               </div>
               <span className="text-lg font-bold text-gray-300">FinAnalyzer.AI</span>
             </div>
