@@ -1,6 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   BarChart3, UploadCloud, ArrowRight, 
@@ -8,15 +7,8 @@ import {
 } from "lucide-react";
 
 export default function LandingPage() {
-  const router = useRouter(); 
+  // REMOVI O 'useEffect' E O 'useRouter' QUE CAUSAVAM O LOOP
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-
-  useEffect(() => {
-    const user = localStorage.getItem('usuario');
-    if (user) {
-      router.push('/dashboard'); 
-    }
-  }, [router]);
 
   return (
     <div className="min-h-screen bg-[#0E1117] text-gray-100 font-sans selection:bg-blue-500/30">
@@ -40,6 +32,7 @@ export default function LandingPage() {
             <Link href="#planos" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Preços
             </Link>
+            {/* O botão Entrar agora é a única forma de ir pro Dashboard */}
             <Link href="/login" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Entrar
             </Link>
@@ -278,8 +271,6 @@ export default function LandingPage() {
              <p>
                <strong className="text-gray-200">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
              </p>
-
-             {/* Parágrafo de Disclaimers de Dados foi removido conforme solicitado */}
 
              <p className="text-center pt-4 text-gray-500">
                © 2026 FinAnalyzer Inc. Todos os direitos reservados.
