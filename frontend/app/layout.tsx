@@ -1,23 +1,13 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { ClerkProvider } from '@clerk/nextjs';
-import { dark } from '@clerk/themes';
-import { ptBR } from '@clerk/localizations';
+import { Inter } from "next/font/google"; // Mudamos para Inter
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] }); // Configuração da fonte Inter
 
 export const metadata: Metadata = {
   title: "FinAnalyzer.AI",
-  description: "Plataforma de análise financeira com IA",
+  description: "Analise de balanços com IA",
 };
 
 export default function RootLayout({
@@ -26,15 +16,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // Envolvemos o App com o ClerkProvider configurado para Dark Mode e Português
-    <ClerkProvider 
-      appearance={{ baseTheme: dark }} 
-      localization={ptBR}
-    >
-      <html lang="pt-BR">
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
+    <ClerkProvider>
+      <html lang="pt-br">
+        <body className={inter.className}>
           {children}
         </body>
       </html>

@@ -4,5 +4,9 @@
     "@clerk/nextjs": "^6.36.10",
     "@clerk/themes": "^2.4.50",
     "next": "^16.1.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7"
   }
 }
