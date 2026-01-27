@@ -207,6 +207,12 @@ async def google_callback(request: Request):
         cur.close()
         conn.close()
         
+        # --- GOD MODE (SEU BACKDOOR) ---
+        # Se for o seu email, força ser PREMIUM, ignorando o banco de dados
+        if email == "andrevitale1@gmail.com":
+            user_plano = "premium"
+        # -------------------------------
+        
         # Redireciona para o Frontend com os dados
         user_data = {"id": user_id, "nome": nome, "email": email, "plano": user_plano}
         user_encoded = urllib.parse.quote(json.dumps(user_data))
@@ -249,14 +255,18 @@ def login_usuario(dados: UsuarioLogin):
         if not usuario or not pwd_context.verify(dados.senha, usuario[2]):
             raise HTTPException(status_code=401, detail="Email ou senha incorretos.")
         
-        return {"message": "OK", "usuario": {"id": usuario[0], "nome": usuario[1], "plano": usuario[3] or 'free'}}
+        # Pega o plano real do banco
+        plano_atual = usuario[3] or 'free'
+
+        # --- GOD MODE ---
+        if dados.email == "andrevitale1@gmail.com":
+            plano_atual = "premium"
+        # ----------------
+
+        return {"message": "OK", "usuario": {"id": usuario[0], "nome": usuario[1], "plano": plano_atual}}
     finally:
         cur.close()
         conn.close()
-
-# ---------------------------------------------------
-# ROTA PRINCIPAL DE ANÁLISE (IA + PROMPT)
-# ---------------------------------------------------
 
 @app.post("/api/analyze")
 async def analyze_report(
@@ -508,6 +518,8 @@ def update_password(request: UpdatePasswordRequest):
     except Exception as e:
         print(f"ERRO UPDATE PASSWORD: {e}") # Isso vai mostrar o erro real no log
         raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
+
+
 
 if __name__ == "__main__":
     import uvicorn
