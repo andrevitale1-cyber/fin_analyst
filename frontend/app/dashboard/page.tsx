@@ -383,22 +383,22 @@ export default function FinancialDashboard() {
         
         {isPremium && <div className="mt-auto" />}
 
-        {/* --- RODAPÉ COM CONTA CLERK --- */}
-        <div className="mt-4 pt-4 border-t border-gray-800 space-y-2">
-            {/* BOTÃO MINHA CONTA (Leva para o Profile do Clerk) */}
-            <Link 
-                href="/profile" 
-                className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer"
-            >
-                <Settings size={20} className="group-hover:text-blue-400 transition-colors" />
-                <span className="font-medium">Minha Conta</span>
-            </Link>
-
-            {/* BOTÃO DE USUÁRIO DO CLERK (SUBSTITUI O LOGOUT MANUAL) */}
-            <div className="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer">
-               {/* O UserButton já tem logout embutido */}
-               <UserButton afterSignOutUrl="/"/>
-               <span className="font-medium">Gerenciar Sessão</span>
+       {/* --- RODAPÉ SIMPLIFICADO --- */}
+        <div className="mt-auto pt-4 border-t border-gray-800 px-4 pb-6">
+            <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-white/5 transition-all cursor-pointer">
+               {/* O componente UserButton agora mostra a foto E o nome, funcionando como um botão único */}
+               <UserButton 
+                 afterSignOutUrl="/"
+                 showName={true}
+                 appearance={{
+                   elements: {
+                     rootBox: "w-full",
+                     userButtonBox: "flex flex-row gap-3 w-full",
+                     userButtonOuterIdentifier: "text-gray-300 font-medium text-sm hover:text-white transition-colors",
+                     userButtonTrigger: "focus:shadow-none w-full justify-start"
+                   }
+                 }}
+               />
             </div>
         </div>
       </aside>
