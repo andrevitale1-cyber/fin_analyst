@@ -14,9 +14,10 @@ import stripe
 import urllib.parse
 from pypdf import PdfReader
 from dotenv import load_dotenv
-from fastapi_sso.sso.google import GoogleSSO 
-from fastapi import FastAPI, HTTPException, Request # Certifique-se que HTTPException está aqui
-from pydantic import BaseModel
+try:
+    from fastapi_sso.sso.google import GoogleSSO
+except ImportError:
+    GoogleSSO = None
 
 # Carrega variáveis de ambiente
 load_dotenv()
@@ -30,7 +31,7 @@ GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 # URL de Callback (Deve ser igual ao configurado no Google Cloud)
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://api-finanalyzer.onrender.com/auth/google/callback")
 
-if GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
+if GoogleSSO and GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET:
     google_sso = GoogleSSO(
         client_id=GOOGLE_CLIENT_ID,
         client_secret=GOOGLE_CLIENT_SECRET,
@@ -82,7 +83,7 @@ def init_db():
                 trimestre TEXT,
                 data_criacao TEXT,
                 resultado_json TEXT,
-                user_id INTEGER
+                user_id TEXT
             );
         ''')
 
@@ -274,7 +275,7 @@ async def analyze_report(
     empresa: str = Form(...),
     ano: str = Form(...),
     trimestre: str = Form(...),
-    user_id: int = Form(...) 
+    user_id: str = Form(...) 
 ):
     if not model:
         raise HTTPException(status_code=500, detail="Erro: Chave API Gemini não configurada.")
@@ -363,7 +364,7 @@ def create_checkout(dados: dict):
     return {"message": "Use link direto"}
 
 @app.get("/api/table-data")
-def get_table_data(user_id: int): 
+def get_table_data(user_id: str): 
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -397,7 +398,7 @@ def get_table_data(user_id: int):
         conn.close()
 
 @app.get("/api/history")
-def get_history(user_id: int):
+def get_history(user_id: str):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -452,15 +453,30 @@ def fix_database_plans():
         cur.close()
         conn.close()
 
+# --- ROTA PARA MIGRAR ID DO USUÁRIO PARA TEXTO (CLERK) ---
+@app.get("/api/migrate-clerk-db")
+def migrate_clerk_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("ALTER TABLE historico ALTER COLUMN user_id TYPE TEXT;")
+        conn.commit()
+        return {"message": "Coluna user_id migrada para TEXT com sucesso."}
+    except Exception as e:
+        return {"error": f"Erro na migração: {str(e)}"}
+    finally:
+        cur.close()
+        conn.close()
+
 from pydantic import BaseModel
 
 class UpdateProfileRequest(BaseModel):
-    user_id: int
+    user_id: str
     nome: str
     email: str
 
 class UpdatePasswordRequest(BaseModel):
-    user_id: int
+    user_id: str
     nova_senha: str
 
 # --- ROTA: ATUALIZAR DADOS PESSOAIS ---
