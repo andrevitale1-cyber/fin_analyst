@@ -1,20 +1,22 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser, UserButton } from "@clerk/nextjs"; // <--- NOVO IMPORT
 import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
-  BarChart3, TrendingUp, DollarSign, Percent, Activity, LogOut, Loader2,
+  BarChart3, TrendingUp, DollarSign, Percent, Activity, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
   GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DO STRIPE ---
 const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/test_28E28s5vV5J43eX0H78ww00"; 
+const API_BASE = "https://api-finanalyzer.onrender.com"; // <--- BASE URL
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
 const COLUMN_DEFINITIONS = [
   { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-white font-bold' },
-  { key: 'nota_final', label: 'Nota do Último Resultado', align: 'center', color: 'text-purple-400 font-bold' },
+  { key: 'nota_final', label: 'Nota Final', align: 'center', color: 'text-purple-400 font-bold' },
   { key: 'receita_nota', label: 'Receita', align: 'center', color: 'text-blue-400' },
   { key: 'lucro_nota', label: 'Lucro', align: 'center', color: 'text-green-400' },
   { key: 'divida_nota', label: 'Dívida', align: 'center', color: 'text-red-400' },
@@ -42,44 +44,25 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
             <h2 className="text-2xl font-bold text-white mb-2">Gratuito</h2>
             <p className="text-gray-400 text-sm">Para começar a analisar sem custo.</p>
           </div>
-          
           <ul className="space-y-4 mb-8 text-sm">
             <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> 5 Análises por semana</li>
             <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Upload de arquivos ilimitado</li>
-            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Acesso ao histórico simples</li>
-            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Suporte por email</li>
-            
-            <li className="flex items-center gap-3 text-gray-500 line-through"><div className="p-0.5 rounded-full border border-gray-700 text-gray-600"><X size={14} /></div> Download do Relatório PDF</li>
-            <li className="flex items-center gap-3 text-gray-500 line-through"><div className="p-0.5 rounded-full border border-gray-700 text-gray-600"><X size={14} /></div> Tabela Comparativa de Ativos</li>
+            <button onClick={onClose} className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all">Continuar no Plano Grátis</button>
           </ul>
-          
-          <button onClick={onClose} className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all">Continuar no Plano Grátis</button>
         </div>
 
         {/* LADO DIREITO: PREMIUM */}
         <div className="md:w-1/2 p-8 bg-blue-900/10 relative flex flex-col justify-center">
           <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">MAIS POPULAR</div>
-          
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Premium <Zap size={20} className="text-yellow-400 fill-yellow-400"/></h2>
-            <div className="flex items-end gap-1">
-               <span className="text-4xl font-bold text-white">R$ 29</span>
-               <span className="text-gray-400 text-sm mb-1">/mês</span>
-            </div>
-            <p className="text-blue-200 text-xs mt-2">Para quem quer realmente evoluir como investidor!</p>
+            <div className="flex items-end gap-1"><span className="text-4xl font-bold text-white">R$ 29</span><span className="text-gray-400 text-sm mb-1">/mês</span></div>
           </div>
-          
           <ul className="space-y-4 mb-8 text-sm">
-            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Análises de IA Ilimitadas</li>
-            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Download do Relatório PDF Completo</li>
-            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Tabela Comparativa Customizável</li>
-            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Upload de arquivos ilimitado</li>
-            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Histórico de dados ilimitado</li>
-            <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Prioridade máxima na fila</li>
+             <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Análises de IA Ilimitadas</li>
+             <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Relatórios Completos</li>
           </ul>
-          
           <button onClick={handleCheckout} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20">Assinar Agora</button>
-          <p className="text-center text-[10px] text-gray-500 mt-3">Cancele quando quiser.</p>
         </div>
       </div>
     </div>
@@ -92,7 +75,6 @@ function NavItem({ icon, label, active = false, onClick, isLocked = false }: any
       {React.cloneElement(icon, { size: 20 })}
       <span className="font-medium text-sm">{label}</span>
       {isLocked && <Lock size={14} className="ml-auto text-gray-600 group-hover:text-blue-400" />}
-      {active && !isLocked && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
     </button>
   );
 }
@@ -100,11 +82,10 @@ function NavItem({ icon, label, active = false, onClick, isLocked = false }: any
 // --- COMPONENTE PRINCIPAL ---
 export default function FinancialDashboard() {
   const router = useRouter();
-  const API_BASE = "https://api-finanalyzer.onrender.com"; 
+  const { user, isLoaded } = useUser(); // <--- HOOK DO CLERK
 
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
-  const [user, setUser] = useState<any>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   
   // Contadores
@@ -132,16 +113,21 @@ export default function FinancialDashboard() {
   const [trimestre, setTrimestre] = useState("1T");
   const [file, setFile] = useState<File | null>(null);
 
+  // Define se é premium (Por enquanto false até integrar metadata do Clerk)
+  const isPremium = false; 
+
   useEffect(() => {
-    const storedUser = localStorage.getItem('usuario');
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      
+    // Se não estiver logado e terminou de carregar, volta pro login
+    if (isLoaded && !user) {
+      // O Middleware já faz isso, mas é uma segurança extra no cliente
+      return; 
+    }
+
+    if (user) {
       // --- LÓGICA DE CONTAGEM E RESET SEMANAL ---
-      if (parsedUser.plano !== 'premium') {
-        const usageKey = `usage_${parsedUser.id}`;
-        const dateKey = `usage_date_${parsedUser.id}`;
+      if (!isPremium) {
+        const usageKey = `usage_${user.id}`; // Usa ID do Clerk
+        const dateKey = `usage_date_${user.id}`;
         
         const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
         const savedDate = localStorage.getItem(dateKey);
@@ -157,12 +143,8 @@ export default function FinancialDashboard() {
           setUsageCount(savedCount);
         }
       }
-    } else {
-      router.push('/login');
     }
-  }, [router]);
-
-  const isPremium = useMemo(() => user?.plano === 'premium', [user]);
+  }, [isLoaded, user, isPremium]);
 
   const formatarData = (dataString: string) => {
     if (!dataString) return "-";
@@ -174,8 +156,6 @@ export default function FinancialDashboard() {
 
   const columnDefsMap = useMemo(() => COLUMN_DEFINITIONS.reduce((acc, col) => { acc[col.key] = col; return acc; }, {} as any), []);
   const visibleCount = useMemo(() => Object.values(visibleColumns).filter(Boolean).length, [visibleColumns]);
-
-  const handleLogout = () => { localStorage.removeItem('usuario'); router.push('/login'); };
 
   const fetchHistory = async () => {
     if (!user) return;
@@ -213,7 +193,7 @@ export default function FinancialDashboard() {
 
   const handleAnalyze = async () => {
     if (!file || !empresa || !ano) { alert("Preencha tudo!"); return; }
-    if (!user) { alert("Logue novamente."); return; }
+    if (!user) { alert("Aguarde o carregamento do usuário."); return; }
 
     // --- BLOQUEIO RÍGIDO NO FRONTEND ---
     if (!isPremium && usageCount >= WEEKLY_LIMIT) {
@@ -228,7 +208,7 @@ export default function FinancialDashboard() {
       formData.append("empresa", empresa.toUpperCase());
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
-      formData.append("user_id", user.id); 
+      formData.append("user_id", user.id); // <--- ID DO CLERK
 
       const response = await fetch(`${API_BASE}/api/analyze`, { method: "POST", body: formData });
 
@@ -254,7 +234,7 @@ export default function FinancialDashboard() {
       fetchTableData();
     } catch (error) {
       console.error(error);
-      alert("Erro na análise.");
+      alert("Erro na análise. Verifique se o backend está online.");
     } finally {
       setLoading(false);
     }
@@ -300,14 +280,11 @@ export default function FinancialDashboard() {
     return [...tableData].sort((a, b) => {
       const valA = a[sortConfig.key];
       const valB = b[sortConfig.key];
-
-      // Tenta converter para número para ordenação correta (ex: "10" > "2")
       const numA = Number(valA);
       const numB = Number(valB);
       if (!isNaN(numA) && !isNaN(numB)) {
         return sortConfig.direction === 'asc' ? numA - numB : numB - numA;
       }
-
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
       if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
@@ -337,6 +314,8 @@ export default function FinancialDashboard() {
     return <span className={`${colDef.color || 'text-gray-300'}`}>{item[key]}</span>;
   };
 
+  if (!isLoaded) return <div className="flex h-screen items-center justify-center bg-[#0E1117]"><Loader2 className="animate-spin text-blue-500" /></div>;
+
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
@@ -356,7 +335,7 @@ export default function FinancialDashboard() {
           </nav>
         </div>
 
-        {/* --- CONTADOR DE ANÁLISES (VISUAL NOVO) --- */}
+        {/* --- CONTADOR DE ANÁLISES --- */}
         {!isPremium && (
           <div className="mt-auto mb-6 px-2">
             <div className="bg-[#161b22] border border-gray-800 p-4 rounded-xl mb-4">
@@ -370,9 +349,7 @@ export default function FinancialDashboard() {
                   style={{ width: `${Math.min((usageCount / WEEKLY_LIMIT) * 100, 100)}%` }} 
                 />
               </div>
-              {usageCount >= 5 && <p className="text-xs text-red-400 mt-2 font-medium">Limite atingido.</p>}
             </div>
-
             <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
               <Zap size={14} className="text-yellow-300 fill-yellow-300" /> Seja Premium
             </button>
@@ -381,10 +358,18 @@ export default function FinancialDashboard() {
         
         {isPremium && <div className="mt-auto" />}
 
-        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-all duration-300 group cursor-pointer mt-4">
-          <LogOut size={20} className="group-hover:text-red-400 transition-colors" />
-          <span className="font-medium">Sair</span>
-        </button>
+        {/* --- BOTÃO OFICIAL DO CLERK (SUBSTITUINDO O MANUAL) --- */}
+        <div className="mt-4 px-2 py-3 border-t border-gray-800">
+           <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all w-full">
+              <UserButton showName={true} appearance={{
+                  elements: {
+                    userButtonBox: "flex flex-row-reverse w-full justify-start gap-3",
+                    userButtonOuterIdentifier: "text-white font-medium",
+                    avatarBox: "w-8 h-8"
+                  }
+              }}/>
+           </div>
+        </div>
       </aside>
       
       <main className="flex-1 overflow-y-auto p-8 relative">
