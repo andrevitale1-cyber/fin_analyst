@@ -11,6 +11,7 @@ export default function LandingPage() {
   const router = useRouter(); 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
+  // Verifica se já existe sessão antiga (opcional, mas mantive sua lógica)
   useEffect(() => {
     const user = localStorage.getItem('usuario');
     if (user) {
@@ -40,10 +41,12 @@ export default function LandingPage() {
             <Link href="#planos" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Preços
             </Link>
-            <Link href="/login" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
+            
+            {/* CORREÇÃO AQUI: Mandamos para dashboard, o Middleware cuida do resto */}
+            <Link href="/dashboard" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Entrar
             </Link>
-            <Link href="/register" className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20 hover:scale-105">
+            <Link href="/dashboard" className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20 hover:scale-105">
               Começar Grátis
             </Link>
           </div>
@@ -62,11 +65,12 @@ export default function LandingPage() {
           </h1>
           
           <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Abandone a leitura manual de PDFs. Nossa IA lê os balanços, interpreta os dados e entrega uma tese de investimento pronta.
+            Abandone a leitura manual de PDFs. Nossa IA lê os balanços, interpreta os dados e entrega uma tese de investimento completa.
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-            <Link href="/register" className="w-full md:w-auto bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2">
+            {/* CORREÇÃO AQUI TAMBÉM */}
+            <Link href="/dashboard" className="w-full md:w-auto bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2">
               Criar Conta Grátis <ArrowRight size={20} />
             </Link>
             <Link href="#funcionalidades" className="w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg text-gray-300 border border-gray-700 hover:border-gray-500 hover:text-white transition-all">
@@ -216,7 +220,8 @@ export default function LandingPage() {
                 <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
 
-              <Link href="/register" className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 hover:border-gray-500 transition-all mt-auto">
+              {/* CORREÇÃO AQUI */}
+              <Link href="/dashboard" className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 hover:border-gray-500 transition-all mt-auto">
                 Criar conta grátis
               </Link>
             </div>
@@ -244,7 +249,8 @@ export default function LandingPage() {
                 <Feature text="Prioridade máxima na fila" active />
               </ul>
 
-              <Link href="/register" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto">
+              {/* CORREÇÃO AQUI */}
+              <Link href="/dashboard" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto">
                 Assinar Agora
               </Link>
               <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
@@ -278,8 +284,6 @@ export default function LandingPage() {
              <p>
                <strong className="text-gray-200">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
              </p>
-
-             {/* Parágrafo de Disclaimers de Dados foi removido conforme solicitado */}
 
              <p className="text-center pt-4 text-gray-500">
                © 2026 FinAnalyzer Inc. Todos os direitos reservados.
