@@ -7,7 +7,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      // AQUI ESTÁ O SEGREDO: Forçamos os links externos direto no código
+      signInUrl="https://dashing-ocelot-83.accounts.dev/sign-in"
+      signUpUrl="https://dashing-ocelot-83.accounts.dev/sign-up"
+      afterSignOutUrl="/"
+    >
       <html lang="en">
         <body>{children}</body>
       </html>
