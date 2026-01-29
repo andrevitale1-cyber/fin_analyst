@@ -1,23 +1,13 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-// Define as rotas que exigem login
-const isProtectedRoute = createRouteMatcher([
-  '/dashboard(.*)',
-  '/profile(.*)',
-]);
-
-export default clerkMiddleware((auth, req) => {
-  // Na versão 5, o auth().protect() é síncrono e direto
-  if (isProtectedRoute(req)) {
-    auth().protect();
-  }
-});
+// Middleware simples: apenas carrega o contexto do Clerk, sem forçar bloqueios
+export default clerkMiddleware();
 
 export const config = {
   matcher: [
-    // Pula arquivos estáticos
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Sempre roda na API
-    '/(api|trpc)(.*)',
+    // Pula arquivos estáticos (_next, imagens, etc)
+    '/((?!.*\\..*|_next).*)', 
+    '/', 
+    '/(api|trpc)(.*)'
   ],
 };
