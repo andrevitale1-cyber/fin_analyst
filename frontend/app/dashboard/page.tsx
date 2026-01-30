@@ -28,6 +28,7 @@ const COLUMN_DEFINITIONS = [
 ];
 
 // --- COMPONENTE MODAL DE UPGRADE ---
+// --- COMPONENTE MODAL DE UPGRADE (ATUALIZADO IGUAL LANDING PAGE) ---
 function UpgradeModal({ onClose }: { onClose: () => void }) {
   const handleCheckout = () => {
     window.open(STRIPE_CHECKOUT_URL, '_blank');
@@ -35,34 +36,61 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-[#161b22] border border-blue-500/30 rounded-2xl p-0 max-w-4xl w-full flex flex-col md:flex-row overflow-hidden shadow-2xl shadow-blue-900/20 scale-100 animate-in zoom-in-95 duration-200 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50"><X size={24} /></button>
+      <div className="relative w-full max-w-5xl grid md:grid-cols-2 gap-8 p-4">
+        {/* Botão de Fechar */}
+        <button 
+          onClick={onClose} 
+          className="absolute top-2 right-2 md:-top-8 md:-right-8 text-gray-400 hover:text-white bg-gray-800/50 p-2 rounded-full transition-colors z-50"
+        >
+          <X size={24} />
+        </button>
 
-        {/* LADO ESQUERDO: GRÁTIS */}
-        <div className="md:w-1/2 p-8 bg-[#0d1117] border-r border-gray-800 flex flex-col justify-center relative">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2">Gratuito</h2>
-            <p className="text-gray-400 text-sm">Para começar a analisar sem custo.</p>
-          </div>
-          <ul className="space-y-4 mb-8 text-sm">
-            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> 5 Análises por semana</li>
-            <li className="flex items-center gap-3 text-gray-300"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500"><Check size={14} /></div> Upload de arquivos ilimitado</li>
-            <button onClick={onClose} className="w-full border border-gray-700 hover:border-gray-500 text-gray-300 font-bold py-3 rounded-xl transition-all">Continuar no Plano Grátis</button>
+        {/* --- CARD GRATUITO --- */}
+        <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 flex flex-col h-full opacity-80 scale-95">
+          <h3 className="text-2xl font-bold text-white mb-2">Gratuito</h3>
+          <p className="text-gray-400 text-base mb-8">Seu plano atual.</p>
+          
+          <ul className="space-y-4 mb-8 flex-1">
+            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">5 Análises por semana</span></li>
+            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Upload de arquivos ilimitado</span></li>
+            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Acesso ao histórico simples</span></li>
+            
+            {/* Itens Bloqueados */}
+            <li className="flex items-center gap-3 opacity-50"><div className="p-0.5 rounded-full border border-gray-600 text-gray-500"><X size={12} /></div><span className="text-gray-500 line-through">Download do Relatório PDF</span></li>
+            <li className="flex items-center gap-3 opacity-50"><div className="p-0.5 rounded-full border border-gray-600 text-gray-500"><X size={12} /></div><span className="text-gray-500 line-through">Tabela Comparativa</span></li>
           </ul>
+
+          <button onClick={onClose} className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 transition-all mt-auto">
+            Continuar Grátis
+          </button>
         </div>
 
-        {/* LADO DIREITO: PREMIUM */}
-        <div className="md:w-1/2 p-8 bg-blue-900/10 relative flex flex-col justify-center">
-          <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl">MAIS POPULAR</div>
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">Premium <Zap size={20} className="text-yellow-400 fill-yellow-400"/></h2>
-            <div className="flex items-end gap-1"><span className="text-4xl font-bold text-white">R$ 29</span><span className="text-gray-400 text-sm mb-1">/mês</span></div>
+        {/* --- CARD PREMIUM (DESTAQUE) --- */}
+        <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/30 flex flex-col h-full transform hover:scale-[1.02] transition-transform duration-300">
+          <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-2xl">
+            RECOMENDADO
           </div>
-          <ul className="space-y-4 mb-8 text-sm">
-             <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Análises de IA Ilimitadas</li>
-             <li className="flex items-center gap-3 text-white"><div className="p-0.5 rounded-full bg-blue-500/20 text-blue-400"><Check size={14} /></div> Relatórios Completos</li>
+
+          <h3 className="text-2xl font-bold text-blue-400 mb-2 flex items-center gap-2">
+            Premium <Zap size={20} className="fill-blue-400" />
+          </h3>
+          <div className="flex items-end gap-1 mb-2">
+            <span className="text-5xl font-bold text-white">R$ 29</span>
+            <span className="text-gray-500 mb-1 text-lg">/mês</span>
+          </div>
+          <p className="text-gray-400 text-sm mb-8">Desbloqueie todo o poder da IA.</p>
+          
+          <ul className="space-y-4 mb-8 flex-1">
+            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Análises de IA Ilimitadas</span></li>
+            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Download do Relatório PDF Completo</span></li>
+            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Tabela Comparativa Customizável</span></li>
+            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Prioridade máxima na fila</span></li>
           </ul>
-          <button onClick={handleCheckout} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20">Assinar Agora</button>
+
+          <button onClick={handleCheckout} className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto animate-pulse hover:animate-none">
+            Assinar Agora
+          </button>
+          <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
         </div>
       </div>
     </div>
