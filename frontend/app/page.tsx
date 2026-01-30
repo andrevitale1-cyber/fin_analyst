@@ -200,11 +200,12 @@ export default function LandingPage() {
               
               <ul className="space-y-4 mb-8 flex-1">
                 <Feature text="5 Análises por semana" active />
-                <Feature text="Upload de arquivos ilimitado" active />
+                <Feature text="Relatório Resumido na Tela" active />
                 <Feature text="Acesso ao histórico simples" active />
                 <Feature text="Suporte por email" active />
                 {/* Bloqueios */}
-                <Feature text="Download do Relatório PDF" disabled />
+                <Feature text="Upload de arquivos ilimitado" disabled />
+                <Feature text="Download da Análise Completa da IA" disabled />
                 <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
 
@@ -229,7 +230,8 @@ export default function LandingPage() {
               
               <ul className="space-y-4 mb-8 flex-1">
                 <Feature text="Análises de IA Ilimitadas" active />
-                <Feature text="Download do Relatório PDF Completo" active />
+                <Feature text="Relatório Resumido na Tela" active />
+                <Feature text="Download da Análise Completa da IA" active />
                 <Feature text="Tabela Comparativa Customizável" active />
                 <Feature text="Upload de arquivos ilimitado" active />
                 <Feature text="Histórico de dados ilimitado" active />
