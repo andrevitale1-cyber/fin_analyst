@@ -232,7 +232,7 @@ export default function LandingPage() {
                 <Feature text="Análises de IA Ilimitadas" active />
                 <Feature text="Relatório Resumido na Tela" active />
                 <Feature text="Acesso ao Histórico Ilimitado" active />
-                <Feature text="Suporte Prioritário por Email" active />
+                <Feature text="Suporte por Email" active />
                 <Feature text="Upload de arquivos ilimitado" active />
                 <Feature text="Download da Análise Completa da IA" active />
                 <Feature text="Tabela Comparativa de Ativos" active />
