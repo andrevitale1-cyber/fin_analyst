@@ -68,148 +68,143 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- SEÇÃO: FUNCIONALIDADES (LAYOUT FUNDAMENTEI) --- */}
-      <div id="funcionalidades" className="flex flex-col gap-32 pb-32 pt-16 overflow-hidden">
+  {/* --- SEÇÃO: FUNCIONALIDADES (VISUAL IMERSIVO COM FUNDO DESFOCADO) --- */}
+      <div id="funcionalidades" className="flex flex-col bg-[#0E1117]">
         
         {/* BLOCO 1: UPLOAD (AZUL) */}
-        <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
-            
-            {/* Texto Centralizado */}
-            <div className="max-w-3xl mb-12">
-              <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30 mx-auto shadow-lg shadow-blue-900/20">
-                <UploadCloud className="text-blue-400 w-8 h-8" />
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-                Upload Inteligente
-              </h2>
-              <p className="text-xl text-gray-400 leading-relaxed mb-8">
-                Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA identifica automaticamente a empresa, o trimestre e o ano.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4 text-gray-300">
-                 <div className="bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700 flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-blue-500" /> Sem limite de tamanho
-                 </div>
-                 <div className="bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700 flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-blue-500" /> Identificação automática
-                 </div>
-              </div>
-            </div>
-
-            {/* Imagem Gigante */}
-            <div className="relative w-full max-w-6xl group">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[105%] h-[105%] bg-blue-600/20 blur-[100px] rounded-full -z-10 opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
-              <img 
+        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-y border-gray-800/50">
+          {/* IMAGEM DE FUNDO DESFOCADA */}
+          <div className="absolute inset-0 z-0">
+             <div className="absolute inset-0 bg-blue-900/20 mix-blend-multiply z-10"></div> {/* Tintura Azul */}
+             <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/50 to-[#0E1117] z-20"></div> {/* Degradê para leitura */}
+             <img 
                 src="/demo-upload.png" 
-                alt="Tela de Upload" 
-                className="w-full h-auto rounded-xl border border-gray-700 shadow-2xl shadow-blue-900/30 object-cover" 
+                alt="Background Upload" 
+                className="w-full h-full object-cover blur-2xl opacity-50 scale-110 transform"
               />
-            </div>
+          </div>
 
+          {/* CONTEÚDO (TEXTO) POR CIMA */}
+          <div className="relative z-30 max-w-4xl mx-auto px-6 flex flex-col items-center text-center p-12 rounded-3xl bg-[#0E1117]/40 backdrop-blur-sm border border-white/10 shadow-2xl">
+            <div className="w-20 h-20 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-500/30 mx-auto shadow-lg shadow-blue-900/30">
+                <UploadCloud className="text-blue-400 w-10 h-10" />
+            </div>
+            <h2 className="text-5xl md:text-6xl font-bold text-white mb-8 tracking-tight drop-shadow-lg">
+              Upload Inteligente
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-200 leading-relaxed mb-10 max-w-2xl drop-shadow-md">
+              Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA identifica automaticamente a empresa, o trimestre e o ano.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 text-gray-200 font-medium">
+                 <div className="bg-blue-900/40 px-6 py-3 rounded-full border border-blue-500/30 flex items-center gap-3 backdrop-blur-md">
+                    <CheckCircle2 size={20} className="text-blue-400" /> Sem limite de tamanho
+                 </div>
+                 <div className="bg-blue-900/40 px-6 py-3 rounded-full border border-blue-500/30 flex items-center gap-3 backdrop-blur-md">
+                    <CheckCircle2 size={20} className="text-blue-400" /> Identificação automática
+                 </div>
+            </div>
           </div>
         </section>
 
         {/* BLOCO 2: RESULTADO (VERDE) */}
-        <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
-            
-            <div className="max-w-3xl mb-12">
-              <div className="w-16 h-16 bg-green-600/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/30 mx-auto shadow-lg shadow-green-900/20">
-                <FileText className="text-green-400 w-8 h-8" />
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-                Análise Profunda
-              </h2>
-              <p className="text-xl text-gray-400 leading-relaxed mb-8">
-                O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos e escreve uma tese de investimento completa e detalhada para você.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4 text-gray-300">
-                 <div className="bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700 flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-green-500" /> Score Fundamentalista
-                 </div>
-                 <div className="bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700 flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-green-500" /> Tese via IA
-                 </div>
-              </div>
-            </div>
-
-            <div className="relative w-full max-w-6xl group">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[105%] h-[105%] bg-green-600/20 blur-[100px] rounded-full -z-10 opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
-              <img 
+        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800/50">
+          {/* IMAGEM DE FUNDO DESFOCADA */}
+          <div className="absolute inset-0 z-0">
+             <div className="absolute inset-0 bg-green-900/20 mix-blend-multiply z-10"></div>
+             <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/50 to-[#0E1117] z-20"></div>
+             <img 
                 src="/demo-result.png" 
-                alt="Tela de Resultado" 
-                className="w-full h-auto rounded-xl border border-gray-700 shadow-2xl shadow-green-900/30 object-cover" 
+                alt="Background Result" 
+                className="w-full h-full object-cover blur-2xl opacity-50 scale-110 transform"
               />
-            </div>
+          </div>
 
+          {/* CONTEÚDO */}
+          <div className="relative z-30 max-w-4xl mx-auto px-6 flex flex-col items-center text-center p-12 rounded-3xl bg-[#0E1117]/40 backdrop-blur-sm border border-white/10 shadow-2xl">
+            <div className="w-20 h-20 bg-green-600/20 rounded-2xl flex items-center justify-center mb-8 border border-green-500/30 mx-auto shadow-lg shadow-green-900/30">
+                <FileText className="text-green-400 w-10 h-10" />
+            </div>
+            <h2 className="text-5xl md:text-6xl font-bold text-white mb-8 tracking-tight drop-shadow-lg">
+              Análise Profunda
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-200 leading-relaxed mb-10 max-w-2xl drop-shadow-md">
+              O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos e escreve uma tese de investimento completa e detalhada para você.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 text-gray-200 font-medium">
+                 <div className="bg-green-900/40 px-6 py-3 rounded-full border border-green-500/30 flex items-center gap-3 backdrop-blur-md">
+                    <CheckCircle2 size={20} className="text-green-400" /> Score Fundamentalista
+                 </div>
+                 <div className="bg-green-900/40 px-6 py-3 rounded-full border border-green-500/30 flex items-center gap-3 backdrop-blur-md">
+                    <CheckCircle2 size={20} className="text-green-400" /> Tese via IA
+                 </div>
+            </div>
           </div>
         </section>
 
         {/* BLOCO 3: TABELA (ROXO) */}
-        <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
-            
-            <div className="max-w-3xl mb-12">
-              <div className="w-16 h-16 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/30 mx-auto shadow-lg shadow-purple-900/20">
-                <Layout className="text-purple-400 w-8 h-8" />
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-                Comparador de Ativos
-              </h2>
-              <p className="text-xl text-gray-400 leading-relaxed mb-8">
-                Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro para tomar melhores decisões.
-              </p>
-              <div className="flex flex-wrap justify-center gap-4 text-gray-300">
-                 <div className="bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700 flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-purple-500" /> Comparação lado a lado
-                 </div>
-                 <div className="bg-gray-800/50 px-4 py-2 rounded-full border border-gray-700 flex items-center gap-2">
-                    <CheckCircle2 size={16} className="text-purple-500" /> Ordenação inteligente
-                 </div>
-              </div>
-            </div>
-
-            <div className="relative w-full max-w-6xl group">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[105%] h-[105%] bg-purple-600/20 blur-[100px] rounded-full -z-10 opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
-              <img 
+        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800/50">
+          {/* IMAGEM DE FUNDO DESFOCADA */}
+          <div className="absolute inset-0 z-0">
+             <div className="absolute inset-0 bg-purple-900/20 mix-blend-multiply z-10"></div>
+             <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/50 to-[#0E1117] z-20"></div>
+             <img 
                 src="/demo-table.png" 
-                alt="Tabela Agregada" 
-                className="w-full h-auto rounded-xl border border-gray-700 shadow-2xl shadow-purple-900/30 object-cover" 
+                alt="Background Table" 
+                className="w-full h-full object-cover blur-2xl opacity-50 scale-110 transform"
               />
-            </div>
+          </div>
 
+          {/* CONTEÚDO */}
+          <div className="relative z-30 max-w-4xl mx-auto px-6 flex flex-col items-center text-center p-12 rounded-3xl bg-[#0E1117]/40 backdrop-blur-sm border border-white/10 shadow-2xl">
+            <div className="w-20 h-20 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-8 border border-purple-500/30 mx-auto shadow-lg shadow-purple-900/30">
+                <Layout className="text-purple-400 w-10 h-10" />
+            </div>
+            <h2 className="text-5xl md:text-6xl font-bold text-white mb-8 tracking-tight drop-shadow-lg">
+              Comparador de Ativos
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-200 leading-relaxed mb-10 max-w-2xl drop-shadow-md">
+              Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro para tomar melhores decisões.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4 text-gray-200 font-medium">
+                 <div className="bg-purple-900/40 px-6 py-3 rounded-full border border-purple-500/30 flex items-center gap-3 backdrop-blur-md">
+                    <CheckCircle2 size={20} className="text-purple-400" /> Comparação lado a lado
+                 </div>
+                 <div className="bg-purple-900/40 px-6 py-3 rounded-full border border-purple-500/30 flex items-center gap-3 backdrop-blur-md">
+                    <CheckCircle2 size={20} className="text-purple-400" /> Ordenação inteligente
+                 </div>
+            </div>
           </div>
         </section>
 
         {/* BLOCO 4: HISTÓRICO (AMARELO) */}
-        <section className="relative">
-          <div className="max-w-7xl mx-auto px-6 flex flex-col items-center text-center">
-            
-            <div className="max-w-3xl mb-12">
-              <div className="w-16 h-16 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/30 mx-auto shadow-lg shadow-yellow-900/20">
-                <Database className="text-yellow-400 w-8 h-8" />
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-                Histórico Completo
-              </h2>
-              <p className="text-xl text-gray-400 leading-relaxed mb-8">
-                Todas as suas análises ficam salvas para sempre. Acompanhe a evolução da nota das suas empresas trimestre a trimestre.
-              </p>
-            </div>
-
-            <div className="relative w-full max-w-6xl group">
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[105%] h-[105%] bg-yellow-600/20 blur-[100px] rounded-full -z-10 opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
-              <img 
+        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800/50">
+          {/* IMAGEM DE FUNDO DESFOCADA */}
+          <div className="absolute inset-0 z-0">
+             <div className="absolute inset-0 bg-yellow-900/20 mix-blend-multiply z-10"></div>
+             <div className="absolute inset-0 bg-gradient-to-t from-[#0E1117] via-[#0E1117]/50 to-[#0E1117] z-20"></div>
+             <img 
                 src="/demo-history.png" 
-                alt="Histórico" 
-                className="w-full h-auto rounded-xl border border-gray-700 shadow-2xl shadow-yellow-900/30 object-cover" 
+                alt="Background History" 
+                className="w-full h-full object-cover blur-2xl opacity-50 scale-110 transform"
               />
-            </div>
+          </div>
 
+          {/* CONTEÚDO */}
+          <div className="relative z-30 max-w-4xl mx-auto px-6 flex flex-col items-center text-center p-12 rounded-3xl bg-[#0E1117]/40 backdrop-blur-sm border border-white/10 shadow-2xl">
+            <div className="w-20 h-20 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-500/30 mx-auto shadow-lg shadow-yellow-900/30">
+                <Database className="text-yellow-400 w-10 h-10" />
+            </div>
+            <h2 className="text-5xl md:text-6xl font-bold text-white mb-8 tracking-tight drop-shadow-lg">
+              Histórico Completo
+            </h2>
+            <p className="text-xl md:text-2xl text-gray-200 leading-relaxed mb-10 max-w-2xl drop-shadow-md">
+              Todas as suas análises ficam salvas para sempre. Acompanhe a evolução da nota das suas empresas trimestre a trimestre.
+            </p>
           </div>
         </section>
+
       </div>
-      
+
       {/* --- SEÇÃO DE PLANOS --- */}
       <section id="planos" className="py-24 relative bg-[#0d1117] border-t border-gray-800">
         <div className="max-w-6xl mx-auto px-6">
