@@ -388,16 +388,24 @@ export default function FinancialDashboard() {
         
         {isPremium && <div className="mt-auto" />}
 
-        {/* --- BOTÃO OFICIAL DO CLERK (SUBSTITUINDO O MANUAL) --- */}
+        {/* --- BOTÃO OFICIAL DO CLERK (ATUALIZADO PARA FICAR NÍTIDO) --- */}
         <div className="mt-4 px-2 py-3 border-t border-gray-800">
            <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all w-full">
-              <UserButton showName={true} appearance={{
+              <UserButton 
+                showName={true} 
+                appearance={{
                   elements: {
+                    // O box principal: inverte ordem e alinha
                     userButtonBox: "flex flex-row-reverse w-full justify-start gap-3",
-                    userButtonOuterIdentifier: "text-white font-medium",
-                    avatarBox: "w-8 h-8"
+                    
+                    // O NOME: !text-white força o branco, !font-bold deixa mais grosso
+                    userButtonOuterIdentifier: "!text-white !font-bold text-sm tracking-wide",
+                    
+                    // O AVATAR: aumenta um pouquinho
+                    avatarBox: "w-9 h-9 ring-2 ring-gray-700"
                   }
-              }}/>
+                }}
+              />
            </div>
         </div>
       </aside>
