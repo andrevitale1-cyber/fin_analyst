@@ -1,6 +1,5 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   BarChart3, UploadCloud, ArrowRight, 
@@ -8,16 +7,7 @@ import {
 } from "lucide-react";
 
 export default function LandingPage() {
-  const router = useRouter(); 
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-
-  // Verifica se já existe sessão antiga (opcional, mas mantive sua lógica)
-  useEffect(() => {
-    const user = localStorage.getItem('usuario');
-    if (user) {
-      router.push('/dashboard'); 
-    }
-  }, [router]);
 
   return (
     <div className="min-h-screen bg-[#0E1117] text-gray-100 font-sans selection:bg-blue-500/30">
@@ -42,7 +32,6 @@ export default function LandingPage() {
               Preços
             </Link>
             
-            {/* CORREÇÃO AQUI: Mandamos para dashboard, o Middleware cuida do resto */}
             <Link href="/dashboard" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Entrar
             </Link>
@@ -69,7 +58,6 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-            {/* CORREÇÃO AQUI TAMBÉM */}
             <Link href="/dashboard" className="w-full md:w-auto bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2">
               Criar Conta Grátis <ArrowRight size={20} />
             </Link>
@@ -220,7 +208,6 @@ export default function LandingPage() {
                 <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
 
-              {/* CORREÇÃO AQUI */}
               <Link href="/dashboard" className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 hover:border-gray-500 transition-all mt-auto">
                 Criar conta grátis
               </Link>
@@ -249,7 +236,6 @@ export default function LandingPage() {
                 <Feature text="Prioridade máxima na fila" active />
               </ul>
 
-              {/* CORREÇÃO AQUI */}
               <Link href="/dashboard" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto">
                 Assinar Agora
               </Link>
@@ -272,10 +258,11 @@ export default function LandingPage() {
               <span className="text-lg font-bold text-gray-300">FinAnalyzer.AI</span>
             </div>
             
+            {/* ATUALIZAÇÃO AQUI: Links reais para as páginas legais */}
             <div className="flex gap-6">
-              <a href="#" className="text-gray-500 hover:text-white transition-colors">Termos</a>
-              <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacidade</a>
-              <a href="#" className="text-gray-500 hover:text-white transition-colors">Contato</a>
+              <Link href="/terms" className="text-gray-500 hover:text-white transition-colors">Termos de Uso</Link>
+              <Link href="/privacy" className="text-gray-500 hover:text-white transition-colors">Privacidade</Link>
+              <Link href="/refund" className="text-gray-500 hover:text-white transition-colors">Reembolso</Link>
             </div>
           </div>
 
