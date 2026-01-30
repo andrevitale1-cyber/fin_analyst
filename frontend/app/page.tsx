@@ -231,10 +231,11 @@ export default function LandingPage() {
               <ul className="space-y-4 mb-8 flex-1">
                 <Feature text="Análises de IA Ilimitadas" active />
                 <Feature text="Relatório Resumido na Tela" active />
-                <Feature text="Download da Análise Completa da IA" active />
-                <Feature text="Tabela Comparativa Customizável" active />
+                <Feature text="Acesso ao Histórico Ilimitado" active />
+                <Feature text="Suporte Prioritário por Email" active />
                 <Feature text="Upload de arquivos ilimitado" active />
-                <Feature text="Histórico de dados ilimitado" active />
+                <Feature text="Download da Análise Completa da IA" active />
+                <Feature text="Tabela Comparativa de Ativos" active />
                 <Feature text="Prioridade máxima na fila" active />
               </ul>
 
