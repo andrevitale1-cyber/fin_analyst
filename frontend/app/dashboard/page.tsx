@@ -113,8 +113,10 @@ export default function FinancialDashboard() {
   const [trimestre, setTrimestre] = useState("1T");
   const [file, setFile] = useState<File | null>(null);
 
-  // Define se é premium (Por enquanto false até integrar metadata do Clerk)
-  const isPremium = false; 
+  // --- LÓGICA DE PREMIUM REAL ---
+  // Verifica se no Clerk o usuário tem a tag "premium"
+  const isPremium = user?.publicMetadata?.plan === 'premium';
+
 
   useEffect(() => {
     // Se não estiver logado e terminou de carregar, volta pro login
