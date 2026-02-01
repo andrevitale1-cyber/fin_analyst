@@ -203,7 +203,7 @@ export default function LandingPage() {
             <div className="relative w-full max-w-5xl mx-auto group">
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
               <img 
-                src="/demo-table-2.png" 
+                src="/demo-table-2.jpg" 
                 alt="Tabela Comparativa" 
                 className="relative w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
               />
