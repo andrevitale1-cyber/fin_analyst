@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   BarChart3, UploadCloud, ArrowRight, 
-  FileText, Layout, Database, Check, X, CheckCircle2, ChevronRight, Play
+  FileText, Layout, Database, Check, X, CheckCircle2, Play
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -86,10 +86,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- FUNCIONALIDADES (ATUALIZADO) --- */}
+      {/* --- FUNCIONALIDADES (ATUALIZADO E CORRIGIDO) --- */}
       <div id="funcionalidades" className="flex flex-col bg-[#0E1117] overflow-hidden">
         
-        {/* BLOCO 1: UPLOAD (Layout Cinemático - w-full) */}
+        {/* BLOCO 1: UPLOAD */}
         <section className="py-24 border-b border-gray-800 relative">
           <div className="max-w-7xl mx-auto px-6">
             
@@ -116,20 +116,16 @@ export default function LandingPage() {
                   <div className="p-1 rounded-full bg-blue-500/10 text-blue-500"><CheckCircle2 size={18} /></div>
                   <span>Identificação automática</span>
                 </div>
-                <div className="flex items-center gap-3 text-gray-300">
-                  <div className="p-1 rounded-full bg-blue-500/10 text-blue-500"><CheckCircle2 size={18} /></div>
-                  <span>Processamento Rápido</span>
-                </div>
               </div>
             </div>
 
-            {/* Imagem */}
-            <div className="relative w-full max-w-5xl mx-auto group">
+            {/* IMAGEM CORRIGIDA (w-fit) */}
+            <div className="relative w-fit mx-auto group">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
               <img 
                 src="/demo-upload.png" 
                 alt="Tela de Upload" 
-                className="relative w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
+                className="relative block w-auto max-w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
               />
             </div>
 
@@ -137,7 +133,7 @@ export default function LandingPage() {
         </section>
 
 
-        {/* BLOCO 2: RESULTADO (Layout Cinemático - w-full) */}
+        {/* BLOCO 2: RESULTADO */}
         <section className="py-24 border-b border-gray-800 relative">
           <div className="max-w-7xl mx-auto px-6">
             
@@ -161,21 +157,18 @@ export default function LandingPage() {
                 </div>
                 <div className="flex items-center gap-3 text-gray-300">
                   <div className="p-1 rounded-full bg-green-500/10 text-green-500"><CheckCircle2 size={18} /></div>
-                  <span>Indicadores Coloridos</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-300">
-                  <div className="p-1 rounded-full bg-green-500/10 text-green-500"><CheckCircle2 size={18} /></div>
                   <span>Tese Descritiva</span>
                 </div>
               </div>
             </div>
 
-            <div className="relative w-full max-w-5xl mx-auto group">
+            {/* IMAGEM CORRIGIDA (w-fit) */}
+            <div className="relative w-fit mx-auto group">
               <div className="absolute -inset-1 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
               <img 
                 src="/demo-result.png" 
                 alt="Tela de Resultado" 
-                className="relative w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
+                className="relative block w-auto max-w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
               />
             </div>
 
@@ -183,7 +176,7 @@ export default function LandingPage() {
         </section>
 
 
-        {/* BLOCO 3: TABELA (Layout AJUSTADO - w-fit) */}
+        {/* BLOCO 3: TABELA */}
         <section className="py-24 border-b border-gray-800 relative">
           <div className="max-w-7xl mx-auto px-6">
             
@@ -197,28 +190,17 @@ export default function LandingPage() {
               </h2>
               
               <p className="text-xl text-gray-400 leading-relaxed mb-8 max-w-2xl">
-                Visualize e compare todas as empresas analisadas em uma única tabela interativa e ordenável.
+                Visualize e compare todas as empresas analisadas em uma única tabela interativa.
               </p>
-
-              <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-                <div className="flex items-center gap-3 text-gray-300">
-                  <div className="p-1 rounded-full bg-purple-500/10 text-purple-500"><CheckCircle2 size={18} /></div>
-                  <span>Colunas Customizáveis</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-300">
-                  <div className="p-1 rounded-full bg-purple-500/10 text-purple-500"><CheckCircle2 size={18} /></div>
-                  <span>Comparação Lado a Lado</span>
-                </div>
-              </div>
             </div>
 
-            {/* CORREÇÃO APLICADA AQUI: w-fit e w-auto */}
-            <div className="relative w-fit max-w-5xl mx-auto group">
+            {/* IMAGEM CORRIGIDA (w-fit) - AQUI ESTAVA O PROBLEMA DA BORDA */}
+            <div className="relative w-fit mx-auto group">
               <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
               <img 
-                src="/demo-table.png" 
+                src="/demo-table-2.jpg" 
                 alt="Tabela Comparativa" 
-                className="relative w-auto max-w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
+                className="relative block w-auto max-w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
               />
             </div>
 
@@ -226,7 +208,7 @@ export default function LandingPage() {
         </section>
 
 
-        {/* BLOCO 4: HISTÓRICO (Layout Cinemático - w-full) */}
+        {/* BLOCO 4: HISTÓRICO */}
         <section className="py-24 border-b border-gray-800 relative">
           <div className="max-w-7xl mx-auto px-6">
             
@@ -242,25 +224,15 @@ export default function LandingPage() {
               <p className="text-xl text-gray-400 leading-relaxed mb-8 max-w-2xl">
                 Seu banco de dados pessoal de investimentos. Acesse análises antigas e acompanhe a evolução.
               </p>
-
-              <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-                <div className="flex items-center gap-3 text-gray-300">
-                  <div className="p-1 rounded-full bg-yellow-500/10 text-yellow-500"><CheckCircle2 size={18} /></div>
-                  <span>Backup Automático</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-300">
-                  <div className="p-1 rounded-full bg-yellow-500/10 text-yellow-500"><CheckCircle2 size={18} /></div>
-                  <span>Acesso Rápido</span>
-                </div>
-              </div>
             </div>
 
-            <div className="relative w-full max-w-5xl mx-auto group">
+            {/* IMAGEM CORRIGIDA (w-fit) */}
+            <div className="relative w-fit mx-auto group">
               <div className="absolute -inset-1 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
               <img 
                 src="/demo-history.png" 
                 alt="Histórico" 
-                className="relative w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
+                className="relative block w-auto max-w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
               />
             </div>
 
@@ -270,14 +242,13 @@ export default function LandingPage() {
       </div>
 
 
-      {/* --- PRICING --- */}
+      {/* --- PRICING (MANTIDO O PADRÃO ORIGINAL) --- */}
       <section id="pricing" className="py-32 relative">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-white mb-4">Planos Simples e Transparentes</h2>
             <p className="text-gray-400 text-lg">Comece grátis e faça o upgrade quando precisar.</p>
             
-            {/* Toggle Mensal/Anual */}
             <div className="flex items-center justify-center gap-4 mt-8">
               <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`}>Mensal</span>
               <button 
@@ -312,11 +283,8 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            {/* Pro (Destaque) */}
-            <div className="bg-[#1C2128] border border-blue-600 rounded-2xl p-8 flex flex-col relative shadow-2xl shadow-blue-900/20 scale-105 z-10">
-              <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
-                MAIS POPULAR
-              </div>
+            {/* Pro */}
+            <div className="bg-[#161B22] border border-blue-600/50 rounded-2xl p-8 flex flex-col hover:border-blue-500 transition-all">
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-white mb-2">Pro Investor</h3>
                 <div className="text-3xl font-bold text-white">
@@ -331,7 +299,6 @@ export default function LandingPage() {
                 <Feature text="Score Fundamentalista Completo" />
                 <Feature text="Teses de Investimento via IA" />
                 <Feature text="Comparador de Ativos" />
-                <Feature text="Suporte Prioritário" />
               </ul>
               <Link href="/sign-up" className="w-full py-3 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-500 transition-colors text-center shadow-lg shadow-blue-900/20">
                 Assinar Agora
@@ -378,9 +345,6 @@ export default function LandingPage() {
               <p className="text-gray-400 max-w-sm mb-6">
                 Transformando relatórios financeiros complexos em decisões simples e inteligentes com o poder da Inteligência Artificial.
               </p>
-              <div className="flex gap-4">
-                 {/* Social Icons could go here */}
-              </div>
             </div>
             
             <div>
