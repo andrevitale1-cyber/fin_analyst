@@ -67,173 +67,190 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-  {/* --- SEÇÃO: FUNCIONALIDADES (TEXTO ORIGINAL + FUNDO IMERSIVO) --- */}
-      <div id="funcionalidades" className="flex flex-col bg-[#0E1117]">
+{/* --- SEÇÃO: FUNCIONALIDADES (ESTILO FUNDAMENTEI - TEXTO TOPO / IMAGEM EMBAIXO) --- */}
+      <div id="funcionalidades" className="flex flex-col bg-[#0E1117] overflow-hidden">
         
         {/* BLOCO 1: UPLOAD */}
-        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
-          {/* IMAGEM DE FUNDO (A MUDANÇA VISUAL) */}
-          <div className="absolute inset-0 z-0">
-             <div className="absolute inset-0 bg-[#0E1117]/80 z-10" /> {/* Máscara escura para ler o texto */}
-             <img 
-                src="/demo-upload.png" 
-                alt="Background Upload" 
-                className="w-full h-full object-cover blur-[8px] opacity-60 scale-110"
-              />
-          </div>
+        <section className="py-24 border-b border-gray-800 relative">
+          <div className="max-w-7xl mx-auto px-6">
+            
+            {/* 1. CABEÇALHO (TEXTO) */}
+            <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-16">
+              <div className="w-16 h-16 bg-blue-600/10 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/20 shadow-[0_0_30px_-5px_rgba(37,99,235,0.3)]">
+                <UploadCloud className="text-blue-500 w-8 h-8" />
+              </div>
+              
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
+                Upload Inteligente
+              </h2>
+              
+              <p className="text-xl text-gray-400 leading-relaxed mb-8 max-w-2xl">
+                Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA identifica tudo sozinha.
+              </p>
 
-          {/* CONTEÚDO (TEXTO ORIGINAL PRESERVADO) */}
-          <div className="relative z-20 max-w-3xl mx-auto px-6 text-center">
-            <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-500/30 mx-auto shadow-lg shadow-blue-900/30">
-              <UploadCloud className="text-blue-400 w-8 h-8" />
+              {/* Lista de Features Horizontal */}
+              <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-blue-500/10 text-blue-500"><CheckCircle2 size={18} /></div>
+                  <span>Sem limite de tamanho</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-blue-500/10 text-blue-500"><CheckCircle2 size={18} /></div>
+                  <span>Identificação automática</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-blue-500/10 text-blue-500"><CheckCircle2 size={18} /></div>
+                  <span>Processamento Rápido</span>
+                </div>
+              </div>
             </div>
-            
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Upload Inteligente</h2>
-            
-            <p className="text-xl text-gray-300 leading-relaxed mb-8">
-              Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA identifica automaticamente a empresa, o trimestre e o ano.
-            </p>
-            
-            <div className="inline-block text-left bg-[#0E1117]/60 p-8 rounded-3xl border border-gray-700/50 backdrop-blur-md">
-              <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-blue-500" />
-                  <span>Sem limite de tamanho de arquivo</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-blue-500" />
-                  <span>Identificação automática de tickers</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-blue-500" />
-                  <span>Processamento em nuvem ultra-rápido</span>
-                </li>
-              </ul>
+
+            {/* 2. IMAGEM (GIGANTE EMBAIXO) */}
+            <div className="relative w-full max-w-5xl mx-auto group">
+              {/* Efeito de brilho atrás da imagem */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+              
+              <img 
+                src="/demo-upload.png" 
+                alt="Tela de Upload" 
+                className="relative w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
+              />
             </div>
+
           </div>
         </section>
+
 
         {/* BLOCO 2: RESULTADO */}
-        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
-          <div className="absolute inset-0 z-0">
-             <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
-             <img 
-                src="/demo-result.png" 
-                alt="Background Result" 
-                className="w-full h-full object-cover blur-[8px] opacity-60 scale-110"
-              />
-          </div>
+        <section className="py-24 border-b border-gray-800 relative">
+          <div className="max-w-7xl mx-auto px-6">
+            
+            <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-16">
+              <div className="w-16 h-16 bg-green-600/10 rounded-2xl flex items-center justify-center mb-6 border border-green-500/20 shadow-[0_0_30px_-5px_rgba(22,163,74,0.3)]">
+                <FileText className="text-green-500 w-8 h-8" />
+              </div>
+              
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
+                Análise Profunda
+              </h2>
+              
+              <p className="text-xl text-gray-400 leading-relaxed mb-8 max-w-2xl">
+                Receba um Score Fundamentalista e uma tese de investimento detalhada escrita por Inteligência Artificial.
+              </p>
 
-          <div className="relative z-20 max-w-3xl mx-auto px-6 text-center">
-            <div className="w-16 h-16 bg-green-600/20 rounded-2xl flex items-center justify-center mb-8 border border-green-500/30 mx-auto shadow-lg shadow-green-900/30">
-              <FileText className="text-green-400 w-8 h-8" />
+              <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-green-500/10 text-green-500"><CheckCircle2 size={18} /></div>
+                  <span>Score (0 a 5)</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-green-500/10 text-green-500"><CheckCircle2 size={18} /></div>
+                  <span>Indicadores Coloridos</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-green-500/10 text-green-500"><CheckCircle2 size={18} /></div>
+                  <span>Tese Descritiva</span>
+                </div>
+              </div>
             </div>
-            
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Análise Profunda</h2>
-            
-            <p className="text-xl text-gray-300 leading-relaxed mb-8">
-              O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos e escreve uma tese de investimento completa.
-            </p>
-            
-            <div className="inline-block text-left bg-[#0E1117]/60 p-8 rounded-3xl border border-gray-700/50 backdrop-blur-md">
-              <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-green-500" />
-                  <span>Score Fundamentalista (0 a 5)</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-green-500" />
-                  <span>Indicadores visuais coloridos</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-green-500" />
-                  <span>Tese descritiva gerada por IA</span>
-                </li>
-              </ul>
+
+            <div className="relative w-full max-w-5xl mx-auto group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+              <img 
+                src="/demo-result.png" 
+                alt="Tela de Resultado" 
+                className="relative w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
+              />
             </div>
+
           </div>
         </section>
+
 
         {/* BLOCO 3: TABELA */}
-        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
-          <div className="absolute inset-0 z-0">
-             <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
-             <img 
-                src="/demo-table-2.png" 
-                alt="Background Table" 
-                className="w-full h-full object-cover blur-[8px] opacity-60 scale-110"
-              />
-          </div>
+        <section className="py-24 border-b border-gray-800 relative">
+          <div className="max-w-7xl mx-auto px-6">
+            
+            <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-16">
+              <div className="w-16 h-16 bg-purple-600/10 rounded-2xl flex items-center justify-center mb-6 border border-purple-500/20 shadow-[0_0_30px_-5px_rgba(147,51,234,0.3)]">
+                <Layout className="text-purple-500 w-8 h-8" />
+              </div>
+              
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
+                Comparador de Ativos
+              </h2>
+              
+              <p className="text-xl text-gray-400 leading-relaxed mb-8 max-w-2xl">
+                Visualize e compare todas as empresas analisadas em uma única tabela interativa e ordenável.
+              </p>
 
-          <div className="relative z-20 max-w-3xl mx-auto px-6 text-center">
-            <div className="w-16 h-16 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-8 border border-purple-500/30 mx-auto shadow-lg shadow-purple-900/30">
-              <Layout className="text-purple-400 w-8 h-8" />
+              <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-purple-500/10 text-purple-500"><CheckCircle2 size={18} /></div>
+                  <span>Colunas Customizáveis</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-purple-500/10 text-purple-500"><CheckCircle2 size={18} /></div>
+                  <span>Comparação Lado a Lado</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-purple-500/10 text-purple-500"><CheckCircle2 size={18} /></div>
+                  <span>Ordenação Inteligente</span>
+                </div>
+              </div>
             </div>
-            
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Comparador de Ativos</h2>
-            
-            <p className="text-xl text-gray-300 leading-relaxed mb-8">
-              Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro.
-            </p>
-            
-            <div className="inline-block text-left bg-[#0E1117]/60 p-8 rounded-3xl border border-gray-700/50 backdrop-blur-md">
-              <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-purple-500" />
-                  <span>Colunas customizáveis</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-purple-500" />
-                  <span>Ordenação inteligente</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-purple-500" />
-                  <span>Comparação lado a lado</span>
-                </li>
-              </ul>
+
+            <div className="relative w-full max-w-5xl mx-auto group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+              <img 
+                src="/demo-table-2.png" 
+                alt="Tabela Comparativa" 
+                className="relative w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
+              />
             </div>
+
           </div>
         </section>
 
-        {/* BLOCO 4: HISTÓRICO */}
-        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
-          <div className="absolute inset-0 z-0">
-             <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
-             <img 
-                src="/demo-history.png" 
-                alt="Background History" 
-                className="w-full h-full object-cover blur-[8px] opacity-60 scale-110"
-              />
-          </div>
 
-          <div className="relative z-20 max-w-3xl mx-auto px-6 text-center">
-            <div className="w-16 h-16 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-500/30 mx-auto shadow-lg shadow-yellow-900/30">
-              <Database className="text-yellow-400 w-8 h-8" />
+        {/* BLOCO 4: HISTÓRICO */}
+        <section className="py-24 border-b border-gray-800 relative">
+          <div className="max-w-7xl mx-auto px-6">
+            
+            <div className="flex flex-col items-center text-center max-w-4xl mx-auto mb-16">
+              <div className="w-16 h-16 bg-yellow-600/10 rounded-2xl flex items-center justify-center mb-6 border border-yellow-500/20 shadow-[0_0_30px_-5px_rgba(234,179,8,0.3)]">
+                <Database className="text-yellow-500 w-8 h-8" />
+              </div>
+              
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
+                Histórico Completo
+              </h2>
+              
+              <p className="text-xl text-gray-400 leading-relaxed mb-8 max-w-2xl">
+                Seu banco de dados pessoal de investimentos. Acesse análises antigas e acompanhe a evolução.
+              </p>
+
+              <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-yellow-500/10 text-yellow-500"><CheckCircle2 size={18} /></div>
+                  <span>Backup Automático</span>
+                </div>
+                <div className="flex items-center gap-3 text-gray-300">
+                  <div className="p-1 rounded-full bg-yellow-500/10 text-yellow-500"><CheckCircle2 size={18} /></div>
+                  <span>Acesso Rápido</span>
+                </div>
+              </div>
             </div>
-            
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Histórico Completo</h2>
-            
-            <p className="text-xl text-gray-300 leading-relaxed mb-8">
-              Todas as suas análises ficam salvas para sempre. Compare a evolução da nota da empresa trimestre a trimestre.
-            </p>
-            
-            <div className="inline-block text-left bg-[#0E1117]/60 p-8 rounded-3xl border border-gray-700/50 backdrop-blur-md">
-              <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-yellow-500" />
-                  <span>Backup automático na nuvem</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-yellow-500" />
-                  <span>Acesso rápido a relatórios antigos</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-yellow-500" />
-                  <span>Exclusão e gerenciamento fácil</span>
-                </li>
-              </ul>
+
+            <div className="relative w-full max-w-5xl mx-auto group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-600 to-orange-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+              <img 
+                src="/demo-history.png" 
+                alt="Histórico" 
+                className="relative w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
+              />
             </div>
+
           </div>
         </section>
 
