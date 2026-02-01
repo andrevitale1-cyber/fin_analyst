@@ -154,12 +154,18 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="relative w-full max-w-5xl mx-auto group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+            {/* 2. IMAGEM (TABELA - CAIXA AJUSTÁVEL) */}
+            {/* Adicionei 'w-fit' para a caixa encolher até o tamanho da imagem */}
+            <div className="relative w-fit max-w-5xl mx-auto group">
+              
+              {/* Brilho de fundo ajustado */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+              
               <img 
-                src="/demo-result.png" 
-                alt="Tela de Resultado" 
-                className="relative w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
+                src="/demo-table.png" 
+                alt="Tabela Comparativa" 
+                /* Removi 'w-full' para não esticar. Usei 'h-auto' para manter proporção */
+                className="relative w-auto max-w-full h-auto rounded-xl border border-gray-700/50 shadow-2xl bg-[#0E1117]" 
               />
             </div>
 
