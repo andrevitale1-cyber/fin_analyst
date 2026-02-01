@@ -160,7 +160,7 @@ export default function LandingPage() {
           <div className="absolute inset-0 z-0">
              <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
              <img 
-                src="/demo-table.png" 
+                src="/demo-table-2.png" 
                 alt="Background Table" 
                 className="w-full h-full object-cover blur-[8px] opacity-60 scale-110"
               />
