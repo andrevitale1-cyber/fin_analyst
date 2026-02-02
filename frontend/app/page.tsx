@@ -73,9 +73,9 @@ export default function LandingPage() {
         
         {/* BLOCO 1: UPLOAD */}
         <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
-          {/* IMAGEM DE FUNDO (A MUDANÇA VISUAL) */}
+          {/* IMAGEM DE FUNDO */}
           <div className="absolute inset-0 z-0">
-             <div className="absolute inset-0 bg-[#0E1117]/80 z-10" /> {/* Máscara escura para ler o texto */}
+             <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
              <img 
                 src="/demo-upload.png" 
                 alt="Background Upload" 
@@ -83,7 +83,7 @@ export default function LandingPage() {
               />
           </div>
 
-          {/* CONTEÚDO (TEXTO ORIGINAL PRESERVADO) */}
+          {/* CONTEÚDO */}
           <div className="relative z-20 max-w-3xl mx-auto px-6 text-center">
             <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-500/30 mx-auto shadow-lg shadow-blue-900/30">
               <UploadCloud className="text-blue-400 w-8 h-8" />
@@ -114,7 +114,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 2: RESULTADO */}
+        {/* BLOCO 2: ANÁLISE PROFUNDA */}
         <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
           <div className="absolute inset-0 z-0">
              <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
@@ -144,24 +144,24 @@ export default function LandingPage() {
                 </li>
                 <li className="flex items-center gap-3 text-gray-200 text-lg">
                   <CheckCircle2 size={24} className="text-green-500" />
-                  <span>Indicadores visuais coloridos</span>
+                  <span>Tese de investimento escrita</span>
                 </li>
                 <li className="flex items-center gap-3 text-gray-200 text-lg">
                   <CheckCircle2 size={24} className="text-green-500" />
-                  <span>Tese descritiva gerada por IA</span>
+                  <span>Análise de indicadores-chave</span>
                 </li>
               </ul>
             </div>
           </div>
         </section>
 
-        {/* BLOCO 3: TABELA */}
+        {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
           <div className="absolute inset-0 z-0">
              <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
              <img 
-                src="/demo-table.png" 
-                alt="Background Table" 
+                src="/demo-comparador.png" 
+                alt="Background Comparador" 
                 className="w-full h-full object-cover blur-[8px] opacity-60 scale-110"
               />
           </div>
@@ -195,48 +195,7 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-
-        {/* BLOCO 4: HISTÓRICO */}
-        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
-          <div className="absolute inset-0 z-0">
-             <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
-             <img 
-                src="/demo-history.png" 
-                alt="Background History" 
-                className="w-full h-full object-cover blur-[8px] opacity-60 scale-110"
-              />
-          </div>
-
-          <div className="relative z-20 max-w-3xl mx-auto px-6 text-center">
-            <div className="w-16 h-16 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-500/30 mx-auto shadow-lg shadow-yellow-900/30">
-              <Database className="text-yellow-400 w-8 h-8" />
-            </div>
-            
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Histórico Completo</h2>
-            
-            <p className="text-xl text-gray-300 leading-relaxed mb-8">
-              Todas as suas análises ficam salvas para sempre. Compare a evolução da nota da empresa trimestre a trimestre.
-            </p>
-            
-            <div className="inline-block text-left bg-[#0E1117]/60 p-8 rounded-3xl border border-gray-700/50 backdrop-blur-md">
-              <ul className="space-y-4">
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-yellow-500" />
-                  <span>Backup automático na nuvem</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-yellow-500" />
-                  <span>Acesso rápido a relatórios antigos</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-200 text-lg">
-                  <CheckCircle2 size={24} className="text-yellow-500" />
-                  <span>Exclusão e gerenciamento fácil</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
+        
       </div>
       
       {/* --- SEÇÃO DE PLANOS --- */}
@@ -332,7 +291,6 @@ export default function LandingPage() {
               <span className="text-lg font-bold text-gray-300">FinAnalyzer.AI</span>
             </div>
             
-            {/* ATUALIZAÇÃO AQUI: Links reais para as páginas legais */}
             <div className="flex gap-6">
               <Link href="/terms" className="text-gray-500 hover:text-white transition-colors">Termos de Uso</Link>
               <Link href="/privacy" className="text-gray-500 hover:text-white transition-colors">Privacidade</Link>
@@ -340,7 +298,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* ÁREA DE DISCLAIMER - TEXTO MAIS CLARO */}
+          {/* ÁREA DE DISCLAIMER */}
           <div className="border-t border-gray-800 pt-8 text-xs text-gray-400 space-y-4 text-justify leading-relaxed">
              <p>
                <strong className="text-gray-200">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
