@@ -73,14 +73,11 @@ export default function LandingPage() {
         
         {/* BLOCO 1: UPLOAD */}
         <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
-          {/* IMAGEM DE FUNDO */}
+          {/* GRADIENTE DE FUNDO */}
           <div className="absolute inset-0 z-0">
-             <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
-             <img 
-                src="/demo-upload.png" 
-                alt="Background Upload" 
-                className="w-full h-full object-cover blur-[8px] opacity-60 scale-110"
-              />
+             <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-[#0E1117] to-[#0E1117]" />
+             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl" />
+             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-400/5 rounded-full blur-3xl" />
           </div>
 
           {/* CONTEÚDO */}
@@ -117,12 +114,9 @@ export default function LandingPage() {
         {/* BLOCO 2: ANÁLISE PROFUNDA */}
         <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
           <div className="absolute inset-0 z-0">
-             <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
-             <img 
-                src="/demo-result.png" 
-                alt="Background Result" 
-                className="w-full h-full object-cover blur-[8px] opacity-60 scale-110"
-              />
+             <div className="absolute inset-0 bg-gradient-to-br from-green-900/20 via-[#0E1117] to-[#0E1117]" />
+             <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-green-600/10 rounded-full blur-3xl" />
+             <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-green-400/5 rounded-full blur-3xl" />
           </div>
 
           <div className="relative z-20 max-w-3xl mx-auto px-6 text-center">
@@ -158,12 +152,9 @@ export default function LandingPage() {
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
           <div className="absolute inset-0 z-0">
-             <div className="absolute inset-0 bg-[#0E1117]/80 z-10" />
-             <img 
-                src="/demo-comparador.png" 
-                alt="Background Comparador" 
-                className="w-full h-full object-cover blur-[8px] opacity-60 scale-110"
-              />
+             <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-[#0E1117] to-[#0E1117]" />
+             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
+             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-400/5 rounded-full blur-3xl" />
           </div>
 
           <div className="relative z-20 max-w-3xl mx-auto px-6 text-center">
@@ -190,6 +181,44 @@ export default function LandingPage() {
                 <li className="flex items-center gap-3 text-gray-200 text-lg">
                   <CheckCircle2 size={24} className="text-purple-500" />
                   <span>Comparação lado a lado</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* BLOCO 4: HISTÓRICO */}
+        <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden border-b border-gray-800">
+          <div className="absolute inset-0 z-0">
+             <div className="absolute inset-0 bg-gradient-to-br from-yellow-900/20 via-[#0E1117] to-[#0E1117]" />
+             <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-yellow-600/10 rounded-full blur-3xl" />
+             <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-yellow-400/5 rounded-full blur-3xl" />
+          </div>
+
+          <div className="relative z-20 max-w-3xl mx-auto px-6 text-center">
+            <div className="w-16 h-16 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-500/30 mx-auto shadow-lg shadow-yellow-900/30">
+              <Database className="text-yellow-400 w-8 h-8" />
+            </div>
+            
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Histórico Completo</h2>
+            
+            <p className="text-xl text-gray-300 leading-relaxed mb-8">
+              Todas as suas análises ficam salvas para sempre. Compare a evolução da nota da empresa trimestre a trimestre.
+            </p>
+            
+            <div className="inline-block text-left bg-[#0E1117]/60 p-8 rounded-3xl border border-gray-700/50 backdrop-blur-md">
+              <ul className="space-y-4">
+                <li className="flex items-center gap-3 text-gray-200 text-lg">
+                  <CheckCircle2 size={24} className="text-yellow-500" />
+                  <span>Backup automático na nuvem</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-200 text-lg">
+                  <CheckCircle2 size={24} className="text-yellow-500" />
+                  <span>Acesso rápido a relatórios antigos</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-200 text-lg">
+                  <CheckCircle2 size={24} className="text-yellow-500" />
+                  <span>Exclusão e gerenciamento fácil</span>
                 </li>
               </ul>
             </div>
