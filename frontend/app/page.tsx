@@ -239,7 +239,7 @@ export default function LandingPage() {
                 <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
                 <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
               </div>
-              <p className="text-gray-400 text-sm mb-8">Para quem quer realmente evoluir como investidor!</p>
+              <p className="text-gray-400 text-sm mb-8">Desbloqueie todo o poder da IA.</p>
               
               <ul className="space-y-4 mb-8 flex-1">
                 <Feature text="Análises de IA Ilimitadas" active />

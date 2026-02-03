@@ -10,671 +10,562 @@ import {
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DO STRIPE ---
-// ATENÇÃO: Substitua pelos seus links de pagamento reais da Stripe
-const STRIPE_LINKS = {
-  monthly: "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00", 
-  yearly: "https://buy.stripe.com/3cI6oIgdleEBgmNdI967S01"
-};
-
-const API_BASE = "https://api-finanalyzer.onrender.com";
+const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00"; 
+const API_BASE = "https://api-finanalyzer.onrender.com"; // <--- BASE URL
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
 const COLUMN_DEFINITIONS = [
   { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-white font-bold' },
   { key: 'nota_final', label: 'Nota Final', align: 'center', color: 'text-purple-400 font-bold' },
+  { key: 'receita_nota', label: 'Receita', align: 'center', color: 'text-blue-400' },
   { key: 'lucro_nota', label: 'Lucro', align: 'center', color: 'text-green-400' },
-  { key: 'margem_nota', label: 'Margem', align: 'center', color: 'text-yellow-400' },
-  { key: 'roe_nota', label: 'ROE', align: 'center', color: 'text-orange-400' },
-  { key: 'liquidez_nota', label: 'Liquidez', align: 'center', color: 'text-cyan-400' },
   { key: 'divida_nota', label: 'Dívida', align: 'center', color: 'text-red-400' },
+  { key: 'rentabilidade_nota', label: 'Rentabilidade', align: 'center', color: 'text-yellow-400' },
+  { key: 'soma_total', label: 'Soma', align: 'center', bg: 'bg-blue-900/10', color: 'text-blue-200' },
+  { key: 'qtde_tri', label: 'Resultados Analisados', align: 'center', bg: 'bg-purple-900/10', color: 'text-purple-200' },
+  { key: 'media', label: 'Média', align: 'center', bg: 'bg-green-900/10', color: 'text-green-200' },
+  { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-bold' },
 ];
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const { user, isLoaded } = useUser();
-  
-  // --- ESTADOS GERAIS ---
-  const [activeTab, setActiveTab] = useState('upload');
-  const [file, setFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [analysis, setAnalysis] = useState<any>(null);
-  const [history, setHistory] = useState<any[]>([]);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [dragActive, setDragActive] = useState(false);
-  
-  // --- ESTADO PARA O CICLO DE FATURAÇÃO (NOVO) ---
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-
-  // --- ESTADOS DA TABELA ---
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
-  const [columnVisibility, setColumnVisibility] = useState<Record<string, boolean>>(
-    COLUMN_DEFINITIONS.reduce((acc, col) => ({ ...acc, [col.key]: true }), {})
+// --- COMPONENTE FEATURE ---
+function Feature({ text, active = false, disabled = false }: any) {
+  return (
+    <li className="flex items-center gap-3">
+      {disabled ? (
+        <div className="p-0.5 rounded-full border border-gray-600 text-gray-500"><X size={12} /></div>
+      ) : (
+        <div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30">
+          <Check size={12} />
+        </div>
+      )}
+      <span className={`text-base ${disabled ? 'text-gray-500 line-through' : 'text-gray-300'}`}>{text}</span>
+    </li>
   );
-  const [showColumnSelector, setShowColumnSelector] = useState(false);
+}
 
-  // --- EFEITOS ---
+// --- COMPONENTE MODAL DE UPGRADE ---
+// --- COMPONENTE MODAL DE UPGRADE (ATUALIZADO IGUAL LANDING PAGE) ---
+function UpgradeModal({ onClose, billingCycle = 'monthly' }: { onClose: () => void; billingCycle?: 'monthly' | 'yearly' }) {
+  const handleCheckout = () => {
+    window.open(STRIPE_CHECKOUT_URL, '_blank');
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="relative w-full max-w-5xl grid md:grid-cols-2 gap-8 p-4">
+        {/* Botão de Fechar */}
+        <button 
+          onClick={onClose} 
+          className="absolute top-2 right-2 md:-top-8 md:-right-8 text-gray-400 hover:text-white bg-gray-800/50 p-2 rounded-full transition-colors z-50"
+        >
+          <X size={24} />
+        </button>
+
+        {/* --- CARD GRATUITO --- */}
+        <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 flex flex-col h-full opacity-80 scale-95">
+          <h3 className="text-2xl font-bold text-white mb-2">Gratuito</h3>
+          <p className="text-gray-400 text-base mb-8">Seu plano atual.</p>
+          
+          <ul className="space-y-4 mb-8 flex-1">
+                <Feature text="5 Análises por semana" active />
+                <Feature text="Relatório Resumido na Tela" active />
+                <Feature text="Acesso ao histórico simples" active />
+                <Feature text="Suporte por email" active />
+                {/* Bloqueios */}
+                <Feature text="Upload de arquivos ilimitado" disabled />
+                <Feature text="Download da Análise Completa da IA" disabled />
+                <Feature text="Tabela Comparativa de Ativos" disabled />
+          </ul>
+
+          <button onClick={onClose} className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 transition-all mt-auto">
+            Continuar Grátis
+          </button>
+        </div>
+
+        {/* --- CARD PREMIUM (DESTAQUE) --- */}
+        <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+              {billingCycle === 'yearly' && (
+                <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
+                  2 Meses Grátis no Anual
+                </div>
+              )}
+              <h3 className="text-2xl font-bold text-blue-400 mb-2">Premium</h3>
+              <div className="flex items-end gap-1 mb-2">
+                <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
+                <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
+              </div>
+              <p className="text-gray-400 text-sm mb-8">Desbloqueie todo o poder da IA.</p>
+          
+           <ul className="space-y-4 mb-8 flex-1">
+                <Feature text="5 Análises por semana" active />
+                <Feature text="Relatório Resumido na Tela" active />
+                <Feature text="Acesso ao histórico simples" active />
+                <Feature text="Suporte por email" active />
+                <Feature text="Upload de arquivos ilimitado" active />
+                <Feature text="Download da Análise Completa da IA" active />
+                <Feature text="Tabela Comparativa de Ativos" active />
+          </ul>
+
+          <button onClick={handleCheckout} className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto animate-pulse hover:animate-none">
+            Assinar Agora
+          </button>
+          <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NavItem({ icon, label, active = false, onClick, isLocked = false }: any) {
+  return (
+    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+      {React.cloneElement(icon, { size: 20 })}
+      <span className="font-medium text-sm">{label}</span>
+      {isLocked && <Lock size={14} className="ml-auto text-gray-600 group-hover:text-blue-400" />}
+    </button>
+  );
+}
+
+// --- COMPONENTE PRINCIPAL ---
+export default function FinancialDashboard() {
+  const router = useRouter();
+  const { user, isLoaded } = useUser(); // <--- HOOK DO CLERK
+
+  const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
+  const [loading, setLoading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  
+  // Contadores
+  const [usageCount, setUsageCount] = useState(0);
+  const WEEKLY_LIMIT = 5;
+
+  const [result, setResult] = useState<any>(null);
+  const [historyList, setHistoryList] = useState<any[]>([]);
+  const [tableData, setTableData] = useState<any[]>([]);
+
+  // Tabela e Filtros
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [showColumnMenu, setShowColumnMenu] = useState(false);
+  const columnMenuRef = useRef<HTMLDivElement>(null);
+  const [columnOrder, setColumnOrder] = useState<string[]>(COLUMN_DEFINITIONS.map(c => c.key));
+  const [draggedItemIndex, setDraggedItemIndex] = useState<number | null>(null);
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    empresa: true, ano: true, trimestre: true, nota_final: true, soma_total: true,
+    qtde_tri: true, media: true, last_analysed_quarter: true, receita_nota: false,
+    lucro_nota: true, divida_nota: false, rentabilidade_nota: false
+  });
+  
+  const [empresa, setEmpresa] = useState("");
+  const [ano, setAno] = useState("");
+  const [trimestre, setTrimestre] = useState("1T");
+  const [file, setFile] = useState<File | null>(null);
+
+  // --- LÓGICA DE PREMIUM REAL ---
+  // Verifica se no Clerk o usuário tem a tag "premium"
+  const isPremium = user?.publicMetadata?.plan === 'premium';
+
+
   useEffect(() => {
-    // Simulação de verificação de auth
+    // Se não estiver logado e terminou de carregar, volta pro login
     if (isLoaded && !user) {
-      router.push('/');
+      // O Middleware já faz isso, mas é uma segurança extra no cliente
+      return; 
     }
-  }, [isLoaded, user]); // Removido router das dependências para evitar loop no mock
 
-  useEffect(() => {
     if (user) {
-      fetchHistory();
-    }
-  }, [user]);
+      // --- LÓGICA DE CONTAGEM E RESET SEMANAL ---
+      if (!isPremium) {
+        const usageKey = `usage_${user.id}`; // Usa ID do Clerk
+        const dateKey = `usage_date_${user.id}`;
+        
+        const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
+        const savedDate = localStorage.getItem(dateKey);
+        
+        const now = Date.now();
+        const oneWeek = 7 * 24 * 60 * 60 * 1000;
 
-  // --- FUNÇÕES ---
-  const fetchHistory = async () => {
-    try {
-      // Mock data para demonstração se a API falhar
-      const mockHistory = [
-         { id: 1, empresa: "PETR4", trimestre: "4T24", nota_final: 4.5, receita_nota: 5, lucro_nota: 4, margem_nota: 5, roe_nota: 4, liquidez_nota: 5, divida_nota: 3 },
-         { id: 2, empresa: "VALE3", trimestre: "4T24", nota_final: 3.8, receita_nota: 4, lucro_nota: 3, margem_nota: 4, roe_nota: 5, liquidez_nota: 4, divida_nota: 4 }
-      ];
-      
-      try {
-        const res = await fetch(`${API_BASE}/historico`);
-        if (res.ok) {
-          const data = await res.json();
-          const cleanData = data.map((item: any) => ({
-             ...item,
-             nota_final: parseFloat(item.nota_final) || 0
-          }));
-          setHistory(cleanData);
+        if (!savedDate || (now - parseInt(savedDate)) > oneWeek) {
+          localStorage.setItem(usageKey, '0');
+          localStorage.setItem(dateKey, now.toString());
+          setUsageCount(0);
         } else {
-           setHistory(mockHistory); // Fallback para mock
+          setUsageCount(savedCount);
         }
-      } catch (e) {
-        setHistory(mockHistory); // Fallback para mock
       }
-
-    } catch (err) {
-      console.error("Erro ao buscar histórico:", err);
     }
+  }, [isLoaded, user, isPremium]);
+
+  const formatarData = (dataString: string) => {
+    if (!dataString) return "-";
+    try {
+      const data = new Date(dataString);
+      return new Intl.DateTimeFormat('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric'}).format(data);
+    } catch (e) { return dataString; }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setError('');
-    }
+  const columnDefsMap = useMemo(() => COLUMN_DEFINITIONS.reduce((acc, col) => { acc[col.key] = col; return acc; }, {} as any), []);
+  const visibleCount = useMemo(() => Object.values(visibleColumns).filter(Boolean).length, [visibleColumns]);
+
+  const fetchHistory = async () => {
+    if (!user) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/history?user_id=${user.id}`);
+      const data = await res.json();
+      setHistoryList(data);
+    } catch (error) { console.error("Erro histórico", error); }
   };
 
-  const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault();
+  const fetchTableData = async () => {
+    if (!user) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/table-data?user_id=${user.id}`);
+      const data = await res.json();
+      setTableData(data);
+    } catch (error) { console.error("Erro tabela", error); }
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
+    if (!confirm("Tem certeza?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error("Erro delete");
+      fetchHistory();
+      fetchTableData();
+    } catch (error) { alert("Erro ao excluir."); }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setFile(e.dataTransfer.files[0]);
-    }
+  const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
+    if (view === 'table' && !isPremium) setShowUpgradeModal(true);
+    else setCurrentView(view);
   };
 
   const handleAnalyze = async () => {
-    if (!file) {
-       // Mock analysis para demo se não houver arquivo real
-       setLoading(true);
-       setTimeout(() => {
-          setAnalysis({
-            empresa: "DEMO3",
-            trimestre: "1T25",
-            nota_final: 4.2,
-            receita_nota: 5, lucro_nota: 4, margem_nota: 4, roe_nota: 5, liquidez_nota: 3, divida_nota: 4,
-            analise_texto: "A empresa apresentou resultados sólidos no trimestre, com crescimento expressivo de receita (+15% a/a) impulsionado pelo aumento de volume de vendas. O EBITDA ajustado cresceu 12%, embora a margem tenha sofrido leve compressão devido ao aumento de custos logísticos.\n\nPontos Positivos:\n- Forte geração de caixa operacional.\n- Redução da alavancagem financeira.\n\nPontos de Atenção:\n- Exposição cambial elevada.\n- Competição acirrada no setor de varejo."
-          });
-          setLoading(false);
-       }, 2000);
-       return;
+    if (!file || !empresa || !ano) { alert("Preencha tudo!"); return; }
+    if (!user) { alert("Aguarde o carregamento do usuário."); return; }
+
+    // --- BLOQUEIO RÍGIDO NO FRONTEND ---
+    if (!isPremium && usageCount >= WEEKLY_LIMIT) {
+      setShowUpgradeModal(true);
+      return;
     }
 
     setLoading(true);
-    setError('');
-    setAnalysis(null);
-
-    const formData = new FormData();
-    formData.append('file', file);
-
     try {
-      const res = await fetch(`${API_BASE}/analisar`, {
-        method: 'POST',
-        body: formData,
-      });
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("empresa", empresa.toUpperCase());
+      formData.append("ano", ano);
+      formData.append("trimestre", trimestre);
+      formData.append("user_id", user.id); // <--- ID DO CLERK
 
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.detail || "Erro ao processar o arquivo.");
+      const response = await fetch(`${API_BASE}/api/analyze`, { method: "POST", body: formData });
+
+      if (response.status === 403) {
+        setLoading(false);
+        setShowUpgradeModal(true);
+        return;
       }
 
-      const data = await res.json();
-      setAnalysis(data);
-      fetchHistory(); // Atualiza histórico após análise
-    } catch (err: any) {
-      setError(err.message);
+      if (!response.ok) throw new Error("Erro API");
+      
+      // Sucesso: Incrementa contador se não for premium
+      if (!isPremium) {
+        const newCount = usageCount + 1;
+        setUsageCount(newCount);
+        localStorage.setItem(`usage_${user.id}`, newCount.toString());
+      }
+
+      const data = await response.json();
+      setResult(data);
+      setCurrentView('result');
+      fetchHistory();
+      fetchTableData();
+    } catch (error) {
+      console.error(error);
+      alert("Erro na análise. Verifique se o backend está online.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Tem a certeza que deseja eliminar esta análise?")) return;
-    try {
-      // Tenta deletar na API
-      const res = await fetch(`${API_BASE}/historico/${id}`, { method: 'DELETE' });
-      // Atualiza estado local independentemente (para funcionar no mock)
-      setHistory(history.filter(h => h.id !== id));
-    } catch (err) {
-      console.error("Erro ao eliminar:", err);
-      // Fallback para deletar localmente no mock
-      setHistory(history.filter(h => h.id !== id));
+  useEffect(() => {
+    if (user) { 
+        if (currentView === 'history') fetchHistory();
+        if (currentView === 'table' && isPremium) fetchTableData();
     }
+    const handleClickOutside = (e: MouseEvent) => {
+      if (columnMenuRef.current && !columnMenuRef.current.contains(e.target as Node)) setShowColumnMenu(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [currentView, user, isPremium]); 
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
   };
 
-  // Lógica de Ordenação
   const handleSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'desc';
-    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'desc') {
-      direction = 'asc';
-    }
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key) direction = sortConfig.direction === 'asc' ? 'desc' : 'asc';
     setSortConfig({ key, direction });
   };
 
-  const sortedHistory = useMemo(() => {
-    if (!sortConfig) return history;
-    return [...history].sort((a, b) => {
-      // Tratamento especial para valores numéricos e strings
-      let valA = a[sortConfig.key];
-      let valB = b[sortConfig.key];
+  const toggleColumn = (key: string) => setVisibleColumns(prev => ({ ...prev, [key]: !prev[key] }));
+  const onDragStart = (index: number) => setDraggedItemIndex(index);
+  const onDragEnter = (index: number) => {
+    if (draggedItemIndex === null || draggedItemIndex === index) return;
+    const newOrder = [...columnOrder];
+    const item = newOrder[draggedItemIndex];
+    newOrder.splice(draggedItemIndex, 1);
+    newOrder.splice(index, 0, item);
+    setColumnOrder(newOrder);
+    setDraggedItemIndex(index);
+  };
+  const onDragEnd = () => setDraggedItemIndex(null);
 
-      // Tenta converter para número se possível para ordenação correta
-      const numA = parseFloat(valA);
-      const numB = parseFloat(valB);
-      
+  const sortedTableData = useMemo(() => {
+    if (!sortConfig) return tableData;
+    return [...tableData].sort((a, b) => {
+      const valA = a[sortConfig.key];
+      const valB = b[sortConfig.key];
+      const numA = Number(valA);
+      const numB = Number(valB);
       if (!isNaN(numA) && !isNaN(numB)) {
-         valA = numA;
-         valB = numB;
-      } else {
-         valA = String(valA).toLowerCase();
-         valB = String(valB).toLowerCase();
+        return sortConfig.direction === 'asc' ? numA - numB : numB - numA;
       }
-
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
       if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
       return 0;
     });
-  }, [history, sortConfig]);
+  }, [tableData, sortConfig]);
 
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-[#0E1117] flex items-center justify-center">
-         <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-      </div>
-    );
-  }
+  const handleDownload = () => {
+    if (!isPremium) { setShowUpgradeModal(true); return; }
+    if (!result) return;
+    const meta = result.metadata || {};
+    const text = `RELATÓRIO: ${meta.empresa}\n${result.analise_completa || result.data?.tese_investimento}`;
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Relatorio_${meta.empresa}.txt`;
+    link.click();
+  };
+
+  const renderCellContent = (item: any, key: string, colDef: any) => {
+    if (key === 'empresa') return <span className={`${colDef.color || 'text-white'} font-bold`}>{item[key]?.toString().toUpperCase()}</span>;
+    if (key === 'trimestre') return <span className="bg-blue-900/30 text-blue-300 py-1 px-2 rounded text-xs font-bold border border-blue-500/20">{item[key]}</span>;
+    if (key === 'media') return <span className={`px-2 py-1 rounded font-bold ${item.media >= 4 ? 'text-green-400' : 'text-yellow-400'}`}>{item[key]}</span>;
+    if (key.includes('nota') || key === 'nota_final') {
+      const val = item[key];
+      return <span className={`font-bold text-base ${val >= 4 ? 'text-emerald-400' : val >= 3 ? 'text-yellow-400' : 'text-red-400'}`}>{val}</span>;
+    }
+    return <span className={`${colDef.color || 'text-gray-300'}`}>{item[key]}</span>;
+  };
+
+  if (!isLoaded) return <div className="flex h-screen items-center justify-center bg-[#0E1117]"><Loader2 className="animate-spin text-blue-500" /></div>;
 
   return (
-    <div className="min-h-screen bg-[#0E1117] text-gray-100 font-sans flex overflow-hidden">
-      
-      {/* --- SIDEBAR --- */}
-      <aside className="w-20 lg:w-64 bg-[#161b22] border-r border-gray-800 flex-col justify-between hidden md:flex transition-all duration-300">
-        <div>
-          <div className="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-gray-800">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20 shrink-0">
-              <BarChart3 className="text-white w-6 h-6" />
-            </div>
-            <span className="ml-3 text-xl font-bold tracking-tight text-white hidden lg:block">
-              Fin<span className="text-blue-500">Analyzer</span>
-            </span>
-          </div>
+    <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
 
-          <nav className="p-4 space-y-2">
-            {[
-              { id: 'upload', icon: <UploadCloud size={20} />, label: 'Nova Análise' },
-              { id: 'history', icon: <TableIcon size={20} />, label: 'Comparador de Ativos' },
-            ].map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-                  activeTab === item.id 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
-                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                }`}
-              >
-                {item.icon}
-                <span className="font-medium hidden lg:block">{item.label}</span>
-                {activeTab === item.id && (
-                  <div className="ml-auto w-1.5 h-1.5 bg-white rounded-full hidden lg:block" />
-                )}
-              </button>
-            ))}
+      <aside className="w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 z-20">
+        <div>
+          <div className="flex items-center gap-3 mb-10 px-2">
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
+              <BarChart3 className="text-white w-5 h-5" />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white">FinAnalyzer <span className="text-blue-500">.AI</span></span>
+          </div>
+          <nav className="space-y-2">
+            <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} />
+            <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} />
+            <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} />
           </nav>
         </div>
 
-        <div className="p-4 border-t border-gray-800">
-          <button 
-             onClick={() => setShowPaymentModal(true)}
-             className="w-full bg-gradient-to-r from-purple-600 to-blue-600 p-4 rounded-xl relative overflow-hidden group mb-4"
-          >
-             <div className="relative z-10 flex items-center gap-3 justify-center lg:justify-start">
-               <Zap className="text-white fill-current" size={20} />
-               <div className="text-left hidden lg:block">
-                 <p className="text-white font-bold text-sm">Seja Premium</p>
-                 <p className="text-blue-100 text-xs">Acesso ilimitado</p>
-               </div>
-             </div>
-             <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-          </button>
-
-          <div className="flex items-center gap-3 px-2 justify-center lg:justify-start">
-            <UserButton afterSignOutUrl="/" appearance={{
-              elements: { avatarBox: "w-10 h-10 ring-2 ring-gray-700" }
-            }} />
-            <div className="hidden lg:block overflow-hidden">
-               <p className="text-sm font-medium text-white truncate">{user?.fullName}</p>
-               <p className="text-xs text-gray-500 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* --- MOBILE NAV (Simple) --- */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#161b22] border-t border-gray-800 z-50 flex justify-around p-3">
-         <button onClick={() => setActiveTab('upload')} className={`p-2 rounded-lg ${activeTab === 'upload' ? 'text-blue-500 bg-blue-500/10' : 'text-gray-400'}`}><UploadCloud /></button>
-         <button onClick={() => setActiveTab('history')} className={`p-2 rounded-lg ${activeTab === 'history' ? 'text-blue-500 bg-blue-500/10' : 'text-gray-400'}`}><TableIcon /></button>
-         <button onClick={() => setShowPaymentModal(true)} className="p-2 rounded-lg text-purple-400"><Zap /></button>
-         <div className="p-2"><UserButton /></div>
-      </div>
-
-      {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 p-6 lg:p-10 overflow-y-auto relative h-screen">
-        
-        {/* TAB: UPLOAD & ANALYSIS */}
-        {activeTab === 'upload' && (
-          <div className="max-w-5xl mx-auto space-y-8 pb-20 md:pb-0">
-            
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-2">Nova Análise</h1>
-                <p className="text-gray-400">Carregue o PDF do release de resultados (ITR/DFP) para iniciar.</p>
+        {/* --- CONTADOR DE ANÁLISES --- */}
+        {!isPremium && (
+          <div className="mt-auto mb-6 px-2">
+            <div className="bg-[#161b22] border border-gray-800 p-4 rounded-xl mb-4">
+              <div className="flex justify-between text-xs mb-2">
+                <span className="text-gray-400">Análises Semanais</span>
+                <span className={`font-bold ${usageCount >= 5 ? 'text-red-400' : 'text-white'}`}>{usageCount}/{WEEKLY_LIMIT}</span>
+              </div>
+              <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-500 ${usageCount >= 5 ? 'bg-red-500' : 'bg-blue-500'}`} 
+                  style={{ width: `${Math.min((usageCount / WEEKLY_LIMIT) * 100, 100)}%` }} 
+                />
               </div>
             </div>
+            <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+              <Zap size={14} className="text-yellow-300 fill-yellow-300" /> Seja Premium
+            </button>
+          </div>
+        )}
+        
+        {isPremium && <div className="mt-auto" />}
 
-            {/* Upload Area */}
-            {!analysis && (
-              <div 
-                className={`relative border-2 border-dashed rounded-3xl p-12 text-center transition-all duration-300 group ${
-                  dragActive 
-                    ? 'border-blue-500 bg-blue-500/5 scale-[1.01]' 
-                    : 'border-gray-700 bg-[#161b22] hover:border-gray-500'
-                }`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-xl">
-                  {loading ? (
-                    <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-                  ) : (
-                    <UploadCloud className="w-10 h-10 text-blue-400" />
-                  )}
-                </div>
-                
-                <h3 className="text-xl font-bold text-white mb-2">
-                  {loading ? 'Processando Inteligência Artificial...' : 'Arraste seu arquivo aqui'}
-                </h3>
-                <p className="text-gray-400 mb-8 max-w-md mx-auto">
-                  Suportamos arquivos PDF de até 20MB. Nossa IA identifica automaticamente a empresa e o período.
-                </p>
-
-                <div className="relative inline-block">
-                  <input 
-                    type="file" 
-                    id="file-upload" 
-                    className="hidden" 
-                    accept=".pdf"
-                    onChange={handleFileUpload}
-                    disabled={loading}
-                  />
-                  <label 
-                    htmlFor="file-upload" 
-                    className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg ${
-                       loading 
-                        ? 'bg-gray-700 text-gray-400 cursor-not-allowed' 
-                        : 'bg-blue-600 hover:bg-blue-500 text-white hover:shadow-blue-900/30'
-                    }`}
-                  >
-                    {loading ? 'Analisando...' : 'Selecionar Arquivo'}
-                  </label>
-                  
-                  {/* Botão de demonstração para quando não há arquivo real */}
-                  <button 
-                    onClick={() => handleAnalyze()}
-                    className="block mt-4 text-xs text-gray-500 hover:text-blue-400 underline mx-auto"
-                  >
-                    (Modo Demo: Simular Análise sem arquivo)
-                  </button>
-                </div>
-
-                {file && !loading && (
-                   <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-300 bg-gray-800/50 py-2 px-4 rounded-lg inline-flex">
-                      <FileText size={16} />
-                      {file.name}
-                      <button onClick={(e) => { e.preventDefault(); handleAnalyze(); }} className="ml-4 text-blue-400 hover:text-blue-300 font-bold underline">
-                        CONFIRMAR ANÁLISE
-                      </button>
-                   </div>
-                )}
-
-                {error && (
-                  <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 flex items-center justify-center gap-2 animate-in fade-in slide-in-from-bottom-2">
-                    <AlertCircle size={20} />
-                    {error}
+        {/* --- BOTÃO OFICIAL DO CLERK (ATUALIZADO PARA FICAR NÍTIDO) --- */}
+        <div className="mt-4 px-2 py-3 border-t border-gray-800">
+           <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all w-full">
+              <UserButton 
+                showName={true} 
+                appearance={{
+                  elements: {
+                    // O box principal: inverte ordem e alinha
+                    userButtonBox: "flex flex-row-reverse w-full justify-start gap-3",
+                    
+                    // O NOME: !text-white força o branco, !font-bold deixa mais grosso
+                    userButtonOuterIdentifier: "!text-white !font-bold text-sm tracking-wide",
+                    
+                    // O AVATAR: aumenta um pouquinho
+                    avatarBox: "w-9 h-9 ring-2 ring-gray-700"
+                  }
+                }}
+              />
+           </div>
+        </div>
+      </aside>
+      
+      <main className="flex-1 overflow-y-auto p-8 relative">
+        {/* Lógica de renderização das views */}
+        {currentView === 'table' && (
+          <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
+            {/* ... Conteúdo da Tabela ... */}
+            <header className="flex items-center justify-between mb-8">
+              <div><h1 className="text-3xl font-bold text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-400 mt-1">Visão consolidada do desempenho das empresas.</p></div>
+              <div className="relative" ref={columnMenuRef}>
+                <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#161b22] border-gray-700 hover:border-blue-500 text-gray-300'}`}>
+                  <Settings2 size={18} /><span>Configurar Colunas</span>
+                </button>
+                {showColumnMenu && (
+                  <div className="absolute right-0 mt-3 w-80 bg-[#161b22]/95 backdrop-blur-md border border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
+                    <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-[#0d1117]/50"><span className="text-sm font-bold text-white">Visualização de Colunas</span><button onClick={() => setShowColumnMenu(false)} className="text-gray-400 hover:text-white"><X size={16} /></button></div>
+                    <div className="p-2 max-h-[400px] overflow-y-auto space-y-1">
+                      <p className="px-2 py-1 text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">Arraste para reordenar</p>
+                      {columnOrder.map((colKey, index) => {
+                        const col = columnDefsMap[colKey];
+                        const isVisible = visibleColumns[colKey];
+                        return (
+                          <div key={colKey} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onClick={() => toggleColumn(colKey)} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border border-transparent ${draggedItemIndex === index ? 'bg-blue-900/20 border-blue-500/50 opacity-50' : 'hover:bg-white/5 hover:border-gray-700'}`}>
+                            <div className="flex items-center gap-3"><div className="cursor-grab text-gray-600 hover:text-gray-300"><GripVertical size={16} /></div><span className={`text-sm font-medium ${isVisible ? 'text-gray-200' : 'text-gray-500'}`}>{col.label}</span></div>
+                            <div className={`p-1.5 rounded-lg transition-colors ${isVisible ? 'bg-blue-500/10 text-blue-400' : 'bg-gray-800 text-gray-600'}`}>{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Analysis Results */}
-            {analysis && (
-              <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 space-y-8">
-                
-                {/* Score Card */}
-                <div className="bg-gradient-to-br from-[#161b22] to-[#0d1117] border border-gray-800 rounded-3xl p-8 relative overflow-hidden shadow-2xl">
-                   <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                      <Activity size={200} />
-                   </div>
-                   
-                   <div className="flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-                      <div>
-                         <div className="flex items-center gap-3 mb-2">
-                            <h2 className="text-4xl font-bold text-white">{analysis.empresa}</h2>
-                            <span className="px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-xs font-mono text-gray-300">
-                               {analysis.trimestre}
-                            </span>
-                         </div>
-                         <p className="text-gray-400 max-w-xl text-lg">
-                           Análise fundamentalista gerada por IA com base nos documentos oficiais.
-                         </p>
-                      </div>
-
-                      <div className="flex items-center gap-6 bg-gray-900/50 p-4 rounded-2xl border border-gray-800 backdrop-blur-sm">
-                         <div className="text-right">
-                            <p className="text-gray-400 text-sm font-medium uppercase tracking-wider">Score Final</p>
-                            <p className="text-xs text-gray-500">de 0 a 5</p>
-                         </div>
-                         <div className={`text-6xl font-black tracking-tighter ${
-                            analysis.nota_final >= 4 ? 'text-green-500' : 
-                            analysis.nota_final >= 3 ? 'text-yellow-500' : 'text-red-500'
-                         }`}>
-                            {analysis.nota_final}
-                         </div>
-                      </div>
-                   </div>
-
-                   {/* Botões de Ação */}
-                   <div className="flex gap-4 mt-8">
-                      <button onClick={() => setAnalysis(null)} className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-800 hover:bg-gray-700 text-white font-medium transition-colors">
-                         <ChevronLeft size={18} /> Nova Análise
-                      </button>
-                      <button onClick={() => window.print()} className="flex items-center gap-2 px-6 py-3 rounded-xl border border-gray-700 hover:bg-gray-800 text-gray-300 font-medium transition-colors">
-                         <Download size={18} /> Salvar PDF
-                      </button>
-                   </div>
-                </div>
-
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  {[
-                    { label: 'Receita', val: analysis.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> },
-                    { label: 'Lucro Líq.', val: analysis.lucro_nota, icon: <BarChart3 size={20} className="text-purple-400" /> },
-                    { label: 'Margem', val: analysis.margem_nota, icon: <Percent size={20} className="text-yellow-400" /> },
-                    { label: 'ROE', val: analysis.roe_nota, icon: <Activity size={20} className="text-orange-400" /> },
-                    { label: 'Liquidez', val: analysis.liquidez_nota, icon: <Activity size={20} className="text-cyan-400" /> },
-                    { label: 'Dívida', val: analysis.divida_nota, icon: <TrendingUp size={20} className="text-red-400" /> } // Dívida geralmente é melhor se baixa, mas aqui assumo nota de qualidade
-                  ].map((item, idx) => (
-                    <div key={idx} className="bg-[#161b22] border border-gray-800 p-6 rounded-2xl hover:border-gray-700 transition-all duration-300">
-                      <div className="flex items-center justify-between mb-4">
-                         <span className="text-gray-400 text-sm font-medium">{item.label}</span>
-                         <div className="bg-gray-900 p-2 rounded-lg">{item.icon}</div>
-                      </div>
-                      <div className="flex items-end gap-2">
-                         <span className="text-3xl font-bold text-white">{item.val}</span>
-                         <span className="text-gray-600 text-sm mb-1">/5</span>
-                      </div>
-                      <div className="w-full bg-gray-800 h-1 mt-4 rounded-full overflow-hidden">
-                         <div 
-                           className={`h-full ${
-                             (item.val || 0) >= 4 ? 'bg-green-500' : 
-                             (item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'
-                           }`} 
-                           style={{ width: `${((item.val || 0) / 5) * 100}%` }} 
-                         />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* AI Text Analysis */}
-                <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-10 shadow-2xl">
-                   <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
-                     <div className="w-1 h-8 bg-blue-500 rounded-full" />
-                     Tese de Investimento (IA)
-                   </h3>
-                   <div className="prose prose-invert prose-lg max-w-none text-gray-300 leading-relaxed whitespace-pre-line">
-                      {analysis.analise_texto}
-                   </div>
-                </div>
-
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* TAB: HISTORY / COMPARISON TABLE */}
-        {activeTab === 'history' && (
-          <div className="max-w-[1600px] mx-auto pb-20 md:pb-0 h-full flex flex-col">
-             <div className="flex items-center justify-between mb-8">
-               <div>
-                  <h1 className="text-3xl font-bold text-white mb-2">Comparador de Ativos</h1>
-                  <p className="text-gray-400">Compare fundamentalmente todas as empresas analisadas.</p>
-               </div>
-               
-               <div className="flex gap-2 relative">
-                  <button 
-                    onClick={() => setShowColumnSelector(!showColumnSelector)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#161b22] border border-gray-700 text-gray-300 rounded-lg hover:text-white transition-colors"
-                  >
-                    <Settings2 size={16} /> Colunas
-                  </button>
-                  
-                  {showColumnSelector && (
-                    <div className="absolute right-0 top-12 w-64 bg-[#161b22] border border-gray-700 rounded-xl shadow-2xl z-50 p-4">
-                      <h4 className="text-white font-bold mb-3 text-sm">Exibir Colunas</h4>
-                      <div className="space-y-2 max-h-60 overflow-y-auto">
-                        {COLUMN_DEFINITIONS.map(col => (
-                          <label key={col.key} className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer hover:bg-gray-800 p-2 rounded">
-                            <input 
-                              type="checkbox" 
-                              checked={columnVisibility[col.key]}
-                              onChange={() => setColumnVisibility(prev => ({ ...prev, [col.key]: !prev[col.key] }))}
-                              className="rounded border-gray-600 bg-gray-700 text-blue-500 focus:ring-offset-gray-900"
-                            />
-                            {col.label}
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-               </div>
-             </div>
-
-             <div className="flex-1 bg-[#161b22] border border-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
-                <div className="overflow-auto custom-scrollbar flex-1">
-                  <table className="w-full border-collapse">
-                    <thead className="bg-[#0d1117] sticky top-0 z-20">
-                      <tr>
-                        {COLUMN_DEFINITIONS.filter(c => columnVisibility[c.key]).map((col) => (
-                          <th 
-                            key={col.key}
-                            className={`p-4 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-800/50 transition-colors border-b border-gray-800 ${col.minWidth || ''}`}
-                            onClick={() => handleSort(col.key)}
-                          >
-                            <div className={`flex items-center gap-2 justify-${col.align === 'center' ? 'center' : 'start'}`}>
-                              {col.label}
-                              {sortConfig?.key === col.key && (
-                                sortConfig.direction === 'asc' ? <ArrowUp size={12} className="text-blue-500" /> : <ArrowDown size={12} className="text-blue-500" />
-                              )}
-                              {sortConfig?.key !== col.key && <ArrowUpDown size={12} className="text-gray-600 opacity-0 group-hover:opacity-100" />}
-                            </div>
+            </header>
+            <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden">
+              <div className="overflow-x-auto w-full">
+                <table className={`text-left border-collapse ${visibleCount > 8 ? 'min-w-[1200px]' : 'w-full'}`}>
+                  <thead>
+                    <tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500">
+                      {columnOrder.map((colKey, index) => {
+                        const col = columnDefsMap[colKey];
+                        if (!visibleColumns[colKey]) return null;
+                        const isDragging = draggedItemIndex === index;
+                        return (
+                          <th key={col.key} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onDragOver={(e) => e.preventDefault()} onClick={() => handleSort(col.key)} className={`py-3 px-3 font-semibold transition-all relative group select-none cursor-grab active:cursor-grabbing ${col.color || ''} ${col.minWidth || ''} ${isDragging ? 'opacity-30 bg-blue-500/10 border-2 border-dashed border-blue-500' : 'hover:bg-white/5'}`} style={{ textAlign: col.align as any }}>
+                            <div className={`flex items-center gap-2 ${col.align === 'center' ? 'justify-center' : ''}`}><GripVertical size={12} className="text-gray-700 group-hover:text-gray-400 transition-colors opacity-0 group-hover:opacity-100" />{col.label}{sortConfig?.key === col.key ? (sortConfig?.direction === 'asc' ? <ArrowUp size={12} className="text-blue-400"/> : <ArrowDown size={12} className="text-blue-400"/>) : <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-30 transition-opacity"/>}</div>
                           </th>
-                        ))}
-                        <th className="p-4 text-xs font-bold text-gray-400 uppercase border-b border-gray-800 w-16">Ações</th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800 text-sm">
+                    {sortedTableData.map((item: any) => (
+                      <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group">
+                        {columnOrder.map(colKey => {
+                          const col = columnDefsMap[colKey];
+                          if (!visibleColumns[colKey]) return null;
+                          return <td key={`${item.id}-${col.key}`} className={`py-3 px-3 ${col.align === 'center' ? 'text-center' : ''} ${col.bg || ''}`}>{renderCellContent(item, col.key, col)}</td>;
+                        })}
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-800/50">
-                      {sortedHistory.map((row) => (
-                        <tr key={row.id} className="hover:bg-gray-800/30 transition-colors group">
-                           {COLUMN_DEFINITIONS.filter(c => columnVisibility[c.key]).map((col) => (
-                             <td key={col.key} className={`p-4 text-sm whitespace-nowrap ${col.color || 'text-gray-300'} text-${col.align || 'left'}`}>
-                               {col.key === 'nota_final' ? (
-                                  <div className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-800 border border-gray-700">
-                                    {row[col.key]}
-                                  </div>
-                               ) : row[col.key]}
-                             </td>
-                           ))}
-                           <td className="p-4 text-center">
-                              <button 
-                                onClick={() => handleDelete(row.id)}
-                                className="text-gray-600 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-red-500/10"
-                                title="Excluir Análise"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                           </td>
-                        </tr>
-                      ))}
-                      {sortedHistory.length === 0 && (
-                        <tr>
-                          <td colSpan={COLUMN_DEFINITIONS.length + 1} className="p-12 text-center text-gray-500">
-                            Nenhuma análise encontrada. Faça um upload para começar.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-             </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {sortedTableData.length === 0 && <div className="p-12 text-center text-gray-500">Nenhuma análise disponível.</div>}
+            </div>
           </div>
         )}
-
-      </main>
-
-      {/* --- PAYMENT MODAL (ATUALIZADO) --- */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-[#161b22] w-full max-w-lg rounded-3xl border border-gray-800 shadow-2xl relative overflow-hidden">
-             
-             {/* Efeitos de Fundo */}
-             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
-             <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/20 blur-[80px] rounded-full pointer-events-none" />
-
-             {/* Botão Fechar */}
-             <button 
-               onClick={() => setShowPaymentModal(false)}
-               className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-700 rounded-full transition-all"
-             >
-               <X size={20} />
-             </button>
-
-             <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-blue-900/40 mb-6">
-                   <Zap className="text-white w-8 h-8" fill="currentColor" />
-                </div>
-
-                <h3 className="text-2xl font-bold text-white mb-2">Desbloqueie o Poder da IA</h3>
-                <p className="text-gray-400 mb-8">
-                   Tenha acesso ilimitado a análises, histórico completo e relatórios detalhados.
-                </p>
-
-                {/* --- TOGGLE MENSAL / ANUAL --- */}
-                <div className="flex justify-center mb-8">
-                   <div className="bg-gray-900 p-1.5 rounded-xl flex items-center relative border border-gray-800">
-                      <button 
-                        onClick={() => setBillingCycle('monthly')}
-                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-300 z-10 ${
-                          billingCycle === 'monthly' ? 'text-white shadow-lg' : 'text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        Mensal
-                      </button>
-                      <button 
-                        onClick={() => setBillingCycle('yearly')}
-                        className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-300 z-10 flex items-center gap-2 ${
-                          billingCycle === 'yearly' ? 'text-white shadow-lg' : 'text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        Anual
-                        <span className="bg-green-500/20 text-green-400 text-[10px] px-1.5 py-0.5 rounded uppercase tracking-wider">
-                          -20%
-                        </span>
-                      </button>
-                      
-                      {/* Fundo Animado do Toggle */}
-                      <div className={`absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-gray-700 rounded-lg transition-all duration-300 ${
-                         billingCycle === 'monthly' ? 'left-1.5' : 'left-[calc(50%+3px)]'
-                      }`} />
-                   </div>
-                </div>
-
-                {/* --- PREÇO DINÂMICO --- */}
-                <div className="mb-8">
-                   <div className="flex items-end justify-center gap-1">
-                      <span className="text-5xl font-black text-white tracking-tight">
-                        {billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}
-                      </span>
-                      <span className="text-gray-500 mb-2 font-medium text-lg">
-                        /{billingCycle === 'monthly' ? 'mês' : 'ano'}
-                      </span>
-                   </div>
-                   {billingCycle === 'yearly' && (
-                      <p className="text-green-400 text-sm mt-2 font-medium">Você economiza 2 meses!</p>
-                   )}
-                </div>
-
-                {/* --- BOTÃO DE CHECKOUT DINÂMICO --- */}
-                <a 
-                   href={STRIPE_LINKS[billingCycle]}
-                   target="_blank"
-                   rel="noopener noreferrer"
-                   className="block w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/30 hover:scale-[1.02] active:scale-[0.98] transition-all"
-                >
-                   Assinar Plano {billingCycle === 'monthly' ? 'Mensal' : 'Anual'}
-                </a>
-                
-                <p className="mt-4 text-xs text-gray-500">
-                   Pagamento seguro via Stripe. Cancele quando quiser.
-                </p>
-             </div>
+        {currentView === 'history' && (
+          <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
+            {/* ... Conteúdo do Histórico ... */}
+            <header className="flex items-center justify-between mb-8"><div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
+            <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
+              <table className="w-full text-left border-collapse">
+                <thead><tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500"><th className="py-5 px-6 font-semibold">Empresa</th><th className="py-5 px-6 font-semibold">Período</th><th className="py-5 px-6 font-semibold">Data</th><th className="py-5 px-6 text-center font-semibold">Score</th><th className="py-5 px-6 text-right font-semibold">Ações</th></tr></thead>
+                <tbody className="divide-y divide-gray-800">
+                  {historyList.map((item: any) => (
+                    <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { setResult(item.conteudo); setEmpresa(item.empresa); setCurrentView('result'); }}>
+                      <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-gray-200">{item.empresa?.toUpperCase()}</span></div></td>
+                      <td className="py-4 px-6 text-gray-400">{item.periodo}</td>
+                      <td className="py-4 px-6 text-gray-500 text-sm">{formatarData(item.data)}</td>
+                      <td className="py-4 px-6 text-center"><span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold ${item.nota >= 4 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : item.nota >= 3 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>{item.nota}</span></td>
+                      <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">Detalhes <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {historyList.length === 0 && <div className="p-12 text-center text-gray-500">Histórico vazio.</div>}
+            </div>
           </div>
-        </div>
-      )}
-
+        )}
+        {currentView === 'dashboard' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-3xl mx-auto mt-10">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center h-96 animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-6" /><h2 className="text-3xl font-bold animate-pulse text-white mb-2">Analisando Dados...</h2><p className="text-gray-400">Nossa IA está processando o relatório e calculando os indicadores.</p></div>
+            ) : (
+              <>
+                <div className="text-center mb-12"><h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Nova Análise Financeira</h1><p className="text-gray-400 text-lg">Carregue o relatório trimestral (PDF) para processamento via IA.</p></div>
+                <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-8 shadow-2xl relative overflow-hidden group hover:border-gray-700 transition-colors duration-500">
+                  <div className="grid grid-cols-3 gap-6 mb-8">
+                    <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa</label><input type="text" placeholder="Ex: Apple" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all uppercase" value={empresa} onChange={(e) => setEmpresa(e.target.value)} /></div>
+                    <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ano</label><input type="text" placeholder="2025" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={ano} onChange={(e) => setAno(e.target.value)} /></div>
+                    <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trimestre</label><select className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">1º Trimestre</option><option value="2T">2º Trimestre</option><option value="3T">3º Trimestre</option><option value="4T">4º Trimestre</option></select></div>
+                  </div>
+                  <div className="border-2 border-dashed border-gray-700 rounded-xl p-10 flex flex-col items-center justify-center bg-[#0d1117]/50 hover:bg-[#0d1117] hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
+                    <input type="file" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" /><div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div><p className="text-gray-300 font-medium text-lg">{file ? file.name : "Clique ou arraste o PDF do resultado aqui"}</p><p className="text-gray-500 text-sm mt-2">Suporta PDF de até 10MB</p>
+                  </div>
+                  <button onClick={handleAnalyze} className="w-full mt-8 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition-all duration-300 flex items-center justify-center gap-2"><Activity size={20} /> Gerar Análise Completa</button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        {currentView === 'result' && result && (
+          <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
+            {/* ... Conteúdo do Resultado ... */}
+            <div className="flex justify-between items-center mb-10">
+              <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
+              
+              <button onClick={handleDownload} className={`px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${isPremium ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}>
+                {isPremium ? <Download size={18} /> : <Lock size={18} />} Baixar Relatório
+              </button>
+            </div>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
+              <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
+              <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800"><div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : 'text-amber-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span></div></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+              {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "ROE", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
+                <div key={idx} className="bg-[#161b22] border border-gray-800 p-6 rounded-2xl hover:border-gray-700 transition-all duration-300">
+                  <div className="flex items-center justify-between mb-4"><span className="text-gray-400 text-sm font-medium">{item.label}</span><div className="bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
+                  <div className="flex items-end gap-2"><span className="text-3xl font-bold text-white">{item.val}</span><span className="text-gray-600 text-sm mb-1">/5</span></div>
+                  <div className="w-full bg-gray-800 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${(item.val || 0) >= 4 ? 'bg-green-500' : (item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${((item.val || 0) / 5) * 100}%` }} /></div>
+                </div>
+              ))}
+            </div>
+            <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-10 shadow-2xl"><h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3"><FileText className="text-blue-500" /> Tese de Investimento</h3><div className="prose prose-invert prose-lg max-w-none text-gray-300 leading-relaxed whitespace-pre-line">{result.data?.tese_investimento ? result.data.tese_investimento : "Sem análise textual disponível."}</div></div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
