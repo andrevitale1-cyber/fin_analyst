@@ -49,8 +49,8 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 text-center">
           
           <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-8 leading-tight">
-            Analise Empresas com <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Agilidade que Gera Valor.</span>
+            A Nova era da <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Análise de Ativos.</span>
           </h1>
           
           <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
