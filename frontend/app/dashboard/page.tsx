@@ -11,7 +11,7 @@ import {
 
 // --- CONFIGURAÇÃO DO STRIPE ---
 const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00"; 
-const API_BASE = "https://api-finanalyzer.onrender.com"; // <--- BASE URL
+const API_BASE = "https://api-finanalyzer.onrender.com";
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
 const COLUMN_DEFINITIONS = [
@@ -44,15 +44,21 @@ function Feature({ text, active = false, disabled = false }: any) {
 }
 
 // --- COMPONENTE MODAL DE UPGRADE ---
-// --- COMPONENTE MODAL DE UPGRADE (ATUALIZADO IGUAL LANDING PAGE) ---
-function UpgradeModal({ onClose, billingCycle = 'monthly' }: { onClose: () => void; billingCycle?: 'monthly' | 'yearly' }) {
+function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'monthly' }: { onClose: () => void; userId?: string; billingCycle?: 'monthly' | 'yearly' }) {
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
+
   const handleCheckout = () => {
-    window.open(STRIPE_CHECKOUT_URL, '_blank');
+    const url = new URL(STRIPE_CHECKOUT_URL);
+    if (userId) {
+      url.searchParams.set("client_reference_id", userId);
+    }
+    window.open(url.toString(), '_blank');
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-5xl grid md:grid-cols-2 gap-8 p-4">
+      <div className="relative w-full max-w-5xl">
+
         {/* Botão de Fechar */}
         <button 
           onClick={onClose} 
@@ -61,58 +67,92 @@ function UpgradeModal({ onClose, billingCycle = 'monthly' }: { onClose: () => vo
           <X size={24} />
         </button>
 
-        {/* --- CARD GRATUITO --- */}
-        <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 flex flex-col h-full opacity-80 scale-95">
-          <h3 className="text-2xl font-bold text-white mb-2">Gratuito</h3>
-          <p className="text-gray-400 text-base mb-8">Seu plano atual.</p>
-          
-          <ul className="space-y-4 mb-8 flex-1">
-                <Feature text="5 Análises por semana" active />
-                <Feature text="Relatório Resumido na Tela" active />
-                <Feature text="Acesso ao histórico simples" active />
-                <Feature text="Suporte por email" active />
-                {/* Bloqueios */}
-                <Feature text="Upload de arquivos ilimitado" disabled />
-                <Feature text="Download da Análise Completa da IA" disabled />
-                <Feature text="Tabela Comparativa de Ativos" disabled />
-          </ul>
+        {/* Toggle Mensal / Anual */}
+        <div className="flex flex-col items-center gap-2 mb-6">
+          <div className="flex items-center justify-center gap-4">
+            <span
+              className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`}
+              onClick={() => setBillingCycle('monthly')}
+            >
+              Mensal
+            </span>
+            <button 
+              onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
+              className="w-16 h-8 bg-gray-800 rounded-full p-1 relative transition-colors hover:bg-gray-700"
+            >
+              <div className={`w-6 h-6 bg-blue-500 rounded-full transition-transform duration-300 shadow-md ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-0'}`} />
+            </button>
+            <span
+              className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`}
+              onClick={() => setBillingCycle('yearly')}
+            >
+              Anual
+            </span>
+          </div>
 
-          <button onClick={onClose} className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 transition-all mt-auto">
-            Continuar Grátis
-          </button>
+          <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'}`}>
+            <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-3 py-1 rounded-full">2 MESES GRÁTIS</span>
+          </div>
         </div>
 
-        {/* --- CARD PREMIUM (DESTAQUE) --- */}
-        <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-              {billingCycle === 'yearly' && (
-                <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
-                  2 Meses Grátis no Anual
-                </div>
-              )}
-              <h3 className="text-2xl font-bold text-blue-400 mb-2">Premium</h3>
-              <div className="flex items-end gap-1 mb-2">
-                <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
-                <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
+        {/* Grid dos dois cards */}
+        <div className="grid md:grid-cols-2 gap-8">
+
+          {/* --- CARD GRATUITO --- */}
+          <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 flex flex-col h-full opacity-80 scale-95">
+            <h3 className="text-2xl font-bold text-white mb-2">Gratuito</h3>
+            <p className="text-gray-400 text-base mb-8">Seu plano atual.</p>
+            
+            <ul className="space-y-4 mb-8 flex-1">
+              <Feature text="5 Análises por semana" active />
+              <Feature text="Relatório Resumido na Tela" active />
+              <Feature text="Acesso ao histórico simples" active />
+              <Feature text="Suporte por email" active />
+              {/* Bloqueios */}
+              <Feature text="Upload de arquivos ilimitado" disabled />
+              <Feature text="Download da Análise Completa da IA" disabled />
+              <Feature text="Tabela Comparativa de Ativos" disabled />
+            </ul>
+
+            <button onClick={onClose} className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 transition-all mt-auto">
+              Continuar Grátis
+            </button>
+          </div>
+
+          {/* --- CARD PREMIUM (DESTAQUE) --- */}
+          <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+            {billingCycle === 'yearly' && (
+              <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
+                2 Meses Grátis no Anual
               </div>
-              <p className="text-gray-400 text-sm mb-8">Desbloqueie todo o poder da IA.</p>
-          
-           <ul className="space-y-4 mb-8 flex-1">
-                <Feature text="5 Análises por semana" active />
-                <Feature text="Relatório Resumido na Tela" active />
-                <Feature text="Acesso ao histórico simples" active />
-                <Feature text="Suporte por email" active />
-                <Feature text="Upload de arquivos ilimitado" active />
-                <Feature text="Download da Análise Completa da IA" active />
-                <Feature text="Tabela Comparativa de Ativos" active />
-          </ul>
+            )}
+            <h3 className="text-2xl font-bold text-blue-400 mb-2">Premium</h3>
+            <div className="flex items-end gap-1 mb-2">
+              <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
+              <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
+            </div>
+            <p className="text-gray-400 text-sm mb-8">Desbloqueie todo o poder da IA.</p>
+        
+            <ul className="space-y-4 mb-8 flex-1">
+              <Feature text="Análises de IA Ilimitadas" active />
+              <Feature text="Relatório Resumido na Tela" active />
+              <Feature text="Acesso ao Histórico Ilimitado" active />
+              <Feature text="Suporte por Email" active />
+              <Feature text="Upload de arquivos ilimitado" active />
+              <Feature text="Download da Análise Completa da IA" active />
+              <Feature text="Tabela Comparativa de Ativos" active />
+              <Feature text="Prioridade máxima na fila" active />
+            </ul>
 
-          <button onClick={handleCheckout} className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto animate-pulse hover:animate-none">
-            Assinar Agora
-          </button>
-          <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
-        </div>
-      </div>
-    </div>
+            <button onClick={handleCheckout} className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto animate-pulse hover:animate-none">
+              Assinar Agora
+            </button>
+            <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
+          </div>
+
+        </div> 
+      </div> 
+    </div> 
   );
 }
 
@@ -129,7 +169,7 @@ function NavItem({ icon, label, active = false, onClick, isLocked = false }: any
 // --- COMPONENTE PRINCIPAL ---
 export default function FinancialDashboard() {
   const router = useRouter();
-  const { user, isLoaded } = useUser(); // <--- HOOK DO CLERK
+  const { user, isLoaded } = useUser();
 
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
@@ -161,21 +201,17 @@ export default function FinancialDashboard() {
   const [file, setFile] = useState<File | null>(null);
 
   // --- LÓGICA DE PREMIUM REAL ---
-  // Verifica se no Clerk o usuário tem a tag "premium"
   const isPremium = user?.publicMetadata?.plan === 'premium';
 
 
   useEffect(() => {
-    // Se não estiver logado e terminou de carregar, volta pro login
     if (isLoaded && !user) {
-      // O Middleware já faz isso, mas é uma segurança extra no cliente
       return; 
     }
 
     if (user) {
-      // --- LÓGICA DE CONTAGEM E RESET SEMANAL ---
       if (!isPremium) {
-        const usageKey = `usage_${user.id}`; // Usa ID do Clerk
+        const usageKey = `usage_${user.id}`;
         const dateKey = `usage_date_${user.id}`;
         
         const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
@@ -244,7 +280,6 @@ export default function FinancialDashboard() {
     if (!file || !empresa || !ano) { alert("Preencha tudo!"); return; }
     if (!user) { alert("Aguarde o carregamento do usuário."); return; }
 
-    // --- BLOQUEIO RÍGIDO NO FRONTEND ---
     if (!isPremium && usageCount >= WEEKLY_LIMIT) {
       setShowUpgradeModal(true);
       return;
@@ -257,7 +292,7 @@ export default function FinancialDashboard() {
       formData.append("empresa", empresa.toUpperCase());
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
-      formData.append("user_id", user.id); // <--- ID DO CLERK
+      formData.append("user_id", user.id);
 
       const response = await fetch(`${API_BASE}/api/analyze`, { method: "POST", body: formData });
 
@@ -269,7 +304,6 @@ export default function FinancialDashboard() {
 
       if (!response.ok) throw new Error("Erro API");
       
-      // Sucesso: Incrementa contador se não for premium
       if (!isPremium) {
         const newCount = usageCount + 1;
         setUsageCount(newCount);
@@ -367,7 +401,7 @@ export default function FinancialDashboard() {
 
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
-      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} />}
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} userId={user?.id} />}
 
       <aside className="w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 z-20">
         <div>
@@ -407,20 +441,15 @@ export default function FinancialDashboard() {
         
         {isPremium && <div className="mt-auto" />}
 
-        {/* --- BOTÃO OFICIAL DO CLERK (ATUALIZADO PARA FICAR NÍTIDO) --- */}
+        {/* --- BOTÃO OFICIAL DO CLERK --- */}
         <div className="mt-4 px-2 py-3 border-t border-gray-800">
            <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all w-full">
               <UserButton 
                 showName={true} 
                 appearance={{
                   elements: {
-                    // O box principal: inverte ordem e alinha
                     userButtonBox: "flex flex-row-reverse w-full justify-start gap-3",
-                    
-                    // O NOME: !text-white força o branco, !font-bold deixa mais grosso
                     userButtonOuterIdentifier: "!text-white !font-bold text-sm tracking-wide",
-                    
-                    // O AVATAR: aumenta um pouquinho
                     avatarBox: "w-9 h-9 ring-2 ring-gray-700"
                   }
                 }}
@@ -433,7 +462,6 @@ export default function FinancialDashboard() {
         {/* Lógica de renderização das views */}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
-            {/* ... Conteúdo da Tabela ... */}
             <header className="flex items-center justify-between mb-8">
               <div><h1 className="text-3xl font-bold text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-400 mt-1">Visão consolidada do desempenho das empresas.</p></div>
               <div className="relative" ref={columnMenuRef}>
@@ -496,7 +524,6 @@ export default function FinancialDashboard() {
         )}
         {currentView === 'history' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
-            {/* ... Conteúdo do Histórico ... */}
             <header className="flex items-center justify-between mb-8"><div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
             <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
               <table className="w-full text-left border-collapse">
@@ -541,7 +568,6 @@ export default function FinancialDashboard() {
         )}
         {currentView === 'result' && result && (
           <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
-            {/* ... Conteúdo do Resultado ... */}
             <div className="flex justify-between items-center mb-10">
               <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
               
