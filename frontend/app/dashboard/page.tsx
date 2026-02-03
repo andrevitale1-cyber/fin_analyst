@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DO STRIPE ---
-const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00"; 
+const STRIPE_CHECKOUT_URL_MONTHLY = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00";
+const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/SEU_LINK_ANUAL_AQUI"; // <-- Cole aqui o link do plano anual do Stripe
 const API_BASE = "https://api-finanalyzer.onrender.com";
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
@@ -38,7 +39,7 @@ function Feature({ text, active = false, disabled = false }: any) {
           <Check size={12} />
         </div>
       )}
-      <span className={`text-base ${disabled ? 'text-gray-500 line-through' : 'text-gray-300'}`}>{text}</span>
+      <span className={`text-sm ${disabled ? 'text-gray-500 line-through' : 'text-gray-300'}`}>{text}</span>
     </li>
   );
 }
@@ -48,16 +49,17 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
 
   const handleCheckout = () => {
-    const url = new URL(STRIPE_CHECKOUT_URL);
+    const baseUrl = billingCycle === "yearly" ? STRIPE_CHECKOUT_URL_YEARLY : STRIPE_CHECKOUT_URL_MONTHLY;
+    const url = new URL(baseUrl);
     if (userId) {
       url.searchParams.set("client_reference_id", userId);
     }
-    window.open(url.toString(), '_blank');
+    window.open(url.toString(), "_blank");
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-5xl">
+      <div className="relative w-full max-w-3xl">
 
         {/* Botão de Fechar */}
         <button 
@@ -68,8 +70,8 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
         </button>
 
         {/* Toggle Mensal / Anual */}
-        <div className="flex flex-col items-center gap-2 mb-6">
-          <div className="flex items-center justify-center gap-4">
+        <div className="flex flex-col items-center gap-1 mb-4">
+          <div className="flex items-center justify-center gap-3">
             <span
               className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`}
               onClick={() => setBillingCycle('monthly')}
@@ -96,14 +98,14 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
         </div>
 
         {/* Grid dos dois cards */}
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-2 gap-5">
 
           {/* --- CARD GRATUITO --- */}
-          <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 flex flex-col h-full opacity-80 scale-95">
-            <h3 className="text-2xl font-bold text-white mb-2">Gratuito</h3>
-            <p className="text-gray-400 text-base mb-8">Seu plano atual.</p>
+          <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-5 flex flex-col h-full opacity-80 scale-95">
+            <h3 className="text-lg font-bold text-white mb-1">Gratuito</h3>
+            <p className="text-gray-400 text-sm mb-3">Seu plano atual.</p>
             
-            <ul className="space-y-4 mb-8 flex-1">
+            <ul className="space-y-2 mb-4 flex-1">
               <Feature text="5 Análises por semana" active />
               <Feature text="Relatório Resumido na Tela" active />
               <Feature text="Acesso ao histórico simples" active />
@@ -114,26 +116,26 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
               <Feature text="Tabela Comparativa de Ativos" disabled />
             </ul>
 
-            <button onClick={onClose} className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 transition-all mt-auto">
+            <button onClick={onClose} className="block w-full text-center py-2.5 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 transition-all mt-auto">
               Continuar Grátis
             </button>
           </div>
 
           {/* --- CARD PREMIUM (DESTAQUE) --- */}
-          <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+          <div className="bg-[#0f131a] border border-blue-500 rounded-2xl p-5 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
             {billingCycle === 'yearly' && (
-              <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
+              <div className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
                 2 Meses Grátis no Anual
               </div>
             )}
-            <h3 className="text-2xl font-bold text-blue-400 mb-2">Premium</h3>
+            <h3 className="text-lg font-bold text-blue-400 mb-1">Premium</h3>
             <div className="flex items-end gap-1 mb-2">
-              <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
+              <span className="text-3xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
               <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
             </div>
-            <p className="text-gray-400 text-sm mb-8">Desbloqueie todo o poder da IA.</p>
+            <p className="text-gray-400 text-sm mb-3">Desbloqueie todo o poder da IA.</p>
         
-            <ul className="space-y-4 mb-8 flex-1">
+            <ul className="space-y-2 mb-4 flex-1">
               <Feature text="Análises de IA Ilimitadas" active />
               <Feature text="Relatório Resumido na Tela" active />
               <Feature text="Acesso ao Histórico Ilimitado" active />
@@ -144,7 +146,7 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
               <Feature text="Prioridade máxima na fila" active />
             </ul>
 
-            <button onClick={handleCheckout} className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto animate-pulse hover:animate-none">
+            <button onClick={handleCheckout} className="block w-full text-center py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto animate-pulse hover:animate-none">
               Assinar Agora
             </button>
             <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
