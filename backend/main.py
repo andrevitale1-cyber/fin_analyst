@@ -160,7 +160,7 @@ async def analyze_report(
         pdf_text = extract_text_from_pdf_bytes(contents)
         
         prompt = f"""
-    Você é um analista sênior de Equity Research. Analise o resultado de: {empresa} ({trimestre}/{ano}) Sua nota deve avaliar o resultado. Se a empresa for boa e o resultado ruim, a nota deverá ser penalisada.
+    Você é um analista sênior de Equity Research. Analise o resultado de: {empresa} ({trimestre}/{ano}) Sua nota deve avaliar o resultado. Se a empresa for boa e o resultado ruim, a nota deverá ser penalisada. 
 
 
 
@@ -172,7 +172,7 @@ async def analyze_report(
 
     - Use no máximo duas casas decimais.
 
-    - Se for banco/seguradora, ignore EBITDA e use métricas do setor (Margem Financeira, Índice de Basileia, etc).
+    - Se for banco/seguradora, ignore EBITDA e use métricas do setor (Margem Financeira, Índice de Basileia, etc). Reconheça que o "Resultado Financeiro" (receitas de investimentos/float) é uma parte core e operacional do negócio.
 
     - TODAS AS NOTAS DEVEM SER DADAS APENAS COM OS NÚMEROS INTEIROS: 1/2/3/4/5.
 
@@ -186,7 +186,13 @@ async def analyze_report(
 
     (Analise a Receita Líquida. Cresceu? Caiu? Foi preço ou volume? O mix de produtos ajudou?)
 
-    ...
+    Apresente a Receita Líquida (Não-Financeiras) ou Prêmios Emitidos / Margem Financeira (Financeiras) e sua variação.
+
+    Desconstrua o crescimento por segmento.
+
+    Conecte a receita com os indicadores operacionais do setor (ex: Vendas Mesmas Lojas; Volume vs. Preço; Sinistralidade). O operacional foi um ponto forte ou fraco?
+
+    (Para aquisições): Se relevante, identifique o crescimento orgânico.
 
     **Nota Seção 1: X/5**
 
@@ -216,7 +222,9 @@ async def analyze_report(
 
     (Analise o Lucro Líquido. Foi limpo ou teve não-recorrentes? É sustentável?)
 
-    ...
+    Indentifique os Drivers: Conecte o lucro final aos componentes das seções 1, 2 e 3.
+
+    Qualifique o Lucro: Identifique fatores não recorrentes, não-caixa ou cíclicos (ex: créditos tributários, deflação/inflação de índices, Selic) que tenham impulsionado ou prejudicado o resultado.
 
     **Nota Seção 4: X/5**
 
@@ -226,7 +234,11 @@ async def analyze_report(
 
     (Sintetize: O resultado foi Bom, Neutro ou Ruim? Qual a perspectiva futura (Guidance)?)
 
+    Sintetize a análise de forma coesa. Comece pela conclusão principal (ex: "A empresa entregou um resultado forte/recorde..." ou "O resultado foi fraco...").
 
+    Em seguida, explique os drivers, balanceando os fatores (ex: "...apesar de um operacional modesto, isso foi impulsionado por um resultado financeiro excepcional..." ou "...o forte crescimento operacional foi consumido por despesas financeiras...").
+
+    Conclua sobre a tese principal que o resultado do trimestre suporta.
 
     **Seção 6: Nota Final**
 
