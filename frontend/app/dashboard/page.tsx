@@ -11,7 +11,7 @@ import {
 
 // --- CONFIGURAÇÃO DO STRIPE ---
 const STRIPE_CHECKOUT_URL_MONTHLY = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00";
-const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/SEU_LINK_ANUAL_AQUI"; // <-- Cole aqui o link do plano anual do Stripe
+const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/3cI6oIgdleEBgmNdI967S01"; // <-- Cole aqui o link do plano anual do Stripe
 const API_BASE = "https://api-finanalyzer.onrender.com";
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
