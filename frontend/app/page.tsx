@@ -50,11 +50,11 @@ export default function LandingPage() {
           
           <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-8 leading-tight">
             Analise Ações em <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Segundos, não Horas.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Agilidade que Gera Valor.</span>
           </h1>
           
           <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Abandone a leitura manual dos resultados. Nossa IA lê os balanços, interpreta os dados e entrega uma tese de investimento completa.
+            Acelere a leitura de relatórios trimestrais. Deixe a IA estruturar os dados e gerar insights para apoiar sua decisão de investimento.
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
@@ -83,7 +83,7 @@ export default function LandingPage() {
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Upload Inteligente</h2>
               
               <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                Esqueça configurações manuais. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA identifica automaticamente a empresa, o trimestre e o ano.
+                Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado.
               </p>
             </div>
 
@@ -110,7 +110,7 @@ export default function LandingPage() {
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Análise Profunda</h2>
               
               <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                O FinAnalyzer gera um Score de 0 a 5 baseado em fundamentos sólidos e escreve uma tese de investimento completa.
+                O FinAnalyzer gera um Score de 0 a 5 para cada métrica para facilitar a identificação de pontos fortes e de atenção. 
               </p>
             </div>
 
@@ -137,7 +137,7 @@ export default function LandingPage() {
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Comparador de Ativos</h2>
               
               <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                Visualize todas as empresas que você analisou em uma única tabela interativa. Ordene por Nota, Receita ou Lucro.
+                Visualize e compare todos os Resultados que você analisou em uma única tabela interativa. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e Muito Mais!.
               </p>
             </div>
 
@@ -164,7 +164,7 @@ export default function LandingPage() {
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Histórico Completo</h2>
               
               <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                Todas as suas análises ficam salvas para sempre. Compare a evolução da nota da empresa trimestre a trimestre.
+                Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
             </div>
 
@@ -187,7 +187,7 @@ export default function LandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
               Um único plano. <br />
-              O site mais completo para o investidor.
+              Invista melhor com o poder da IA.
             </h2>
             
             <div className="flex items-center justify-center gap-4 mt-8">
