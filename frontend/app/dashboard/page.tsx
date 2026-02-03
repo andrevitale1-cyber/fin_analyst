@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DO STRIPE ---
-const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/test_28E28s5vV5J43eX0H78ww00"; 
+const STRIPE_CHECKOUT_URL = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00"; 
 const API_BASE = "https://api-finanalyzer.onrender.com"; // <--- BASE URL
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
@@ -26,6 +26,22 @@ const COLUMN_DEFINITIONS = [
   { key: 'media', label: 'Média', align: 'center', bg: 'bg-green-900/10', color: 'text-green-200' },
   { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-bold' },
 ];
+
+// --- COMPONENTE FEATURE ---
+function Feature({ text, active = false, disabled = false }: any) {
+  return (
+    <li className="flex items-center gap-3">
+      {disabled ? (
+        <div className="p-0.5 rounded-full border border-gray-600 text-gray-500"><X size={12} /></div>
+      ) : (
+        <div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30">
+          <Check size={12} />
+        </div>
+      )}
+      <span className={`text-base ${disabled ? 'text-gray-500 line-through' : 'text-gray-300'}`}>{text}</span>
+    </li>
+  );
+}
 
 // --- COMPONENTE MODAL DE UPGRADE ---
 // --- COMPONENTE MODAL DE UPGRADE (ATUALIZADO IGUAL LANDING PAGE) ---
@@ -51,13 +67,14 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
           <p className="text-gray-400 text-base mb-8">Seu plano atual.</p>
           
           <ul className="space-y-4 mb-8 flex-1">
-            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">5 Análises por semana</span></li>
-            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Upload de arquivos ilimitado</span></li>
-            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Acesso ao histórico simples</span></li>
-            
-            {/* Itens Bloqueados */}
-            <li className="flex items-center gap-3 opacity-50"><div className="p-0.5 rounded-full border border-gray-600 text-gray-500"><X size={12} /></div><span className="text-gray-500 line-through">Download do Relatório PDF</span></li>
-            <li className="flex items-center gap-3 opacity-50"><div className="p-0.5 rounded-full border border-gray-600 text-gray-500"><X size={12} /></div><span className="text-gray-500 line-through">Tabela Comparativa</span></li>
+                <Feature text="5 Análises por semana" active />
+                <Feature text="Relatório Resumido na Tela" active />
+                <Feature text="Acesso ao histórico simples" active />
+                <Feature text="Suporte por email" active />
+                {/* Bloqueios */}
+                <Feature text="Upload de arquivos ilimitado" disabled />
+                <Feature text="Download da Análise Completa da IA" disabled />
+                <Feature text="Tabela Comparativa de Ativos" disabled />
           </ul>
 
           <button onClick={onClose} className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 transition-all mt-auto">
@@ -80,11 +97,15 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
           </div>
           <p className="text-gray-400 text-sm mb-8">Desbloqueie todo o poder da IA.</p>
           
-          <ul className="space-y-4 mb-8 flex-1">
-            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Análises de IA Ilimitadas</span></li>
-            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Download do Relatório PDF Completo</span></li>
-            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Tabela Comparativa Customizável</span></li>
-            <li className="flex items-center gap-3"><div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30"><Check size={12} /></div><span className="text-gray-300">Prioridade máxima na fila</span></li>
+           <ul className="space-y-4 mb-8 flex-1">
+                <Feature text="5 Análises por semana" active />
+                <Feature text="Relatório Resumido na Tela" active />
+                <Feature text="Acesso ao histórico simples" active />
+                <Feature text="Suporte por email" active />
+                {/* Bloqueios */}
+                <Feature text="Upload de arquivos ilimitado" disabled />
+                <Feature text="Download da Análise Completa da IA" disabled />
+                <Feature text="Tabela Comparativa de Ativos" disabled />
           </ul>
 
           <button onClick={handleCheckout} className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto animate-pulse hover:animate-none">
