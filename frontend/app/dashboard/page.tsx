@@ -405,7 +405,7 @@ export default function FinancialDashboard() {
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} userId={user?.id} />}
 
-      <aside className="w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 z-20">
+      <aside className="hidden md:flex w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 z-20">
         <div>
           <div className="flex items-center gap-3 mb-10 px-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
@@ -553,8 +553,8 @@ export default function FinancialDashboard() {
             ) : (
               <>
                 <div className="text-center mb-12"><h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Nova Análise Financeira</h1><p className="text-gray-400 text-lg">Carregue o relatório trimestral (PDF) para processamento via IA.</p></div>
-                <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-8 shadow-2xl relative overflow-hidden group hover:border-gray-700 transition-colors duration-500">
-                  <div className="grid grid-cols-3 gap-6 mb-8">
+                <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-4 md:p-8 shadow-2xl relative overflow-hidden group hover:border-gray-700 transition-colors duration-500">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa</label><input type="text" placeholder="Ex: Apple" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all uppercase" value={empresa} onChange={(e) => setEmpresa(e.target.value)} /></div>
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ano</label><input type="text" placeholder="2025" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={ano} onChange={(e) => setAno(e.target.value)} /></div>
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trimestre</label><select className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">1º Trimestre</option><option value="2T">2º Trimestre</option><option value="3T">3º Trimestre</option><option value="4T">4º Trimestre</option></select></div>
