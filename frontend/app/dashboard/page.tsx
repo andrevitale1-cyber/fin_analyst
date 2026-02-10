@@ -1,17 +1,17 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, UserButton } from "@clerk/nextjs"; // <--- NOVO IMPORT
+import { useUser, UserButton } from "@clerk/nextjs";
 import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Activity, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
-  GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check
+  GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check, Menu
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DO STRIPE ---
 const STRIPE_CHECKOUT_URL_MONTHLY = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00";
-const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/3cI6oIgdleEBgmNdI967S01"; // <-- Cole aqui o link do plano anual do Stripe
+const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/3cI6oIgdleEBgmNdI967S01"; 
 const API_BASE = "https://api-finanalyzer.onrender.com";
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
@@ -177,6 +177,9 @@ export default function FinancialDashboard() {
   const [loading, setLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   
+  // ESTADO PARA O MENU MOBILE
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
   // Contadores
   const [usageCount, setUsageCount] = useState(0);
   const WEEKLY_LIMIT = 5;
@@ -274,6 +277,7 @@ export default function FinancialDashboard() {
   };
 
   const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
+    setIsSidebarOpen(false); // Fecha o menu ao clicar em um item
     if (view === 'table' && !isPremium) setShowUpgradeModal(true);
     else setCurrentView(view);
   };
@@ -404,21 +408,40 @@ export default function FinancialDashboard() {
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} userId={user?.id} />}
+      
+      {/* --- OVERLAY ESCURO (MOBILE) --- */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden animate-in fade-in"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
-      <aside className="hidden md:flex w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 z-20">
-        <div>
-          <div className="flex items-center gap-3 mb-10 px-2">
+      {/* --- SIDEBAR RESPONSIVA --- */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 transition-transform duration-300 ease-in-out
+        md:relative md:translate-x-0 
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        {/* Header da Sidebar com botão de fechar (Mobile) */}
+        <div className="flex items-center justify-between mb-10 px-2">
+          <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
               <BarChart3 className="text-white w-5 h-5" />
             </div>
             <span className="text-xl font-bold tracking-tight text-white">FinAnalyzer <span className="text-blue-500">.AI</span></span>
           </div>
-          <nav className="space-y-2">
-            <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} />
-            <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} />
-            <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} />
-          </nav>
+          {/* Botão Fechar só no mobile */}
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white">
+            <X size={24} />
+          </button>
         </div>
+
+        <nav className="space-y-2">
+          <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} />
+          <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} />
+          <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} />
+        </nav>
 
         {/* --- CONTADOR DE ANÁLISES --- */}
         {!isPremium && (
@@ -460,14 +483,30 @@ export default function FinancialDashboard() {
         </div>
       </aside>
       
-      <main className="flex-1 overflow-y-auto p-8 relative">
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+        
+        {/* --- HEADER MOBILE (MENU + LOGO + USER) --- */}
+        <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-gray-800">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="p-2 bg-[#161b22] border border-gray-800 rounded-lg text-white hover:bg-gray-800 active:scale-95 transition-all"
+            >
+              <Menu size={24} />
+            </button>
+            <span className="font-bold text-lg text-white tracking-tight">FinAnalyzer <span className="text-blue-500">.AI</span></span>
+          </div>
+          {/* User Button no Header Mobile para fácil acesso */}
+          <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
+        </div>
+
         {/* Lógica de renderização das views */}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
-            <header className="flex items-center justify-between mb-8">
-              <div><h1 className="text-3xl font-bold text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-400 mt-1">Visão consolidada do desempenho das empresas.</p></div>
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+              <div><h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-400 mt-1 text-sm md:text-base">Visão consolidada do desempenho das empresas.</p></div>
               <div className="relative" ref={columnMenuRef}>
-                <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#161b22] border-gray-700 hover:border-blue-500 text-gray-300'}`}>
+                <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#161b22] border-gray-700 hover:border-blue-500 text-gray-300'}`}>
                   <Settings2 size={18} /><span>Configurar Colunas</span>
                 </button>
                 {showColumnMenu && (
@@ -528,7 +567,8 @@ export default function FinancialDashboard() {
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
             <header className="flex items-center justify-between mb-8"><div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
             <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
-              <table className="w-full text-left border-collapse">
+             <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] text-left border-collapse">
                 <thead><tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500"><th className="py-5 px-6 font-semibold">Empresa</th><th className="py-5 px-6 font-semibold">Período</th><th className="py-5 px-6 font-semibold">Data</th><th className="py-5 px-6 text-center font-semibold">Score</th><th className="py-5 px-6 text-right font-semibold">Ações</th></tr></thead>
                 <tbody className="divide-y divide-gray-800">
                   {historyList.map((item: any) => (
@@ -542,25 +582,30 @@ export default function FinancialDashboard() {
                   ))}
                 </tbody>
               </table>
+             </div> 
               {historyList.length === 0 && <div className="p-12 text-center text-gray-500">Histórico vazio.</div>}
             </div>
           </div>
         )}
         {currentView === 'dashboard' && (
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-3xl mx-auto mt-10">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-3xl mx-auto mt-6 md:mt-10 px-0 md:px-0">
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-96 animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-6" /><h2 className="text-3xl font-bold animate-pulse text-white mb-2">Analisando Dados...</h2><p className="text-gray-400">Nossa IA está processando o relatório e calculando os indicadores.</p></div>
+              <div className="flex flex-col items-center justify-center h-96 animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-6" /><h2 className="text-2xl md:text-3xl font-bold animate-pulse text-white mb-2 text-center">Analisando Dados...</h2><p className="text-gray-400 text-center px-4">Nossa IA está processando o relatório e calculando os indicadores.</p></div>
             ) : (
               <>
-                <div className="text-center mb-12"><h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Nova Análise Financeira</h1><p className="text-gray-400 text-lg">Carregue o relatório trimestral (PDF) para processamento via IA.</p></div>
+                <div className="text-center mb-8 md:mb-12"><h1 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">Nova Análise Financeira</h1><p className="text-gray-400 text-base md:text-lg">Carregue o relatório trimestral (PDF) para processamento via IA.</p></div>
+                
                 <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-4 md:p-8 shadow-2xl relative overflow-hidden group hover:border-gray-700 transition-colors duration-500">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-8">
+                  
+                  {/* Grid Responsivo: 1 coluna no mobile, 3 no desktop */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa</label><input type="text" placeholder="Ex: Apple" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all uppercase" value={empresa} onChange={(e) => setEmpresa(e.target.value)} /></div>
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ano</label><input type="text" placeholder="2025" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={ano} onChange={(e) => setAno(e.target.value)} /></div>
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trimestre</label><select className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">1º Trimestre</option><option value="2T">2º Trimestre</option><option value="3T">3º Trimestre</option><option value="4T">4º Trimestre</option></select></div>
                   </div>
-                  <div className="border-2 border-dashed border-gray-700 rounded-xl p-10 flex flex-col items-center justify-center bg-[#0d1117]/50 hover:bg-[#0d1117] hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
-                    <input type="file" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" /><div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div><p className="text-gray-300 font-medium text-lg">{file ? file.name : "Clique ou arraste o PDF do resultado aqui"}</p><p className="text-gray-500 text-sm mt-2">Suporta PDF de até 10MB</p>
+                  
+                  <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 md:p-10 flex flex-col items-center justify-center bg-[#0d1117]/50 hover:bg-[#0d1117] hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
+                    <input type="file" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" /><div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div><p className="text-gray-300 font-medium text-lg text-center">{file ? file.name : "Clique ou arraste o PDF"}</p><p className="text-gray-500 text-sm mt-2 text-center">Suporta PDF de até 10MB</p>
                   </div>
                   <button onClick={handleAnalyze} className="w-full mt-8 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition-all duration-300 flex items-center justify-center gap-2"><Activity size={20} /> Gerar Análise Completa</button>
                 </div>
@@ -570,16 +615,16 @@ export default function FinancialDashboard() {
         )}
         {currentView === 'result' && result && (
           <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
-            <div className="flex justify-between items-center mb-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
               <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
               
-              <button onClick={handleDownload} className={`px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${isPremium ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}>
+              <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${isPremium ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}>
                 {isPremium ? <Download size={18} /> : <Lock size={18} />} Baixar Relatório
               </button>
             </div>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
-              <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
-              <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800"><div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : (result.data?.nota_geral || 0) == 3 ? 'text-amber-400' : 'text-red-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span></div></div>
+              <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
+              <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800 w-full md:w-auto justify-between md:justify-start"><div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : (result.data?.nota_geral || 0) == 3 ? 'text-amber-400' : 'text-red-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span></div></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
               {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "ROE", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
@@ -590,7 +635,7 @@ export default function FinancialDashboard() {
                 </div>
               ))}
             </div>
-            <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-10 shadow-2xl"><h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3"><FileText className="text-blue-500" /> Tese de Investimento</h3><div className="prose prose-invert prose-lg max-w-none text-gray-300 leading-relaxed whitespace-pre-line">{result.data?.tese_investimento ? result.data.tese_investimento : "Sem análise textual disponível."}</div></div>
+            <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl"><h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3"><FileText className="text-blue-500" /> Tese de Investimento</h3><div className="prose prose-invert prose-lg max-w-none text-gray-300 leading-relaxed whitespace-pre-line">{result.data?.tese_investimento ? result.data.tese_investimento : "Sem análise textual disponível."}</div></div>
           </div>
         )}
       </main>
