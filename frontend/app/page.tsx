@@ -1,16 +1,42 @@
 "use client";
 import React, { useState } from 'react';
-import Link from 'next/link';
+// import Link from 'next/link'; // <--- Descomente no seu projeto Next.js e use Link no lugar de <a>
 import { 
   BarChart3, UploadCloud, ArrowRight, 
-  FileText, Layout, Database, Check, X, CheckCircle2 
+  FileText, Layout, Database, Check, X, CheckCircle2,
+  Maximize2 
 } from "lucide-react";
+
+// --- COMPONENTE: MOLDURA DE NAVEGADOR (Para dar acabamento profissional) ---
+const BrowserMockup = ({ children, className = "", zoom = false }: { children: React.ReactNode, className?: string, zoom?: boolean }) => {
+  return (
+    <div className={`relative rounded-xl border border-gray-800 bg-[#0d1117] shadow-2xl shadow-black/50 overflow-hidden group ${className}`}>
+      {/* Barra de Título estilo Mac/Windows */}
+      <div className="h-8 bg-[#161b22] border-b border-gray-800 flex items-center px-4 gap-2">
+        <div className="w-3 h-3 rounded-full bg-red-500/80" />
+        <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+        <div className="w-3 h-3 rounded-full bg-green-500/80" />
+        {/* Barra de endereço fake */}
+        <div className="ml-4 flex-1 h-5 bg-[#0d1117] rounded-md border border-gray-800/50 opacity-50" />
+      </div>
+      
+      {/* Container da Imagem com Lógica de Zoom */}
+      {/* O translate-y ajuda a centralizar o conteúdo quando o zoom é aplicado */}
+      <div className={`relative w-full ${zoom ? 'scale-[1.35] translate-y-8 md:translate-y-12' : ''} transition-transform duration-700 ease-out origin-top`}>
+         {children}
+      </div>
+      
+      {/* Overlay de brilho sutil */}
+      <div className="absolute inset-0 pointer-events-none ring-1 ring-white/5 rounded-xl" />
+    </div>
+  );
+};
 
 export default function LandingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   return (
-    <div className="min-h-screen bg-[#0E1117] text-gray-100 font-sans selection:bg-blue-500/30">
+    <div className="min-h-screen bg-[#0E1117] text-gray-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
       
       {/* --- NAVBAR --- */}
       <nav className="border-b border-gray-800 bg-[#0E1117]/80 backdrop-blur-md sticky top-0 z-50">
@@ -25,29 +51,34 @@ export default function LandingPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Link href="#funcionalidades" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
+            <a href="#funcionalidades" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Funcionalidades
-            </Link>
-            <Link href="#planos" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
+            </a>
+            <a href="#planos" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Preços
-            </Link>
+            </a>
             
-            <Link href="/dashboard" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
+            <a href="/dashboard" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
               Entrar
-            </Link>
-            <Link href="/dashboard" className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20 hover:scale-105">
+            </a>
+            <a href="/dashboard" className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20 hover:scale-105">
               Começar Grátis
-            </Link>
+            </a>
           </div>
         </div>
       </nav>
 
       {/* --- HERO SECTION --- */}
       <section className="relative pt-24 pb-32 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-blue-600/20 blur-[120px] rounded-full -z-10" />
+        {/* Glow de fundo aprimorado */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80vw] h-[500px] bg-blue-600/20 blur-[120px] rounded-full -z-10 opacity-50 pointer-events-none" />
 
         <div className="max-w-5xl mx-auto px-6 text-center">
           
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/20 border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-wider mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+             <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" /> Nova Versão 2.0
+          </div>
+
           <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-8 leading-tight">
             A Nova Era Da <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Análise de Ativos.</span>
@@ -58,12 +89,12 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-            <Link href="/dashboard" className="w-full md:w-auto bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2">
+            <a href="/dashboard" className="w-full md:w-auto bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2 shadow-xl shadow-white/10 hover:shadow-white/20 hover:-translate-y-1">
               Criar Conta Grátis <ArrowRight size={20} />
-            </Link>
-            <Link href="#funcionalidades" className="w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg text-gray-300 border border-gray-700 hover:border-gray-500 hover:text-white transition-all">
+            </a>
+            <a href="#funcionalidades" className="w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg text-gray-300 border border-gray-700 hover:border-gray-500 hover:text-white transition-all">
               Ver Funcionalidades
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -73,110 +104,120 @@ export default function LandingPage() {
         
         {/* BLOCO 1: UPLOAD */}
         <section className="py-24 border-b border-gray-800">
-          <div className="max-w-6xl mx-auto px-6">
-            {/* TEXTO NO TOPO */}
-            <div className="text-center mb-16">
-              <div className="w-16 h-16 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-500/30 mx-auto shadow-lg shadow-blue-900/30">
-                <UploadCloud className="text-blue-400 w-8 h-8" />
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <div className="w-14 h-14 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30 shadow-lg shadow-blue-900/30">
+                  <UploadCloud className="text-blue-400 w-7 h-7" />
+                </div>
+                <h2 className="text-4xl font-bold text-white mb-6">Upload Inteligente</h2>
+                <p className="text-lg text-gray-300 leading-relaxed mb-6">
+                  Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos.
+                </p>
+                <ul className="space-y-3">
+                  <ListItem>Suporte a PDFs de até 10MB</ListItem>
+                  <ListItem>Extração automática de métricas</ListItem>
+                  <ListItem>Identificação de trimestre e ano</ListItem>
+                </ul>
               </div>
               
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Upload Inteligente</h2>
-              
-              <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado.
-              </p>
-            </div>
-
-            {/* IMAGEM ABAIXO */}
-            <div className="flex justify-center">
-              <img 
-                src="/demo-upload.png" 
-                alt="Tela de Upload" 
-                className="w-full max-w-5xl h-auto rounded-2xl shadow-2xl"
-              />
+              {/* Moldura para a imagem de Upload */}
+              <BrowserMockup className="transform rotate-1 hover:rotate-0 transition-transform duration-500">
+                <img 
+                  src="/image_456e01.png" // Ex: Tela de inputs
+                  alt="Tela de Upload" 
+                  className="w-full h-auto object-cover"
+                />
+              </BrowserMockup>
             </div>
           </div>
         </section>
 
         {/* BLOCO 2: ANÁLISE PROFUNDA */}
-        <section className="py-24 border-b border-gray-800">
-          <div className="max-w-6xl mx-auto px-6">
-            {/* TEXTO NO TOPO */}
-            <div className="text-center mb-16">
-              <div className="w-16 h-16 bg-green-600/20 rounded-2xl flex items-center justify-center mb-8 border border-green-500/30 mx-auto shadow-lg shadow-green-900/30">
-                <FileText className="text-green-400 w-8 h-8" />
+        <section className="py-24 border-b border-gray-800 bg-[#0d1117]/30">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Ordem invertida no Desktop para variar o layout */}
+              <div className="order-2 md:order-1">
+                 <BrowserMockup className="transform -rotate-1 hover:rotate-0 transition-transform duration-500">
+                  <img 
+                    src="/demo-result.png" // Ex: Tela de dashboard/resultado
+                    alt="Tela de Análise" 
+                    className="w-full h-auto object-cover"
+                  />
+                </BrowserMockup>
               </div>
-              
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Análise Profunda</h2>
-              
-              <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                O FinAnalyzer gera um Score de 0 a 5 para cada métrica para facilitar a identificação de pontos fortes e de atenção. 
-              </p>
-            </div>
 
-            {/* IMAGEM ABAIXO */}
-            <div className="flex justify-center">
-              <img 
-                src="/demo-result.png" 
-                alt="Tela de Análise" 
-                className="w-full max-w-5xl h-auto rounded-2xl shadow-2xl"
-              />
+              <div className="order-1 md:order-2">
+                <div className="w-14 h-14 bg-green-600/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/30 shadow-lg shadow-green-900/30">
+                  <FileText className="text-green-400 w-7 h-7" />
+                </div>
+                <h2 className="text-4xl font-bold text-white mb-6">Score de IA</h2>
+                <p className="text-lg text-gray-300 leading-relaxed mb-6">
+                  O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
+                </p>
+                <ul className="space-y-3">
+                  <ListItem>Score de Receita e Lucro</ListItem>
+                  <ListItem>Análise de Endividamento</ListItem>
+                  <ListItem>Resumo textual da Tese</ListItem>
+                </ul>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* BLOCO 3: COMPARADOR DE ATIVOS */}
-        <section className="py-24 border-b border-gray-800">
-          <div className="max-w-6xl mx-auto px-6">
-            {/* TEXTO NO TOPO */}
-            <div className="text-center mb-16">
+        {/* BLOCO 3: COMPARADOR DE ATIVOS (AQUI APLICAMOS O ZOOM) */}
+        <section className="py-24 border-b border-gray-800 relative overflow-hidden">
+          {/* Fundo decorativo para destacar a tabela */}
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 to-transparent pointer-events-none" />
+          
+          <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
+            <div className="max-w-3xl mx-auto mb-16">
               <div className="w-16 h-16 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-8 border border-purple-500/30 mx-auto shadow-lg shadow-purple-900/30">
                 <Layout className="text-purple-400 w-8 h-8" />
               </div>
-              
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Comparador de Ativos</h2>
-              
-              <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
-                Visualize e compare todos os Resultados que você analisou em uma única tabela interativa. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e Muito Mais!.
+              <p className="text-xl text-gray-300 leading-relaxed">
+                Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
               </p>
             </div>
 
-            {/* IMAGEM ABAIXO */}
-            <div className="flex justify-center">
-              <img 
-                src="/demo-table.png" 
-                alt="Tabela Comparativa" 
-                className="w-full max-w-5xl h-auto rounded-2xl shadow-2xl"
-              />
+            {/* AQUI ESTÁ O FIX: zoom={true} */}
+            <div className="max-w-6xl mx-auto">
+               <BrowserMockup zoom={true} className="border-purple-500/20 shadow-purple-900/20">
+                  {/* Esta imagem tinha bordas pretas muito grandes, o zoom vai corrigir isso visualmente */}
+                  <img 
+                    src="demo-table.jpg" 
+                    alt="Tabela Comparativa" 
+                    className="w-full h-auto object-cover"
+                  />
+               </BrowserMockup>
+               <p className="mt-4 text-sm text-gray-500 flex items-center justify-center gap-2">
+                 <Maximize2 size={14} /> Visualização otimizada para foco nos dados
+               </p>
             </div>
           </div>
         </section>
 
         {/* BLOCO 4: HISTÓRICO */}
         <section className="py-24 border-b border-gray-800">
-          <div className="max-w-6xl mx-auto px-6">
-            {/* TEXTO NO TOPO */}
-            <div className="text-center mb-16">
+           <div className="max-w-6xl mx-auto px-6 text-center">
               <div className="w-16 h-16 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-500/30 mx-auto shadow-lg shadow-yellow-900/30">
                 <Database className="text-yellow-400 w-8 h-8" />
               </div>
-              
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Histórico Completo</h2>
-              
-              <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto">
+              <p className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto mb-12">
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
-            </div>
-
-            {/* IMAGEM ABAIXO */}
-            <div className="flex justify-center">
-              <img 
-                src="/demo-history.png" 
-                alt="Histórico de Análises" 
-                className="w-full max-w-5xl h-auto rounded-2xl shadow-2xl"
-              />
-            </div>
-          </div>
+              
+              <BrowserMockup className="max-w-4xl mx-auto border-yellow-500/20">
+                  <img 
+                    src="/demo-history.png" 
+                    alt="Histórico" 
+                    className="w-full h-auto object-cover"
+                  />
+               </BrowserMockup>
+           </div>
         </section>
 
       </div>
@@ -222,9 +263,9 @@ export default function LandingPage() {
                 <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
 
-              <Link href="/dashboard" className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 hover:border-gray-500 transition-all mt-auto">
+              <a href="/dashboard" className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 hover:border-gray-500 transition-all mt-auto">
                 Criar conta grátis
-              </Link>
+              </a>
             </div>
 
             {/* CARD PREMIUM */}
@@ -252,9 +293,9 @@ export default function LandingPage() {
                 <Feature text="Prioridade máxima na fila" active />
               </ul>
 
-              <Link href="/dashboard" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto">
+              <a href="/dashboard" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto">
                 Assinar Agora
-              </Link>
+              </a>
               <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
             </div>
           </div>
@@ -265,7 +306,6 @@ export default function LandingPage() {
       <footer className="border-t border-gray-800 bg-[#0E1117] pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-6">
           
-          {/* Logo e Links Principais */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
@@ -275,13 +315,12 @@ export default function LandingPage() {
             </div>
             
             <div className="flex gap-6">
-              <Link href="/terms" className="text-gray-500 hover:text-white transition-colors">Termos de Uso</Link>
-              <Link href="/privacy" className="text-gray-500 hover:text-white transition-colors">Privacidade</Link>
-              <Link href="/refund" className="text-gray-500 hover:text-white transition-colors">Reembolso</Link>
+              <a href="/terms" className="text-gray-500 hover:text-white transition-colors">Termos de Uso</a>
+              <a href="/privacy" className="text-gray-500 hover:text-white transition-colors">Privacidade</a>
+              <a href="/refund" className="text-gray-500 hover:text-white transition-colors">Reembolso</a>
             </div>
           </div>
 
-          {/* ÁREA DE DISCLAIMER */}
           <div className="border-t border-gray-800 pt-8 text-xs text-gray-400 space-y-4 text-justify leading-relaxed">
              <p>
                <strong className="text-gray-200">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
