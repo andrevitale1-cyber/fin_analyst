@@ -75,7 +75,8 @@ export default function LandingPage() {
       {/* --- HERO SECTION --- */}
       <section 
         className="relative pt-24 pb-32 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop')" }}
+        // 👇 AQUI: Caminho para a sua imagem local na pasta public/
+        style={{ backgroundImage: "url('/fundo-hero.jpg')" }}
       >
         {/* Overlay escuro para garantir leitura */}
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-0" />
@@ -112,7 +113,8 @@ export default function LandingPage() {
         {/* BLOCO 1: UPLOAD */}
         <section 
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop')" }}
+          // 👇 AQUI: Imagem local para o bloco Upload
+          style={{ backgroundImage: "url('/fundo-upload.jpg')" }}
         >
           <div className="absolute inset-0 bg-black/80 z-0" />
           
@@ -149,7 +151,8 @@ export default function LandingPage() {
         {/* BLOCO 2: ANÁLISE PROFUNDA (SCORE) */}
         <section 
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/Design sem nome.png')" }}
+          // 👇 AQUI: Imagem local para o bloco Score
+          style={{ backgroundImage: "url('/fundo-score.png')" }}
         >
           <div className="absolute inset-0 bg-black/80 z-0" />
 
@@ -187,7 +190,8 @@ export default function LandingPage() {
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section 
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop')" }}
+          // 👇 AQUI: Imagem local para o bloco Comparador
+          style={{ backgroundImage: "url('/fundo-comparador.jpg')" }}
         >
           <div className="absolute inset-0 bg-black/80 z-0" />
           
@@ -220,7 +224,8 @@ export default function LandingPage() {
         {/* BLOCO 4: HISTÓRICO */}
         <section 
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1614850715649-1d0106293bd1?q=80&w=2070&auto=format&fit=crop')" }}
+          // 👇 AQUI: Imagem local para o bloco Histórico
+          style={{ backgroundImage: "url('/fundo-historico.jpg')" }}
         >
           <div className="absolute inset-0 bg-black/80 z-0" />
 
@@ -249,7 +254,8 @@ export default function LandingPage() {
       <section 
         id="planos" 
         className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2070&auto=format&fit=crop')" }}
+        // 👇 AQUI: Imagem local para o bloco Planos
+        style={{ backgroundImage: "url('/fundo-planos.jpg')" }}
       >
         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0" />
 
@@ -334,7 +340,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- FOOTER & DISCLAIMERS --- */}
-      <footer className="border-t border-white/10 bg-[#0A0D14] pt-20 pb-10">
+      <footer className="border-t border-white/10 bg-black/80 backdrop-blur-2xl pt-20 pb-10">
         <div className="max-w-[90rem] mx-auto px-6">
           
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
