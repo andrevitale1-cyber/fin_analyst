@@ -149,7 +149,7 @@ export default function LandingPage() {
         {/* BLOCO 2: ANÁLISE PROFUNDA (SCORE) */}
         <section 
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1620825937374-87fc1d62c262?q=80&w=2074&auto=format&fit=crop')" }}
+          style={{ backgroundImage: "url('/Design sem nome.png')" }}
         >
           <div className="absolute inset-0 bg-black/80 z-0" />
 
