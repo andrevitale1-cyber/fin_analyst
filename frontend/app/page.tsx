@@ -14,7 +14,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#0A0D14] text-gray-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
 
       {/* --- NAVBAR --- */}
-      <nav className="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
+      <nav className="border-b border-white/10 bg-[#0A0D14]/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
@@ -48,12 +48,12 @@ export default function LandingPage() {
         className="relative pt-24 pb-32 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/fundo-hero.jpg')" }}
       >
-        {/* Overlay escuro SEM blur para a imagem ficar 100% nítida */}
-        <div className="absolute inset-0 bg-black/70 z-0" />
+        {/* Overlay muito subtil apenas para garantir leitura do texto branco */}
+        <div className="absolute inset-0 bg-black/40 z-0" />
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
           
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-gray-200 text-sm font-medium mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 backdrop-blur-md">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/30 border border-white/20 text-gray-200 text-sm font-medium mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 backdrop-blur-md">
              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" /> Nova Versão 2.0
           </div>
 
@@ -62,7 +62,7 @@ export default function LandingPage() {
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 drop-shadow-lg">Análise de Ativos.</span>
           </h1>
           
-          <p className="text-xl md:text-3xl text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed font-light drop-shadow-md">
+          <p className="text-xl md:text-3xl text-white mb-12 max-w-4xl mx-auto leading-relaxed font-medium drop-shadow-lg">
             Acelere a leitura de relatórios trimestrais. Deixe a IA estruturar os dados e gerar insights para apoiar sua decisão de investimento.
           </p>
 
@@ -70,7 +70,7 @@ export default function LandingPage() {
             <a href="/dashboard" className="w-full md:w-auto bg-white text-gray-900 px-10 py-5 rounded-full font-bold text-lg hover:bg-gray-100 transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-2xl shadow-white/20">
               Criar Conta Grátis <ArrowRight size={20} />
             </a>
-            <a href="#funcionalidades" className="w-full md:w-auto px-10 py-5 rounded-full font-bold text-lg text-white border border-white/30 hover:bg-white/10 transition-all backdrop-blur-sm">
+            <a href="#funcionalidades" className="w-full md:w-auto px-10 py-5 rounded-full font-bold text-lg text-white border border-white/30 hover:bg-white/10 transition-all backdrop-blur-md bg-black/20">
               Ver Funcionalidades
             </a>
           </div>
@@ -82,11 +82,11 @@ export default function LandingPage() {
         
         {/* BLOCO 1: UPLOAD */}
         <section 
-          className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
+          className="py-32 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-upload.jpg')" }}
         >
-          {/* Overlay escuro SEM blur */}
-          <div className="absolute inset-0 bg-black/80 z-0" />
+          {/* Sem overlay global. Gradiente escuro apenas à esquerda para o texto */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-0" />
           
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
@@ -96,8 +96,8 @@ export default function LandingPage() {
                 <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-400/30 backdrop-blur-sm shadow-xl">
                   <UploadCloud className="text-blue-400 w-8 h-8" />
                 </div>
-                <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight drop-shadow-lg">Upload Inteligente</h2>
-                <p className="text-xl text-gray-300 leading-relaxed mb-8 font-light drop-shadow-md">
+                <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">Upload Inteligente</h2>
+                <p className="text-xl text-gray-100 leading-relaxed mb-8 font-medium drop-shadow-lg">
                   Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos.
                 </p>
                 <ul className="space-y-5">
@@ -109,11 +109,11 @@ export default function LandingPage() {
               
               {/* IMAGEM LIVRE */}
               <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2 relative group">
-                <div className="absolute -inset-4 bg-blue-500/20 blur-3xl rounded-full opacity-0 group-hover:opacity-60 transition duration-700 -z-10"></div>
+                {/* Glow suave removido para não ofuscar o fundo. Aumentado o drop-shadow. */}
                 <img 
                   src="/upload.png" 
                   alt="Interface de Upload" 
-                  className="w-full h-auto object-contain drop-shadow-[0_30px_50px_rgba(0,0,0,0.6)] transition-transform duration-700 hover:-translate-y-4"
+                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
                 />
               </div>
 
@@ -123,22 +123,23 @@ export default function LandingPage() {
 
         {/* BLOCO 2: ANÁLISE PROFUNDA (SCORE) */}
         <section 
-          className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/fundo-score.png')" }}
+          className="py-32 relative bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/fundo-score.png')" }} // Atenção à extensão. Anteriormente usou .png aqui e .jpg noutros sítios.
         >
-          {/* Overlay escuro SEM blur */}
-          <div className="absolute inset-0 bg-black/80 z-0" />
+          {/* Gradiente escuro apenas à direita para o texto */}
+          <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/40 to-transparent z-0" />
 
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+              
 
               {/* TEXTO DESLOCADO */}
               <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2">
                 <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30 backdrop-blur-sm shadow-xl">
                   <FileText className="text-green-400 w-8 h-8" />
                 </div>
-                <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight drop-shadow-lg">Score de IA</h2>
-                <p className="text-xl text-gray-300 leading-relaxed mb-8 font-light drop-shadow-md">
+                <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">Score de IA</h2>
+                <p className="text-xl text-gray-100 leading-relaxed mb-8 font-medium drop-shadow-lg">
                   O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
                 </p>
                 <ul className="space-y-5">
@@ -154,31 +155,30 @@ export default function LandingPage() {
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section 
-          className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
+          className="py-32 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-comparador.jpg')" }}
         >
-          {/* Overlay escuro SEM blur */}
-          <div className="absolute inset-0 bg-black/80 z-0" />
+          {/* Overlay subtil */}
+          <div className="absolute inset-0 bg-black/40 z-0" />
           
           <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
             <div className="max-w-3xl mx-auto mb-16">
               <div className="w-20 h-20 bg-purple-500/20 rounded-3xl flex items-center justify-center mb-8 border border-purple-400/30 mx-auto backdrop-blur-sm shadow-xl">
                 <Layout className="text-purple-400 w-10 h-10" />
               </div>
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-lg">Comparador de Ativos</h2>
-              <p className="text-xl text-gray-300 leading-relaxed font-light drop-shadow-md">
+              <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">Comparador de Ativos</h2>
+              <p className="text-xl text-gray-100 leading-relaxed font-medium drop-shadow-lg bg-black/20 p-4 rounded-xl backdrop-blur-sm inline-block">
                 Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
               </p>
             </div>
 
             <div className="max-w-5xl mx-auto relative group">
-               <div className="absolute -inset-10 bg-purple-500/20 blur-[100px] rounded-full opacity-50 -z-10 pointer-events-none"></div>
                <img 
                  src="/comparador.png" 
                  alt="Tabela Comparativa" 
-                 className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.8)] transition-transform duration-700 hover:scale-[1.02]"
+                 className="w-full h-auto object-contain drop-shadow-[0_50px_80px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:scale-[1.02]"
                />
-               <p className="mt-8 text-base text-gray-400 flex items-center justify-center gap-2 drop-shadow-md">
+               <p className="mt-8 text-base text-gray-200 font-medium drop-shadow-md bg-black/30 py-2 px-4 rounded-full inline-flex items-center gap-2 backdrop-blur-sm">
                  <Maximize2 size={16} /> Visualização otimizada para foco nos dados
                </p>
             </div>
@@ -187,27 +187,26 @@ export default function LandingPage() {
 
         {/* BLOCO 4: HISTÓRICO */}
         <section 
-          className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
+          className="py-32 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-historico.jpg')" }}
         >
-          {/* Overlay escuro SEM blur */}
-          <div className="absolute inset-0 bg-black/80 z-0" />
+          {/* Overlay subtil */}
+          <div className="absolute inset-0 bg-black/40 z-0" />
 
            <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
               <div className="w-20 h-20 bg-yellow-500/20 rounded-3xl flex items-center justify-center mb-8 border border-yellow-400/30 mx-auto backdrop-blur-sm shadow-xl">
                 <Database className="text-yellow-400 w-10 h-10" />
               </div>
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-lg">Histórico Completo</h2>
-              <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto mb-16 font-light drop-shadow-md">
+              <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">Histórico Completo</h2>
+              <p className="text-xl text-gray-100 leading-relaxed max-w-3xl mx-auto mb-16 font-medium drop-shadow-lg bg-black/20 p-4 rounded-xl backdrop-blur-sm inline-block">
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
               
               <div className="max-w-4xl mx-auto relative group">
-                <div className="absolute -inset-10 bg-yellow-500/10 blur-[100px] rounded-full opacity-50 -z-10 pointer-events-none"></div>
                 <img 
                   src="/historico.png" 
                   alt="Interface de Histórico" 
-                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.8)] transition-transform duration-700 hover:-translate-y-4"
+                  className="w-full h-auto object-contain drop-shadow-[0_50px_80px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
                 />
               </div>
            </div>
@@ -218,20 +217,20 @@ export default function LandingPage() {
       {/* --- SECÇÃO DE PLANOS --- */}
       <section 
         id="planos" 
-        className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
+        className="py-32 relative bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/fundo-planos.jpg')" }}
       >
-        {/* Overlay escuro SEM blur */}
-        <div className="absolute inset-0 bg-black/80 z-0" />
+        {/* Overlay escuro de volta aqui para dar contraste aos cartões de preço brancos/azuis */}
+        <div className="absolute inset-0 bg-black/70 z-0" />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight drop-shadow-lg">
+            <h2 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight drop-shadow-2xl">
               Um único plano. <br className="hidden md:block"/>
               Invista melhor com o poder da IA.
             </h2>
             
-            <div className="flex items-center justify-center gap-4 bg-white/10 inline-flex p-1.5 rounded-full border border-white/20 mt-8 backdrop-blur-md">
+            <div className="flex items-center justify-center gap-4 bg-black/30 inline-flex p-1.5 rounded-full border border-white/20 mt-8 backdrop-blur-md">
               <button 
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-8 py-3 rounded-full text-base font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
@@ -247,7 +246,7 @@ export default function LandingPage() {
             </div>
             
             <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-6`}>
-               <span className="bg-orange-500/30 text-orange-300 border border-orange-500/40 text-sm font-bold px-5 py-2 rounded-full uppercase tracking-wider backdrop-blur-sm shadow-xl">
+               <span className="bg-orange-500/80 text-white border border-orange-400 text-sm font-bold px-5 py-2 rounded-full uppercase tracking-wider shadow-xl drop-shadow-md">
                  2 MESES GRÁTIS
                </span>
             </div>
@@ -256,9 +255,9 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-10 items-stretch max-w-5xl mx-auto">
             
             {/* CARD GRATUITO */}
-            <div className="bg-black/50 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-12 hover:border-white/30 transition-colors flex flex-col shadow-2xl">
+            <div className="bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-12 hover:border-white/30 transition-colors flex flex-col shadow-2xl">
               <h3 className="text-4xl font-bold text-white mb-2 drop-shadow-md">Gratuito</h3>
-              <p className="text-gray-400 text-lg mb-10 font-light">Para começar a analisar sem custo.</p>
+              <p className="text-gray-300 text-lg mb-10 font-medium">Para começar a analisar sem custo.</p>
               
               <ul className="space-y-6 mb-12 flex-1">
                 <Feature text="5 Análises por semana" active />
@@ -276,13 +275,13 @@ export default function LandingPage() {
             </div>
 
             {/* CARD PREMIUM */}
-            <div className="bg-blue-600/90 backdrop-blur-2xl border border-blue-400/50 rounded-[2.5rem] p-12 relative shadow-[0_0_80px_-10px_rgba(37,99,235,0.6)] flex flex-col transform hover:-translate-y-3 transition-transform duration-300">
+            <div className="bg-blue-600/95 backdrop-blur-xl border border-blue-400/50 rounded-[2.5rem] p-12 relative shadow-[0_0_80px_-10px_rgba(37,99,235,0.8)] flex flex-col transform hover:-translate-y-3 transition-transform duration-300">
               <h3 className="text-4xl font-bold text-white mb-2 drop-shadow-md">Premium</h3>
               <div className="flex items-end gap-2 mb-2">
                 <span className="text-7xl font-extrabold text-white drop-shadow-lg">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
-                <span className="text-blue-200 mb-3 font-medium text-xl">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
+                <span className="text-blue-100 mb-3 font-medium text-xl drop-shadow-md">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
               </div>
-              <p className="text-blue-100 text-lg mb-10 font-light drop-shadow-md">Desbloqueie todo o poder da IA.</p>
+              <p className="text-blue-50 text-lg mb-10 font-medium drop-shadow-md">Desbloqueie todo o poder da IA.</p>
               
               <ul className="space-y-6 mb-12 flex-1">
                 <Feature text="Análises de IA Ilimitadas" active light />
@@ -298,14 +297,14 @@ export default function LandingPage() {
               <a href="/dashboard" className="block w-full text-center py-5 rounded-full bg-white text-blue-900 text-lg font-extrabold shadow-2xl hover:bg-gray-100 hover:scale-[1.02] transition-all mt-auto">
                 Assinar Agora
               </a>
-              <p className="text-center text-sm text-blue-200 mt-6 font-medium drop-shadow-md">Cancele quando quiser.</p>
+              <p className="text-center text-sm text-blue-100 mt-6 font-medium drop-shadow-md">Cancele quando quiser.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* --- FOOTER & DISCLAIMERS --- */}
-      <footer className="border-t border-white/10 bg-black/80 backdrop-blur-2xl pt-20 pb-10">
+      <footer className="border-t border-white/10 bg-[#0A0D14] pt-20 pb-10">
         <div className="max-w-7xl mx-auto px-6">
           
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
@@ -344,24 +343,24 @@ function Feature({ text, active = false, disabled = false, light = false }: any)
   return (
     <li className="flex items-center gap-4">
       {disabled ? (
-        <div className="p-1.5 rounded-full border border-gray-600 text-gray-500"><X size={14} /></div>
+        <div className="p-1.5 rounded-full border border-gray-500 text-gray-400"><X size={14} /></div>
       ) : (
-        <div className={`p-1.5 rounded-full ${light ? 'bg-white text-blue-600' : 'bg-green-500/20 text-green-400'}`}>
+        <div className={`p-1.5 rounded-full ${light ? 'bg-white text-blue-600' : 'bg-green-500 text-white'}`}>
           <Check size={14} strokeWidth={3} />
         </div>
       )}
-      <span className={`text-lg font-medium ${disabled ? 'text-gray-500 line-through' : light ? 'text-white' : 'text-gray-200'}`}>{text}</span>
+      <span className={`text-lg font-medium drop-shadow-md ${disabled ? 'text-gray-400 line-through' : light ? 'text-white' : 'text-gray-100'}`}>{text}</span>
     </li>
   );
 }
 
 function ListItem({ children }: { children: React.ReactNode }) {
   return (
-    <li className="flex items-center gap-4 text-gray-200 font-medium text-lg">
-      <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 border border-blue-500/30">
-         <Check size={16} className="text-blue-400" strokeWidth={3} />
+    <li className="flex items-center gap-4 text-white font-medium text-lg">
+      <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 border border-blue-400 shadow-lg">
+         <Check size={16} className="text-white" strokeWidth={3} />
       </div>
-      <span className="drop-shadow-sm">{children}</span>
+      <span className="drop-shadow-lg">{children}</span>
     </li>
   );
 }
