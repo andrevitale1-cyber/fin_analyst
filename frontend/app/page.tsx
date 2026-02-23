@@ -131,16 +131,6 @@ export default function LandingPage() {
 
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-              
-              {/* IMAGEM LIVRE NA ESQUERDA */}
-              <div className="lg:col-span-5 lg:col-start-2 order-2 lg:order-1 relative group">
-                <div className="absolute -inset-4 bg-green-500/20 blur-3xl rounded-full opacity-0 group-hover:opacity-60 transition duration-700 -z-10"></div>
-                <img 
-                  src="/score.png" 
-                  alt="Interface de Análise" 
-                  className="w-full h-auto object-contain drop-shadow-[0_30px_50px_rgba(0,0,0,0.6)] transition-transform duration-700 hover:-translate-y-4"
-                />
-              </div>
 
               {/* TEXTO DESLOCADO */}
               <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2">
