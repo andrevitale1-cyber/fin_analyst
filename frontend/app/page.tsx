@@ -48,7 +48,8 @@ export default function LandingPage() {
         className="relative pt-24 pb-32 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/fundo-hero.jpg')" }}
       >
-        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-0" />
+        {/* Overlay escuro SEM blur para a imagem ficar 100% nítida */}
+        <div className="absolute inset-0 bg-black/70 z-0" />
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
           
@@ -79,17 +80,18 @@ export default function LandingPage() {
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
         
-        {/* BLOCO 1: UPLOAD (Estilo Robinhood - Texto deslocado e imagem livre) */}
+        {/* BLOCO 1: UPLOAD */}
         <section 
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-upload.jpg')" }}
         >
+          {/* Overlay escuro SEM blur */}
           <div className="absolute inset-0 bg-black/80 z-0" />
           
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
               
-              {/* TEXTO DESLOCADO PARA A DIREITA (col-start-2 cria o espaço na esquerda) */}
+              {/* TEXTO DESLOCADO PARA A DIREITA */}
               <div className="lg:col-span-5 lg:col-start-2 order-2 lg:order-1">
                 <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-400/30 backdrop-blur-sm shadow-xl">
                   <UploadCloud className="text-blue-400 w-8 h-8" />
@@ -105,14 +107,13 @@ export default function LandingPage() {
                 </ul>
               </div>
               
-              {/* IMAGEM LIVRE (Sem ecrã) */}
+              {/* IMAGEM LIVRE */}
               <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2 relative group">
-                {/* Glow suave atrás da imagem para a destacar do fundo preto */}
                 <div className="absolute -inset-4 bg-blue-500/20 blur-3xl rounded-full opacity-0 group-hover:opacity-60 transition duration-700 -z-10"></div>
                 <img 
-                  src="/image_456e01.png" 
+                  src="/upload.png" 
                   alt="Interface de Upload" 
-                  className="w-full h-auto object-cover rounded-[2rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)] transition-transform duration-700 hover:-translate-y-4"
+                  className="w-full h-auto object-contain drop-shadow-[0_30px_50px_rgba(0,0,0,0.6)] transition-transform duration-700 hover:-translate-y-4"
                 />
               </div>
 
@@ -125,11 +126,21 @@ export default function LandingPage() {
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-score.png')" }}
         >
+          {/* Overlay escuro SEM blur */}
           <div className="absolute inset-0 bg-black/80 z-0" />
 
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
               
+              {/* IMAGEM LIVRE NA ESQUERDA */}
+              <div className="lg:col-span-5 lg:col-start-2 order-2 lg:order-1 relative group">
+                <div className="absolute -inset-4 bg-green-500/20 blur-3xl rounded-full opacity-0 group-hover:opacity-60 transition duration-700 -z-10"></div>
+                <img 
+                  src="/score.png" 
+                  alt="Interface de Análise" 
+                  className="w-full h-auto object-contain drop-shadow-[0_30px_50px_rgba(0,0,0,0.6)] transition-transform duration-700 hover:-translate-y-4"
+                />
+              </div>
 
               {/* TEXTO DESLOCADO */}
               <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2">
@@ -156,6 +167,7 @@ export default function LandingPage() {
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-comparador.jpg')" }}
         >
+          {/* Overlay escuro SEM blur */}
           <div className="absolute inset-0 bg-black/80 z-0" />
           
           <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
@@ -172,9 +184,9 @@ export default function LandingPage() {
             <div className="max-w-5xl mx-auto relative group">
                <div className="absolute -inset-10 bg-purple-500/20 blur-[100px] rounded-full opacity-50 -z-10 pointer-events-none"></div>
                <img 
-                 src="/image_03af1d.png" 
+                 src="/comparador.png" 
                  alt="Tabela Comparativa" 
-                 className="w-full h-auto object-cover rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] transition-transform duration-700 hover:scale-[1.02]"
+                 className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.8)] transition-transform duration-700 hover:scale-[1.02]"
                />
                <p className="mt-8 text-base text-gray-400 flex items-center justify-center gap-2 drop-shadow-md">
                  <Maximize2 size={16} /> Visualização otimizada para foco nos dados
@@ -188,6 +200,7 @@ export default function LandingPage() {
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-historico.jpg')" }}
         >
+          {/* Overlay escuro SEM blur */}
           <div className="absolute inset-0 bg-black/80 z-0" />
 
            <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
@@ -202,9 +215,9 @@ export default function LandingPage() {
               <div className="max-w-4xl mx-auto relative group">
                 <div className="absolute -inset-10 bg-yellow-500/10 blur-[100px] rounded-full opacity-50 -z-10 pointer-events-none"></div>
                 <img 
-                  src="/demo-history.png" 
+                  src="/historico.png" 
                   alt="Interface de Histórico" 
-                  className="w-full h-auto object-cover rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] transition-transform duration-700 hover:-translate-y-4"
+                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.8)] transition-transform duration-700 hover:-translate-y-4"
                 />
               </div>
            </div>
@@ -218,7 +231,8 @@ export default function LandingPage() {
         className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/fundo-planos.jpg')" }}
       >
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0" />
+        {/* Overlay escuro SEM blur */}
+        <div className="absolute inset-0 bg-black/80 z-0" />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-20">
