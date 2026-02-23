@@ -7,35 +7,6 @@ import {
   Maximize2 
 } from "lucide-react";
 
-// --- COMPONENTE: ECRÃ DE APP (Design Robinhood/Glassmorphism) ---
-const AppScreen = ({ children, className = "", zoom = false, tilt = "none" }: { children: React.ReactNode, className?: string, zoom?: boolean, tilt?: "left" | "right" | "up" | "none" }) => {
-  const tiltClasses = {
-    left: "-rotate-2 hover:rotate-0 translate-x-2 md:translate-x-4",
-    right: "rotate-2 hover:rotate-0 -translate-x-2 md:-translate-x-4",
-    up: "hover:-translate-y-3",
-    none: "hover:scale-[1.02]"
-  };
-
-  return (
-    <div className={`relative group transition-all duration-700 ease-out w-full ${tiltClasses[tilt]} ${className}`}>
-      {/* Brilho de fundo da janela */}
-      <div className="absolute -inset-2 bg-gradient-to-tr from-blue-500/20 to-purple-500/20 rounded-[2.5rem] blur-xl opacity-0 group-hover:opacity-100 transition duration-700 pointer-events-none" />
-      
-      {/* Container Principal (Glassmorphism) */}
-      <div className="relative rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 bg-black/40 backdrop-blur-xl shadow-[0_30px_80px_-15px_rgba(0,0,0,0.8)] overflow-hidden">
-        
-        {/* Lógica de Zoom */}
-        <div className={`relative w-full ${zoom ? 'scale-[1.35] translate-y-8 md:translate-y-12' : ''} transition-transform duration-700 ease-out origin-top`}>
-           {children}
-        </div>
-        
-        {/* Overlay de reflexo subtil */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.05] to-transparent pointer-events-none z-10" />
-      </div>
-    </div>
-  );
-};
-
 export default function LandingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
@@ -44,7 +15,7 @@ export default function LandingPage() {
 
       {/* --- NAVBAR --- */}
       <nav className="border-b border-white/10 bg-black/60 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-[90rem] mx-auto px-6 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
               <BarChart3 className="text-white w-6 h-6" />
@@ -75,13 +46,11 @@ export default function LandingPage() {
       {/* --- HERO SECTION --- */}
       <section 
         className="relative pt-24 pb-32 bg-cover bg-center bg-no-repeat"
-        // 👇 AQUI: Caminho para a sua imagem local na pasta public/
         style={{ backgroundImage: "url('/fundo-hero.jpg')" }}
       >
-        {/* Overlay escuro para garantir leitura */}
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-0" />
 
-        <div className="max-w-[90rem] mx-auto px-6 text-center relative z-10">
+        <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
           
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-gray-200 text-sm font-medium mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 backdrop-blur-md">
              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" /> Nova Versão 2.0
@@ -110,17 +79,18 @@ export default function LandingPage() {
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
         
-        {/* BLOCO 1: UPLOAD */}
+        {/* BLOCO 1: UPLOAD (Estilo Robinhood - Texto deslocado e imagem livre) */}
         <section 
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-          // 👇 AQUI: Imagem local para o bloco Upload
           style={{ backgroundImage: "url('/fundo-upload.jpg')" }}
         >
           <div className="absolute inset-0 bg-black/80 z-0" />
           
-          <div className="max-w-[90rem] mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-2 gap-16 items-center">
-              <div className="order-2 lg:order-1">
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+              
+              {/* TEXTO DESLOCADO PARA A DIREITA (col-start-2 cria o espaço na esquerda) */}
+              <div className="lg:col-span-5 lg:col-start-2 order-2 lg:order-1">
                 <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-400/30 backdrop-blur-sm shadow-xl">
                   <UploadCloud className="text-blue-400 w-8 h-8" />
                 </div>
@@ -135,15 +105,17 @@ export default function LandingPage() {
                 </ul>
               </div>
               
-              <div className="order-1 lg:order-2">
-                <AppScreen tilt="right">
-                  <img 
-                    src="/image_456e01.png" 
-                    alt="Ecrã de Upload" 
-                    className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity duration-700"
-                  />
-                </AppScreen>
+              {/* IMAGEM LIVRE (Sem ecrã) */}
+              <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2 relative group">
+                {/* Glow suave atrás da imagem para a destacar do fundo preto */}
+                <div className="absolute -inset-4 bg-blue-500/20 blur-3xl rounded-full opacity-0 group-hover:opacity-60 transition duration-700 -z-10"></div>
+                <img 
+                  src="/image_456e01.png" 
+                  alt="Interface de Upload" 
+                  className="w-full h-auto object-cover rounded-[2rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)] transition-transform duration-700 hover:-translate-y-4"
+                />
               </div>
+
             </div>
           </div>
         </section>
@@ -151,25 +123,25 @@ export default function LandingPage() {
         {/* BLOCO 2: ANÁLISE PROFUNDA (SCORE) */}
         <section 
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-          // 👇 AQUI: Imagem local para o bloco Score
           style={{ backgroundImage: "url('/fundo-score.png')" }}
         >
           <div className="absolute inset-0 bg-black/80 z-0" />
 
-          <div className="max-w-[90rem] mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-2 gap-16 items-center">
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
               
-              <div className="order-2 lg:order-1">
-                 <AppScreen tilt="left">
-                  <img 
-                    src="/Captura de tela 2026-02-22 222027.png" 
-                    alt="Ecrã de Análise" 
-                    className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-transform duration-700 scale-[1.2] md:scale-[1.25] origin-top translate-y-2 md:translate-y-4"
-                  />
-                </AppScreen>
+              {/* IMAGEM LIVRE NA ESQUERDA */}
+              <div className="lg:col-span-5 lg:col-start-2 order-2 lg:order-1 relative group">
+                <div className="absolute -inset-4 bg-green-500/20 blur-3xl rounded-full opacity-0 group-hover:opacity-60 transition duration-700 -z-10"></div>
+                <img 
+                  src="/Captura de tela 2026-02-22 222027.png" 
+                  alt="Interface de Análise" 
+                  className="w-full h-auto object-cover rounded-[2rem] shadow-[0_20px_50px_-15px_rgba(0,0,0,0.7)] transition-transform duration-700 hover:-translate-y-4"
+                />
               </div>
 
-              <div className="order-1 lg:order-2">
+              {/* TEXTO DESLOCADO */}
+              <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2">
                 <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30 backdrop-blur-sm shadow-xl">
                   <FileText className="text-green-400 w-8 h-8" />
                 </div>
@@ -183,6 +155,7 @@ export default function LandingPage() {
                   <ListItem>Resumo textual da Tese</ListItem>
                 </ul>
               </div>
+
             </div>
           </div>
         </section>
@@ -190,30 +163,28 @@ export default function LandingPage() {
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section 
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-          // 👇 AQUI: Imagem local para o bloco Comparador
           style={{ backgroundImage: "url('/fundo-comparador.jpg')" }}
         >
           <div className="absolute inset-0 bg-black/80 z-0" />
           
-          <div className="max-w-[90rem] mx-auto px-6 text-center relative z-10">
-            <div className="max-w-4xl mx-auto mb-16">
+          <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
+            <div className="max-w-3xl mx-auto mb-16">
               <div className="w-20 h-20 bg-purple-500/20 rounded-3xl flex items-center justify-center mb-8 border border-purple-400/30 mx-auto backdrop-blur-sm shadow-xl">
                 <Layout className="text-purple-400 w-10 h-10" />
               </div>
               <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-lg">Comparador de Ativos</h2>
-              <p className="text-2xl text-gray-300 leading-relaxed font-light drop-shadow-md">
+              <p className="text-xl text-gray-300 leading-relaxed font-light drop-shadow-md">
                 Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
               </p>
             </div>
 
-            <div className="max-w-[80rem] mx-auto">
-               <AppScreen zoom={true} tilt="up" className="border-purple-500/20 shadow-purple-900/40">
-                  <img 
-                    src="/image_03af1d.png" 
-                    alt="Tabela Comparativa" 
-                    className="w-full h-auto object-cover"
-                  />
-               </AppScreen>
+            <div className="max-w-5xl mx-auto relative group">
+               <div className="absolute -inset-10 bg-purple-500/20 blur-[100px] rounded-full opacity-50 -z-10 pointer-events-none"></div>
+               <img 
+                 src="/image_03af1d.png" 
+                 alt="Tabela Comparativa" 
+                 className="w-full h-auto object-cover rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] transition-transform duration-700 hover:scale-[1.02]"
+               />
                <p className="mt-8 text-base text-gray-400 flex items-center justify-center gap-2 drop-shadow-md">
                  <Maximize2 size={16} /> Visualização otimizada para foco nos dados
                </p>
@@ -224,27 +195,27 @@ export default function LandingPage() {
         {/* BLOCO 4: HISTÓRICO */}
         <section 
           className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-          // 👇 AQUI: Imagem local para o bloco Histórico
           style={{ backgroundImage: "url('/fundo-historico.jpg')" }}
         >
           <div className="absolute inset-0 bg-black/80 z-0" />
 
-           <div className="max-w-[90rem] mx-auto px-6 text-center relative z-10">
+           <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
               <div className="w-20 h-20 bg-yellow-500/20 rounded-3xl flex items-center justify-center mb-8 border border-yellow-400/30 mx-auto backdrop-blur-sm shadow-xl">
                 <Database className="text-yellow-400 w-10 h-10" />
               </div>
               <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-lg">Histórico Completo</h2>
-              <p className="text-2xl text-gray-300 leading-relaxed max-w-3xl mx-auto mb-16 font-light drop-shadow-md">
+              <p className="text-xl text-gray-300 leading-relaxed max-w-3xl mx-auto mb-16 font-light drop-shadow-md">
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
               
-              <AppScreen tilt="up" className="max-w-5xl mx-auto border-yellow-500/20 shadow-yellow-900/30">
-                  <img 
-                    src="/demo-history.png" 
-                    alt="Histórico" 
-                    className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-all duration-700"
-                  />
-               </AppScreen>
+              <div className="max-w-4xl mx-auto relative group">
+                <div className="absolute -inset-10 bg-yellow-500/10 blur-[100px] rounded-full opacity-50 -z-10 pointer-events-none"></div>
+                <img 
+                  src="/demo-history.png" 
+                  alt="Interface de Histórico" 
+                  className="w-full h-auto object-cover rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] transition-transform duration-700 hover:-translate-y-4"
+                />
+              </div>
            </div>
         </section>
 
@@ -254,12 +225,11 @@ export default function LandingPage() {
       <section 
         id="planos" 
         className="py-32 relative border-t border-white/10 bg-cover bg-center bg-no-repeat"
-        // 👇 AQUI: Imagem local para o bloco Planos
         style={{ backgroundImage: "url('/fundo-planos.jpg')" }}
       >
         <div className="absolute inset-0 bg-black/80 backdrop-blur-sm z-0" />
 
-        <div className="max-w-[90rem] mx-auto px-6 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-20">
             <h2 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight drop-shadow-lg">
               Um único plano. <br className="hidden md:block"/>
@@ -341,7 +311,7 @@ export default function LandingPage() {
 
       {/* --- FOOTER & DISCLAIMERS --- */}
       <footer className="border-t border-white/10 bg-black/80 backdrop-blur-2xl pt-20 pb-10">
-        <div className="max-w-[90rem] mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-6">
           
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
             <div className="flex items-center gap-4">
