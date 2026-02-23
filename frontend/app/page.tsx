@@ -7,27 +7,33 @@ import {
   Maximize2 
 } from "lucide-react";
 
-// --- COMPONENTE: MOLDURA DE NAVEGADOR (Para dar acabamento profissional) ---
-const BrowserMockup = ({ children, className = "", zoom = false }: { children: React.ReactNode, className?: string, zoom?: boolean }) => {
+// --- NOVO COMPONENTE: TELA DE APP (Design Robinhood/Fintech) ---
+// Substitui a antiga moldura de navegador por uma apresentação mais limpa, 
+// com cantos muito arredondados, bordas subtis e sombras profundas.
+const AppScreen = ({ children, className = "", zoom = false, tilt = "none" }: { children: React.ReactNode, className?: string, zoom?: boolean, tilt?: "left" | "right" | "up" | "none" }) => {
+  const tiltClasses = {
+    left: "-rotate-2 hover:rotate-0 translate-x-2 md:translate-x-4",
+    right: "rotate-2 hover:rotate-0 -translate-x-2 md:-translate-x-4",
+    up: "hover:-translate-y-3",
+    none: "hover:scale-[1.02]"
+  };
+
   return (
-    <div className={`relative rounded-xl border border-gray-800 bg-[#0d1117] shadow-2xl shadow-black/50 overflow-hidden group ${className}`}>
-      {/* Barra de Título estilo Mac/Windows */}
-      <div className="h-8 bg-[#161b22] border-b border-gray-800 flex items-center px-4 gap-2">
-        <div className="w-3 h-3 rounded-full bg-red-500/80" />
-        <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
-        <div className="w-3 h-3 rounded-full bg-green-500/80" />
-        {/* Barra de endereço fake */}
-        <div className="ml-4 flex-1 h-5 bg-[#0d1117] rounded-md border border-gray-800/50 opacity-50" />
-      </div>
+    <div className={`relative group transition-all duration-700 ease-out ${tiltClasses[tilt]} ${className}`}>
+      {/* Glow de fundo da imagem (brilho difuso) */}
+      <div className="absolute -inset-2 bg-gradient-to-tr from-blue-500/10 to-purple-500/10 rounded-[2.5rem] blur-xl opacity-0 group-hover:opacity-100 transition duration-700 pointer-events-none" />
       
-      {/* Container da Imagem com Lógica de Zoom */}
-      {/* O translate-y ajuda a centralizar o conteúdo quando o zoom é aplicado */}
-      <div className={`relative w-full ${zoom ? 'scale-[1.35] translate-y-8 md:translate-y-12' : ''} transition-transform duration-700 ease-out origin-top`}>
-         {children}
+      {/* Container Principal */}
+      <div className="relative rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 bg-[#0A0D14] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.6)] overflow-hidden">
+        
+        {/* Lógica de Zoom para imagens com bordas indesejadas */}
+        <div className={`relative w-full ${zoom ? 'scale-[1.35] translate-y-8 md:translate-y-12' : ''} transition-transform duration-700 ease-out origin-top`}>
+           {children}
+        </div>
+        
+        {/* Overlay de reflexo subtil (Glass effect) */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent pointer-events-none z-10" />
       </div>
-      
-      {/* Overlay de brilho sutil */}
-      <div className="absolute inset-0 pointer-events-none ring-1 ring-white/5 rounded-xl" />
     </div>
   );
 };
@@ -36,13 +42,13 @@ export default function LandingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   return (
-    <div className="min-h-screen bg-[#0E1117] text-gray-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[#0A0D14] text-gray-100 font-sans selection:bg-blue-500/30 overflow-x-hidden">
       
       {/* --- NAVBAR --- */}
-      <nav className="border-b border-gray-800 bg-[#0E1117]/80 backdrop-blur-md sticky top-0 z-50">
+      <nav className="border-b border-white/5 bg-[#0A0D14]/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/20">
+            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
               <BarChart3 className="text-white w-6 h-6" />
             </div>
             <span className="text-2xl font-bold tracking-tight text-white">
@@ -50,18 +56,18 @@ export default function LandingPage() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <a href="#funcionalidades" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
+          <div className="flex items-center gap-6">
+            <a href="#funcionalidades" className="hidden md:block text-sm text-gray-400 hover:text-white font-medium transition-colors">
               Funcionalidades
             </a>
-            <a href="#planos" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
+            <a href="#planos" className="hidden md:block text-sm text-gray-400 hover:text-white font-medium transition-colors">
               Preços
             </a>
             
-            <a href="/dashboard" className="hidden md:block text-gray-300 hover:text-white font-medium transition-colors">
+            <a href="/dashboard" className="hidden md:block text-sm text-gray-400 hover:text-white font-medium transition-colors">
               Entrar
             </a>
-            <a href="/dashboard" className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20 hover:scale-105">
+            <a href="/dashboard" className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-full font-bold transition-all shadow-lg shadow-white/10 hover:scale-105 text-sm">
               Começar Grátis
             </a>
           </div>
@@ -70,29 +76,29 @@ export default function LandingPage() {
 
       {/* --- HERO SECTION --- */}
       <section className="relative pt-24 pb-32 overflow-hidden">
-        {/* Glow de fundo aprimorado */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80vw] h-[500px] bg-blue-600/20 blur-[120px] rounded-full -z-10 opacity-50 pointer-events-none" />
+        {/* Glow de fundo */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80vw] h-[500px] bg-blue-600/10 blur-[150px] rounded-full -z-10 opacity-70 pointer-events-none" />
 
         <div className="max-w-5xl mx-auto px-6 text-center">
           
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-900/20 border border-blue-500/30 text-blue-400 text-xs font-bold uppercase tracking-wider mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-300 text-sm font-medium mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" /> Nova Versão 2.0
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold text-white tracking-tight mb-8 leading-tight">
+          <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-8 leading-[1.1]">
             A Nova Era Da <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">Análise de Ativos.</span>
           </h1>
           
-          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed font-light">
             Acelere a leitura de relatórios trimestrais. Deixe a IA estruturar os dados e gerar insights para apoiar sua decisão de investimento.
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-            <a href="/dashboard" className="w-full md:w-auto bg-white text-gray-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-100 transition-all flex items-center justify-center gap-2 shadow-xl shadow-white/10 hover:shadow-white/20 hover:-translate-y-1">
+            <a href="/dashboard" className="w-full md:w-auto bg-white text-gray-900 px-8 py-4 rounded-full font-bold text-lg hover:bg-gray-100 transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-xl shadow-white/10">
               Criar Conta Grátis <ArrowRight size={20} />
             </a>
-            <a href="#funcionalidades" className="w-full md:w-auto px-8 py-4 rounded-xl font-bold text-lg text-gray-300 border border-gray-700 hover:border-gray-500 hover:text-white transition-all">
+            <a href="#funcionalidades" className="w-full md:w-auto px-8 py-4 rounded-full font-bold text-lg text-gray-300 border border-white/10 hover:bg-white/5 hover:text-white transition-all">
               Ver Funcionalidades
             </a>
           </div>
@@ -100,63 +106,69 @@ export default function LandingPage() {
       </section>
 
       {/* --- SEÇÃO: FUNCIONALIDADES --- */}
-      <div id="funcionalidades" className="flex flex-col bg-[#0E1117]">
+      <div id="funcionalidades" className="flex flex-col bg-[#0A0D14]">
         
         {/* BLOCO 1: UPLOAD */}
-        <section className="py-24 border-b border-gray-800">
+        <section className="py-32 relative border-t border-white/5 overflow-hidden">
+          <div className="absolute top-1/2 right-0 w-[400px] h-[400px] bg-blue-600/5 blur-[120px] rounded-full -z-10 pointer-events-none" />
+          
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <div className="w-14 h-14 bg-blue-600/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-500/30 shadow-lg shadow-blue-900/30">
+            <div className="grid md:grid-cols-2 gap-16 items-center">
+              <div className="order-2 md:order-1">
+                <div className="w-14 h-14 bg-blue-600/10 rounded-2xl flex items-center justify-center mb-8 border border-blue-500/20">
                   <UploadCloud className="text-blue-400 w-7 h-7" />
                 </div>
-                <h2 className="text-4xl font-bold text-white mb-6">Upload Inteligente</h2>
-                <p className="text-lg text-gray-300 leading-relaxed mb-6">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">Upload Inteligente</h2>
+                <p className="text-lg text-gray-400 leading-relaxed mb-8 font-light">
                   Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos.
                 </p>
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   <ListItem>Suporte a PDFs de até 10MB</ListItem>
                   <ListItem>Extração automática de métricas</ListItem>
                   <ListItem>Identificação de trimestre e ano</ListItem>
                 </ul>
               </div>
               
-              {/* Moldura para a imagem de Upload */}
-              <BrowserMockup className="transform rotate-1 hover:rotate-0 transition-transform duration-500">
-                <img 
-                  src="/image_456e01.png" // Ex: Tela de inputs
-                  alt="Tela de Upload" 
-                  className="w-full h-auto object-cover"
-                />
-              </BrowserMockup>
+              {/* Moldura AppScreen para Imagem */}
+              <div className="order-1 md:order-2">
+                <AppScreen tilt="right">
+                  <img 
+                    src="/image_456e01.png" 
+                    alt="Tela de Upload" 
+                    className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
+                  />
+                </AppScreen>
+              </div>
             </div>
           </div>
         </section>
 
         {/* BLOCO 2: ANÁLISE PROFUNDA */}
-        <section className="py-24 border-b border-gray-800 bg-[#0d1117]/30">
+        <section className="py-32 relative border-t border-white/5 bg-[#0D111A]">
+          <div className="absolute top-1/2 left-0 w-[400px] h-[400px] bg-green-600/5 blur-[120px] rounded-full -z-10 pointer-events-none" />
+
           <div className="max-w-7xl mx-auto px-6">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              {/* Ordem invertida no Desktop para variar o layout */}
+            <div className="grid md:grid-cols-2 gap-16 items-center">
+              
               <div className="order-2 md:order-1">
-                 <BrowserMockup className="transform -rotate-1 hover:rotate-0 transition-transform duration-500">
+                 <AppScreen tilt="left">
                   <img 
-                    src="/demo-result.png" // Ex: Tela de dashboard/resultado
+                    src="/demo-result.png" 
                     alt="Tela de Análise" 
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
                   />
-                </BrowserMockup>
+                </AppScreen>
               </div>
 
               <div className="order-1 md:order-2">
-                <div className="w-14 h-14 bg-green-600/20 rounded-2xl flex items-center justify-center mb-6 border border-green-500/30 shadow-lg shadow-green-900/30">
+                <div className="w-14 h-14 bg-green-600/10 rounded-2xl flex items-center justify-center mb-8 border border-green-500/20">
                   <FileText className="text-green-400 w-7 h-7" />
                 </div>
-                <h2 className="text-4xl font-bold text-white mb-6">Score de IA</h2>
-                <p className="text-lg text-gray-300 leading-relaxed mb-6">
+                <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">Score de IA</h2>
+                <p className="text-lg text-gray-400 leading-relaxed mb-8 font-light">
                   O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
                 </p>
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   <ListItem>Score de Receita e Lucro</ListItem>
                   <ListItem>Análise de Endividamento</ListItem>
                   <ListItem>Resumo textual da Tese</ListItem>
@@ -166,33 +178,30 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 3: COMPARADOR DE ATIVOS (AQUI APLICAMOS O ZOOM) */}
-        <section className="py-24 border-b border-gray-800 relative overflow-hidden">
-          {/* Fundo decorativo para destacar a tabela */}
-          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/10 to-transparent pointer-events-none" />
+        {/* BLOCO 3: COMPARADOR DE ATIVOS (COM ZOOM MANTIDO) */}
+        <section className="py-32 relative border-t border-white/5 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-900/5 to-transparent pointer-events-none" />
           
           <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
             <div className="max-w-3xl mx-auto mb-16">
-              <div className="w-16 h-16 bg-purple-600/20 rounded-2xl flex items-center justify-center mb-8 border border-purple-500/30 mx-auto shadow-lg shadow-purple-900/30">
+              <div className="w-16 h-16 bg-purple-600/10 rounded-2xl flex items-center justify-center mb-8 border border-purple-500/20 mx-auto">
                 <Layout className="text-purple-400 w-8 h-8" />
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Comparador de Ativos</h2>
-              <p className="text-xl text-gray-300 leading-relaxed">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">Comparador de Ativos</h2>
+              <p className="text-xl text-gray-400 leading-relaxed font-light">
                 Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
               </p>
             </div>
 
-            {/* AQUI ESTÁ O FIX: zoom={true} */}
             <div className="max-w-6xl mx-auto">
-               <BrowserMockup zoom={true} className="border-purple-500/20 shadow-purple-900/20">
-                  {/* Esta imagem tinha bordas pretas muito grandes, o zoom vai corrigir isso visualmente */}
+               <AppScreen zoom={true} tilt="up" className="border-purple-500/10 shadow-purple-900/10">
                   <img 
                     src="/image_03af1d.png" 
                     alt="Tabela Comparativa" 
                     className="w-full h-auto object-cover"
                   />
-               </BrowserMockup>
-               <p className="mt-4 text-sm text-gray-500 flex items-center justify-center gap-2">
+               </AppScreen>
+               <p className="mt-8 text-sm text-gray-500 flex items-center justify-center gap-2">
                  <Maximize2 size={14} /> Visualização otimizada para foco nos dados
                </p>
             </div>
@@ -200,59 +209,67 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 4: HISTÓRICO */}
-        <section className="py-24 border-b border-gray-800">
+        <section className="py-32 relative border-t border-white/5 bg-[#0D111A]">
            <div className="max-w-6xl mx-auto px-6 text-center">
-              <div className="w-16 h-16 bg-yellow-600/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-500/30 mx-auto shadow-lg shadow-yellow-900/30">
+              <div className="w-16 h-16 bg-yellow-600/10 rounded-2xl flex items-center justify-center mb-8 border border-yellow-500/20 mx-auto">
                 <Database className="text-yellow-400 w-8 h-8" />
               </div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Histórico Completo</h2>
-              <p className="text-xl text-gray-300 leading-relaxed max-w-2xl mx-auto mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">Histórico Completo</h2>
+              <p className="text-xl text-gray-400 leading-relaxed max-w-2xl mx-auto mb-16 font-light">
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
               
-              <BrowserMockup className="max-w-4xl mx-auto border-yellow-500/20">
+              <AppScreen tilt="up" className="max-w-4xl mx-auto border-yellow-500/10 shadow-yellow-900/10">
                   <img 
                     src="/demo-history.png" 
                     alt="Histórico" 
-                    className="w-full h-auto object-cover"
+                    className="w-full h-auto object-cover opacity-90 hover:opacity-100 transition-opacity"
                   />
-               </BrowserMockup>
+               </AppScreen>
            </div>
         </section>
 
       </div>
       
       {/* --- SEÇÃO DE PLANOS --- */}
-      <section id="planos" className="py-24 relative bg-[#0d1117] border-t border-gray-800">
+      <section id="planos" className="py-32 relative bg-[#0A0D14] border-t border-white/5">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-              Um único plano. <br />
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">
+              Um único plano. <br className="hidden md:block"/>
               Invista melhor com o poder da IA.
             </h2>
             
-            <div className="flex items-center justify-center gap-4 mt-8">
-              <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('monthly')}>Mensal</span>
+            <div className="flex items-center justify-center gap-4 bg-white/5 inline-flex p-1 rounded-full border border-white/10 mt-8">
               <button 
-                onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-                className="w-16 h-8 bg-gray-800 rounded-full p-1 relative transition-colors hover:bg-gray-700"
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}
               >
-                <div className={`w-6 h-6 bg-blue-500 rounded-full transition-transform duration-300 shadow-md ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-0'}`} />
+                Mensal
               </button>
-              <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('yearly')}>Anual</span>
+              <button 
+                onClick={() => setBillingCycle('yearly')}
+                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-white text-black shadow-lg' : 'text-gray-400 hover:text-white'}`}
+              >
+                Anual
+              </button>
             </div>
-            <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-2`}>
-               <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-3 py-1 rounded-full">2 MESES GRÁTIS</span>
+            
+            <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-4`}>
+               <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider">
+                 2 MESES GRÁTIS
+               </span>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 items-start max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto">
+            
             {/* CARD GRATUITO */}
-            <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-8 hover:border-gray-600 transition-all h-full flex flex-col">
+            <div className="bg-[#11141D] border border-white/5 rounded-[2.5rem] p-10 hover:border-white/10 transition-colors flex flex-col">
               <h3 className="text-3xl font-bold text-white mb-2">Gratuito</h3>
-              <p className="text-gray-400 text-base mb-8">Para começar a analisar sem custo.</p>
+              <p className="text-gray-400 text-base mb-10 font-light">Para começar a analisar sem custo.</p>
               
-              <ul className="space-y-4 mb-8 flex-1">
+              <ul className="space-y-5 mb-10 flex-1">
                 <Feature text="5 Análises por semana" active />
                 <Feature text="Relatório Resumido na Tela" active />
                 <Feature text="Acesso ao histórico simples" active />
@@ -263,70 +280,65 @@ export default function LandingPage() {
                 <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
 
-              <a href="/dashboard" className="block w-full text-center py-4 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 hover:border-gray-500 transition-all mt-auto">
+              <a href="/dashboard" className="block w-full text-center py-4 rounded-full border border-white/20 text-white font-bold hover:bg-white/5 transition-all mt-auto">
                 Criar conta grátis
               </a>
             </div>
 
             {/* CARD PREMIUM */}
-            <div className="bg-[#0f131a] border border-blue-500 rounded-3xl p-8 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-              {billingCycle === 'yearly' && (
-                <div className="absolute top-4 right-4 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
-                  2 Meses Grátis no Anual
-                </div>
-              )}
-              <h3 className="text-2xl font-bold text-blue-400 mb-2">Premium</h3>
+            <div className="bg-blue-600 rounded-[2.5rem] p-10 relative shadow-[0_0_50px_-12px_rgba(37,99,235,0.4)] flex flex-col transform hover:-translate-y-2 transition-transform duration-300">
+              <h3 className="text-3xl font-bold text-white mb-2">Premium</h3>
               <div className="flex items-end gap-1 mb-2">
-                <span className="text-5xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
-                <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
+                <span className="text-6xl font-extrabold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
+                <span className="text-blue-200 mb-2 font-medium">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
               </div>
-              <p className="text-gray-400 text-sm mb-8">Desbloqueie todo o poder da IA.</p>
+              <p className="text-blue-200 text-sm mb-10 font-light">Desbloqueie todo o poder da IA.</p>
               
-              <ul className="space-y-4 mb-8 flex-1">
-                <Feature text="Análises de IA Ilimitadas" active />
-                <Feature text="Relatório Resumido na Tela" active />
-                <Feature text="Acesso ao Histórico Ilimitado" active />
-                <Feature text="Suporte por Email" active />
-                <Feature text="Upload de arquivos ilimitado" active />
-                <Feature text="Download da Análise Completa da IA" active />
-                <Feature text="Tabela Comparativa de Ativos" active />
-                <Feature text="Prioridade máxima na fila" active />
+              <ul className="space-y-5 mb-10 flex-1">
+                <Feature text="Análises de IA Ilimitadas" active light />
+                <Feature text="Relatório Resumido na Tela" active light />
+                <Feature text="Acesso ao Histórico Ilimitado" active light />
+                <Feature text="Suporte por Email" active light />
+                <Feature text="Upload de arquivos ilimitado" active light />
+                <Feature text="Download da Análise Completa da IA" active light />
+                <Feature text="Tabela Comparativa de Ativos" active light />
+                <Feature text="Prioridade máxima na fila" active light />
               </ul>
 
-              <a href="/dashboard" className="block w-full text-center py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto">
+              <a href="/dashboard" className="block w-full text-center py-4 rounded-full bg-white text-blue-900 font-extrabold shadow-xl hover:bg-gray-100 transition-all mt-auto">
                 Assinar Agora
               </a>
-              <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
+              <p className="text-center text-xs text-blue-200 mt-4 font-medium">Cancele quando quiser.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* --- FOOTER & DISCLAIMERS --- */}
-      <footer className="border-t border-gray-800 bg-[#0E1117] pt-16 pb-8">
+      <footer className="border-t border-white/5 bg-[#0A0D14] pt-20 pb-10">
         <div className="max-w-7xl mx-auto px-6">
           
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-12">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gray-800 rounded-lg flex items-center justify-center">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
                 <BarChart3 className="text-gray-400 w-5 h-5" />
               </div>
-              <span className="text-lg font-bold text-gray-300">FinAnalyzer.AI</span>
+              <span className="text-xl font-bold text-gray-300 tracking-tight">FinAnalyzer.AI</span>
             </div>
             
-            <div className="flex gap-6">
-              <a href="/terms" className="text-gray-500 hover:text-white transition-colors">Termos de Uso</a>
-              <a href="/privacy" className="text-gray-500 hover:text-white transition-colors">Privacidade</a>
-              <a href="/refund" className="text-gray-500 hover:text-white transition-colors">Reembolso</a>
+            <div className="flex gap-8">
+              <a href="/terms" className="text-sm text-gray-400 hover:text-white transition-colors font-medium">Termos de Uso</a>
+              <a href="/privacy" className="text-sm text-gray-400 hover:text-white transition-colors font-medium">Privacidade</a>
+              <a href="/refund" className="text-sm text-gray-400 hover:text-white transition-colors font-medium">Reembolso</a>
             </div>
           </div>
 
-          <div className="border-t border-gray-800 pt-8 text-xs text-gray-400 space-y-4 text-justify leading-relaxed">
+          <div className="border-t border-white/5 pt-10 text-xs text-gray-500 space-y-4 text-justify leading-relaxed font-light">
              <p>
-               <strong className="text-gray-200">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
+               <strong className="text-gray-400 font-semibold">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-400 font-semibold">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-400 font-semibold">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
              </p>
 
-             <p className="text-center pt-4 text-gray-500">
+             <p className="text-center pt-6 text-gray-600 font-medium">
                © 2026 FinAnalyzer Inc. Todos os direitos reservados.
              </p>
           </div>
@@ -338,25 +350,27 @@ export default function LandingPage() {
 }
 
 // Subcomponentes
-function Feature({ text, active = false, disabled = false }: any) {
+function Feature({ text, active = false, disabled = false, light = false }: any) {
   return (
-    <li className="flex items-center gap-3">
+    <li className="flex items-center gap-4">
       {disabled ? (
-        <div className="p-0.5 rounded-full border border-gray-600 text-gray-500"><X size={12} /></div>
+        <div className="p-1 rounded-full border border-gray-700 text-gray-600"><X size={12} /></div>
       ) : (
-        <div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30">
-          <Check size={12} />
+        <div className={`p-1 rounded-full ${light ? 'bg-white text-blue-600' : 'bg-green-500/20 text-green-400'}`}>
+          <Check size={12} strokeWidth={3} />
         </div>
       )}
-      <span className={`text-base ${disabled ? 'text-gray-500 line-through' : 'text-gray-300'}`}>{text}</span>
+      <span className={`text-base font-medium ${disabled ? 'text-gray-600 line-through' : light ? 'text-white' : 'text-gray-300'}`}>{text}</span>
     </li>
   );
 }
 
 function ListItem({ children }: { children: React.ReactNode }) {
   return (
-    <li className="flex items-center gap-3 text-gray-300">
-      <CheckCircle2 size={18} className="text-blue-500" />
+    <li className="flex items-center gap-4 text-gray-300 font-medium">
+      <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 border border-blue-500/30">
+         <Check size={14} className="text-blue-400" strokeWidth={3} />
+      </div>
       <span>{children}</span>
     </li>
   );
