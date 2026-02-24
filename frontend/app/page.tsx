@@ -45,28 +45,27 @@ export default function LandingPage() {
 
       {/* --- HERO SECTION --- */}
       <section 
-        className="relative pt-24 pb-32 bg-cover bg-center bg-no-repeat"
+        className="relative pt-32 pb-40 lg:pt-40 lg:pb-56 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/fundo-hero.jpg')" }}
       >
-        {/* Overlay muito subtil apenas para garantir leitura do texto branco */}
         <div className="absolute inset-0 bg-black/40 z-0" />
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
           
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/30 border border-white/20 text-gray-200 text-sm font-medium mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 backdrop-blur-md">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/30 border border-white/20 text-gray-200 text-sm font-medium mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500 backdrop-blur-md">
              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" /> Nova Versão 2.0
           </div>
 
-          <h1 className="text-5xl md:text-8xl font-extrabold text-white tracking-tight mb-8 leading-[1.1] drop-shadow-2xl">
+          <h1 className="text-6xl md:text-8xl lg:text-[6.5rem] font-extrabold text-white tracking-tight mb-8 leading-[1.05] drop-shadow-2xl">
             A Nova Era Da <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 drop-shadow-lg">Análise de Ativos.</span>
           </h1>
           
-          <p className="text-xl md:text-3xl text-white mb-12 max-w-4xl mx-auto leading-relaxed font-medium drop-shadow-lg">
+          <p className="text-xl md:text-3xl text-white mb-16 max-w-4xl mx-auto leading-relaxed font-medium drop-shadow-lg">
             Acelere a leitura de relatórios trimestrais. Deixe a IA estruturar os dados e gerar insights para apoiar sua decisão de investimento.
           </p>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
             <a href="/dashboard" className="w-full md:w-auto bg-white text-gray-900 px-10 py-5 rounded-full font-bold text-lg hover:bg-gray-100 transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-2xl shadow-white/20">
               Criar Conta Grátis <ArrowRight size={20} />
             </a>
@@ -80,36 +79,35 @@ export default function LandingPage() {
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
         
-        {/* BLOCO 1: UPLOAD */}
+        {/* BLOCO 1: UPLOAD (Aumentado o distanciamento e altura) */}
         <section 
-          className="py-32 relative bg-cover bg-center bg-no-repeat"
+          className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-upload.jpg')" }}
         >
-          {/* Sem overlay global. Gradiente escuro apenas à esquerda para o texto */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-0" />
           
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            {/* O gap-0 e os cols forçam o distanciamento brutal estilo Robinhood */}
+            <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-center">
               
-              {/* TEXTO DESLOCADO PARA A DIREITA */}
-              <div className="lg:col-span-5 lg:col-start-2 order-2 lg:order-1">
-                <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-400/30 backdrop-blur-sm shadow-xl">
+              {/* TEXTO: Ocupa apenas 4 colunas (mais estreito) e começa na coluna 2 */}
+              <div className="lg:col-span-4 lg:col-start-2 order-2 lg:order-1">
+                <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-10 border border-blue-400/30 backdrop-blur-sm shadow-xl">
                   <UploadCloud className="text-blue-400 w-8 h-8" />
                 </div>
-                <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">Upload Inteligente</h2>
-                <p className="text-xl text-gray-100 leading-relaxed mb-8 font-medium drop-shadow-lg">
+                <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 tracking-tight drop-shadow-2xl">Upload Inteligente</h2>
+                <p className="text-xl text-gray-100 leading-relaxed mb-10 font-medium drop-shadow-lg">
                   Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos.
                 </p>
-                <ul className="space-y-5">
+                <ul className="space-y-6">
                   <ListItem>Suporte a PDFs de até 10MB</ListItem>
                   <ListItem>Extração automática de métricas</ListItem>
                   <ListItem>Identificação de trimestre e ano</ListItem>
                 </ul>
               </div>
               
-              {/* IMAGEM LIVRE */}
+              {/* IMAGEM: Ocupa 5 colunas e começa na coluna 8 (Cria um GAP de 2 colunas inteiras vazias no meio) */}
               <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2 relative group">
-                {/* Glow suave removido para não ofuscar o fundo. Aumentado o drop-shadow. */}
                 <img 
                   src="/upload.png" 
                   alt="Interface de Upload" 
@@ -123,26 +121,33 @@ export default function LandingPage() {
 
         {/* BLOCO 2: ANÁLISE PROFUNDA (SCORE) */}
         <section 
-          className="py-32 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/fundo-score.png')" }} // Atenção à extensão. Anteriormente usou .png aqui e .jpg noutros sítios.
+          className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/fundo-score.png')" }} 
         >
-          {/* Gradiente escuro apenas à direita para o texto */}
           <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/40 to-transparent z-0" />
 
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-center">
               
+              {/* IMAGEM LIVRE NA ESQUERDA (Começa na 1, ocupa 5 colunas) */}
+              <div className="lg:col-span-5 lg:col-start-1 order-2 lg:order-1 relative group">
+                <img 
+                  src="/score.png" 
+                  alt="Interface de Análise" 
+                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
+                />
+              </div>
 
-              {/* TEXTO DESLOCADO */}
-              <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2">
-                <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30 backdrop-blur-sm shadow-xl">
+              {/* TEXTO DESLOCADO BEM PARA A DIREITA (Começa na 8, ocupa 4 colunas) */}
+              <div className="lg:col-span-4 lg:col-start-8 order-1 lg:order-2">
+                <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-10 border border-green-400/30 backdrop-blur-sm shadow-xl">
                   <FileText className="text-green-400 w-8 h-8" />
                 </div>
-                <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">Score de IA</h2>
-                <p className="text-xl text-gray-100 leading-relaxed mb-8 font-medium drop-shadow-lg">
+                <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 tracking-tight drop-shadow-2xl">Score de IA</h2>
+                <p className="text-xl text-gray-100 leading-relaxed mb-10 font-medium drop-shadow-lg">
                   O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
                 </p>
-                <ul className="space-y-5">
+                <ul className="space-y-6">
                   <ListItem>Score de Receita e Lucro</ListItem>
                   <ListItem>Análise de Endividamento</ListItem>
                   <ListItem>Resumo textual da Tese</ListItem>
@@ -155,19 +160,18 @@ export default function LandingPage() {
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section 
-          className="py-32 relative bg-cover bg-center bg-no-repeat"
+          className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-comparador.jpg')" }}
         >
-          {/* Overlay subtil */}
           <div className="absolute inset-0 bg-black/40 z-0" />
           
           <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-            <div className="max-w-3xl mx-auto mb-16">
-              <div className="w-20 h-20 bg-purple-500/20 rounded-3xl flex items-center justify-center mb-8 border border-purple-400/30 mx-auto backdrop-blur-sm shadow-xl">
+            <div className="max-w-3xl mx-auto mb-20">
+              <div className="w-20 h-20 bg-purple-500/20 rounded-3xl flex items-center justify-center mb-10 border border-purple-400/30 mx-auto backdrop-blur-sm shadow-xl">
                 <Layout className="text-purple-400 w-10 h-10" />
               </div>
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">Comparador de Ativos</h2>
-              <p className="text-xl text-gray-100 leading-relaxed font-medium drop-shadow-lg bg-black/20 p-4 rounded-xl backdrop-blur-sm inline-block">
+              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight drop-shadow-2xl">Comparador de Ativos</h2>
+              <p className="text-2xl text-gray-100 leading-relaxed font-medium drop-shadow-lg bg-black/20 p-6 rounded-2xl backdrop-blur-sm inline-block">
                 Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
               </p>
             </div>
@@ -178,7 +182,7 @@ export default function LandingPage() {
                  alt="Tabela Comparativa" 
                  className="w-full h-auto object-contain drop-shadow-[0_50px_80px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:scale-[1.02]"
                />
-               <p className="mt-8 text-base text-gray-200 font-medium drop-shadow-md bg-black/30 py-2 px-4 rounded-full inline-flex items-center gap-2 backdrop-blur-sm">
+               <p className="mt-10 text-base text-gray-200 font-medium drop-shadow-md bg-black/30 py-3 px-6 rounded-full inline-flex items-center gap-2 backdrop-blur-sm">
                  <Maximize2 size={16} /> Visualização otimizada para foco nos dados
                </p>
             </div>
@@ -187,18 +191,17 @@ export default function LandingPage() {
 
         {/* BLOCO 4: HISTÓRICO */}
         <section 
-          className="py-32 relative bg-cover bg-center bg-no-repeat"
+          className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-historico.jpg')" }}
         >
-          {/* Overlay subtil */}
           <div className="absolute inset-0 bg-black/40 z-0" />
 
            <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-              <div className="w-20 h-20 bg-yellow-500/20 rounded-3xl flex items-center justify-center mb-8 border border-yellow-400/30 mx-auto backdrop-blur-sm shadow-xl">
+              <div className="w-20 h-20 bg-yellow-500/20 rounded-3xl flex items-center justify-center mb-10 border border-yellow-400/30 mx-auto backdrop-blur-sm shadow-xl">
                 <Database className="text-yellow-400 w-10 h-10" />
               </div>
-              <h2 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight drop-shadow-2xl">Histórico Completo</h2>
-              <p className="text-xl text-gray-100 leading-relaxed max-w-3xl mx-auto mb-16 font-medium drop-shadow-lg bg-black/20 p-4 rounded-xl backdrop-blur-sm inline-block">
+              <h2 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight drop-shadow-2xl">Histórico Completo</h2>
+              <p className="text-2xl text-gray-100 leading-relaxed max-w-3xl mx-auto mb-20 font-medium drop-shadow-lg bg-black/20 p-6 rounded-2xl backdrop-blur-sm inline-block">
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
               
@@ -217,49 +220,48 @@ export default function LandingPage() {
       {/* --- SECÇÃO DE PLANOS --- */}
       <section 
         id="planos" 
-        className="py-32 relative bg-cover bg-center bg-no-repeat"
+        className="py-32 lg:py-48 relative bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/fundo-planos.jpg')" }}
       >
-        {/* Overlay escuro de volta aqui para dar contraste aos cartões de preço brancos/azuis */}
         <div className="absolute inset-0 bg-black/70 z-0" />
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-20">
+          <div className="text-center mb-24">
             <h2 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight drop-shadow-2xl">
               Um único plano. <br className="hidden md:block"/>
               Invista melhor com o poder da IA.
             </h2>
             
-            <div className="flex items-center justify-center gap-4 bg-black/30 inline-flex p-1.5 rounded-full border border-white/20 mt-8 backdrop-blur-md">
+            <div className="flex items-center justify-center gap-4 bg-black/30 inline-flex p-2 rounded-full border border-white/20 mt-10 backdrop-blur-md">
               <button 
                 onClick={() => setBillingCycle('monthly')}
-                className={`px-8 py-3 rounded-full text-base font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
+                className={`px-10 py-4 rounded-full text-lg font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
               >
                 Mensal
               </button>
               <button 
                 onClick={() => setBillingCycle('yearly')}
-                className={`px-8 py-3 rounded-full text-base font-bold transition-all flex items-center gap-2 ${billingCycle === 'yearly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
+                className={`px-10 py-4 rounded-full text-lg font-bold transition-all flex items-center gap-3 ${billingCycle === 'yearly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
               >
                 Anual
               </button>
             </div>
             
-            <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-6`}>
-               <span className="bg-orange-500/80 text-white border border-orange-400 text-sm font-bold px-5 py-2 rounded-full uppercase tracking-wider shadow-xl drop-shadow-md">
+            <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-8`}>
+               <span className="bg-orange-500/80 text-white border border-orange-400 text-sm font-bold px-6 py-2.5 rounded-full uppercase tracking-wider shadow-xl drop-shadow-md">
                  2 MESES GRÁTIS
                </span>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-10 items-stretch max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-12 items-stretch max-w-5xl mx-auto">
             
             {/* CARD GRATUITO */}
-            <div className="bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-12 hover:border-white/30 transition-colors flex flex-col shadow-2xl">
+            <div className="bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-14 hover:border-white/30 transition-colors flex flex-col shadow-2xl">
               <h3 className="text-4xl font-bold text-white mb-2 drop-shadow-md">Gratuito</h3>
-              <p className="text-gray-300 text-lg mb-10 font-medium">Para começar a analisar sem custo.</p>
+              <p className="text-gray-300 text-xl mb-12 font-medium">Para começar a analisar sem custo.</p>
               
-              <ul className="space-y-6 mb-12 flex-1">
+              <ul className="space-y-6 mb-16 flex-1">
                 <Feature text="5 Análises por semana" active />
                 <Feature text="Relatório Resumido na Tela" active />
                 <Feature text="Acesso ao histórico simples" active />
@@ -269,21 +271,21 @@ export default function LandingPage() {
                 <Feature text="Tabela Comparativa de Ativos" disabled />
               </ul>
 
-              <a href="/dashboard" className="block w-full text-center py-5 rounded-full border-2 border-white/30 text-white text-lg font-bold hover:bg-white/10 transition-all mt-auto backdrop-blur-md">
+              <a href="/dashboard" className="block w-full text-center py-6 rounded-full border-2 border-white/30 text-white text-xl font-bold hover:bg-white/10 transition-all mt-auto backdrop-blur-md">
                 Criar conta grátis
               </a>
             </div>
 
             {/* CARD PREMIUM */}
-            <div className="bg-blue-600/95 backdrop-blur-xl border border-blue-400/50 rounded-[2.5rem] p-12 relative shadow-[0_0_80px_-10px_rgba(37,99,235,0.8)] flex flex-col transform hover:-translate-y-3 transition-transform duration-300">
+            <div className="bg-blue-600/95 backdrop-blur-2xl border border-blue-400/50 rounded-[2.5rem] p-14 relative shadow-[0_0_80px_-10px_rgba(37,99,235,0.8)] flex flex-col transform hover:-translate-y-4 transition-transform duration-300">
               <h3 className="text-4xl font-bold text-white mb-2 drop-shadow-md">Premium</h3>
               <div className="flex items-end gap-2 mb-2">
-                <span className="text-7xl font-extrabold text-white drop-shadow-lg">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
-                <span className="text-blue-100 mb-3 font-medium text-xl drop-shadow-md">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
+                <span className="text-[5.5rem] leading-none font-extrabold text-white drop-shadow-lg">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
+                <span className="text-blue-100 mb-4 font-medium text-2xl drop-shadow-md">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
               </div>
-              <p className="text-blue-50 text-lg mb-10 font-medium drop-shadow-md">Desbloqueie todo o poder da IA.</p>
+              <p className="text-blue-50 text-xl mb-12 font-medium drop-shadow-md">Desbloqueie todo o poder da IA.</p>
               
-              <ul className="space-y-6 mb-12 flex-1">
+              <ul className="space-y-6 mb-16 flex-1">
                 <Feature text="Análises de IA Ilimitadas" active light />
                 <Feature text="Relatório Resumido na Tela" active light />
                 <Feature text="Acesso ao Histórico Ilimitado" active light />
@@ -294,17 +296,17 @@ export default function LandingPage() {
                 <Feature text="Prioridade máxima na fila" active light />
               </ul>
 
-              <a href="/dashboard" className="block w-full text-center py-5 rounded-full bg-white text-blue-900 text-lg font-extrabold shadow-2xl hover:bg-gray-100 hover:scale-[1.02] transition-all mt-auto">
+              <a href="/dashboard" className="block w-full text-center py-6 rounded-full bg-white text-blue-900 text-xl font-extrabold shadow-2xl hover:bg-gray-100 hover:scale-[1.02] transition-all mt-auto">
                 Assinar Agora
               </a>
-              <p className="text-center text-sm text-blue-100 mt-6 font-medium drop-shadow-md">Cancele quando quiser.</p>
+              <p className="text-center text-sm text-blue-200 mt-8 font-medium drop-shadow-md">Cancele quando quiser.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* --- FOOTER & DISCLAIMERS --- */}
-      <footer className="border-t border-white/10 bg-[#0A0D14] pt-20 pb-10">
+      <footer className="border-t border-white/10 bg-[#0A0D14] pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-6">
           
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
@@ -322,12 +324,12 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="border-t border-white/10 pt-10 text-sm text-gray-400 space-y-4 text-justify leading-relaxed font-light">
+          <div className="border-t border-white/10 pt-12 text-sm text-gray-400 space-y-4 text-justify leading-relaxed font-light">
              <p>
                <strong className="text-gray-300 font-semibold">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300 font-semibold">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300 font-semibold">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
              </p>
 
-             <p className="text-center pt-8 text-gray-500 font-medium">
+             <p className="text-center pt-10 text-gray-500 font-medium">
                © 2026 FinAnalyzer Inc. Todos os direitos reservados.
              </p>
           </div>
