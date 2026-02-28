@@ -46,7 +46,7 @@ export default function LandingPage() {
       {/* --- HERO SECTION --- */}
       <section 
         className="relative pt-32 pb-40 lg:pt-40 lg:pb-56 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/Day and night concept sun moon tree – Royalty-Free Vector _ VectorStock.jfif')" }}
+        style={{ backgroundImage: "url('/Gemini_Generated_Image_yiydibyiydibyiyd.jfif')" }}
       >
         <div className="absolute inset-0 bg-black/40 z-0" />
 
