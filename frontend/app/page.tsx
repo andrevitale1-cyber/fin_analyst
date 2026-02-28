@@ -46,7 +46,7 @@ export default function LandingPage() {
       {/* --- HERO SECTION --- */}
       <section 
         className="relative pt-32 pb-40 lg:pt-40 lg:pb-56 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/Gemini_Generated_Image_yiydibyiydibyiyd.jfif')" }}
+        style={{ backgroundImage: "url('/Gemini_Generated_Image_yiydibyiydibyiyd.png')" }}
       >
         <div className="absolute inset-0 bg-black/40 z-0" />
 
