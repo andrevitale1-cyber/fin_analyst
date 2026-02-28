@@ -46,16 +46,13 @@ export default function LandingPage() {
       {/* --- HERO SECTION --- */}
       <section 
         className="relative pt-32 pb-40 lg:pt-40 lg:pb-56 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/fundo-hero.jpg')" }}
+        style={{ backgroundImage: "url('/Blue solar eclipse animation in a dark sky.jfif')" }}
       >
         <div className="absolute inset-0 bg-black/40 z-0" />
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
           
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/30 border border-white/20 text-gray-200 text-sm font-medium mb-10 animate-in fade-in slide-in-from-bottom-4 duration-500 backdrop-blur-md">
-             <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" /> Nova Versão 2.0
-          </div>
-
+          
           <h1 className="text-6xl md:text-8xl lg:text-[6.5rem] font-extrabold text-white tracking-tight mb-8 leading-[1.05] drop-shadow-2xl">
             A Nova Era Da <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 drop-shadow-lg">Análise de Ativos.</span>
@@ -106,14 +103,7 @@ export default function LandingPage() {
                 </ul>
               </div>
               
-              {/* IMAGEM: Ocupa 5 colunas e começa na coluna 8 (Cria um GAP de 2 colunas inteiras vazias no meio) */}
-              <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2 relative group">
-                <img 
-                  src="/upload.png" 
-                  alt="Interface de Upload" 
-                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
-                />
-              </div>
+              
 
             </div>
           </div>
@@ -129,14 +119,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-center">
               
-              {/* IMAGEM LIVRE NA ESQUERDA (Começa na 1, ocupa 5 colunas) */}
-              <div className="lg:col-span-5 lg:col-start-1 order-2 lg:order-1 relative group">
-                <img 
-                  src="/score.png" 
-                  alt="Interface de Análise" 
-                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
-                />
-              </div>
+          
 
               {/* TEXTO DESLOCADO BEM PARA A DIREITA (Começa na 8, ocupa 4 colunas) */}
               <div className="lg:col-span-4 lg:col-start-8 order-1 lg:order-2">
@@ -205,13 +188,7 @@ export default function LandingPage() {
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
               
-              <div className="max-w-4xl mx-auto relative group">
-                <img 
-                  src="/historico.png" 
-                  alt="Interface de Histórico" 
-                  className="w-full h-auto object-contain drop-shadow-[0_50px_80px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
-                />
-              </div>
+              
            </div>
         </section>
 
