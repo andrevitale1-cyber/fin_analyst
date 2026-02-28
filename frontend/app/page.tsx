@@ -51,7 +51,7 @@ export default function LandingPage() {
         Resultado: Um espaço vazio enorme no meio! 
       */}
       <section 
-        className="relative min-h-[90vh] lg:min-h-[140vh] w-full flex flex-col items-center justify-start pt-32 lg:pt-48 bg-cover bg-bottom bg-no-repeat"
+        className="relative min-h-[90vh] lg:min-h-[140vh] w-full flex flex-col items-center justify-start pt-24 lg:pt-32 bg-cover bg-bottom bg-no-repeat"
         style={{ backgroundImage: "url('/hero.jpg')" }}
       >
         <div className="absolute inset-0 bg-black/40 z-0" />
