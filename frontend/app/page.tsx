@@ -47,7 +47,7 @@ export default function LandingPage() {
       {/* CORREÇÃO AQUI: Mudámos para bg-bottom e aumentámos drasticamente o pb (padding-bottom) */}
       <section 
         className="relative pt-32 pb-64 lg:pt-40 lg:pb-[30rem] bg-cover bg-bottom bg-no-repeat"
-        style={{ backgroundImage: "url('/hero.png')" }}
+        style={{ backgroundImage: "url('/hero.jpg')" }}
       >
         <div className="absolute inset-0 bg-black/40 z-0" />
 
