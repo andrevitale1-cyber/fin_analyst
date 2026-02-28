@@ -44,29 +44,36 @@ export default function LandingPage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      {/* CORREÇÃO AQUI: Mudámos para bg-bottom e aumentámos drasticamente o pb (padding-bottom) */}
+      {/* AQUI ESTÁ A MAGIA DO LAYOUT ROBINHOOD:
+        1. Usamos `min-h-[100vh] lg:min-h-[110vh]` para forçar a secção a ser mais alta que o ecrã.
+        2. Usamos `flex flex-col justify-start` e `pt-32` para colar o texto lá no topo.
+        3. O `bg-bottom` cola a imagem do planeta lá em baixo. 
+        Resultado: Um espaço vazio enorme no meio! 
+      */}
       <section 
-        className="relative pt-32 pb-64 lg:pt-40 lg:pb-[30rem] bg-cover bg-bottom bg-no-repeat"
+        className="relative min-h-[100vh] lg:min-h-[110vh] w-full flex flex-col items-center justify-start pt-32 lg:pt-48 bg-cover bg-bottom bg-no-repeat"
         style={{ backgroundImage: "url('/hero.jpg')" }}
       >
         <div className="absolute inset-0 bg-black/40 z-0" />
 
-        <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
+        <div className="max-w-4xl mx-auto px-6 text-center relative z-10 flex flex-col items-center">
           
-          <h1 className="text-6xl md:text-8xl lg:text-[6.5rem] font-extrabold text-white tracking-tight mb-8 leading-[1.05] drop-shadow-2xl">
+          {/* FONTE ESTILO ROBINHOOD: Trocámos para font-serif, reduzimos o peso e apertámos o tracking */}
+          <h1 className="text-6xl md:text-7xl lg:text-[6.5rem] font-serif font-medium text-white tracking-tight mb-8 leading-[1.05] drop-shadow-2xl">
             A Nova Era Da <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 drop-shadow-lg">Análise de Ativos.</span>
           </h1>
           
-          <p className="text-xl md:text-3xl text-white mb-16 max-w-4xl mx-auto leading-relaxed font-medium drop-shadow-lg">
+          <p className="text-lg md:text-2xl text-gray-200 mb-12 max-w-2xl mx-auto leading-relaxed font-light drop-shadow-lg">
             Acelere a leitura de relatórios trimestrais. Deixe a IA estruturar os dados e gerar insights para apoiar sua decisão de investimento.
           </p>
 
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-            <a href="/dashboard" className="w-full md:w-auto bg-white text-gray-900 px-10 py-5 rounded-full font-bold text-lg hover:bg-gray-100 transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-2xl shadow-white/20">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full md:w-auto">
+            {/* BOTÃO ESTILO ROBINHOOD: Verde neon vibrante */}
+            <a href="/dashboard" className="w-full md:w-auto bg-[#D2FF00] text-black px-10 py-4 rounded-full font-bold text-lg hover:bg-[#bce600] transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(210,255,0,0.5)]">
               Criar Conta Grátis <ArrowRight size={20} />
             </a>
-            <a href="#funcionalidades" className="w-full md:w-auto px-10 py-5 rounded-full font-bold text-lg text-white border border-white/30 hover:bg-white/10 transition-all backdrop-blur-md bg-black/20">
+            <a href="#funcionalidades" className="w-full md:w-auto px-10 py-4 rounded-full font-bold text-lg text-white border border-white/30 hover:bg-white/10 transition-all backdrop-blur-md bg-black/20">
               Ver Funcionalidades
             </a>
           </div>
