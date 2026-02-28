@@ -44,14 +44,14 @@ export default function LandingPage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
+      {/* CORREÇÃO AQUI: Mudámos para bg-bottom e aumentámos drasticamente o pb (padding-bottom) */}
       <section 
-        className="relative pt-32 pb-40 lg:pt-40 lg:pb-56 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/hero.jpg')" }}
+        className="relative pt-32 pb-64 lg:pt-40 lg:pb-[30rem] bg-cover bg-bottom bg-no-repeat"
+        style={{ backgroundImage: "url('/hero.png')" }}
       >
         <div className="absolute inset-0 bg-black/40 z-0" />
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-          
           
           <h1 className="text-6xl md:text-8xl lg:text-[6.5rem] font-extrabold text-white tracking-tight mb-8 leading-[1.05] drop-shadow-2xl">
             A Nova Era Da <br />
@@ -76,7 +76,7 @@ export default function LandingPage() {
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
         
-        {/* BLOCO 1: UPLOAD (Aumentado o distanciamento e altura) */}
+        {/* BLOCO 1: UPLOAD */}
         <section 
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-upload.jpg')" }}
@@ -84,10 +84,8 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-0" />
           
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            {/* O gap-0 e os cols forçam o distanciamento brutal estilo Robinhood */}
             <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-center">
               
-              {/* TEXTO: Ocupa apenas 4 colunas (mais estreito) e começa na coluna 2 */}
               <div className="lg:col-span-4 lg:col-start-2 order-2 lg:order-1">
                 <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-10 border border-blue-400/30 backdrop-blur-sm shadow-xl">
                   <UploadCloud className="text-blue-400 w-8 h-8" />
@@ -103,7 +101,13 @@ export default function LandingPage() {
                 </ul>
               </div>
               
-              
+              <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2 relative group">
+                <img 
+                  src="/upload.png" 
+                  alt="Interface de Upload" 
+                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
+                />
+              </div>
 
             </div>
           </div>
@@ -119,9 +123,14 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-center">
               
-          
+              <div className="lg:col-span-5 lg:col-start-1 order-2 lg:order-1 relative group">
+                <img 
+                  src="/score.png" 
+                  alt="Interface de Análise" 
+                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
+                />
+              </div>
 
-              {/* TEXTO DESLOCADO BEM PARA A DIREITA (Começa na 8, ocupa 4 colunas) */}
               <div className="lg:col-span-4 lg:col-start-8 order-1 lg:order-2">
                 <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-10 border border-green-400/30 backdrop-blur-sm shadow-xl">
                   <FileText className="text-green-400 w-8 h-8" />
@@ -188,7 +197,13 @@ export default function LandingPage() {
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
               
-              
+              <div className="max-w-4xl mx-auto relative group">
+                <img 
+                  src="/historico.png" 
+                  alt="Interface de Histórico" 
+                  className="w-full h-auto object-contain drop-shadow-[0_50px_80px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
+                />
+              </div>
            </div>
         </section>
 
