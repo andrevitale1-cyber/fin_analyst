@@ -52,7 +52,7 @@ export default function LandingPage() {
       */}
       <section 
         className="relative min-h-[90vh] lg:min-h-[140vh] w-full flex flex-col items-center justify-start pt-24 lg:pt-32 bg-cover bg-bottom bg-no-repeat"
-        style={{ backgroundImage: "url('/hero1.png')" }}
+        style={{ backgroundImage: "url('/hero2.png')" }}
       >
         <div className="absolute inset-0 bg-black/40 z-0" />
 
