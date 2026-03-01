@@ -43,7 +43,7 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* --- HERO SECTION --- */}
+      {/* --- HERO SECTION (INTACTO) --- */}
       <section 
         className="relative min-h-[90vh] lg:min-h-[140vh] w-full flex flex-col items-center justify-start pt-24 lg:pt-32 bg-cover bg-bottom bg-no-repeat"
         style={{ backgroundImage: "url('/hero2.png')" }}
@@ -79,9 +79,11 @@ export default function LandingPage() {
           style={{ backgroundImage: "url('/upload.png')" }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-center">
+            {/* items-start atira o texto para o topo absoluto da secção */}
+            <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-start">
               
-              <div className="lg:col-span-4 lg:col-start-2 order-2 lg:order-1">
+              {/* col-start-1 encosta o texto à extrema esquerda */}
+              <div className="lg:col-span-5 lg:col-start-1 order-2 lg:order-1">
                 <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-10 border border-blue-400/30 backdrop-blur-sm shadow-xl">
                   <UploadCloud className="text-blue-400 w-8 h-8" />
                 </div>
@@ -95,6 +97,15 @@ export default function LandingPage() {
                   <ListItem>Identificação de trimestre e ano</ListItem>
                 </ul>
               </div>
+              
+              {/* mt-16 empurra a imagem para baixo para não ficar ao mesmo nível do título */}
+              <div className="lg:col-span-6 lg:col-start-7 order-1 lg:order-2 relative group mt-12 lg:mt-24">
+                <img 
+                  src="/upload.png" 
+                  alt="Interface de Upload" 
+                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
+                />
+              </div>
 
             </div>
           </div>
@@ -106,9 +117,10 @@ export default function LandingPage() {
           style={{ backgroundImage: "url('/fundo-score.png')" }} 
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-center">
+            <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-start">
               
-              <div className="lg:col-span-4 lg:col-start-8 order-1 lg:order-2">
+              {/* O texto deste bloco foi movido para a ESQUERDA (col-start-1) para manter a coerência visual da Robinhood */}
+              <div className="lg:col-span-5 lg:col-start-1 order-2 lg:order-1">
                 <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-10 border border-green-400/30 backdrop-blur-sm shadow-xl">
                   <FileText className="text-green-400 w-8 h-8" />
                 </div>
@@ -123,6 +135,15 @@ export default function LandingPage() {
                 </ul>
               </div>
 
+              {/* A imagem do Score movida para a DIREITA */}
+              <div className="lg:col-span-6 lg:col-start-7 order-1 lg:order-2 relative group mt-12 lg:mt-24">
+                <img 
+                  src="/score.png" 
+                  alt="Interface de Análise" 
+                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
+                />
+              </div>
+
             </div>
           </div>
         </section>
@@ -132,9 +153,10 @@ export default function LandingPage() {
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-comparador.jpg')" }}
         >
-          <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-            <div className="max-w-3xl mx-auto mb-20">
-              <div className="w-20 h-20 bg-purple-500/20 rounded-3xl flex items-center justify-center mb-10 border border-purple-400/30 mx-auto backdrop-blur-sm shadow-xl">
+          {/* Removido o text-center. Agora tudo está ancorado à esquerda */}
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="max-w-3xl mb-20 text-left">
+              <div className="w-20 h-20 bg-purple-500/20 rounded-3xl flex items-center justify-center mb-10 border border-purple-400/30 backdrop-blur-sm shadow-xl">
                 <Layout className="text-purple-400 w-10 h-10" />
               </div>
               <h2 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight drop-shadow-2xl">Comparador de Ativos</h2>
@@ -143,13 +165,14 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="max-w-5xl mx-auto relative group">
+            {/* Imagem a ocupar toda a largura para impacto máximo */}
+            <div className="w-full relative group">
                <img 
                  src="/comparador.png" 
                  alt="Tabela Comparativa" 
                  className="w-full h-auto object-contain drop-shadow-[0_50px_80px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:scale-[1.02]"
                />
-               <p className="mt-10 text-base text-gray-200 font-medium drop-shadow-md bg-black/30 py-3 px-6 rounded-full inline-flex items-center gap-2 backdrop-blur-sm">
+               <p className="mt-10 text-base text-gray-200 font-medium drop-shadow-md bg-black/30 py-3 px-6 rounded-full inline-flex items-center justify-center gap-2 backdrop-blur-sm w-full md:w-auto">
                  <Maximize2 size={16} /> Visualização otimizada para foco nos dados
                </p>
             </div>
@@ -161,15 +184,22 @@ export default function LandingPage() {
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-historico.jpg')" }}
         >
-           <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-              <div className="w-20 h-20 bg-yellow-500/20 rounded-3xl flex items-center justify-center mb-10 border border-yellow-400/30 mx-auto backdrop-blur-sm shadow-xl">
+           <div className="max-w-7xl mx-auto px-6 relative z-10 text-left">
+              <div className="w-20 h-20 bg-yellow-500/20 rounded-3xl flex items-center justify-center mb-10 border border-yellow-400/30 backdrop-blur-sm shadow-xl">
                 <Database className="text-yellow-400 w-10 h-10" />
               </div>
               <h2 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight drop-shadow-2xl">Histórico Completo</h2>
-              <p className="text-2xl text-gray-100 leading-relaxed max-w-3xl mx-auto mb-20 font-medium drop-shadow-lg bg-black/20 p-6 rounded-2xl backdrop-blur-sm inline-block">
+              <p className="text-2xl text-gray-100 leading-relaxed max-w-3xl mb-20 font-medium drop-shadow-lg bg-black/20 p-6 rounded-2xl backdrop-blur-sm inline-block">
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
               
+              <div className="w-full relative group">
+                <img 
+                  src="/historico.png" 
+                  alt="Interface de Histórico" 
+                  className="w-full h-auto object-contain drop-shadow-[0_50px_80px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
+                />
+              </div>
            </div>
         </section>
 
@@ -182,13 +212,15 @@ export default function LandingPage() {
         style={{ backgroundImage: "url('/fundo-planos.jpg')" }}
       >
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-24">
+          
+          {/* Título de preços também alinhado à esquerda e no topo */}
+          <div className="mb-24 flex flex-col items-start text-left">
             <h2 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight drop-shadow-2xl">
               Um único plano. <br className="hidden md:block"/>
               Invista melhor com o poder da IA.
             </h2>
             
-            <div className="flex items-center justify-center gap-4 bg-black/30 inline-flex p-2 rounded-full border border-white/20 mt-10 backdrop-blur-md">
+            <div className="flex items-center justify-start gap-4 bg-black/30 inline-flex p-2 rounded-full border border-white/20 mt-6 backdrop-blur-md">
               <button 
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-10 py-4 rounded-full text-lg font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
