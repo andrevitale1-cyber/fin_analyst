@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
+
+const playfair = Playfair_Display({ 
+  subsets: ["latin"],
+  weight: ["700", "800", "900"],
+  variable: "--font-playfair"
+});
 
 export const metadata: Metadata = {
   title: "FinAnalyzer.AI",
@@ -17,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="pt-br">
+      <html lang="pt-br" className={playfair.variable}>
         <body className={inter.className}>{children}</body>
       </html>
     </ClerkProvider>
