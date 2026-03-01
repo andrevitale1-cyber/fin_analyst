@@ -50,9 +50,9 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 text-center relative z-10 flex flex-col items-center">
           
           {/* Título Gigante com espaçamento apertado e fonte SERIF (Robinhood Style) */}
-          <h1 className="text-4xl md:text-4xl lg:text-[7rem] font-serif font-bold text-white tracking-tighter mb-8 leading-none">
+          <h1 className="text-4xl md:text-4xl lg:text-[6rem] font-serif font-bold text-white tracking-tighter mb-8 leading-none">
             A Nova Era Da <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Análise de Ativos.</span>
+            <span className="text-white tracking-tighter mb-8 leading-none">Análise de Ativos.</span>
           </h1>
           
           <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed font-medium tracking-tight">
