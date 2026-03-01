@@ -327,7 +327,7 @@ function PhoneImage() {
       ref={ref}
       src="/celular.png"
       alt="App no Telemóvel"
-      className="w-full max-w-sm h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-[6px] border-[#1C1C1E]"
+      className="w-full max-w-sm h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)]"
       initial={{ opacity: 0, y: 80 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
