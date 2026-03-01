@@ -158,12 +158,12 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
   );
 }
 
-function NavItem({ icon, label, active = false, onClick, isLocked = false }: any) {
+function NavItem({ icon, label, active = false, onClick, isLocked = false, collapsed = false }: any) {
   return (
-    <button onClick={onClick} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
+    <button onClick={onClick} title={collapsed ? label : undefined} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${collapsed ? 'justify-center px-2' : ''} ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
       {React.cloneElement(icon, { size: 20 })}
-      <span className="font-medium text-sm">{label}</span>
-      {isLocked && <Lock size={14} className="ml-auto text-gray-600 group-hover:text-blue-400" />}
+      {!collapsed && <span className="font-medium text-sm">{label}</span>}
+      {!collapsed && isLocked && <Lock size={14} className="ml-auto text-gray-600 group-hover:text-blue-400" />}
     </button>
   );
 }
@@ -179,6 +179,8 @@ export default function FinancialDashboard() {
   
   // ESTADO PARA O MENU MOBILE
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // ESTADO PARA O MENU DESKTOP
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
   // Contadores
   const [usageCount, setUsageCount] = useState(0);
@@ -419,28 +421,37 @@ export default function FinancialDashboard() {
 
       {/* --- SIDEBAR RESPONSIVA --- */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-50 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 transition-all duration-300 ease-in-out
         md:relative md:translate-x-0 
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isSidebarCollapsed ? 'md:w-20 md:px-3' : 'w-72'}
       `}>
         {/* Header da Sidebar com botão de fechar (Mobile) */}
         <div className="flex items-center justify-between mb-10 px-2">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
+          <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'md:justify-center md:w-full' : ''}`}>
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20 flex-shrink-0">
               <BarChart3 className="text-white w-5 h-5" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-white">FinAnalyzer <span className="text-blue-500">.AI</span></span>
+            {!isSidebarCollapsed && (
+              <span className="text-xl font-bold tracking-tight text-white">FinAnalyzer <span className="text-blue-500">.AI</span></span>
+            )}
           </div>
-          {/* Botão Fechar só no mobile */}
+          {/* Botão Fechar no mobile */}
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white">
             <X size={24} />
           </button>
+          {/* Botão Colapsar no desktop */}
+          {!isSidebarCollapsed && (
+            <button onClick={() => setIsSidebarCollapsed(true)} className="hidden md:flex text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all" title="Esconder menu">
+              <ChevronLeft size={20} />
+            </button>
+          )}
         </div>
 
         <nav className="space-y-2">
-          <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} />
-          <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} />
-          <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} />
+          <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} collapsed={isSidebarCollapsed} />
+          <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} collapsed={isSidebarCollapsed} />
+          <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} collapsed={isSidebarCollapsed} />
         </nav>
 
         {/* --- CONTADOR DE ANÁLISES --- */}
@@ -484,6 +495,17 @@ export default function FinancialDashboard() {
       </aside>
       
       <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
+        
+        {/* Botão para reabrir sidebar no desktop (quando colapsada) */}
+        {isSidebarCollapsed && (
+          <button
+            onClick={() => setIsSidebarCollapsed(false)}
+            className="hidden md:flex absolute top-6 left-4 z-10 items-center gap-2 text-gray-400 hover:text-white bg-[#161b22] border border-gray-800 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:border-blue-500"
+            title="Mostrar menu"
+          >
+            <Menu size={18} /> Menu
+          </button>
+        )}
         
         {/* --- HEADER MOBILE (MENU + LOGO + USER) --- */}
         <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-gray-800">
