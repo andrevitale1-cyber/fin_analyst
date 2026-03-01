@@ -44,21 +44,12 @@ export default function LandingPage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      {/* AQUI ESTÁ A MAGIA DO LAYOUT ROBINHOOD:
-        1. Usamos `min-h-[100vh] lg:min-h-[110vh]` para forçar a secção a ser mais alta que o ecrã.
-        2. Usamos `flex flex-col justify-start` e `pt-32` para colar o texto lá no topo.
-        3. O `bg-bottom` cola a imagem do planeta lá em baixo. 
-        Resultado: Um espaço vazio enorme no meio! 
-      */}
       <section 
         className="relative min-h-[90vh] lg:min-h-[140vh] w-full flex flex-col items-center justify-start pt-24 lg:pt-32 bg-cover bg-bottom bg-no-repeat"
         style={{ backgroundImage: "url('/hero2.png')" }}
       >
-        <div className="absolute inset-0 bg-black/40 z-0" />
-
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10 flex flex-col items-center">
           
-          {/* FONTE ESTILO ROBINHOOD: Trocámos para font-serif, reduzimos o peso e apertámos o tracking */}
           <h1 className="text-6xl md:text-7xl lg:text-[6.5rem] font-serif font-medium text-white tracking-tight mb-8 leading-[1.05] drop-shadow-2xl">
             A Nova Era Da <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 drop-shadow-lg">Análise de Ativos.</span>
@@ -69,7 +60,6 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full md:w-auto">
-            {/* BOTÃO ESTILO ROBINHOOD: Verde neon vibrante */}
             <a href="/dashboard" className="w-full md:w-auto bg-[#D2FF00] text-black px-10 py-4 rounded-full font-bold text-lg hover:bg-[#bce600] transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(210,255,0,0.5)]">
               Criar Conta Grátis <ArrowRight size={20} />
             </a>
@@ -88,8 +78,6 @@ export default function LandingPage() {
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/upload.png')" }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-0" />
-          
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-center">
               
@@ -107,8 +95,6 @@ export default function LandingPage() {
                   <ListItem>Identificação de trimestre e ano</ListItem>
                 </ul>
               </div>
-              
-              
 
             </div>
           </div>
@@ -119,13 +105,9 @@ export default function LandingPage() {
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-score.png')" }} 
         >
-          <div className="absolute inset-0 bg-gradient-to-l from-black/80 via-black/40 to-transparent z-0" />
-
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-center">
               
-              
-
               <div className="lg:col-span-4 lg:col-start-8 order-1 lg:order-2">
                 <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-10 border border-green-400/30 backdrop-blur-sm shadow-xl">
                   <FileText className="text-green-400 w-8 h-8" />
@@ -150,8 +132,6 @@ export default function LandingPage() {
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-comparador.jpg')" }}
         >
-          <div className="absolute inset-0 bg-black/40 z-0" />
-          
           <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
             <div className="max-w-3xl mx-auto mb-20">
               <div className="w-20 h-20 bg-purple-500/20 rounded-3xl flex items-center justify-center mb-10 border border-purple-400/30 mx-auto backdrop-blur-sm shadow-xl">
@@ -181,8 +161,6 @@ export default function LandingPage() {
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/fundo-historico.jpg')" }}
         >
-          <div className="absolute inset-0 bg-black/40 z-0" />
-
            <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
               <div className="w-20 h-20 bg-yellow-500/20 rounded-3xl flex items-center justify-center mb-10 border border-yellow-400/30 mx-auto backdrop-blur-sm shadow-xl">
                 <Database className="text-yellow-400 w-10 h-10" />
@@ -191,7 +169,6 @@ export default function LandingPage() {
               <p className="text-2xl text-gray-100 leading-relaxed max-w-3xl mx-auto mb-20 font-medium drop-shadow-lg bg-black/20 p-6 rounded-2xl backdrop-blur-sm inline-block">
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
-              
               
            </div>
         </section>
@@ -204,8 +181,6 @@ export default function LandingPage() {
         className="py-32 lg:py-48 relative bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/fundo-planos.jpg')" }}
       >
-        <div className="absolute inset-0 bg-black/70 z-0" />
-
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-24">
             <h2 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight drop-shadow-2xl">
