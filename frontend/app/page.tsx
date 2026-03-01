@@ -52,7 +52,7 @@ export default function LandingPage() {
       */}
       <section 
         className="relative min-h-[90vh] lg:min-h-[140vh] w-full flex flex-col items-center justify-start pt-24 lg:pt-32 bg-cover bg-bottom bg-no-repeat"
-        style={{ backgroundImage: "url('/hero.jpg')" }}
+        style={{ backgroundImage: "url('/hero1.png')" }}
       >
         <div className="absolute inset-0 bg-black/40 z-0" />
 
@@ -86,7 +86,7 @@ export default function LandingPage() {
         {/* BLOCO 1: UPLOAD */}
         <section 
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/fundo-upload.jpg')" }}
+          style={{ backgroundImage: "url('/upload.png')" }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-0" />
           
@@ -108,13 +108,7 @@ export default function LandingPage() {
                 </ul>
               </div>
               
-              <div className="lg:col-span-5 lg:col-start-8 order-1 lg:order-2 relative group">
-                <img 
-                  src="/upload.png" 
-                  alt="Interface de Upload" 
-                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
-                />
-              </div>
+              
 
             </div>
           </div>
@@ -130,13 +124,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-16 lg:gap-0 items-center">
               
-              <div className="lg:col-span-5 lg:col-start-1 order-2 lg:order-1 relative group">
-                <img 
-                  src="/score.png" 
-                  alt="Interface de Análise" 
-                  className="w-full h-auto object-contain drop-shadow-[0_40px_60px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
-                />
-              </div>
+              
 
               <div className="lg:col-span-4 lg:col-start-8 order-1 lg:order-2">
                 <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-10 border border-green-400/30 backdrop-blur-sm shadow-xl">
@@ -204,13 +192,7 @@ export default function LandingPage() {
                 Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
               </p>
               
-              <div className="max-w-4xl mx-auto relative group">
-                <img 
-                  src="/historico.png" 
-                  alt="Interface de Histórico" 
-                  className="w-full h-auto object-contain drop-shadow-[0_50px_80px_rgba(0,0,0,0.9)] transition-transform duration-700 hover:-translate-y-4"
-                />
-              </div>
+              
            </div>
         </section>
 
