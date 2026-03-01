@@ -49,8 +49,8 @@ export default function LandingPage() {
       >
         <div className="max-w-5xl mx-auto px-6 text-center relative z-10 flex flex-col items-center">
           
-          {/* Título Gigante com espaçamento apertado (Robinhood Style) */}
-          <h1 className="text-6xl md:text-7xl lg:text-[7.5rem] font-bold text-white tracking-tighter mb-8 leading-[1.05]">
+          {/* Título Gigante com espaçamento apertado e fonte SERIF (Robinhood Style) */}
+          <h1 className="text-6xl md:text-7xl lg:text-[8rem] font-serif font-bold text-white tracking-tighter mb-8 leading-none">
             A Nova Era Da <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Análise de Ativos.</span>
           </h1>
@@ -76,18 +76,18 @@ export default function LandingPage() {
         
         {/* BLOCO 1: UPLOAD (TEXTO NA ESQUERDA) */}
         <section 
-          className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
+          className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat overflow-hidden"
           style={{ backgroundImage: "url('/upload.png')" }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-0 items-start">
+            <div className="grid lg:grid-cols-12 gap-16 items-center">
               
-              {/* Texto ancorado na Esquerda (col-start-1) ocupando 5 colunas para ficar estreito e luxuoso */}
+              {/* Texto ancorado na Esquerda (col-start-1) */}
               <div className="lg:col-span-5 lg:col-start-1">
                 <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-400/30">
                   <UploadCloud className="text-blue-400 w-8 h-8" />
                 </div>
-                <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+                <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
                   Upload <br/>Inteligente
                 </h2>
                 <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
@@ -98,6 +98,19 @@ export default function LandingPage() {
                   <ListItem>Extração automática de métricas</ListItem>
                   <ListItem>Identificação de trimestre e ano</ListItem>
                 </ul>
+              </div>
+
+              {/* Imagem do Telemóvel com Animação de Entrada */}
+              <div className="lg:col-span-6 lg:col-start-7 relative flex justify-end">
+                {/* Glow atrás do telemóvel */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+                
+                <img 
+                  src="/celular.png" 
+                  alt="App no Telemóvel" 
+                  className="w-full max-w-sm h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-[6px] border-[#1C1C1E] animate-in fade-in slide-in-from-bottom-24 duration-1000 ease-out fill-mode-forwards"
+                  style={{ animationDelay: '200ms' }}
+                />
               </div>
 
             </div>
@@ -117,7 +130,7 @@ export default function LandingPage() {
                 <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30">
                   <FileText className="text-green-400 w-8 h-8" />
                 </div>
-                <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+                <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
                   Score <br/>de IA
                 </h2>
                 <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
@@ -147,7 +160,7 @@ export default function LandingPage() {
                   <div className="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-8 border border-purple-400/30">
                     <Layout className="text-purple-400 w-8 h-8" />
                   </div>
-                  <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+                  <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
                     Comparador <br/>de Ativos
                   </h2>
                   <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
@@ -172,7 +185,7 @@ export default function LandingPage() {
                   <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-400/30">
                     <Database className="text-yellow-400 w-8 h-8" />
                   </div>
-                  <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+                  <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
                     Histórico <br/>Completo
                   </h2>
                   <p className="text-xl text-gray-300 leading-relaxed font-medium tracking-tight">
@@ -195,7 +208,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           
           <div className="mb-24 flex flex-col items-center text-center">
-            <h2 className="text-6xl md:text-7xl lg:text-[6.5rem] font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+            <h2 className="text-6xl md:text-7xl lg:text-[6.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
               Um único plano. <br className="hidden md:block"/>
               Invista melhor.
             </h2>
