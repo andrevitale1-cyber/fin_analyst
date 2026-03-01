@@ -1,6 +1,8 @@
 "use client";
-import React, { useState } from 'react';
-// import Link from 'next/link'; // <--- Descomente no seu projeto Next.js e use Link no lugar de <a>
+
+"use client";
+import React, { useState, useRef } from 'react';
+import { motion, useInView } from "framer-motion";
 import { 
   BarChart3, UploadCloud, ArrowRight, 
   FileText, Layout, Database, Check, X
@@ -101,18 +103,11 @@ export default function LandingPage() {
               </div>
 
               {/* Imagem do Telemóvel com Animação de Entrada */}
-              <div className="lg:col-span-6 lg:col-start-7 relative flex justify-end">
-                {/* Glow atrás do telemóvel */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
-                
-                <img 
-                  src="/celular.png" 
-                  alt="App no Telemóvel" 
-                  className="w-full max-w-sm h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-[6px] border-[#1C1C1E] animate-in fade-in slide-in-from-bottom-24 duration-1000 ease-out fill-mode-forwards"
-                  style={{ animationDelay: '200ms' }}
-                />
-              </div>
-
+            <div className="lg:col-span-6 lg:col-start-7 relative flex justify-end">
+              {/* Glow atrás do telemóvel */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+          <PhoneImage />
+          </div>
             </div>
           </div>
         </section>
@@ -131,7 +126,7 @@ export default function LandingPage() {
                   <FileText className="text-green-400 w-8 h-8" />
                 </div>
                 <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
-                  Score <br/>de IA
+                  Score de IA
                 </h2>
                 <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
                   O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
@@ -322,6 +317,24 @@ export default function LandingPage() {
 }
 
 // Subcomponentes
+
+function PhoneImage() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <motion.img
+      ref={ref}
+      src="/celular.png"
+      alt="App no Telemóvel"
+      className="w-full max-w-sm h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border-[6px] border-[#1C1C1E]"
+      initial={{ opacity: 0, y: 80 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
+    />
+  );
+}
+
 function Feature({ text, active = false, disabled = false, light = false }: any) {
   return (
     <li className="flex items-center gap-4">
