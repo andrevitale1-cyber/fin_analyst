@@ -113,47 +113,31 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: ANÁLISE PROFUNDA/SCORE (TEXTO NA DIREITA) */}
-        <section 
-          className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/fundo-score.png')" }} 
-        >
+        <section className="py-32 lg:py-56 relative bg-no-repeat overflow-hidden" style={{ backgroundImage: "url('/computador.png')", backgroundSize: '65% auto', backgroundPosition: 'left center' }}>
+
+          {/* Vídeo encaixado na tela do monitor */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: '9%',
+              left: '5.5%',
+              width: '31.5%',
+              height: '73%',
+              clipPath: 'polygon(0% 0%, 100% 2%, 100% 98%, 0% 100%)',
+            }}
+          >
+            <video
+              src="/score-demo.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+            />
+          </div>
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-0 items-center">
-
-              {/* Computador com vídeo na Esquerda */}
-              <div className="lg:col-span-7 lg:col-start-1 relative flex justify-start mb-12 lg:mb-0">
-                {/* Glow */}
-                <div className="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-96 h-64 bg-green-600/10 blur-[120px] rounded-full pointer-events-none" />
-                <div className="relative w-full max-w-2xl">
-                  {/* Vídeo encaixado na tela do monitor em perspectiva */}
-                  <div
-                    className="absolute overflow-hidden"
-                    style={{
-                      top: '2%',
-                      left: '8.5%',
-                      width: '49%',
-                      height: '82%',
-                      clipPath: 'polygon(0% 0%, 100% 2%, 100% 98%, 0% 100%)',
-                    }}
-                  >
-                    <video
-                      src="/score-demo.mp4"
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  {/* Mockup por cima */}
-                  <img
-                    src="/computador.png"
-                    alt="Dashboard no Monitor"
-                    className="relative z-10 w-full pointer-events-none"
-                  />
-                </div>
-              </div>
-
+            <div className="grid lg:grid-cols-12 gap-0 items-start">
+              
               {/* Texto ancorado na Direita (col-start-8) */}
               <div className="lg:col-span-5 lg:col-start-8">
                 <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30">
