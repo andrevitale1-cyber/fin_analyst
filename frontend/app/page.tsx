@@ -113,55 +113,51 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: ANÁLISE PROFUNDA/SCORE (TEXTO NA DIREITA) */}
-        <section className="relative overflow-hidden">
+        <section className="py-32 lg:py-56 relative bg-no-repeat overflow-hidden" style={{ backgroundImage: "url('/computador.png')", backgroundSize: '100% auto', backgroundPosition: 'left center' }}>
 
-          {/* Container do mockup com vídeo encaixado */}
-          <div className="relative w-[100%] float-left">
-            {/* Imagem do monitor */}
-            <img src="/computador.png" alt="Monitor" className="w-full h-auto block" />
-            {/* Vídeo posicionado sobre a tela do monitor */}
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                top: '3.5%',
-                left: '9%',
-                width: '47%',
-                height: '79%',
-                clipPath: 'polygon(0% 0%, 100% 1.5%, 100% 98.5%, 0% 100%)',
-              }}
-            >
-              <video
-                src="/score-demo.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-cover"
-              />
-            </div>
+          {/* Vídeo encaixado na tela do monitor */}
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              top: '9%',
+              left: '5.5%',
+              width: '31.5%',
+              height: '73%',
+              clipPath: 'polygon(0% 0%, 100% 2%, 100% 98%, 0% 100%)',
+            }}
+          >
+            <video
+              src="/score-demo.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover"
+            />
           </div>
-
-          {/* Texto na direita, verticalmente centralizado */}
-          <div className="overflow-hidden py-32 lg:py-56 px-6 lg:px-16 flex items-center min-h-full">
-            <div className="max-w-xl">
-              <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30">
-                <FileText className="text-green-400 w-8 h-8" />
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="grid lg:grid-cols-12 gap-0 items-start">
+              
+              {/* Texto ancorado na Direita (col-start-8) */}
+              <div className="lg:col-span-5 lg:col-start-8">
+                <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30">
+                  <FileText className="text-green-400 w-8 h-8" />
+                </div>
+                <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+                  Score de IA
+                </h2>
+                <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
+                  O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
+                </p>
+                <ul className="space-y-6">
+                  <ListItem>Score de Receita e Lucro</ListItem>
+                  <ListItem>Análise de Endividamento</ListItem>
+                  <ListItem>Resumo textual da Tese</ListItem>
+                </ul>
               </div>
-              <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
-                Score de IA
-              </h2>
-              <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
-                O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
-              </p>
-              <ul className="space-y-6">
-                <ListItem>Score de Receita e Lucro</ListItem>
-                <ListItem>Análise de Endividamento</ListItem>
-                <ListItem>Resumo textual da Tese</ListItem>
-              </ul>
+
             </div>
           </div>
-
-          <div className="clear-both" />
         </section>
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS (TEXTO NA ESQUERDA) */}
