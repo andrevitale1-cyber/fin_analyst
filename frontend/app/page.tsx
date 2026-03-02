@@ -113,7 +113,7 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: ANÁLISE PROFUNDA/SCORE (TEXTO NA DIREITA) */}
-        <section className="py-32 lg:py-56 relative bg-no-repeat overflow-hidden" style={{ backgroundImage: "url('/computador.png')", backgroundSize: '65% auto', backgroundPosition: 'left center' }}>
+        <section className="py-32 lg:py-56 relative bg-no-repeat overflow-hidden" style={{ backgroundImage: "url('/computador.png')", backgroundSize: '100% auto', backgroundPosition: 'left center' }}>
 
           {/* Vídeo encaixado na tela do monitor */}
           <div
