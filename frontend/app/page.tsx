@@ -115,26 +115,7 @@ export default function LandingPage() {
         {/* BLOCO 2: ANÁLISE PROFUNDA/SCORE (TEXTO NA DIREITA) */}
         <section className="py-32 lg:py-56 relative bg-no-repeat overflow-hidden" style={{ backgroundImage: "url('/computador.png')", backgroundSize: '100% auto', backgroundPosition: 'left center' }}>
 
-          {/* Vídeo encaixado na tela do monitor */}
-          <div
-            className="absolute pointer-events-none"
-            style={{
-              top: '9%',
-              left: '5.5%',
-              width: '31.5%',
-              height: '73%',
-              clipPath: 'polygon(0% 0%, 100% 2%, 100% 98%, 0% 100%)',
-            }}
-          >
-            <video
-              src="/score-demo.mp4"
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover"
-            />
-          </div>
+        
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-0 items-start">
               
@@ -163,7 +144,7 @@ export default function LandingPage() {
         {/* BLOCO 3: COMPARADOR DE ATIVOS (TEXTO NA ESQUERDA) */}
         <section 
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/fundo-comparador.jpg')" }}
+          style={{ backgroundImage: "url('/tabela.png')" }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
              <div className="grid lg:grid-cols-12 gap-0 items-start">
