@@ -113,7 +113,7 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: ANÁLISE PROFUNDA/SCORE (TEXTO NA DIREITA) */}
-        <section className="py-32 lg:py-56 relative bg-no-repeat overflow-hidden" style={{ backgroundImage: "url('/score.png')", backgroundSize: '100% auto', backgroundPosition: 'left center' }}>
+        <section className="py-32 lg:py-56 relative bg-no-repeat overflow-hidden" style={{ backgroundImage: "url('/tabela.png')", backgroundSize: '100% auto', backgroundPosition: 'left center' }}>
 
         
           <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -144,7 +144,7 @@ export default function LandingPage() {
         {/* BLOCO 3: COMPARADOR DE ATIVOS (TEXTO NA ESQUERDA) */}
         <section 
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/computador.png')" }}
+          style={{ backgroundImage: "url('/Design sem nome (2).png')" }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
              <div className="grid lg:grid-cols-12 gap-0 items-start">
