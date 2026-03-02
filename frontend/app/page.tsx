@@ -116,7 +116,7 @@ export default function LandingPage() {
         <section className="relative overflow-hidden">
 
           {/* Container do mockup com vídeo encaixado */}
-          <div className="relative w-[55%] float-left">
+          <div className="relative w-[100%] float-left">
             {/* Imagem do monitor */}
             <img src="/computador.png" alt="Monitor" className="w-full h-auto block" />
             {/* Vídeo posicionado sobre a tela do monitor */}
