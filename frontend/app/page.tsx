@@ -113,7 +113,9 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: ANÁLISE PROFUNDA/SCORE (TEXTO NA DIREITA) */}
-        <section className="py-32 lg:py-56 relative overflow-hidden bg-[#0A0D14]">
+        <section className="py-32 lg:py-56 relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
+          {/* Overlay escuro para legibilidade do texto */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#0A0D14]/60 to-[#0A0D14]/95 pointer-events-none z-0"></div>
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-16 items-center">
               
@@ -133,11 +135,15 @@ export default function LandingPage() {
                     </div>
                     {/* Conteúdo dentro do monitor */}
                     <div style={{ marginTop: '28px', height: 'calc(100% - 28px)', position: 'relative', overflow: 'hidden' }}>
-                      <img
-                        src="/tabela.png"
-                        alt="Tabela de análise FinAnalyzer"
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
-                      />
+                      <video
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                      >
+                        <source src="/score-demo.mp4" type="video/mp4" />
+                      </video>
                     </div>
                   </div>
                   {/* Pescoço do monitor */}
