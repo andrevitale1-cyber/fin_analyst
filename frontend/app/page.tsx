@@ -122,7 +122,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto px-6 relative z-10">
 
             {/* Texto centralizado em cima — fontes menores para não cortar o vídeo */}
-            <div className="flex flex-col items-center text-center mb-8">
+            <div className="flex flex-col items-top text-center mb-8">
               <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-6 border border-green-400/30">
                 <FileText className="text-green-400 w-7 h-7" />
               </div>
