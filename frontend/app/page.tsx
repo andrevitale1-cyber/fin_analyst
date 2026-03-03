@@ -122,7 +122,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto px-6 relative z-10">
 
             {/* Texto centralizado em cima — fontes menores para não cortar o vídeo */}
-            <div className="flex flex-col items-center text-center mb-12">
+            <div className="flex flex-col items-center text-center mb-8">
               <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-6 border border-green-400/30">
                 <FileText className="text-green-400 w-7 h-7" />
               </div>
@@ -163,8 +163,6 @@ export default function LandingPage() {
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/Design sem nome (2).png')" }}
         >
-          {/* Overlay escuro apenas na esquerda onde está o texto */}
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0A0D14]/95 via-[#0A0D14]/70 to-transparent pointer-events-none"></div>
           <div className="max-w-7xl mx-auto px-6 relative z-10">
              <div className="grid lg:grid-cols-12 gap-0 items-start">
               
