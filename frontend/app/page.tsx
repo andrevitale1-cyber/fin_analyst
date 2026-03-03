@@ -112,22 +112,24 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 2: SCORE DE IA — estilo Fundamentei (texto em cima, vídeo flutuante embaixo) */}
-        <section className="pt-32 lg:pt-48 pb-0 relative overflow-hidden bg-[#0A0D14]">
+        {/* BLOCO 2: SCORE DE IA — texto em cima, vídeo flutuante embaixo, tabela.png como background */}
+        <section className="pt-32 lg:pt-48 pb-0 relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
+          {/* Overlay escuro para legibilidade */}
+          <div className="absolute inset-0 bg-[#0A0D14]/85 pointer-events-none"></div>
           {/* Glow de fundo */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-green-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-          <div className="max-w-5xl mx-auto px-6 relative z-10">
+          <div className="max-w-4xl mx-auto px-6 relative z-10">
 
-            {/* Texto centralizado em cima */}
-            <div className="flex flex-col items-center text-center mb-16">
-              <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30">
-                <FileText className="text-green-400 w-8 h-8" />
+            {/* Texto centralizado em cima — fontes menores para não cortar o vídeo */}
+            <div className="flex flex-col items-center text-center mb-12">
+              <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-6 border border-green-400/30">
+                <FileText className="text-green-400 w-7 h-7" />
               </div>
-              <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+              <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-serif font-bold text-white mb-6 tracking-tighter leading-[1.05]">
                 Score de IA
               </h2>
-              <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight max-w-2xl">
+              <p className="text-lg text-gray-300 leading-relaxed mb-8 font-medium tracking-tight max-w-xl">
                 O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
               </p>
               <ul className="flex flex-wrap justify-center gap-6">
@@ -137,9 +139,8 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            {/* Vídeo flutuante — sem moldura de monitor, com sombra e borda arredondada */}
+            {/* Vídeo flutuante */}
             <div className="relative w-full">
-              {/* Glow embaixo do vídeo */}
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-green-500/20 blur-[60px] rounded-full pointer-events-none"></div>
               <video
                 autoPlay
@@ -151,7 +152,6 @@ export default function LandingPage() {
               >
                 <source src="/score-demo.mp4" type="video/mp4" />
               </video>
-              {/* Fade para o próximo bloco */}
               <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0A0D14] to-transparent pointer-events-none"></div>
             </div>
 
@@ -163,18 +163,20 @@ export default function LandingPage() {
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/Design sem nome (2).png')" }}
         >
+          {/* Overlay escuro apenas na esquerda onde está o texto */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0A0D14]/95 via-[#0A0D14]/70 to-transparent pointer-events-none"></div>
           <div className="max-w-7xl mx-auto px-6 relative z-10">
              <div className="grid lg:grid-cols-12 gap-0 items-start">
               
-               {/* Texto ancorado na Esquerda (col-start-1) */}
-               <div className="lg:col-span-5 lg:col-start-1">
-                  <div className="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-8 border border-purple-400/30">
-                    <Layout className="text-purple-400 w-8 h-8" />
+               {/* Texto ancorado na Esquerda */}
+               <div className="lg:col-span-4 lg:col-start-1">
+                  <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30">
+                    <Layout className="text-purple-400 w-7 h-7" />
                   </div>
-                  <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-serif font-bold text-white mb-6 tracking-tighter leading-[1.05]">
+                  <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
                     Comparador <br/>de Ativos
                   </h2>
-                  <p className="text-lg text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
+                  <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
                     Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
                   </p>
                </div>
