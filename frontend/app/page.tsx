@@ -112,66 +112,49 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 2: ANÁLISE PROFUNDA/SCORE (TEXTO NA DIREITA) */}
-        <section className="py-32 lg:py-56 relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
-          {/* Overlay escuro para legibilidade do texto */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#0A0D14]/60 to-[#0A0D14]/95 pointer-events-none z-0"></div>
-          <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-16 items-center">
-              
-              {/* Computer Mockup com Video - Esquerda */}
-              <div className="lg:col-span-6 lg:col-start-1 relative flex items-center justify-center">
-                {/* Glow atrás do monitor */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-600/20 blur-[120px] rounded-full pointer-events-none"></div>
-                {/* Monitor Mockup */}
-                <div className="relative w-full max-w-xl">
-                  {/* Tela do monitor */}
-                  <div className="relative rounded-t-xl overflow-hidden shadow-[0_0_80px_-10px_rgba(0,0,0,0.9)]" style={{ border: '12px solid #1c1c28', borderBottom: '16px solid #1c1c28', aspectRatio: '16/10', background: '#0d0d18' }}>
-                    {/* Barra de título do "OS" */}
-                    <div className="absolute top-0 left-0 right-0 h-7 flex items-center px-3 gap-1.5 z-10" style={{ background: '#16162a' }}>
-                      <div className="w-3 h-3 rounded-full" style={{ background: '#ff5f57' }}></div>
-                      <div className="w-3 h-3 rounded-full" style={{ background: '#febc2e' }}></div>
-                      <div className="w-3 h-3 rounded-full" style={{ background: '#28c840' }}></div>
-                    </div>
-                    {/* Conteúdo dentro do monitor */}
-                    <div style={{ marginTop: '28px', height: 'calc(100% - 28px)', position: 'relative', overflow: 'hidden' }}>
-                      <video
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                      >
-                        <source src="/score-demo.mp4" type="video/mp4" />
-                      </video>
-                    </div>
-                  </div>
-                  {/* Pescoço do monitor */}
-                  <div style={{ margin: '0 auto', width: '56px', height: '32px', background: 'linear-gradient(to bottom, #1c1c28, #252535)' }}></div>
-                  {/* Base do monitor */}
-                  <div style={{ margin: '0 auto', width: '160px', height: '14px', background: '#252535', borderRadius: '0 0 12px 12px', boxShadow: '0 6px 20px rgba(0,0,0,0.5)' }}></div>
-                </div>
-              </div>
+        {/* BLOCO 2: SCORE DE IA — estilo Fundamentei (texto em cima, vídeo flutuante embaixo) */}
+        <section className="pt-32 lg:pt-48 pb-0 relative overflow-hidden bg-[#0A0D14]">
+          {/* Glow de fundo */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-green-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-              {/* Texto ancorado na Direita */}
-              <div className="lg:col-span-5 lg:col-start-8">
-                <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30">
-                  <FileText className="text-green-400 w-8 h-8" />
-                </div>
-                <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
-                  Score de IA
-                </h2>
-                <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
-                  O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
-                </p>
-                <ul className="space-y-6">
-                  <ListItem>Score de Receita e Lucro</ListItem>
-                  <ListItem>Análise de Endividamento</ListItem>
-                  <ListItem>Resumo textual da Tese</ListItem>
-                </ul>
-              </div>
+          <div className="max-w-5xl mx-auto px-6 relative z-10">
 
+            {/* Texto centralizado em cima */}
+            <div className="flex flex-col items-center text-center mb-16">
+              <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30">
+                <FileText className="text-green-400 w-8 h-8" />
+              </div>
+              <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+                Score de IA
+              </h2>
+              <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight max-w-2xl">
+                O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
+              </p>
+              <ul className="flex flex-wrap justify-center gap-6">
+                <ListItem>Score de Receita e Lucro</ListItem>
+                <ListItem>Análise de Endividamento</ListItem>
+                <ListItem>Resumo textual da Tese</ListItem>
+              </ul>
             </div>
+
+            {/* Vídeo flutuante — sem moldura de monitor, com sombra e borda arredondada */}
+            <div className="relative w-full">
+              {/* Glow embaixo do vídeo */}
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-green-500/20 blur-[60px] rounded-full pointer-events-none"></div>
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full rounded-t-2xl shadow-[0_-10px_80px_-10px_rgba(0,0,0,0.6)]"
+                style={{ display: 'block', border: '1px solid rgba(255,255,255,0.08)', borderBottom: 'none' }}
+              >
+                <source src="/score-demo.mp4" type="video/mp4" />
+              </video>
+              {/* Fade para o próximo bloco */}
+              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0A0D14] to-transparent pointer-events-none"></div>
+            </div>
+
           </div>
         </section>
 
