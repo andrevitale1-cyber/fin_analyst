@@ -121,32 +121,29 @@ export default function LandingPage() {
               <div className="lg:col-span-6 lg:col-start-1 relative flex items-center justify-center">
                 {/* Glow atrás do monitor */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-600/20 blur-[120px] rounded-full pointer-events-none"></div>
-                {/* Monitor SVG Mockup */}
+                {/* Monitor Mockup */}
                 <div className="relative w-full max-w-xl">
                   {/* Tela do monitor */}
-                  <div className="relative bg-[#1a1a2e] rounded-t-2xl border-[10px] border-[#2a2a3e] shadow-[0_0_80px_-10px_rgba(0,0,0,0.8)] overflow-hidden" style={{ aspectRatio: '16/10' }}>
+                  <div className="relative rounded-t-xl overflow-hidden shadow-[0_0_80px_-10px_rgba(0,0,0,0.9)]" style={{ border: '12px solid #1c1c28', borderBottom: '16px solid #1c1c28', aspectRatio: '16/10', background: '#0d0d18' }}>
                     {/* Barra de título do "OS" */}
-                    <div className="absolute top-0 left-0 right-0 h-7 bg-[#1e1e2e] flex items-center px-3 gap-1.5 z-10">
-                      <div className="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
-                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
-                      <div className="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+                    <div className="absolute top-0 left-0 right-0 h-7 flex items-center px-3 gap-1.5 z-10" style={{ background: '#16162a' }}>
+                      <div className="w-3 h-3 rounded-full" style={{ background: '#ff5f57' }}></div>
+                      <div className="w-3 h-3 rounded-full" style={{ background: '#febc2e' }}></div>
+                      <div className="w-3 h-3 rounded-full" style={{ background: '#28c840' }}></div>
                     </div>
-                    {/* Video dentro do monitor */}
-                    <video
-                      className="w-full h-full object-cover mt-0"
-                      src="/score-demo.mp4"
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      poster="/tabela.png"
-                      style={{ marginTop: '28px', height: 'calc(100% - 28px)' }}
-                    />
+                    {/* Conteúdo dentro do monitor */}
+                    <div style={{ marginTop: '28px', height: 'calc(100% - 28px)', position: 'relative', overflow: 'hidden' }}>
+                      <img
+                        src="/tabela.png"
+                        alt="Tabela de análise FinAnalyzer"
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top', display: 'block' }}
+                      />
+                    </div>
                   </div>
                   {/* Pescoço do monitor */}
-                  <div className="mx-auto w-16 h-8 bg-[#2a2a3e]"></div>
+                  <div style={{ margin: '0 auto', width: '56px', height: '32px', background: 'linear-gradient(to bottom, #1c1c28, #252535)' }}></div>
                   {/* Base do monitor */}
-                  <div className="mx-auto w-40 h-4 bg-[#2a2a3e] rounded-b-xl shadow-lg"></div>
+                  <div style={{ margin: '0 auto', width: '160px', height: '14px', background: '#252535', borderRadius: '0 0 12px 12px', boxShadow: '0 6px 20px rgba(0,0,0,0.5)' }}></div>
                 </div>
               </div>
 
