@@ -113,13 +113,44 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: ANÁLISE PROFUNDA/SCORE (TEXTO NA DIREITA) */}
-        <section className="py-32 lg:py-56 relative bg-no-repeat overflow-hidden" style={{ backgroundImage: "url('/tabela.png')", backgroundSize: '100% auto', backgroundPosition: 'left center' }}>
-
-        
+        <section className="py-32 lg:py-56 relative overflow-hidden bg-[#0A0D14]">
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-0 items-start">
+            <div className="grid lg:grid-cols-12 gap-16 items-center">
               
-              {/* Texto ancorado na Direita (col-start-8) */}
+              {/* Computer Mockup com Video - Esquerda */}
+              <div className="lg:col-span-6 lg:col-start-1 relative flex items-center justify-center">
+                {/* Glow atrás do monitor */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-green-600/20 blur-[120px] rounded-full pointer-events-none"></div>
+                {/* Monitor SVG Mockup */}
+                <div className="relative w-full max-w-xl">
+                  {/* Tela do monitor */}
+                  <div className="relative bg-[#1a1a2e] rounded-t-2xl border-[10px] border-[#2a2a3e] shadow-[0_0_80px_-10px_rgba(0,0,0,0.8)] overflow-hidden" style={{ aspectRatio: '16/10' }}>
+                    {/* Barra de título do "OS" */}
+                    <div className="absolute top-0 left-0 right-0 h-7 bg-[#1e1e2e] flex items-center px-3 gap-1.5 z-10">
+                      <div className="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+                      <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
+                      <div className="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
+                    </div>
+                    {/* Video dentro do monitor */}
+                    <video
+                      className="w-full h-full object-cover mt-0"
+                      src="/score-demo.mp4"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      poster="/tabela.png"
+                      style={{ marginTop: '28px', height: 'calc(100% - 28px)' }}
+                    />
+                  </div>
+                  {/* Pescoço do monitor */}
+                  <div className="mx-auto w-16 h-8 bg-[#2a2a3e]"></div>
+                  {/* Base do monitor */}
+                  <div className="mx-auto w-40 h-4 bg-[#2a2a3e] rounded-b-xl shadow-lg"></div>
+                </div>
+              </div>
+
+              {/* Texto ancorado na Direita */}
               <div className="lg:col-span-5 lg:col-start-8">
                 <div className="w-16 h-16 bg-green-500/20 rounded-2xl flex items-center justify-center mb-8 border border-green-400/30">
                   <FileText className="text-green-400 w-8 h-8" />
@@ -154,10 +185,10 @@ export default function LandingPage() {
                   <div className="w-16 h-16 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-8 border border-purple-400/30">
                     <Layout className="text-purple-400 w-8 h-8" />
                   </div>
-                  <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+                  <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-serif font-bold text-white mb-6 tracking-tighter leading-[1.05]">
                     Comparador <br/>de Ativos
                   </h2>
-                  <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
+                  <p className="text-lg text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
                     Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
                   </p>
                </div>
