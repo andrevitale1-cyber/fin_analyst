@@ -162,7 +162,7 @@ export default function LandingPage() {
         <section 
           className="py-32 lg:py-56 relative"
           style={{ 
-            backgroundImage: "url('/Design_sem_nome__2_.png')",
+            backgroundImage: "url('/secao3.png')",
             backgroundSize: 'cover',
             backgroundPosition: 'center center',
             backgroundRepeat: 'no-repeat'
