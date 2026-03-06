@@ -15,7 +15,7 @@ export default function LandingPage() {
     <div className="min-h-screen bg-[#0A0D14] text-gray-100 font-sans antialiased selection:bg-blue-500/30 overflow-x-hidden">
 
       {/* --- NAVBAR --- */}
-      <nav className="border-b border-white/10 bg-[#0A0D14]/80 backdrop-blur-xl sticky top-0 z-50">
+      <nav className="border-b border-white/10 bg-[#0A0D14]/80 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
@@ -89,10 +89,10 @@ export default function LandingPage() {
                 <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-400/30">
                   <UploadCloud className="text-blue-400 w-8 h-8" />
                 </div>
-                <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+                <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
                   Upload <br/>Inteligente
                 </h2>
-                <p className="text-xl text-gray-300 leading-relaxed mb-10 font-medium tracking-tight">
+                  <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
                   Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos.
                 </p>
                 <ul className="space-y-6">
@@ -158,11 +158,11 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 3: COMPARADOR DE ATIVOS (TEXTO NA ESQUERDA) */}
+        {/* BLOCO 3: COMPARADOR DE ATIVOS (TEXTO NA DIREITA) */}
         <section 
           className="py-32 lg:py-56 relative"
           style={{ 
-            backgroundImage: "url('/secao3.png')",
+            backgroundImage: "url('/secao3_.png')",
             backgroundSize: 'cover',
             backgroundPosition: 'center center',
             backgroundRepeat: 'no-repeat'
@@ -171,8 +171,8 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
              <div className="grid lg:grid-cols-12 gap-0 items-start">
               
-               {/* Texto ancorado na Esquerda */}
-               <div className="lg:col-span-4 lg:col-start-1">
+               {/* Texto ancorado na Direita */}
+               <div className="lg:col-span-4 lg:col-start-9">
                   <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30">
                     <Layout className="text-purple-400 w-7 h-7" />
                   </div>
