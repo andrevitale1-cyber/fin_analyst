@@ -113,7 +113,7 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: SCORE DE IA — texto em cima, vídeo flutuante embaixo, tabela.png como background */}
-        <section className="pt-32 lg:pt-48 pb-0 relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
+        <section className="pt-16 lg:pt-20 pb-0 relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
           {/* Overlay escuro para legibilidade */}
           <div className="absolute inset-0 bg-[#0A0D14]/85 pointer-events-none"></div>
           {/* Glow de fundo */}
@@ -121,15 +121,15 @@ export default function LandingPage() {
 
           <div className="max-w-4xl mx-auto px-6 relative z-10">
 
-            {/* Texto centralizado em cima — fontes menores para não cortar o vídeo */}
-            <div className="flex flex-col items-top text-center mb-8">
-              <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-6 border border-green-400/30">
+            {/* Texto centralizado em cima */}
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-4 border border-green-400/30">
                 <FileText className="text-green-400 w-7 h-7" />
               </div>
-              <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-serif font-bold text-white mb-6 tracking-tighter leading-[1.05]">
+              <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
                 Score de IA
               </h2>
-              <p className="text-lg text-gray-300 leading-relaxed mb-8 font-medium tracking-tight max-w-xl">
+              <p className="text-lg text-gray-300 leading-relaxed mb-6 font-medium tracking-tight max-w-xl">
                 O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
               </p>
               <ul className="flex flex-wrap justify-center gap-6">
