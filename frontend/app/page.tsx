@@ -113,7 +113,7 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: SCORE DE IA — texto em cima, vídeo flutuante embaixo, tabela.png como background */}
-        <section className="pt-16 lg:pt-20 pb-0 relative overflow-hidden bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
+        <section className="pt-16 lg:pt-20 pb-16 lg:pb-24 relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
           {/* Overlay escuro para legibilidade */}
           <div className="absolute inset-0 bg-[#0A0D14]/85 pointer-events-none"></div>
           {/* Glow de fundo */}
@@ -147,8 +147,8 @@ export default function LandingPage() {
                 loop
                 muted
                 playsInline
-                className="w-full rounded-t-2xl shadow-[0_-10px_80px_-10px_rgba(0,0,0,0.6)]"
-                style={{ display: 'block', border: '1px solid rgba(255,255,255,0.08)', borderBottom: 'none' }}
+                className="w-full rounded-2xl shadow-[0_0_80px_-10px_rgba(0,0,0,0.6)]"
+                style={{ display: 'block', border: '1px solid rgba(255,255,255,0.08)' }}
               >
                 <source src="/score-demo.mp4" type="video/mp4" />
               </video>
