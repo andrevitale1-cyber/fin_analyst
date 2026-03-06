@@ -160,11 +160,11 @@ export default function LandingPage() {
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS (TEXTO NA ESQUERDA) */}
         <section 
-          className="py-32 lg:py-56 relative bg-[#0A0D14]"
+          className="py-32 lg:py-56 relative"
           style={{ 
-            backgroundImage: "url('/secao3.png')",
-            backgroundSize: 'contain',
-            backgroundPosition: 'right center',
+            backgroundImage: "url('/Design_sem_nome__2_.png')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center center',
             backgroundRepeat: 'no-repeat'
           }}
         >
@@ -201,10 +201,10 @@ export default function LandingPage() {
                   <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-400/30">
                     <Database className="text-yellow-400 w-8 h-8" />
                   </div>
-                  <h2 className="text-5xl md:text-6xl lg:text-[5.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+                  <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
                     Histórico <br/>Completo
                   </h2>
-                  <p className="text-xl text-gray-300 leading-relaxed font-medium tracking-tight">
+                  <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
                     Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
                   </p>
                 </div>
