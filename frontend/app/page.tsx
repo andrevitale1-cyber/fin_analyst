@@ -160,8 +160,13 @@ export default function LandingPage() {
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS (TEXTO NA ESQUERDA) */}
         <section 
-          className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/Design sem nome (2).png')" }}
+          className="py-32 lg:py-56 relative bg-[#0A0D14]"
+          style={{ 
+            backgroundImage: "url('/secao3.png')",
+            backgroundSize: 'contain',
+            backgroundPosition: 'right center',
+            backgroundRepeat: 'no-repeat'
+          }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
              <div className="grid lg:grid-cols-12 gap-0 items-start">
