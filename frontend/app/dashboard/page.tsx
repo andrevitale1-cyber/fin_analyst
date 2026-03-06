@@ -525,7 +525,7 @@ export default function FinancialDashboard() {
         {/* Lógica de renderização das views */}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-14 md:pt-0">
               <div><h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-400 mt-1 text-sm md:text-base">Visão consolidada do desempenho das empresas.</p></div>
               <div className="relative" ref={columnMenuRef}>
                 <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#161b22] border-gray-700 hover:border-blue-500 text-gray-300'}`}>
@@ -587,7 +587,7 @@ export default function FinancialDashboard() {
         )}
         {currentView === 'history' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
-            <header className="flex items-center justify-between mb-8"><div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
+            <header className="flex items-center justify-between mb-8 pt-14 md:pt-0"><div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
             <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
              <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-left border-collapse">
