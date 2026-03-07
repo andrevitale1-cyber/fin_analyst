@@ -137,7 +137,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full md:w-auto">
-            <a href="/dashboard" className="w-full md:w-auto bg-[#D2FF00] text-black px-10 py-4 rounded-full font-bold text-lg hover:bg-[#bce600] transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(210,255,0,0.5)]">
+            <a href="/dashboard" className="w-full md:w-auto bg-blue-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-400 transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(59,130,246,0.7)]">
               Criar Conta Grátis <ArrowRight size={20} />
             </a>
             <a href="#funcionalidades" className="w-full md:w-auto px-10 py-4 rounded-full font-bold text-lg text-white border border-white/30 hover:bg-white/10 transition-all backdrop-blur-md bg-black/20">
@@ -259,19 +259,6 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-12 items-start">
 
-              {/* Text on the right */}
-              <div className="lg:col-span-4 lg:col-start-9 order-1 lg:order-2">
-                <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-400/30">
-                  <Database className="text-yellow-400 w-8 h-8" />
-                </div>
-                <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
-                  Histórico <br />Completo
-                </h2>
-                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
-                  Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
-                </p>
-              </div>
-
               {/* Table on the left */}
               <motion.div
                 ref={historicoRef}
@@ -328,6 +315,19 @@ export default function LandingPage() {
                 </div>
               </motion.div>
 
+              {/* Text on the right */}
+              <div className="lg:col-span-4 lg:col-start-9 order-1 lg:order-2">
+                <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-400/30">
+                  <Database className="text-yellow-400 w-8 h-8" />
+                </div>
+                <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
+                  Histórico <br />Completo
+                </h2>
+                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
+                  Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
+                </p>
+              </div>
+
             </div>
           </div>
         </section>
@@ -343,7 +343,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           
           <div className="mb-24 flex flex-col items-center text-center">
-            <h2 className="text-6xl md:text-7xl lg:text-[6.5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+            <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
               Um único plano. <br className="hidden md:block"/>
               Invista melhor.
             </h2>
@@ -364,7 +364,7 @@ export default function LandingPage() {
             </div>
             
             <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-8`}>
-              <span className="bg-[#D2FF00]/90 text-black border border-[#D2FF00] text-sm font-bold px-6 py-2.5 rounded-full uppercase tracking-wider shadow-xl">
+              <span className="bg-blue-500/90 text-white border border-blue-400 text-sm font-bold px-6 py-2.5 rounded-full uppercase tracking-wider shadow-xl">
                 2 MESES GRÁTIS
               </span>
             </div>
@@ -412,7 +412,7 @@ export default function LandingPage() {
                 <Feature text="Prioridade máxima na fila" active light />
               </ul>
 
-              <a href="/dashboard" className="block w-full text-center py-6 rounded-full bg-[#D2FF00] text-black text-xl font-extrabold shadow-2xl hover:bg-[#bce600] hover:scale-[1.02] transition-all mt-auto">
+              <a href="/dashboard" className="block w-full text-center py-6 rounded-full bg-white text-blue-700 text-xl font-extrabold shadow-2xl hover:bg-gray-100 hover:scale-[1.02] transition-all mt-auto">
                 Assinar Agora
               </a>
               <p className="text-center text-sm text-blue-200 mt-8 font-medium">Cancele quando quiser.</p>
