@@ -38,34 +38,6 @@ function ScoreBadge({ score }: { score: number }) {
   );
 }
 
-function ScoreVideo() {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-
-  return (
-    <motion.div
-      ref={ref}
-      className="relative w-full"
-      initial={{ opacity: 0, y: 50 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.9, ease: "easeOut", delay: 0.15 }}
-    >
-      {/* Glow atrás do vídeo */}
-      <div className="absolute -inset-4 bg-green-500/10 blur-[60px] rounded-3xl pointer-events-none"></div>
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="relative w-full rounded-2xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)]"
-        style={{ display: 'block', border: '1px solid rgba(255,255,255,0.12)' }}
-      >
-        <source src="/score-demo.mp4" type="video/mp4" />
-      </video>
-    </motion.div>
-  );
-}
-
 function PhoneImage() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
@@ -211,20 +183,19 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: SCORE DE IA */}
-        <section className="py-24 lg:py-36 relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
-          <div className="absolute inset-0 bg-[#0A0D14]/80 pointer-events-none"></div>
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-green-600/10 blur-[140px] rounded-full pointer-events-none"></div>
+        <section className="pt-16 lg:pt-20 pb-16 lg:pb-24 relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
+          <div className="absolute inset-0 bg-[#0A0D14]/85 pointer-events-none"></div>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-green-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-          <div className="max-w-6xl mx-auto px-6 relative z-10">
-            {/* Texto centralizado em cima */}
-            <div className="flex flex-col items-center text-center mb-14">
-              <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-6 border border-green-400/30">
+          <div className="max-w-4xl mx-auto px-6 relative z-10">
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-4 border border-green-400/30">
                 <FileText className="text-green-400 w-7 h-7" />
               </div>
-              <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
+              <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
                 Score de IA
               </h2>
-              <p className="text-lg text-gray-300 leading-relaxed mb-8 font-medium tracking-tight max-w-xl">
+              <p className="text-lg text-gray-300 leading-relaxed mb-6 font-medium tracking-tight max-w-xl">
                 O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
               </p>
               <ul className="flex flex-wrap justify-center gap-6">
@@ -234,8 +205,20 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            {/* Vídeo grande e bem visível */}
-            <ScoreVideo />
+            <div className="relative w-full">
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-green-500/20 blur-[60px] rounded-full pointer-events-none"></div>
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full rounded-2xl shadow-[0_0_80px_-10px_rgba(0,0,0,0.6)]"
+                style={{ display: 'block', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <source src="/score-demo.mp4" type="video/mp4" />
+              </video>
+              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0A0D14] to-transparent pointer-events-none"></div>
+            </div>
           </div>
         </section>
 
@@ -276,10 +259,23 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-12 items-start">
 
-              {/* Table on the left */}
+              {/* Texto na esquerda */}
+              <div className="lg:col-span-4 lg:col-start-1 order-1">
+                <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-400/30">
+                  <Database className="text-yellow-400 w-8 h-8" />
+                </div>
+                <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
+                  Histórico <br />Completo
+                </h2>
+                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
+                  Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
+                </p>
+              </div>
+
+              {/* Tabela na direita */}
               <motion.div
                 ref={historicoRef}
-                className="lg:col-span-7 lg:col-start-1 order-2 lg:order-1"
+                className="lg:col-span-7 lg:col-start-6 order-2"
                 initial={{ opacity: 0, y: 60 }}
                 animate={historicoInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.8, ease: "easeOut" }}
@@ -306,7 +302,7 @@ export default function LandingPage() {
                           <motion.tr
                             key={item.empresa}
                             className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                            initial={{ opacity: 0, x: -20 }}
+                            initial={{ opacity: 0, x: 20 }}
                             animate={historicoInView ? { opacity: 1, x: 0 } : {}}
                             transition={{ duration: 0.4, delay: 0.1 + i * 0.06 }}
                           >
@@ -331,19 +327,6 @@ export default function LandingPage() {
                   </div>
                 </div>
               </motion.div>
-
-              {/* Text on the right */}
-              <div className="lg:col-span-4 lg:col-start-9 order-1 lg:order-2">
-                <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-400/30">
-                  <Database className="text-yellow-400 w-8 h-8" />
-                </div>
-                <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
-                  Histórico <br />Completo
-                </h2>
-                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
-                  Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
-                </p>
-              </div>
 
             </div>
           </div>
