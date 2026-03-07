@@ -1,15 +1,93 @@
 "use client";
 
-"use client";
 import React, { useState, useRef } from 'react';
 import { motion, useInView } from "framer-motion";
 import { 
   BarChart3, UploadCloud, ArrowRight, 
-  FileText, Layout, Database, Check, X
+  FileText, Layout, Database, Check, X,
+  Trash2, ChevronRight
 } from "lucide-react";
 
+// --- DATA ---
+const historicoData = [
+  { empresa: "SAMSARA", periodo: "4T/2026", data: "05/03/2026", score: 5 },
+  { empresa: "MARVELL", periodo: "4T/2026", data: "05/03/2026", score: 5 },
+  { empresa: "VEEVA", periodo: "4T/2026", data: "04/03/2026", score: 5 },
+  { empresa: "ENGIE", periodo: "4T/2025", data: "04/03/2026", score: 2 },
+  { empresa: "BROADCOM", periodo: "1T/2026", data: "04/03/2026", score: 5 },
+  { empresa: "RAIA DROGASIL", periodo: "4T/2025", data: "04/03/2026", score: 4 },
+  { empresa: "ON RUNNING", periodo: "4T/2025", data: "03/03/2026", score: 4 },
+  { empresa: "AURA", periodo: "4T/2025", data: "27/02/2026", score: 2 },
+  { empresa: "CELSIUS", periodo: "4T/2025", data: "26/02/2026", score: 4 },
+];
+
+// --- SUBCOMPONENTS ---
+
+function ScoreBadge({ score }: { score: number }) {
+  const color =
+    score >= 4
+      ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+      : score >= 3
+      ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/40"
+      : "bg-red-500/20 text-red-400 border-red-500/40";
+
+  return (
+    <span className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-bold border ${color}`}>
+      {score}
+    </span>
+  );
+}
+
+function PhoneImage() {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <motion.img
+      ref={ref}
+      src="/celular.png"
+      alt="App no Telemóvel"
+      className="w-full max-w-sm h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)]"
+      initial={{ opacity: 0, y: 80 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
+    />
+  );
+}
+
+function Feature({ text, active = false, disabled = false, light = false }: { text: string; active?: boolean; disabled?: boolean; light?: boolean }) {
+  return (
+    <li className="flex items-center gap-4">
+      {disabled ? (
+        <div className="p-1.5 rounded-full border border-gray-600 text-gray-500"><X size={14} /></div>
+      ) : (
+        <div className={`p-1.5 rounded-full ${light ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>
+          <Check size={14} strokeWidth={3} />
+        </div>
+      )}
+      <span className={`text-lg font-medium tracking-tight ${disabled ? 'text-gray-500 line-through' : light ? 'text-white' : 'text-gray-100'}`}>{text}</span>
+    </li>
+  );
+}
+
+function ListItem({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex items-center gap-4 text-white font-medium text-lg tracking-tight">
+      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-500">
+         <Check size={16} className="text-white" strokeWidth={3} />
+      </div>
+      <span>{children}</span>
+    </li>
+  );
+}
+
+// --- MAIN COMPONENT ---
+
 export default function LandingPage() {
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [billingCycle, setBillingCycle] = useState('monthly');
+
+  const historicoRef = useRef(null);
+  const historicoInView = useInView(historicoRef, { once: true, margin: "-100px" });
 
   return (
     <div className="min-h-screen bg-[#0A0D14] text-gray-100 font-sans antialiased selection:bg-blue-500/30 overflow-x-hidden">
@@ -33,7 +111,6 @@ export default function LandingPage() {
             <a href="#planos" className="hidden md:block text-sm text-gray-300 hover:text-white font-medium transition-colors">
               Preços
             </a>
-            
             <a href="/dashboard" className="hidden md:block text-sm text-gray-300 hover:text-white font-medium transition-colors">
               Entrar
             </a>
@@ -50,8 +127,6 @@ export default function LandingPage() {
         style={{ backgroundImage: "url('/hero2.png')" }}
       >
         <div className="max-w-5xl mx-auto px-6 text-center relative z-10 flex flex-col items-center">
-          
-          {/* Título Gigante com espaçamento apertado e fonte SERIF (Robinhood Style) */}
           <h1 className="text-4xl md:text-4xl lg:text-[6rem] font-serif font-bold text-white tracking-tighter mb-8 leading-none">
             A Nova Era Da <br />
             <span className="text-white tracking-tighter mb-8 leading-none">Análise de Ativos.</span>
@@ -62,7 +137,6 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full md:w-auto">
-            {/* Botão Neon Gringo */}
             <a href="/dashboard" className="w-full md:w-auto bg-[#D2FF00] text-black px-10 py-4 rounded-full font-bold text-lg hover:bg-[#bce600] transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(210,255,0,0.5)]">
               Criar Conta Grátis <ArrowRight size={20} />
             </a>
@@ -76,15 +150,13 @@ export default function LandingPage() {
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
         
-        {/* BLOCO 1: UPLOAD (TEXTO NA ESQUERDA) */}
+        {/* BLOCO 1: UPLOAD */}
         <section 
           className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat overflow-hidden"
           style={{ backgroundImage: "url('/upload.png')" }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-16 items-center">
-              
-              {/* Texto ancorado na Esquerda (col-start-1) */}
               <div className="lg:col-span-5 lg:col-start-1">
                 <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-400/30">
                   <UploadCloud className="text-blue-400 w-8 h-8" />
@@ -92,7 +164,7 @@ export default function LandingPage() {
                 <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
                   Upload <br/>Inteligente
                 </h2>
-                  <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
+                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
                   Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos.
                 </p>
                 <ul className="space-y-6">
@@ -102,26 +174,20 @@ export default function LandingPage() {
                 </ul>
               </div>
 
-              {/* Imagem do Telemóvel com Animação de Entrada */}
-            <div className="lg:col-span-6 lg:col-start-7 relative flex justify-end">
-              {/* Glow atrás do telemóvel */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
-          <PhoneImage />
-          </div>
+              <div className="lg:col-span-6 lg:col-start-7 relative flex justify-end">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
+                <PhoneImage />
+              </div>
             </div>
           </div>
         </section>
 
-        {/* BLOCO 2: SCORE DE IA — texto em cima, vídeo flutuante embaixo, tabela.png como background */}
+        {/* BLOCO 2: SCORE DE IA */}
         <section className="pt-16 lg:pt-20 pb-16 lg:pb-24 relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
-          {/* Overlay escuro para legibilidade */}
           <div className="absolute inset-0 bg-[#0A0D14]/85 pointer-events-none"></div>
-          {/* Glow de fundo */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-green-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
           <div className="max-w-4xl mx-auto px-6 relative z-10">
-
-            {/* Texto centralizado em cima */}
             <div className="flex flex-col items-center text-center mb-6">
               <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-4 border border-green-400/30">
                 <FileText className="text-green-400 w-7 h-7" />
@@ -139,7 +205,6 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            {/* Vídeo flutuante */}
             <div className="relative w-full">
               <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-green-500/20 blur-[60px] rounded-full pointer-events-none"></div>
               <video
@@ -154,11 +219,10 @@ export default function LandingPage() {
               </video>
               <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0A0D14] to-transparent pointer-events-none"></div>
             </div>
-
           </div>
         </section>
 
-        {/* BLOCO 3: COMPARADOR DE ATIVOS (TEXTO NA DIREITA) */}
+        {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section 
           className="py-32 lg:py-56 relative"
           style={{ 
@@ -169,52 +233,107 @@ export default function LandingPage() {
           }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-             <div className="grid lg:grid-cols-12 gap-0 items-start">
-              
-               {/* Texto ancorado na Direita */}
-               <div className="lg:col-span-4 lg:col-start-9">
-                  <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30">
-                    <Layout className="text-purple-400 w-7 h-7" />
+            <div className="grid lg:grid-cols-12 gap-0 items-start">
+              <div className="lg:col-span-4 lg:col-start-9">
+                <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30">
+                  <Layout className="text-purple-400 w-7 h-7" />
+                </div>
+                <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
+                  Comparador <br/>de Ativos
+                </h2>
+                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
+                  Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* BLOCO 4: HISTÓRICO COMPLETO */}
+        <section
+          className="py-32 lg:py-48 relative bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/images/fundo-historico.png')" }}
+        >
+          <div className="absolute inset-0 bg-[#0A0D14]/60 pointer-events-none" />
+
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="grid lg:grid-cols-12 gap-12 items-start">
+
+              {/* Text on the right */}
+              <div className="lg:col-span-4 lg:col-start-9 order-1 lg:order-2">
+                <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-400/30">
+                  <Database className="text-yellow-400 w-8 h-8" />
+                </div>
+                <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
+                  Histórico <br />Completo
+                </h2>
+                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
+                  Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
+                </p>
+              </div>
+
+              {/* Table on the left */}
+              <motion.div
+                ref={historicoRef}
+                className="lg:col-span-7 lg:col-start-1 order-2 lg:order-1"
+                initial={{ opacity: 0, y: 60 }}
+                animate={historicoInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              >
+                <div className="bg-[#11141D]/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+                  <div className="px-6 py-5 border-b border-white/10">
+                    <h3 className="text-xl font-bold text-white">Histórico Detalhado</h3>
+                    <p className="text-sm text-gray-400 mt-1">Gerencie suas análises individuais.</p>
                   </div>
-                  <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
-                    Comparador <br/>de Ativos
-                  </h2>
-                  <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
-                    Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
-                  </p>
-               </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/10">
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Empresa</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Período</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Data</th>
+                          <th className="text-center px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Score</th>
+                          <th className="text-right px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {historicoData.map((item, i) => (
+                          <motion.tr
+                            key={item.empresa}
+                            className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={historicoInView ? { opacity: 1, x: 0 } : {}}
+                            transition={{ duration: 0.4, delay: 0.1 + i * 0.06 }}
+                          >
+                            <td className="px-6 py-4 text-sm font-bold text-white">{item.empresa}</td>
+                            <td className="px-6 py-4 text-sm text-gray-400">{item.periodo}</td>
+                            <td className="px-6 py-4 text-sm text-gray-400 hidden md:table-cell">{item.data}</td>
+                            <td className="px-6 py-4 text-center">
+                              <ScoreBadge score={item.score} />
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-3">
+                                <Trash2 size={16} className="text-gray-500 cursor-pointer hover:text-red-400 transition-colors" />
+                                <span className="text-blue-400 font-medium text-sm flex items-center gap-1 cursor-pointer hover:text-blue-300 transition-colors">
+                                  Detalhes <ChevronRight size={14} />
+                                </span>
+                              </div>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.div>
 
             </div>
           </div>
         </section>
 
-        {/* BLOCO 4: HISTÓRICO (TEXTO NA DIREITA) */}
-        <section 
-          className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/fundo-historico.jpg')" }}
-        >
-           <div className="max-w-7xl mx-auto px-6 relative z-10">
-              <div className="grid lg:grid-cols-12 gap-0 items-start">
-                
-                {/* Texto ancorado na Direita (col-start-8) */}
-                <div className="lg:col-span-5 lg:col-start-8">
-                  <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-400/30">
-                    <Database className="text-yellow-400 w-8 h-8" />
-                  </div>
-                  <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
-                    Histórico <br/>Completo
-                  </h2>
-                  <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
-                    Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
-                  </p>
-                </div>
-
-              </div>
-           </div>
-        </section>
-
       </div>
-      
+
       {/* --- SECÇÃO DE PLANOS --- */}
       <section 
         id="planos" 
@@ -245,9 +364,9 @@ export default function LandingPage() {
             </div>
             
             <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-8`}>
-               <span className="bg-[#D2FF00]/90 text-black border border-[#D2FF00] text-sm font-bold px-6 py-2.5 rounded-full uppercase tracking-wider shadow-xl">
-                 2 MESES GRÁTIS
-               </span>
+              <span className="bg-[#D2FF00]/90 text-black border border-[#D2FF00] text-sm font-bold px-6 py-2.5 rounded-full uppercase tracking-wider shadow-xl">
+                2 MESES GRÁTIS
+              </span>
             </div>
           </div>
 
@@ -302,7 +421,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* --- FOOTER & DISCLAIMERS --- */}
+      {/* --- FOOTER --- */}
       <footer className="border-t border-white/10 bg-[#0A0D14] pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-6">
           
@@ -322,62 +441,15 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-white/10 pt-12 text-sm text-gray-400 space-y-4 text-justify leading-relaxed font-light">
-             <p>
-               <strong className="text-gray-300 font-semibold">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300 font-semibold">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300 font-semibold">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
-             </p>
-
-             <p className="text-center pt-10 text-gray-500 font-medium">
-               © 2026 FinAnalyzer Inc. Todos os direitos reservados.
-             </p>
+            <p>
+              <strong className="text-gray-300 font-semibold">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300 font-semibold">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300 font-semibold">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
+            </p>
+            <p className="text-center pt-10 text-gray-500 font-medium">
+              © 2026 FinAnalyzer Inc. Todos os direitos reservados.
+            </p>
           </div>
-
         </div>
       </footer>
     </div>
-  );
-}
-
-// Subcomponentes
-
-function PhoneImage() {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
-
-  return (
-    <motion.img
-      ref={ref}
-      src="/celular.png"
-      alt="App no Telemóvel"
-      className="w-full max-w-sm h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)]"
-      initial={{ opacity: 0, y: 80 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
-    />
-  );
-}
-
-function Feature({ text, active = false, disabled = false, light = false }: any) {
-  return (
-    <li className="flex items-center gap-4">
-      {disabled ? (
-        <div className="p-1.5 rounded-full border border-gray-600 text-gray-500"><X size={14} /></div>
-      ) : (
-        <div className={`p-1.5 rounded-full ${light ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>
-          <Check size={14} strokeWidth={3} />
-        </div>
-      )}
-      <span className={`text-lg font-medium tracking-tight ${disabled ? 'text-gray-500 line-through' : light ? 'text-white' : 'text-gray-100'}`}>{text}</span>
-    </li>
-  );
-}
-
-function ListItem({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex items-center gap-4 text-white font-medium text-lg tracking-tight">
-      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-500">
-         <Check size={16} className="text-white" strokeWidth={3} />
-      </div>
-      <span>{children}</span>
-    </li>
   );
 }
