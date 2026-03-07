@@ -106,7 +106,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-6">
             <a href="#funcionalidades" className="hidden md:block text-sm text-gray-300 hover:text-white font-medium transition-colors">
-              Funcionalidades
+              Funções
             </a>
             <a href="#planos" className="hidden md:block text-sm text-gray-300 hover:text-white font-medium transition-colors">
               Preços
