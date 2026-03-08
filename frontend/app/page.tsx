@@ -103,7 +103,7 @@ function ScoreDemo() {
                 </span>
               </div>
               <button className="flex items-center gap-2 bg-emerald-500 text-black text-xs font-bold px-3 py-1.5 rounded-lg">
-                <Download size={13} /> Baixar Relatório
+                <Download size={13} /> Baixar Relatório Completo
               </button>
             </div>
 
@@ -224,7 +224,7 @@ function ScoreDemoMobile() {
 
             {/* Download button */}
             <button className="w-full bg-emerald-500 text-black text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-5">
-              <Download size={15} /> Baixar Relatório
+              <Download size={15} /> Baixar Relatório Completo
             </button>
 
             {/* Header */}
