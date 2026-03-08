@@ -136,8 +136,8 @@ function ScoreDemo() {
         </div>
 
         {/* Scrollable page content */}
-        <div ref={containerRef} className="bg-[#0A0D14] overflow-hidden" style={{ height: "480px" }}>
-          <div ref={innerRef} className="px-8 py-6">
+        <div ref={containerRef} className="bg-[#0A0D14] overflow-hidden" style={{ height: "560px" }}>
+          <div ref={innerRef} className="px-6 md:px-8 py-6">
             {/* App navbar */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
@@ -171,7 +171,7 @@ function ScoreDemo() {
             <div className="border-t border-white/5 mb-8" />
 
             {/* Metric cards */}
-            <div className="grid grid-cols-4 gap-3 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
               {scoreMetrics.map((m) => {
                 const Icon = m.icon;
                 return (
@@ -447,28 +447,28 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: SCORE DE IA */}
-<section
-  className="pt-16 lg:pt-20 pb-16 lg:pb-24 relative bg-cover bg-center bg-no-repeat"
-  style={{ backgroundImage: "url('/secao2.png')" }}
->
+        <section
+          className="pt-20 lg:pt-28 pb-20 lg:pb-32 relative bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/secao2.png')" }}
+        >
+          <div className="max-w-6xl mx-auto px-6 relative z-10">
+            <div className="flex flex-col items-center text-center mb-10">
+              <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-4 border border-green-400/30">
+                <FileText className="text-green-400 w-7 h-7" />
+              </div>
+              <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
+                Score de IA
+              </h2>
+              <p className="text-base text-gray-300 leading-relaxed font-medium tracking-tight max-w-xl">
+                O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista,
+                facilitando a identificação imediata de pontos fortes e de atenção na empresa.
+              </p>
+            </div>
+            <ScoreDemo />
+          </div>
+        </section>
 
-  <div className="max-w-4xl mx-auto px-6 relative z-10">
-    <div className="flex flex-col items-center text-center mb-6">
-      <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-4 border border-green-400/30">
-        <FileText className="text-green-400 w-7 h-7" />
-      </div>
-      <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-        Score de IA
-      </h2>
-      <p className="text-lg text-gray-300 leading-relaxed mb-6 font-medium tracking-tight max-w-xl">
-        O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista,
-        facilitando a identificação imediata de pontos fortes e de atenção na empresa.
-      </p>
-    </div>
 
-    <ScoreDemo />
-  </div>
-</section>
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section 
@@ -500,30 +500,30 @@ export default function LandingPage() {
         {/* BLOCO 4: HISTÓRICO COMPLETO */}
         <section
           className="py-32 lg:py-48 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/fundo-historico.png')" }}
+          style={{ backgroundImage: "url('/secao4.png')" }}
         >
           <div className="absolute inset-0 bg-[#0A0D14]/60 pointer-events-none" />
 
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-12 items-start">
+            <div className="grid lg:grid-cols-12 gap-10 items-center">
 
-              {/* Texto na esquerda */}
-              <div className="lg:col-span-4 lg:col-start-1 order-1">
-                <div className="w-16 h-16 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-8 border border-yellow-400/30">
-                  <Database className="text-yellow-400 w-8 h-8" />
+              {/* Texto na esquerda — compacto */}
+              <div className="lg:col-span-3 lg:col-start-1 order-1">
+                <div className="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-400/30">
+                  <Database className="text-yellow-400 w-7 h-7" />
                 </div>
-                <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
+                <h2 className="text-3xl lg:text-[2.6rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
                   Histórico <br />Completo
                 </h2>
-                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
+                <p className="text-sm text-gray-300 leading-relaxed font-medium tracking-tight">
                   Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
                 </p>
               </div>
 
-              {/* Tabela na direita */}
+              {/* Tabela na direita — mais larga */}
               <motion.div
                 ref={historicoRef}
-                className="lg:col-span-7 lg:col-start-6 order-2"
+                className="lg:col-span-8 lg:col-start-5 order-2"
                 initial={{ opacity: 0, y: 60 }}
                 animate={historicoInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.8, ease: "easeOut" }}
