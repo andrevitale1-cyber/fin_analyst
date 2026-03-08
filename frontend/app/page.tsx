@@ -216,26 +216,31 @@ function PhoneImage() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: false, margin: "-100px" });
   const [isDark, setIsDark] = useState(true);
-  const [fade, setFade] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (isInView) {
       intervalRef.current = setInterval(() => {
-        // Fade out → swap → fade in
-        setFade(true);
-        setTimeout(() => {
-          setIsDark(prev => !prev);
-          setFade(false);
-        }, 400);
-      }, 2800);
+        setIsDark(prev => !prev);
+      }, 3000);
     } else {
       if (intervalRef.current) clearInterval(intervalRef.current);
       setIsDark(true);
-      setFade(false);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isInView]);
+
+  const d = isDark;
+  const screen  = d ? "bg-[#0f1117]" : "bg-[#f2f4f8]";
+  const card    = d ? "bg-[#1a1d27] border-white/8" : "bg-white border-gray-200";
+  const input   = d ? "bg-[#0f1117] border-white/10 text-white" : "bg-gray-100 border-gray-300 text-gray-900";
+  const label   = d ? "text-gray-400" : "text-gray-500";
+  const title   = d ? "text-white" : "text-gray-900";
+  const sub     = d ? "text-gray-400" : "text-gray-500";
+  const btn     = "bg-blue-600 text-white";
+  const zone    = d ? "border-blue-500/40 bg-blue-500/5" : "border-blue-400/60 bg-blue-50";
+  const zoneText = d ? "text-gray-400" : "text-gray-500";
+  const zoneFile = d ? "text-white" : "text-gray-800";
 
   return (
     <motion.div
@@ -243,17 +248,76 @@ function PhoneImage() {
       initial={{ opacity: 0, y: 80 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 80 }}
       transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
-      className="w-full max-w-sm"
+      className="w-full max-w-[320px] mx-auto select-none"
     >
-      <img
-        src={isDark ? "/celular.png" : "/celular-light.png"}
-        alt="App FinAnalyzer"
-        className="w-full h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)]"
-        style={{
-          opacity: fade ? 0 : 1,
-          transition: "opacity 0.4s ease",
-        }}
-      />
+      {/* Phone frame */}
+      <div className="relative rounded-[3rem] bg-[#111] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.9)] border border-white/10 overflow-hidden"
+           style={{ padding: "10px" }}>
+
+        {/* Notch */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-20" />
+
+        {/* Screen */}
+        <div
+          className={`relative rounded-[2.4rem] overflow-hidden transition-colors duration-700 ${screen}`}
+          style={{ minHeight: "620px" }}
+        >
+          {/* Status bar */}
+          <div className={`flex items-center justify-between px-6 pt-10 pb-2 text-[10px] font-semibold ${d ? "text-white/60" : "text-gray-500"}`}>
+            <span>9:41</span>
+            <div className="flex items-center gap-1">
+              <span>●●●</span>
+              <span>WiFi</span>
+              <span>🔋</span>
+            </div>
+          </div>
+
+          {/* App content */}
+          <div className="px-5 pb-6 transition-all duration-700">
+
+            {/* Header */}
+            <div className="text-center mb-5 mt-2">
+              <p className={`text-base font-bold leading-tight ${title} transition-colors duration-700`}>Nova Análise Financeira</p>
+              <p className={`text-xs mt-1 leading-snug ${sub} transition-colors duration-700`}>
+                Carregue o relatório trimestral (PDF) para processamento via IA.
+              </p>
+            </div>
+
+            {/* Fields */}
+            <div className="space-y-3">
+              {[
+                { label: "EMPRESA", value: "AMAZON" },
+                { label: "ANO",     value: "2025"   },
+                { label: "TRIMESTRE", value: "1º Trimestre" },
+              ].map(f => (
+                <div key={f.label}>
+                  <p className={`text-[9px] font-semibold uppercase tracking-widest mb-1 ${label} transition-colors duration-700`}>{f.label}</p>
+                  <div className={`rounded-xl border px-3 py-2.5 text-xs font-medium ${input} transition-colors duration-700`}>
+                    {f.value}
+                  </div>
+                </div>
+              ))}
+
+              {/* Upload zone */}
+              <div className={`rounded-xl border-2 border-dashed px-4 py-4 text-center mt-1 transition-colors duration-700 ${zone}`}>
+                <UploadCloud size={22} className="mx-auto mb-2 text-blue-500" />
+                <p className={`text-[10px] font-bold ${zoneFile} transition-colors duration-700`}>AMZN-Q1-2025-Earnings-Release.pdf</p>
+                <p className={`text-[9px] mt-0.5 ${zoneText} transition-colors duration-700`}>Suporta PDF de até 10MB</p>
+              </div>
+
+              {/* CTA */}
+              <button className={`w-full rounded-xl py-3 text-xs font-bold flex items-center justify-center gap-2 mt-1 ${btn}`}>
+                <span>✦</span> Gerar Análise Completa
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Home bar */}
+        <div className="flex justify-center pt-2 pb-1">
+          <div className={`w-24 h-1 rounded-full transition-colors duration-700 ${d ? "bg-white/30" : "bg-gray-400/50"}`} />
+        </div>
+      </div>
     </motion.div>
   );
 }
