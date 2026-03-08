@@ -357,31 +357,35 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 2: SCORE DE IA */}
-        <section className="pt-16 lg:pt-20 pb-16 lg:pb-24 relative bg-cover bg-center bg-no-repeat" style={{ backgroundImage: "url('/tabela.png')" }}>
-          <div className="absolute inset-0 bg-[#0A0D14]/85 pointer-events-none"></div>
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-green-600/10 blur-[120px] rounded-full pointer-events-none"></div>
+<section
+  className="pt-16 lg:pt-20 pb-16 lg:pb-24 relative bg-cover bg-center bg-no-repeat"
+  style={{ backgroundImage: "url('/secao2.png')" }}
+>
+  <div className="absolute inset-0 bg-[#0A0D14]/85 pointer-events-none"></div>
+  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-green-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
-          <div className="max-w-4xl mx-auto px-6 relative z-10">
-            <div className="flex flex-col items-center text-center mb-6">
-              <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-4 border border-green-400/30">
-                <FileText className="text-green-400 w-7 h-7" />
-              </div>
-              <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                Score de IA
-              </h2>
-              <p className="text-lg text-gray-300 leading-relaxed mb-6 font-medium tracking-tight max-w-xl">
-                O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa.
-              </p>
-              <ul className="flex flex-wrap justify-center gap-6">
-                <ListItem>Score de Receita e Lucro</ListItem>
-                <ListItem>Análise de Endividamento</ListItem>
-                <ListItem>Resumo textual da Tese</ListItem>
-              </ul>
-            </div>
+  <div className="max-w-4xl mx-auto px-6 relative z-10">
+    <div className="flex flex-col items-center text-center mb-6">
+      <div className="w-14 h-14 bg-green-500/20 rounded-2xl flex items-center justify-center mb-4 border border-green-400/30">
+        <FileText className="text-green-400 w-7 h-7" />
+      </div>
+      <h2 className="text-4xl md:text-5xl lg:text-[4rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
+        Score de IA
+      </h2>
+      <p className="text-lg text-gray-300 leading-relaxed mb-6 font-medium tracking-tight max-w-xl">
+        O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista,
+        facilitando a identificação imediata de pontos fortes e de atenção na empresa.
+      </p>
+      <ul className="flex flex-wrap justify-center gap-6">
+        <ListItem>Score de Receita e Lucro</ListItem>
+        <ListItem>Análise de Endividamento</ListItem>
+        <ListItem>Resumo textual da Tese</ListItem>
+      </ul>
+    </div>
 
-            <ScoreDemo />
-          </div>
-        </section>
+    <ScoreDemo />
+  </div>
+</section>
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section 
