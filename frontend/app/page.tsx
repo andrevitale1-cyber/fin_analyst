@@ -354,45 +354,52 @@ export default function LandingPage() {
 
       {/* --- NAVBAR --- */}
       <nav className="border-b border-white/10 bg-[#0A0D14]/80 backdrop-blur-xl sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-              <BarChart3 className="text-white w-6 h-6" />
+        <div className="max-w-7xl mx-auto px-5 h-16 md:h-20 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 md:w-10 md:h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
+              <BarChart3 className="text-white w-5 h-5 md:w-6 md:h-6" />
             </div>
-            <span className="text-2xl font-bold tracking-tight text-white">
+            <span className="text-xl md:text-2xl font-bold tracking-tight text-white">
               FinAnalyzer <span className="text-blue-500">.AI</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-6">
-            <a href="#funcionalidades" className="hidden md:block text-sm text-gray-300 hover:text-white font-medium transition-colors">
-              Funcionalidades
-            </a>
-            <a href="#planos" className="hidden md:block text-sm text-gray-300 hover:text-white font-medium transition-colors">
-              Preços
-            </a>
-            <a href="/dashboard" className="hidden md:block text-sm text-gray-300 hover:text-white font-medium transition-colors">
-              Entrar
-            </a>
-            <a href="/dashboard" className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-full font-bold transition-all shadow-lg shadow-white/10 hover:scale-105 text-sm">
+          {/* Desktop links */}
+          <div className="hidden md:flex items-center gap-6">
+            <a href="#funcionalidades" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">Funcionalidades</a>
+            <a href="#planos" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">Preços</a>
+            <a href="/dashboard" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">Entrar</a>
+            <a href="/dashboard" className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-full font-bold transition-all text-sm hover:scale-105">
               Começar Grátis
             </a>
+          </div>
+
+          {/* Mobile: CTA + hamburger */}
+          <div className="flex md:hidden items-center gap-3">
+            <a href="/dashboard" className="bg-white text-black px-4 py-2 rounded-full font-bold text-sm">
+              Começar Grátis
+            </a>
+            <button className="w-9 h-9 flex flex-col items-center justify-center gap-1.5">
+              <span className="w-5 h-0.5 bg-white rounded-full" />
+              <span className="w-5 h-0.5 bg-white rounded-full" />
+            </button>
           </div>
         </div>
       </nav>
 
       {/* --- HERO SECTION --- */}
       <section 
-        className="relative min-h-[90vh] lg:min-h-[140vh] w-full flex flex-col items-center justify-start pt-24 lg:pt-32 bg-cover bg-bottom bg-no-repeat"
+        className="relative min-h-[80vh] lg:min-h-[140vh] w-full flex flex-col items-center justify-start pt-16 lg:pt-32 bg-cover bg-bottom bg-no-repeat"
         style={{ backgroundImage: "url('/hero2.png')" }}
       >
         <div className="max-w-5xl mx-auto px-6 text-center relative z-10 flex flex-col items-center">
-          <h1 className="text-4xl md:text-4xl lg:text-[6rem] font-serif font-bold text-white tracking-tighter mb-8 leading-none">
+          <h1 className="text-[2.6rem] md:text-5xl lg:text-[6rem] font-serif font-bold text-white tracking-tighter mb-6 leading-none">
             A Nova Era Da <br />
             <span className="text-white tracking-tighter mb-8 leading-none">Análise de Ativos.</span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed font-medium tracking-tight">
+          <p className="text-base md:text-2xl text-gray-300 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-medium tracking-tight">
             Acelere a leitura de relatórios trimestrais. Deixe a IA estruturar os dados e gerar insights para apoiar sua decisão de investimento.
           </p>
 
@@ -412,7 +419,7 @@ export default function LandingPage() {
         
         {/* BLOCO 1: UPLOAD */}
         <section 
-          className="py-20 lg:py-56 relative bg-cover bg-center bg-no-repeat overflow-hidden"
+          className="py-16 lg:py-56 relative bg-cover bg-center bg-no-repeat overflow-hidden"
           style={{ backgroundImage: "url('/upload.png')" }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -472,7 +479,7 @@ export default function LandingPage() {
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section 
-          className="py-32 lg:py-56 relative"
+          className="py-16 lg:py-56 relative"
           style={{ 
             backgroundImage: "url('/secao3_.png')",
             backgroundSize: 'cover',
@@ -482,7 +489,7 @@ export default function LandingPage() {
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-0 items-start">
-              <div className="lg:col-span-4 lg:col-start-9">
+              <div className="lg:col-span-4 lg:col-start-9 text-center lg:text-right">
                 <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30">
                   <Layout className="text-purple-400 w-7 h-7" />
                 </div>
@@ -499,16 +506,16 @@ export default function LandingPage() {
 
         {/* BLOCO 4: HISTÓRICO COMPLETO */}
         <section
-          className="py-32 lg:py-48 relative bg-cover bg-center bg-no-repeat"
+          className="py-16 lg:py-48 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/secao4.png')" }}
         >
           <div className="absolute inset-0 bg-[#0A0D14]/60 pointer-events-none" />
 
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-10 items-center">
+            <div className="flex flex-col gap-10 lg:grid lg:grid-cols-12 lg:gap-10 lg:items-center">
 
-              {/* Texto na esquerda — compacto */}
-              <div className="lg:col-span-3 lg:col-start-1 order-1">
+              {/* Texto acima no mobile, esquerda no desktop */}
+              <div className="lg:col-span-3 lg:col-start-1 order-1 text-center lg:text-left">
                 <div className="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-400/30">
                   <Database className="text-yellow-400 w-7 h-7" />
                 </div>
@@ -585,13 +592,13 @@ export default function LandingPage() {
       {/* --- SECÇÃO DE PLANOS --- */}
       <section 
         id="planos" 
-        className="py-32 lg:py-48 relative bg-cover bg-center bg-no-repeat"
+        className="py-20 lg:py-48 relative bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/fundo-planos.jpg')" }}
       >
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           
-          <div className="mb-24 flex flex-col items-center text-center">
-            <h2 className="text-3xl md:text-4xl lg:text-[5rem] font-serif font-bold text-white mb-8 tracking-tighter leading-[1.05]">
+          <div className="mb-12 md:mb-24 flex flex-col items-center text-center">
+            <h2 className="text-3xl md:text-4xl lg:text-[5rem] font-serif font-bold text-white mb-6 tracking-tighter leading-[1.05]">
               Um único plano. <br className="hidden md:block"/>
               Invista melhor.
             </h2>
@@ -599,13 +606,13 @@ export default function LandingPage() {
             <div className="flex items-center justify-center gap-4 bg-black/30 inline-flex p-2 rounded-full border border-white/20 mt-6 backdrop-blur-md">
               <button 
                 onClick={() => setBillingCycle('monthly')}
-                className={`px-10 py-4 rounded-full text-lg font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
+                className={`px-6 md:px-10 py-3 md:py-4 rounded-full text-base md:text-lg font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
               >
                 Mensal
               </button>
               <button 
                 onClick={() => setBillingCycle('yearly')}
-                className={`px-10 py-4 rounded-full text-lg font-bold transition-all flex items-center gap-3 ${billingCycle === 'yearly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
+                className={`px-6 md:px-10 py-3 md:py-4 rounded-full text-base md:text-lg font-bold transition-all flex items-center gap-3 ${billingCycle === 'yearly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
               >
                 Anual
               </button>
@@ -621,7 +628,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-2 gap-12 items-stretch max-w-5xl mx-auto">
             
             {/* CARD GRATUITO */}
-            <div className="bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-14 hover:border-white/30 transition-colors flex flex-col shadow-2xl">
+            <div className="bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-14 hover:border-white/30 transition-colors flex flex-col shadow-2xl">
               <h3 className="text-4xl font-bold text-white mb-2 tracking-tight">Gratuito</h3>
               <p className="text-gray-400 text-xl mb-12 font-medium">Para começar a analisar sem custo.</p>
               
@@ -641,10 +648,10 @@ export default function LandingPage() {
             </div>
 
             {/* CARD PREMIUM */}
-            <div className="bg-blue-600/95 backdrop-blur-2xl border border-blue-400/50 rounded-[2.5rem] p-14 relative shadow-[0_0_80px_-10px_rgba(37,99,235,0.8)] flex flex-col transform hover:-translate-y-4 transition-transform duration-300">
+            <div className="bg-blue-600/95 backdrop-blur-2xl border border-blue-400/50 rounded-[2.5rem] p-8 md:p-14 relative shadow-[0_0_80px_-10px_rgba(37,99,235,0.8)] flex flex-col transform hover:-translate-y-4 transition-transform duration-300">
               <h3 className="text-4xl font-bold text-white mb-2 tracking-tight">Premium</h3>
               <div className="flex items-end gap-2 mb-2">
-                <span className="text-[5.5rem] leading-none font-extrabold text-white tracking-tighter">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
+                <span className="text-[3.5rem] md:text-[5.5rem] leading-none font-extrabold text-white tracking-tighter">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
                 <span className="text-blue-200 mb-4 font-medium text-2xl">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
               </div>
               <p className="text-blue-100 text-xl mb-12 font-medium">Desbloqueie todo o poder da IA.</p>
