@@ -380,7 +380,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 2: SCORE DE IA */}
+         {/* BLOCO 2: SCORE DE IA */}
 <section
   className="pt-16 lg:pt-20 pb-16 lg:pb-24 relative bg-cover bg-center bg-no-repeat"
   style={{ backgroundImage: "url('/secao2.png')" }}
@@ -398,6 +398,11 @@ export default function LandingPage() {
         O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista,
         facilitando a identificação imediata de pontos fortes e de atenção na empresa.
       </p>
+      <ul className="flex flex-wrap justify-center gap-6">
+        <ListItem>Score de Receita e Lucro</ListItem>
+        <ListItem>Análise de Endividamento</ListItem>
+        <ListItem>Resumo textual da Tese</ListItem>
+      </ul>
     </div>
 
     <ScoreDemo />
