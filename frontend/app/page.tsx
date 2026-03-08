@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from "framer-motion";
 import { 
   BarChart3, UploadCloud, ArrowRight, 
   FileText, Layout, Database, Check, X,
-  Trash2, ChevronRight
+  Trash2, ChevronRight, DollarSign, Percent,
+  AlertCircle, TrendingUp, Download, ChevronLeft, Menu
 } from "lucide-react";
 
 // --- DATA ---
@@ -35,6 +36,179 @@ function ScoreBadge({ score }: { score: number }) {
     <span className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-bold border ${color}`}>
       {score}
     </span>
+  );
+}
+
+// --- SCORE DEMO DATA ---
+const scoreMetrics = [
+  { label: "Receita",  icon: DollarSign,   color: "text-blue-400",    score: 5 },
+  { label: "Margem",   icon: Percent,       color: "text-purple-400",  score: 5 },
+  { label: "Dívida",   icon: AlertCircle,   color: "text-red-400",     score: 5 },
+  { label: "ROE",      icon: TrendingUp,    color: "text-emerald-400", score: 5 },
+];
+
+const teseLines = [
+  "A Microsoft entregou um resultado excepcional no quarto trimestre fiscal de 2025, validando e fortalecendo a tese de investimento na empresa como uma líder indiscutível na era da nuvem e da inteligência artificial.",
+  "Os números superaram as expectativas em todas as linhas principais, demonstrando a capacidade da Microsoft de traduzir a demanda do mercado em crescimento lucrativo e eficiente.",
+  "Os principais drivers foram o crescimento robusto e de alta qualidade da receita, impulsionado pelo desempenho estelar do segmento Intelligent Cloud (especialmente Azure) e pela resiliência de Productivity and Business Processes.",
+  "A empresa demonstrou uma notável alavancagem operacional, com o lucro operacional crescendo acima da receita e uma expansão significativa das margens.",
+  "Além disso, a Microsoft reforçou sua já invejável estrutura de capital, com forte geração de fluxo de caixa livre e redução da dívida bruta.",
+  "O outlook da empresa é extremamente positivo, com sua liderança em IA e nuvem assegurando um caminho de crescimento sustentável e de alto valor.",
+];
+
+function ScoreMetricBar({ score, animate }: { score: number; animate: boolean }) {
+  return (
+    <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden mt-3">
+      <div
+        className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
+        style={{ width: animate ? `${(score / 5) * 100}%` : "0%" }}
+      />
+    </div>
+  );
+}
+
+function ScoreDemo() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [barsVisible, setBarsVisible] = React.useState(false);
+  const animFrameRef = useRef<number>(0);
+  const scrollPos = useRef(0);
+  const pauseUntil = useRef(0);
+  const lastTimeRef = useRef(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setBarsVisible(true), 500);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const inner = innerRef.current;
+    if (!container || !inner) return;
+
+    const SPEED = 0.4;
+    const PAUSE_MS = 2000;
+
+    const tick = (now: number) => {
+      if (!container || !inner) return;
+      const maxScroll = inner.scrollHeight - container.clientHeight;
+
+      if (now < pauseUntil.current) {
+        animFrameRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (scrollPos.current >= maxScroll - 1) {
+        scrollPos.current = 0;
+        container.scrollTop = 0;
+        pauseUntil.current = now + PAUSE_MS;
+        animFrameRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      const delta = now - lastTimeRef.current;
+      lastTimeRef.current = now;
+      scrollPos.current = Math.min(scrollPos.current + SPEED * (delta / 16.67), maxScroll);
+      container.scrollTop = scrollPos.current;
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+
+    animFrameRef.current = requestAnimationFrame((now) => { lastTimeRef.current = now; tick(now); });
+    return () => cancelAnimationFrame(animFrameRef.current);
+  }, []);
+
+  return (
+    <div className="relative w-full select-none">
+      <div className="absolute -inset-6 bg-blue-600/10 blur-[60px] rounded-3xl pointer-events-none" />
+      <div className="relative rounded-2xl overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)] border border-white/10">
+        {/* Browser chrome */}
+        <div className="bg-[#0e1117] border-b border-white/10 px-4 py-3 flex items-center gap-3">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500/80" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+            <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+          </div>
+          <div className="flex-1 bg-white/5 rounded-md px-3 py-1 text-xs text-gray-500 font-mono">
+            app.finanalyzer.ai/relatorio/microsoft
+          </div>
+        </div>
+
+        {/* Scrollable page content */}
+        <div ref={containerRef} className="bg-[#0A0D14] overflow-hidden" style={{ height: "480px" }}>
+          <div ref={innerRef} className="px-8 py-6">
+            {/* App navbar */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <Menu size={18} className="text-gray-400" />
+                <span className="flex items-center gap-1 text-sm text-gray-400">
+                  <ChevronLeft size={16} /> Voltar para Histórico
+                </span>
+              </div>
+              <button className="flex items-center gap-2 bg-emerald-500 text-black text-xs font-bold px-3 py-1.5 rounded-lg">
+                <Download size={13} /> Baixar Relatório
+              </button>
+            </div>
+
+            {/* Header */}
+            <div className="flex items-start justify-between mb-8">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Relatório de Análise</p>
+                <h1 className="text-4xl font-black text-white tracking-tight">MICROSOFT</h1>
+                <p className="text-blue-400 font-bold text-lg mt-1">4T/2025</p>
+              </div>
+              <div className="bg-[#11141D] border border-white/10 rounded-xl px-5 py-4 text-right">
+                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Score IA</p>
+                <p className="text-xs text-gray-500 mb-2">Baseado em 4 fundamentos</p>
+                <div className="flex items-end justify-end gap-1">
+                  <span className="text-4xl font-black text-emerald-400">5</span>
+                  <span className="text-gray-400 text-lg mb-1">/5</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-white/5 mb-8" />
+
+            {/* Metric cards */}
+            <div className="grid grid-cols-4 gap-3 mb-8">
+              {scoreMetrics.map((m) => {
+                const Icon = m.icon;
+                return (
+                  <div key={m.label} className="bg-[#11141D] border border-white/8 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-gray-400">{m.label}</span>
+                      <Icon size={16} className={m.color} />
+                    </div>
+                    <div className="flex items-end gap-1">
+                      <span className="text-3xl font-black text-white">{m.score}</span>
+                      <span className="text-gray-500 text-sm mb-1">/5</span>
+                    </div>
+                    <ScoreMetricBar score={m.score} animate={barsVisible} />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Tese de Investimento */}
+            <div className="bg-[#11141D] border border-white/8 rounded-xl p-6 mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <FileText size={18} className="text-blue-400" />
+                <h2 className="text-lg font-bold text-white">Tese de Investimento</h2>
+              </div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Conclusão — Tese e Outlook</p>
+              <div className="space-y-3">
+                {teseLines.map((line, i) => (
+                  <p key={i} className="text-sm text-gray-300 leading-relaxed">{line}</p>
+                ))}
+              </div>
+            </div>
+            <div className="h-16" />
+          </div>
+        </div>
+
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0A0D14] to-transparent pointer-events-none rounded-b-2xl" />
+      </div>
+    </div>
   );
 }
 
@@ -106,7 +280,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-6">
             <a href="#funcionalidades" className="hidden md:block text-sm text-gray-300 hover:text-white font-medium transition-colors">
-              Funções
+              Funcionalidades
             </a>
             <a href="#planos" className="hidden md:block text-sm text-gray-300 hover:text-white font-medium transition-colors">
               Preços
@@ -205,20 +379,7 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            <div className="relative w-full">
-              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-green-500/20 blur-[60px] rounded-full pointer-events-none"></div>
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full rounded-2xl shadow-[0_0_80px_-10px_rgba(0,0,0,0.6)]"
-                style={{ display: 'block', border: '1px solid rgba(255,255,255,0.08)' }}
-              >
-                <source src="/score-demo.mp4" type="video/mp4" />
-              </video>
-              <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#0A0D14] to-transparent pointer-events-none"></div>
-            </div>
+            <ScoreDemo />
           </div>
         </section>
 
