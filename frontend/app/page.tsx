@@ -84,14 +84,20 @@ function ScoreDemo() {
     const inner = innerRef.current;
     if (!container || !inner) return;
 
-    const SPEED = 0.45;
+    // px per second — consistent across 60fps and 120fps devices
+    const PX_PER_SEC = 28;
     const PAUSE_MS = 2200;
     let pausing = false;
     let pauseStart = 0;
+    let lastTs = 0;
 
-    const tick = () => {
+    const tick = (ts: number) => {
       if (!containerRef.current || !innerRef.current) return;
       const maxScroll = innerRef.current.scrollHeight - containerRef.current.clientHeight;
+
+      if (lastTs === 0) { lastTs = ts; }
+      const delta = Math.min(ts - lastTs, 50); // cap at 50ms to avoid jumps after tab switch
+      lastTs = ts;
 
       if (pausing) {
         if (Date.now() - pauseStart >= PAUSE_MS) {
@@ -106,11 +112,12 @@ function ScoreDemo() {
         containerRef.current.scrollTop = 0;
         pausing = true;
         pauseStart = Date.now();
+        lastTs = 0;
         animFrameRef.current = requestAnimationFrame(tick);
         return;
       }
 
-      scrollPos.current = Math.min(scrollPos.current + SPEED, maxScroll);
+      scrollPos.current = Math.min(scrollPos.current + (PX_PER_SEC * delta / 1000), maxScroll);
       containerRef.current.scrollTop = scrollPos.current;
       animFrameRef.current = requestAnimationFrame(tick);
     };
@@ -211,6 +218,179 @@ function ScoreDemo() {
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0A0D14] to-transparent pointer-events-none rounded-b-2xl" />
       </div>
     </div>
+  );
+}
+
+// --- MOBILE SCORE DEMO: vertical layout matching real app on phone ---
+function ScoreDemoMobile() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: false, margin: "-80px" });
+  const [barsVisible, setBarsVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const animFrameRef = useRef<number>(0);
+  const scrollPos = useRef(0);
+
+  useEffect(() => {
+    if (isInView) {
+      const t = setTimeout(() => setBarsVisible(true), 400);
+      return () => clearTimeout(t);
+    }
+  }, [isInView]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const inner = innerRef.current;
+    if (!container || !inner) return;
+
+    const PX_PER_SEC = 22;
+    const PAUSE_MS = 2500;
+    let pausing = false;
+    let pauseStart = 0;
+    let lastTs = 0;
+
+    const tick = (ts: number) => {
+      if (!containerRef.current || !innerRef.current) return;
+      const maxScroll = innerRef.current.scrollHeight - containerRef.current.clientHeight;
+      if (lastTs === 0) lastTs = ts;
+      const delta = Math.min(ts - lastTs, 50);
+      lastTs = ts;
+
+      if (pausing) {
+        if (Date.now() - pauseStart >= PAUSE_MS) pausing = false;
+        animFrameRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      if (scrollPos.current >= maxScroll - 1) {
+        scrollPos.current = 0;
+        containerRef.current.scrollTop = 0;
+        pausing = true;
+        pauseStart = Date.now();
+        lastTs = 0;
+        animFrameRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      scrollPos.current = Math.min(scrollPos.current + (PX_PER_SEC * delta / 1000), maxScroll);
+      containerRef.current.scrollTop = scrollPos.current;
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+
+    animFrameRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animFrameRef.current);
+  }, []);
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+      className="relative w-full select-none"
+    >
+      {/* Phone frame */}
+      <div className="relative mx-auto rounded-[2.8rem] bg-[#0d0f14] border border-white/10 shadow-[0_30px_80px_-10px_rgba(0,0,0,0.95)] overflow-hidden" style={{ maxWidth: "320px" }}>
+
+        {/* Status bar */}
+        <div className="flex items-center justify-between px-6 pt-8 pb-3 text-[10px] font-semibold text-white/40">
+          <span>8:19</span>
+          <span>●●● WiFi 🔋</span>
+        </div>
+
+        {/* App navbar inside phone */}
+        <div className="flex items-center justify-between px-4 pb-3 border-b border-white/8">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#1a1d27] rounded-xl flex items-center justify-center">
+              <Menu size={14} className="text-gray-300" />
+            </div>
+            <span className="text-sm font-bold text-white">FinAnalyzer <span className="text-blue-400">.AI</span></span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold">A</div>
+        </div>
+
+        {/* Scrollable content */}
+        <div ref={containerRef} className="overflow-hidden" style={{ height: "520px", backgroundColor: "#0A0D14" }}>
+          <div ref={innerRef} className="px-4 py-4">
+
+            {/* Back button */}
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-full bg-[#1a1d27] flex items-center justify-center">
+                <ChevronLeft size={14} className="text-gray-300" />
+              </div>
+              <span className="text-sm text-gray-300">Voltar para Histórico</span>
+            </div>
+
+            {/* Download button */}
+            <button className="w-full bg-emerald-500 text-black text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-5">
+              <Download size={15} /> Baixar Relatório
+            </button>
+
+            {/* Header */}
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Relatório de Análise</p>
+            <h1 className="text-3xl font-black text-white tracking-tight">MICROSOFT</h1>
+            <p className="text-blue-400 font-bold text-lg mt-1 mb-4">2T/2026</p>
+
+            {/* Score card */}
+            <div className="bg-[#11141D] border border-white/8 rounded-2xl px-5 py-4 flex items-center justify-between mb-5">
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Score IA</p>
+                <p className="text-xs text-gray-500 mt-0.5">Baseado em 4 fundamentos</p>
+              </div>
+              <div className="flex items-end gap-0.5">
+                <span className="text-4xl font-black text-emerald-400">5</span>
+                <span className="text-gray-400 text-base mb-1">/5</span>
+              </div>
+            </div>
+
+            <div className="border-t border-white/5 mb-5" />
+
+            {/* Metric cards — 1 per row like real app */}
+            <div className="space-y-3 mb-5">
+              {scoreMetrics.map((m) => {
+                const Icon = m.icon;
+                return (
+                  <div key={m.label} className="bg-[#11141D] border border-white/8 rounded-2xl px-5 py-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm text-gray-400">{m.label}</span>
+                      <div className="w-8 h-8 rounded-xl bg-[#1a1d27] flex items-center justify-center">
+                        <Icon size={15} className={m.color} />
+                      </div>
+                    </div>
+                    <div className="flex items-end gap-1 mb-2">
+                      <span className="text-3xl font-black text-white">{m.score}</span>
+                      <span className="text-gray-500 text-sm mb-1">/5</span>
+                    </div>
+                    <ScoreMetricBar score={m.score} animate={barsVisible} />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Tese de Investimento */}
+            <div className="bg-[#11141D] border border-white/8 rounded-2xl p-5 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <FileText size={16} className="text-blue-400" />
+                <h2 className="text-base font-bold text-white">Tese de Investimento</h2>
+              </div>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Conclusão — Tese e Outlook</p>
+              <div className="space-y-3">
+                {teseLines.map((line, i) => (
+                  <p key={i} className="text-sm text-gray-300 leading-relaxed">{line}</p>
+                ))}
+              </div>
+            </div>
+            <div className="h-8" />
+          </div>
+        </div>
+
+        {/* Bottom fade */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0A0D14] to-transparent pointer-events-none" />
+
+        {/* Home bar */}
+        <div className="flex justify-center py-2 bg-[#0A0D14]">
+          <div className="w-20 h-1 rounded-full bg-white/20" />
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -471,11 +651,16 @@ export default function LandingPage() {
                 facilitando a identificação imediata de pontos fortes e de atenção na empresa.
               </p>
             </div>
-            <ScoreDemo />
+            {/* Desktop: browser mockup */}
+            <div className="hidden md:block">
+              <ScoreDemo />
+            </div>
+            {/* Mobile: phone mockup matching real app */}
+            <div className="md:hidden">
+              <ScoreDemoMobile />
+            </div>
           </div>
         </section>
-
-
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section 
@@ -489,7 +674,7 @@ export default function LandingPage() {
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid lg:grid-cols-12 gap-0 items-start">
-              <div className="lg:col-span-4 lg:col-start-9 text-center lg:text-right">
+              <div className="lg:col-span-4 lg:col-start-9 text-left lg:text-left">
                 <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30">
                   <Layout className="text-purple-400 w-7 h-7" />
                 </div>
