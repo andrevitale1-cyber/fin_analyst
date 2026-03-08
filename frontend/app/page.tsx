@@ -213,62 +213,33 @@ function ScoreDemo() {
 }
 
 function PhoneImage() {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, margin: "-100px" });
-  const [isDark, setIsDark] = useState(true);
-  const [fade, setFade] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (isInView) {
-      intervalRef.current = setInterval(() => {
-        // Fade out → swap → fade in
-        setFade(true);
-        setTimeout(() => {
-          setIsDark(prev => !prev);
-          setFade(false);
-        }, 400);
-      }, 2800);
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setIsDark(true);
-      setFade(false);
-    }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [isInView]);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <motion.div
+    <motion.img
       ref={ref}
+      src="/celular.png"
+      alt="App no Telemóvel"
+      className="w-full max-w-sm h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)]"
       initial={{ opacity: 0, y: 80 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 80 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
-      className="w-full max-w-sm"
-    >
-      <img
-        src={isDark ? "/celular.png" : "/celular-light.png"}
-        alt="App FinAnalyzer"
-        className="w-full h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)]"
-        style={{
-          opacity: fade ? 0 : 1,
-          transition: "opacity 0.4s ease",
-        }}
-      />
-    </motion.div>
+    />
   );
 }
 
 function Feature({ text, active = false, disabled = false, light = false }: { text: string; active?: boolean; disabled?: boolean; light?: boolean }) {
   return (
-    <li className="flex items-center gap-3">
+    <li className="flex items-center gap-4">
       {disabled ? (
-        <div className="p-1 rounded-full border border-gray-600 text-gray-500 flex-shrink-0"><X size={11} /></div>
+        <div className="p-1.5 rounded-full border border-gray-600 text-gray-500"><X size={14} /></div>
       ) : (
-        <div className={`p-1 rounded-full flex-shrink-0 ${light ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>
-          <Check size={11} strokeWidth={3} />
+        <div className={`p-1.5 rounded-full ${light ? 'bg-white text-blue-600' : 'bg-blue-600 text-white'}`}>
+          <Check size={14} strokeWidth={3} />
         </div>
       )}
-      <span className={`text-base font-medium tracking-tight ${disabled ? 'text-gray-500 line-through' : light ? 'text-white' : 'text-gray-100'}`}>{text}</span>
+      <span className={`text-lg font-medium tracking-tight ${disabled ? 'text-gray-500 line-through' : light ? 'text-white' : 'text-gray-100'}`}>{text}</span>
     </li>
   );
 }
@@ -331,7 +302,7 @@ export default function LandingPage() {
       >
         <div className="max-w-5xl mx-auto px-6 text-center relative z-10 flex flex-col items-center">
           <h1 className="text-4xl md:text-4xl lg:text-[6rem] font-serif font-bold text-white tracking-tighter mb-8 leading-none">
-            A Nova Era Da <br />
+            A Nova Era a <br />
             <span className="text-white tracking-tighter mb-8 leading-none">Análise de Ativos.</span>
           </h1>
           
@@ -370,6 +341,11 @@ export default function LandingPage() {
                 <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
                   Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos.
                 </p>
+                <ul className="space-y-6">
+                  <ListItem>Suporte a PDFs de até 10MB</ListItem>
+                  <ListItem>Extração automática de métricas</ListItem>
+                  <ListItem>Identificação de trimestre e ano</ListItem>
+                </ul>
               </div>
 
               <div className="lg:col-span-6 lg:col-start-7 relative flex justify-end">
@@ -380,11 +356,13 @@ export default function LandingPage() {
           </div>
         </section>
 
-         {/* BLOCO 2: SCORE DE IA */}
+        {/* BLOCO 2: SCORE DE IA */}
 <section
   className="pt-16 lg:pt-20 pb-16 lg:pb-24 relative bg-cover bg-center bg-no-repeat"
   style={{ backgroundImage: "url('/secao2.png')" }}
 >
+  <div className="absolute inset-0 bg-[#0A0D14]/60 pointer-events-none"></div>
+  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-green-600/10 blur-[120px] rounded-full pointer-events-none"></div>
 
   <div className="max-w-4xl mx-auto px-6 relative z-10">
     <div className="flex flex-col items-center text-center mb-6">
@@ -439,7 +417,7 @@ export default function LandingPage() {
         {/* BLOCO 4: HISTÓRICO COMPLETO */}
         <section
           className="py-32 lg:py-48 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/secao4.png')" }}
+          style={{ backgroundImage: "url('/fundo-historico.png')" }}
         >
           <div className="absolute inset-0 bg-[#0A0D14]/60 pointer-events-none" />
 
