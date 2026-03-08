@@ -68,62 +68,11 @@ function ScoreMetricBar({ score, animate }: { score: number; animate: boolean })
 }
 
 function ScoreDemo() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
   const [barsVisible, setBarsVisible] = React.useState(false);
-  const animFrameRef = useRef<number>(0);
-  const scrollPos = useRef(0);
 
   useEffect(() => {
     const t = setTimeout(() => setBarsVisible(true), 500);
     return () => clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    const inner = innerRef.current;
-    if (!container || !inner) return;
-
-    // px per second — consistent across 60fps and 120fps devices
-    const PX_PER_SEC = 28;
-    const PAUSE_MS = 2200;
-    let pausing = false;
-    let pauseStart = 0;
-    let lastTs = 0;
-
-    const tick = (ts: number) => {
-      if (!containerRef.current || !innerRef.current) return;
-      const maxScroll = innerRef.current.scrollHeight - containerRef.current.clientHeight;
-
-      if (lastTs === 0) { lastTs = ts; }
-      const delta = Math.min(ts - lastTs, 50); // cap at 50ms to avoid jumps after tab switch
-      lastTs = ts;
-
-      if (pausing) {
-        if (Date.now() - pauseStart >= PAUSE_MS) {
-          pausing = false;
-        }
-        animFrameRef.current = requestAnimationFrame(tick);
-        return;
-      }
-
-      if (scrollPos.current >= maxScroll - 1) {
-        scrollPos.current = 0;
-        containerRef.current.scrollTop = 0;
-        pausing = true;
-        pauseStart = Date.now();
-        lastTs = 0;
-        animFrameRef.current = requestAnimationFrame(tick);
-        return;
-      }
-
-      scrollPos.current = Math.min(scrollPos.current + (PX_PER_SEC * delta / 1000), maxScroll);
-      containerRef.current.scrollTop = scrollPos.current;
-      animFrameRef.current = requestAnimationFrame(tick);
-    };
-
-    animFrameRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animFrameRef.current);
   }, []);
 
   return (
@@ -143,8 +92,8 @@ function ScoreDemo() {
         </div>
 
         {/* Scrollable page content */}
-        <div ref={containerRef} className="bg-[#0A0D14] overflow-hidden" style={{ height: "560px" }}>
-          <div ref={innerRef} className="px-6 md:px-8 py-6">
+        <div className="bg-[#0A0D14] overflow-y-auto scrollbar-thin" style={{ height: "560px", scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.15) transparent" }}>
+          <div className="px-6 md:px-8 py-6">
             {/* App navbar */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
@@ -214,8 +163,7 @@ function ScoreDemo() {
           </div>
         </div>
 
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-[#0A0D14] to-transparent pointer-events-none rounded-b-2xl" />
+
       </div>
     </div>
   );
@@ -226,10 +174,6 @@ function ScoreDemoMobile() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: false, margin: "-80px" });
   const [barsVisible, setBarsVisible] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const innerRef = useRef<HTMLDivElement>(null);
-  const animFrameRef = useRef<number>(0);
-  const scrollPos = useRef(0);
 
   useEffect(() => {
     if (isInView) {
@@ -237,47 +181,6 @@ function ScoreDemoMobile() {
       return () => clearTimeout(t);
     }
   }, [isInView]);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    const inner = innerRef.current;
-    if (!container || !inner) return;
-
-    const PX_PER_SEC = 22;
-    const PAUSE_MS = 2500;
-    let pausing = false;
-    let pauseStart = 0;
-    let lastTs = 0;
-
-    const tick = (ts: number) => {
-      if (!containerRef.current || !innerRef.current) return;
-      const maxScroll = innerRef.current.scrollHeight - containerRef.current.clientHeight;
-      if (lastTs === 0) lastTs = ts;
-      const delta = Math.min(ts - lastTs, 50);
-      lastTs = ts;
-
-      if (pausing) {
-        if (Date.now() - pauseStart >= PAUSE_MS) pausing = false;
-        animFrameRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      if (scrollPos.current >= maxScroll - 1) {
-        scrollPos.current = 0;
-        containerRef.current.scrollTop = 0;
-        pausing = true;
-        pauseStart = Date.now();
-        lastTs = 0;
-        animFrameRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      scrollPos.current = Math.min(scrollPos.current + (PX_PER_SEC * delta / 1000), maxScroll);
-      containerRef.current.scrollTop = scrollPos.current;
-      animFrameRef.current = requestAnimationFrame(tick);
-    };
-
-    animFrameRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(animFrameRef.current);
-  }, []);
 
   return (
     <motion.div
@@ -308,8 +211,8 @@ function ScoreDemoMobile() {
         </div>
 
         {/* Scrollable content */}
-        <div ref={containerRef} className="overflow-hidden" style={{ height: "520px", backgroundColor: "#0A0D14" }}>
-          <div ref={innerRef} className="px-4 py-4">
+        <div className="overflow-y-auto" style={{ height: "520px", backgroundColor: "#0A0D14", scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.15) transparent" }}>
+          <div className="px-4 py-4">
 
             {/* Back button */}
             <div className="flex items-center gap-2 mb-4">
@@ -382,8 +285,7 @@ function ScoreDemoMobile() {
           </div>
         </div>
 
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#0A0D14] to-transparent pointer-events-none" />
+
 
         {/* Home bar */}
         <div className="flex justify-center py-2 bg-[#0A0D14]">
