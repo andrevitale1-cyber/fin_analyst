@@ -429,13 +429,18 @@ const comparadorCols = [
 function ComparadorMobile() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
-  const tableRef = useRef<HTMLDivElement>(null);
-  const [colPage, setColPage] = useState(0);
 
-  // Show 3 data columns at a time (plus empresa col which is fixed)
-  const COLS_PER_PAGE = 3;
-  const totalPages = Math.ceil(comparadorCols.length / COLS_PER_PAGE);
-  const visibleCols = comparadorCols.slice(colPage * COLS_PER_PAGE, colPage * COLS_PER_PAGE + COLS_PER_PAGE);
+  // All columns shown via horizontal scroll — no pagination needed
+  const allCols = [
+    { key: "notaFinal",     label: "NOTA\nFINAL",            colored: true,  labelColor: "#a855f7" },
+    { key: "receita",       label: "RECEITA",                 colored: true,  labelColor: "#3b82f6" },
+    { key: "lucro",         label: "LUCRO",                   colored: true,  labelColor: "#22c55e" },
+    { key: "divida",        label: "DÍVIDA",                  colored: true,  labelColor: "#ef4444" },
+    { key: "rentabilidade", label: "RENTAB.",                 colored: true,  labelColor: "#eab308" },
+    { key: "resultados",    label: "RESULT.",                 colored: false, labelColor: "#9ca3af" },
+    { key: "media",         label: "MÉDIA",                   colored: true,  labelColor: "#22c55e" },
+    { key: "ultimoTri",     label: "ÚLTIMO\nTRI",            colored: false, labelColor: "#9ca3af" },
+  ];
 
   return (
     <motion.div
@@ -445,91 +450,64 @@ function ComparadorMobile() {
       transition={{ duration: 0.7, ease: "easeOut" }}
       className="w-full select-none"
     >
-      {/* Phone frame */}
-      <div className="relative mx-auto rounded-[2.8rem] bg-[#0d0f14] border border-white/10 shadow-[0_30px_80px_-10px_rgba(0,0,0,0.95)] overflow-hidden" style={{ maxWidth: "340px" }}>
-
-        {/* Status bar */}
-        <div className="flex items-center justify-between px-6 pt-8 pb-3 text-[10px] font-semibold text-white/40">
-          <span>8:19</span><span>●●● WiFi 🔋</span>
+      <div className="bg-[#11141D]/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+        {/* Table header */}
+        <div className="px-5 py-4 border-b border-white/10">
+          <h3 className="text-lg font-bold text-white">Tabela Agregada</h3>
+          <p className="text-sm text-gray-400 mt-0.5">Visão consolidada do desempenho.</p>
         </div>
 
-        {/* App navbar */}
-        <div className="flex items-center justify-between px-4 pb-3 border-b border-white/8">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#1a1d27] rounded-xl flex items-center justify-center">
-              <Menu size={14} className="text-gray-300" />
-            </div>
-            <span className="text-sm font-bold text-white">FinAnalyzer <span className="text-blue-400">.AI</span></span>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold">A</div>
-        </div>
-
-        {/* Page content */}
-        <div className="px-4 pt-6 pb-4 bg-[#0A0D14]">
-          <h2 className="text-xl font-bold text-white mb-1">Tabela Agregada</h2>
-          <p className="text-xs text-gray-400 mb-4">Visão consolidada do desempenho das empresas.</p>
-
-          {/* Configurar Colunas button */}
-          <button className="w-full bg-[#11141D] border border-white/10 rounded-xl py-3 text-sm font-semibold text-gray-200 flex items-center justify-center gap-2 mb-5">
-            <span className="text-base">⚙</span> Configurar Colunas
-          </button>
-
-          {/* Table */}
-          <div className="rounded-2xl overflow-hidden border border-white/8 bg-[#0d0f14]">
-            {/* Column headers row */}
-            <div style={{ display: "grid", gridTemplateColumns: `1fr repeat(${visibleCols.length}, 1fr)` }}
-                 className="border-b border-white/10">
-              {/* Empresa header — empty or label */}
-              <div className="px-3 py-3 flex items-end">
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">EMPRESA</span>
-              </div>
-              {visibleCols.map(col => (
-                <div key={col.key} className="px-2 py-3 text-center flex items-end justify-center">
-                  <span className="text-[9px] font-bold uppercase tracking-wider leading-tight text-center whitespace-pre-line"
-                        style={{ color: col.labelColor }}>
+        {/* Horizontally scrollable table */}
+        <div className="overflow-x-auto">
+          <table style={{ minWidth: "600px" }} className="w-full">
+            <thead>
+              <tr className="border-b border-white/10">
+                {/* Fixed empresa column */}
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider sticky left-0 bg-[#11141D] z-10">
+                  Empresa
+                </th>
+                {allCols.map(col => (
+                  <th key={col.key} className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider whitespace-pre-line leading-tight"
+                      style={{ color: col.labelColor }}>
                     {col.label}
-                  </span>
-                </div>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {comparadorData.map((row, i) => (
+                <motion.tr
+                  key={row.empresa}
+                  className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                  initial={{ opacity: 0, x: 16 }}
+                  animate={isInView ? { opacity: 1, x: 0 } : {}}
+                  transition={{ duration: 0.35, delay: 0.05 + i * 0.05 }}
+                >
+                  <td className="px-5 py-3 text-xs font-bold text-white sticky left-0 bg-[#11141D] z-10 leading-tight">
+                    {row.empresa}
+                  </td>
+                  {allCols.map(col => {
+                    const val = row[col.key as keyof typeof row];
+                    const numVal = typeof val === "number" ? val : null;
+                    return (
+                      <td key={col.key} className="px-4 py-3 text-center">
+                        <span className="text-sm font-black"
+                              style={{ color: col.colored && numVal !== null ? scoreColor(numVal) : "#e5e7eb" }}>
+                          {val}
+                        </span>
+                      </td>
+                    );
+                  })}
+                </motion.tr>
               ))}
-            </div>
-
-            {/* Data rows */}
-            {comparadorData.map((row, i) => (
-              <div key={row.empresa}
-                   style={{ display: "grid", gridTemplateColumns: `1fr repeat(${visibleCols.length}, 1fr)` }}
-                   className={`border-b border-white/5 ${i % 2 === 1 ? "bg-[#11141D]/40" : ""}`}>
-                <div className="px-3 py-3 flex items-center">
-                  <span className="text-[10px] font-bold text-white leading-tight">{row.empresa}</span>
-                </div>
-                {visibleCols.map(col => {
-                  const val = row[col.key as keyof typeof row];
-                  const numVal = typeof val === "number" ? val : null;
-                  return (
-                    <div key={col.key} className="px-2 py-3 flex items-center justify-center">
-                      <span className="text-sm font-black"
-                            style={{ color: col.colored && numVal !== null ? scoreColor(numVal) : "#e5e7eb" }}>
-                        {val}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          {/* Column pagination dots */}
-          <div className="flex items-center justify-center gap-2 mt-4">
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button key={i} onClick={() => setColPage(i)}
-                      className={`rounded-full transition-all ${i === colPage ? "w-5 h-2 bg-blue-500" : "w-2 h-2 bg-white/20"}`} />
-            ))}
-          </div>
-          <p className="text-center text-[10px] text-gray-500 mt-1">Deslize para ver mais colunas</p>
+            </tbody>
+          </table>
         </div>
 
-        {/* Home bar */}
-        <div className="flex justify-center py-2 bg-[#0A0D14]">
-          <div className="w-20 h-1 rounded-full bg-white/20" />
+        {/* Scroll hint */}
+        <div className="px-5 py-3 border-t border-white/5 flex items-center justify-end gap-1.5">
+          <ChevronRight size={12} className="text-gray-500" />
+          <span className="text-xs text-gray-500">Deslize para ver mais</span>
         </div>
       </div>
     </motion.div>
@@ -697,12 +675,15 @@ export default function LandingPage() {
             </a>
           </div>
 
-          {/* Mobile: CTA + hamburger */}
-          <div className="flex md:hidden items-center gap-3">
-            <a href="/dashboard" className="bg-white text-black px-4 py-2 rounded-full font-bold text-sm">
-              Começar Grátis
+          {/* Mobile: Login + CTA + hamburger */}
+          <div className="flex md:hidden items-center gap-2">
+            <a href="/login" className="border border-white/30 text-white px-3 py-2 rounded-full font-semibold text-sm hover:bg-white/10 transition-colors">
+              Entrar
             </a>
-            <button className="w-9 h-9 flex flex-col items-center justify-center gap-1.5">
+            <a href="/dashboard" className="bg-white text-black px-3 py-2 rounded-full font-bold text-sm">
+              Cadastrar
+            </a>
+            <button className="w-8 h-8 flex flex-col items-center justify-center gap-1.5 ml-1">
               <span className="w-5 h-0.5 bg-white rounded-full" />
               <span className="w-5 h-0.5 bg-white rounded-full" />
             </button>
