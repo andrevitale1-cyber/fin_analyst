@@ -216,18 +216,23 @@ function PhoneImage() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: false, margin: "-100px" });
   const [isDark, setIsDark] = useState(true);
+  const [fade, setFade] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (isInView) {
-      // Start cycling when in view
       intervalRef.current = setInterval(() => {
-        setIsDark(prev => !prev);
-      }, 2200);
+        // Fade out → swap → fade in
+        setFade(true);
+        setTimeout(() => {
+          setIsDark(prev => !prev);
+          setFade(false);
+        }, 400);
+      }, 2800);
     } else {
-      // Reset to dark when out of view
       if (intervalRef.current) clearInterval(intervalRef.current);
       setIsDark(true);
+      setFade(false);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [isInView]);
@@ -238,21 +243,16 @@ function PhoneImage() {
       initial={{ opacity: 0, y: 80 }}
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 80 }}
       transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
-      className="relative w-full max-w-sm"
+      className="w-full max-w-sm"
     >
-      {/* Dark version */}
       <img
-        src="/celular.png"
-        alt="App modo escuro"
-        className="w-full h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] absolute inset-0 transition-opacity duration-700"
-        style={{ opacity: isDark ? 1 : 0 }}
-      />
-      {/* Light version */}
-      <img
-        src="/celular-light.png"
-        alt="App modo claro"
-        className="w-full h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] transition-opacity duration-700"
-        style={{ opacity: isDark ? 0 : 1 }}
+        src={isDark ? "/celular.png" : "/celular-light.png"}
+        alt="App FinAnalyzer"
+        className="w-full h-auto rounded-[3rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)]"
+        style={{
+          opacity: fade ? 0 : 1,
+          transition: "opacity 0.4s ease",
+        }}
       />
     </motion.div>
   );
