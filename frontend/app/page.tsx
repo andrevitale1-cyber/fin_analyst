@@ -11,15 +11,15 @@ import {
 
 // --- DATA ---
 const historicoData = [
-  { empresa: "SAMSARA", periodo: "4T/2026", data: "05/03/2026", score: 5 },
-  { empresa: "MARVELL", periodo: "4T/2026", data: "05/03/2026", score: 5 },
-  { empresa: "VEEVA", periodo: "4T/2026", data: "04/03/2026", score: 5 },
-  { empresa: "ENGIE", periodo: "4T/2025", data: "04/03/2026", score: 2 },
+  { empresa: "ITAÚ", periodo: "4T/2026", data: "05/03/2026", score: 5 },
+  { empresa: "PETROBRAS", periodo: "4T/2026", data: "05/03/2026", score: 5 },
+  { empresa: "APPLE", periodo: "4T/2026", data: "04/03/2026", score: 5 },
+  { empresa: "GOOGLE", periodo: "4T/2025", data: "04/03/2026", score: 2 },
   { empresa: "BROADCOM", periodo: "1T/2026", data: "04/03/2026", score: 5 },
   { empresa: "RAIA DROGASIL", periodo: "4T/2025", data: "04/03/2026", score: 4 },
-  { empresa: "ON RUNNING", periodo: "4T/2025", data: "03/03/2026", score: 4 },
-  { empresa: "AURA", periodo: "4T/2025", data: "27/02/2026", score: 2 },
-  { empresa: "CELSIUS", periodo: "4T/2025", data: "26/02/2026", score: 4 },
+  { empresa: "TESLA", periodo: "4T/2025", data: "03/03/2026", score: 4 },
+  { empresa: "AMAZON", periodo: "4T/2025", data: "27/02/2026", score: 2 },
+  { empresa: "COCA COLA", periodo: "4T/2025", data: "26/02/2026", score: 4 },
 ];
 
 // --- SUBCOMPONENTS ---
@@ -677,7 +677,7 @@ export default function LandingPage() {
 
           {/* Mobile: Login + CTA + hamburger */}
           <div className="flex md:hidden items-center gap-2">
-            <a href="/login" className="border border-white/30 text-white px-3 py-2 rounded-full font-semibold text-sm hover:bg-white/10 transition-colors">
+            <a href="/dashboard" className="border border-white/30 text-white px-3 py-2 rounded-full font-semibold text-sm hover:bg-white/10 transition-colors">
               Entrar
             </a>
             <a href="/dashboard" className="bg-white text-black px-3 py-2 rounded-full font-bold text-sm">
