@@ -569,7 +569,7 @@ export default function LandingPage() {
         {/* BLOCO 4: HISTÓRICO COMPLETO */}
         <section
           className="py-32 lg:py-48 relative bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/fundo-historico.png')" }}
+          style={{ backgroundImage: "url('/secao4.png')" }}
         >
           <div className="absolute inset-0 bg-[#0A0D14]/60 pointer-events-none" />
 
