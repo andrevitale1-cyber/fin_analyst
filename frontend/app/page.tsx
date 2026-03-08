@@ -394,6 +394,148 @@ function ScoreDemoMobile() {
   );
 }
 
+// --- COMPARADOR MOBILE: recreates the real app's aggregated table ---
+const comparadorData = [
+  { empresa: "AEROVIRONMENT", notaFinal: 2, receita: 4, lucro: 1, divida: 3, rentabilidade: 1,  resultados: 2, media: 2.5, ultimoTri: "2T/2026" },
+  { empresa: "AMAZON",        notaFinal: 4, receita: 5, lucro: 3, divida: 4, rentabilidade: 4,  resultados: 1, media: 4,   ultimoTri: "4T/2025" },
+  { empresa: "AMD",           notaFinal: 4, receita: 5, lucro: 4, divida: 5, rentabilidade: 4,  resultados: 1, media: 4,   ultimoTri: "4T/2025" },
+  { empresa: "ARISTA",        notaFinal: 5, receita: 5, lucro: 5, divida: 5, rentabilidade: 4,  resultados: 1, media: 5,   ultimoTri: "4T/2025" },
+  { empresa: "AURA",          notaFinal: 2, receita: 3, lucro: 2, divida: 1, rentabilidade: 4,  resultados: 1, media: 2,   ultimoTri: "4T/2025" },
+  { empresa: "AXON",          notaFinal: 3, receita: 5, lucro: 2, divida: 4, rentabilidade: 4,  resultados: 1, media: 3,   ultimoTri: "4T/2025" },
+  { empresa: "BADGER METERS", notaFinal: 5, receita: 5, lucro: 5, divida: 5, rentabilidade: 5,  resultados: 4, media: 4.5, ultimoTri: "4T/2025" },
+  { empresa: "BB SEGURIDADE", notaFinal: 3, receita: 3, lucro: 4, divida: 5, rentabilidade: 2,  resultados: 1, media: 3,   ultimoTri: "4T/2025" },
+  { empresa: "BROADCOM",      notaFinal: 5, receita: 5, lucro: 5, divida: 4, rentabilidade: 5,  resultados: 1, media: 5,   ultimoTri: "1T/2026" },
+];
+
+function scoreColor(s: number) {
+  if (s >= 4.5) return "#22c55e";
+  if (s >= 4)   return "#4ade80";
+  if (s >= 3)   return "#eab308";
+  if (s >= 2)   return "#f97316";
+  return "#ef4444";
+}
+
+const comparadorCols = [
+  { key: "notaFinal",    label: "NOTA\nFINAL",           colored: true,  labelColor: "#a855f7" },
+  { key: "receita",      label: "RECEITA",               colored: true,  labelColor: "#3b82f6" },
+  { key: "lucro",        label: "LUCRO",                 colored: true,  labelColor: "#22c55e" },
+  { key: "divida",       label: "DÍVIDA",                colored: true,  labelColor: "#ef4444" },
+  { key: "rentabilidade",label: "RENTABILIDADE",         colored: true,  labelColor: "#eab308" },
+  { key: "resultados",   label: "RESULTADOS\nANALISADOS",colored: false, labelColor: "#e5e7eb" },
+  { key: "media",        label: "MÉDIA",                 colored: true,  labelColor: "#22c55e" },
+  { key: "ultimoTri",    label: "ÚLTIMO\nTRI",           colored: false, labelColor: "#e5e7eb" },
+];
+
+function ComparadorMobile() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
+  const tableRef = useRef<HTMLDivElement>(null);
+  const [colPage, setColPage] = useState(0);
+
+  // Show 3 data columns at a time (plus empresa col which is fixed)
+  const COLS_PER_PAGE = 3;
+  const totalPages = Math.ceil(comparadorCols.length / COLS_PER_PAGE);
+  const visibleCols = comparadorCols.slice(colPage * COLS_PER_PAGE, colPage * COLS_PER_PAGE + COLS_PER_PAGE);
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+      className="w-full select-none"
+    >
+      {/* Phone frame */}
+      <div className="relative mx-auto rounded-[2.8rem] bg-[#0d0f14] border border-white/10 shadow-[0_30px_80px_-10px_rgba(0,0,0,0.95)] overflow-hidden" style={{ maxWidth: "340px" }}>
+
+        {/* Status bar */}
+        <div className="flex items-center justify-between px-6 pt-8 pb-3 text-[10px] font-semibold text-white/40">
+          <span>8:19</span><span>●●● WiFi 🔋</span>
+        </div>
+
+        {/* App navbar */}
+        <div className="flex items-center justify-between px-4 pb-3 border-b border-white/8">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#1a1d27] rounded-xl flex items-center justify-center">
+              <Menu size={14} className="text-gray-300" />
+            </div>
+            <span className="text-sm font-bold text-white">FinAnalyzer <span className="text-blue-400">.AI</span></span>
+          </div>
+          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold">A</div>
+        </div>
+
+        {/* Page content */}
+        <div className="px-4 pt-6 pb-4 bg-[#0A0D14]">
+          <h2 className="text-xl font-bold text-white mb-1">Tabela Agregada</h2>
+          <p className="text-xs text-gray-400 mb-4">Visão consolidada do desempenho das empresas.</p>
+
+          {/* Configurar Colunas button */}
+          <button className="w-full bg-[#11141D] border border-white/10 rounded-xl py-3 text-sm font-semibold text-gray-200 flex items-center justify-center gap-2 mb-5">
+            <span className="text-base">⚙</span> Configurar Colunas
+          </button>
+
+          {/* Table */}
+          <div className="rounded-2xl overflow-hidden border border-white/8 bg-[#0d0f14]">
+            {/* Column headers row */}
+            <div style={{ display: "grid", gridTemplateColumns: `1fr repeat(${visibleCols.length}, 1fr)` }}
+                 className="border-b border-white/10">
+              {/* Empresa header — empty or label */}
+              <div className="px-3 py-3 flex items-end">
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">EMPRESA</span>
+              </div>
+              {visibleCols.map(col => (
+                <div key={col.key} className="px-2 py-3 text-center flex items-end justify-center">
+                  <span className="text-[9px] font-bold uppercase tracking-wider leading-tight text-center whitespace-pre-line"
+                        style={{ color: col.labelColor }}>
+                    {col.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Data rows */}
+            {comparadorData.map((row, i) => (
+              <div key={row.empresa}
+                   style={{ display: "grid", gridTemplateColumns: `1fr repeat(${visibleCols.length}, 1fr)` }}
+                   className={`border-b border-white/5 ${i % 2 === 1 ? "bg-[#11141D]/40" : ""}`}>
+                <div className="px-3 py-3 flex items-center">
+                  <span className="text-[10px] font-bold text-white leading-tight">{row.empresa}</span>
+                </div>
+                {visibleCols.map(col => {
+                  const val = row[col.key as keyof typeof row];
+                  const numVal = typeof val === "number" ? val : null;
+                  return (
+                    <div key={col.key} className="px-2 py-3 flex items-center justify-center">
+                      <span className="text-sm font-black"
+                            style={{ color: col.colored && numVal !== null ? scoreColor(numVal) : "#e5e7eb" }}>
+                        {val}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {/* Column pagination dots */}
+          <div className="flex items-center justify-center gap-2 mt-4">
+            {Array.from({ length: totalPages }).map((_, i) => (
+              <button key={i} onClick={() => setColPage(i)}
+                      className={`rounded-full transition-all ${i === colPage ? "w-5 h-2 bg-blue-500" : "w-2 h-2 bg-white/20"}`} />
+            ))}
+          </div>
+          <p className="text-center text-[10px] text-gray-500 mt-1">Deslize para ver mais colunas</p>
+        </div>
+
+        {/* Home bar */}
+        <div className="flex justify-center py-2 bg-[#0A0D14]">
+          <div className="w-20 h-1 rounded-full bg-white/20" />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 function PhoneImage() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: false, margin: "-100px" });
@@ -673,8 +815,26 @@ export default function LandingPage() {
           }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-0 items-start">
-              <div className="lg:col-span-4 lg:col-start-9 text-left lg:text-left">
+
+            {/* Mobile: text + phone mockup stacked */}
+            <div className="flex flex-col items-center gap-10 lg:hidden">
+              <div className="text-center">
+                <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30 mx-auto">
+                  <Layout className="text-purple-400 w-7 h-7" />
+                </div>
+                <h2 className="text-3xl font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
+                  Comparador <br/>de Ativos
+                </h2>
+                <p className="text-base text-gray-300 leading-relaxed font-medium tracking-tight max-w-sm mx-auto">
+                  Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
+                </p>
+              </div>
+              <ComparadorMobile />
+            </div>
+
+            {/* Desktop: text pinned to right */}
+            <div className="hidden lg:grid lg:grid-cols-12 gap-0 items-start">
+              <div className="lg:col-span-4 lg:col-start-9 text-left">
                 <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30">
                   <Layout className="text-purple-400 w-7 h-7" />
                 </div>
@@ -686,6 +846,7 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
+
           </div>
         </section>
 
