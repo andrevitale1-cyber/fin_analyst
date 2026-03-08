@@ -73,8 +73,6 @@ function ScoreDemo() {
   const [barsVisible, setBarsVisible] = React.useState(false);
   const animFrameRef = useRef<number>(0);
   const scrollPos = useRef(0);
-  const pauseUntil = useRef(0);
-  const lastTimeRef = useRef(0);
 
   useEffect(() => {
     const t = setTimeout(() => setBarsVisible(true), 500);
@@ -86,34 +84,38 @@ function ScoreDemo() {
     const inner = innerRef.current;
     if (!container || !inner) return;
 
-    const SPEED = 0.4;
-    const PAUSE_MS = 2000;
+    const SPEED = 0.45;
+    const PAUSE_MS = 2200;
+    let pausing = false;
+    let pauseStart = 0;
 
-    const tick = (now: number) => {
-      if (!container || !inner) return;
-      const maxScroll = inner.scrollHeight - container.clientHeight;
+    const tick = () => {
+      if (!containerRef.current || !innerRef.current) return;
+      const maxScroll = innerRef.current.scrollHeight - containerRef.current.clientHeight;
 
-      if (now < pauseUntil.current) {
+      if (pausing) {
+        if (Date.now() - pauseStart >= PAUSE_MS) {
+          pausing = false;
+        }
         animFrameRef.current = requestAnimationFrame(tick);
         return;
       }
 
       if (scrollPos.current >= maxScroll - 1) {
         scrollPos.current = 0;
-        container.scrollTop = 0;
-        pauseUntil.current = now + PAUSE_MS;
+        containerRef.current.scrollTop = 0;
+        pausing = true;
+        pauseStart = Date.now();
         animFrameRef.current = requestAnimationFrame(tick);
         return;
       }
 
-      const delta = now - lastTimeRef.current;
-      lastTimeRef.current = now;
-      scrollPos.current = Math.min(scrollPos.current + SPEED * (delta / 16.67), maxScroll);
-      container.scrollTop = scrollPos.current;
+      scrollPos.current = Math.min(scrollPos.current + SPEED, maxScroll);
+      containerRef.current.scrollTop = scrollPos.current;
       animFrameRef.current = requestAnimationFrame(tick);
     };
 
-    animFrameRef.current = requestAnimationFrame((now) => { lastTimeRef.current = now; tick(now); });
+    animFrameRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animFrameRef.current);
   }, []);
 
@@ -214,108 +216,158 @@ function ScoreDemo() {
 
 function PhoneImage() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, margin: "-100px" });
+  const isInView = useInView(ref, { once: false, margin: "-80px" });
   const [isDark, setIsDark] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (isInView) {
+      // Clear any old interval first
+      if (intervalRef.current) clearInterval(intervalRef.current);
       intervalRef.current = setInterval(() => {
         setIsDark(prev => !prev);
-      }, 3000);
+      }, 3200);
     } else {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
       setIsDark(true);
     }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [isInView]);
 
   const d = isDark;
-  const screen  = d ? "bg-[#0f1117]" : "bg-[#f2f4f8]";
-  const card    = d ? "bg-[#1a1d27] border-white/8" : "bg-white border-gray-200";
-  const input   = d ? "bg-[#0f1117] border-white/10 text-white" : "bg-gray-100 border-gray-300 text-gray-900";
-  const label   = d ? "text-gray-400" : "text-gray-500";
-  const title   = d ? "text-white" : "text-gray-900";
-  const sub     = d ? "text-gray-400" : "text-gray-500";
-  const btn     = "bg-blue-600 text-white";
-  const zone    = d ? "border-blue-500/40 bg-blue-500/5" : "border-blue-400/60 bg-blue-50";
-  const zoneText = d ? "text-gray-400" : "text-gray-500";
-  const zoneFile = d ? "text-white" : "text-gray-800";
+  const screen   = d ? "#0f1117" : "#f2f4f8";
+  const titleC   = d ? "#ffffff" : "#111827";
+  const subC     = d ? "#9ca3af" : "#6b7280";
+  const labelC   = d ? "#6b7280" : "#9ca3af";
+  const inputBg  = d ? "#1a1d27" : "#ffffff";
+  const inputBdr = d ? "rgba(255,255,255,0.08)" : "#e5e7eb";
+  const inputTxt = d ? "#ffffff" : "#111827";
+  const zoneBdr  = d ? "rgba(59,130,246,0.35)" : "rgba(59,130,246,0.5)";
+  const zoneBg   = d ? "rgba(59,130,246,0.05)" : "rgba(239,246,255,1)";
+  const zoneFile = d ? "#ffffff" : "#1f2937";
+  const zoneSub  = d ? "#9ca3af" : "#6b7280";
+  const barC     = d ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+
+  const transition = "background-color 0.6s ease, color 0.6s ease, border-color 0.6s ease";
 
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 80 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 80 }}
-      transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
-      className="w-full max-w-[320px] mx-auto select-none"
+      initial={{ opacity: 0, y: 60 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+      transition={{ duration: 0.8, ease: "easeOut", delay: 0.15 }}
+      className="relative w-full select-none"
+      style={{ maxWidth: "320px" }}
     >
-      {/* Phone frame */}
-      <div className="relative rounded-[3rem] bg-[#111] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.9)] border border-white/10 overflow-hidden"
-           style={{ padding: "10px" }}>
+      {/* The phone frame image — renders on top via z-index */}
+      <img
+        src="/celular1.png"
+        alt="iPhone frame"
+        className="relative w-full h-auto pointer-events-none"
+        style={{ zIndex: 2 }}
+      />
 
-        {/* Notch */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-20" />
+      {/* Coded screen — positioned absolutely inside the phone screen area */}
+      {/* These % values align to the screen viewport of a typical iPhone mockup image */}
+      <div
+        style={{
+          position: "absolute",
+          top: "3.2%",
+          left: "6.5%",
+          width: "87%",
+          height: "93.5%",
+          borderRadius: "12%/7%",
+          overflow: "hidden",
+          zIndex: 1,
+          backgroundColor: screen,
+          transition,
+        }}
+      >
+        {/* Status bar */}
+        <div style={{
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          padding: "10px 18px 4px",
+          fontSize: "9px", fontWeight: 600,
+          color: d ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)",
+          transition,
+        }}>
+          <span>9:41</span>
+          <span style={{ fontSize: "8px" }}>●●● WiFi 🔋</span>
+        </div>
 
-        {/* Screen */}
-        <div
-          className={`relative rounded-[2.4rem] overflow-hidden transition-colors duration-700 ${screen}`}
-          style={{ minHeight: "620px" }}
-        >
-          {/* Status bar */}
-          <div className={`flex items-center justify-between px-6 pt-10 pb-2 text-[10px] font-semibold ${d ? "text-white/60" : "text-gray-500"}`}>
-            <span>9:41</span>
-            <div className="flex items-center gap-1">
-              <span>●●●</span>
-              <span>WiFi</span>
-              <span>🔋</span>
-            </div>
+        {/* Notch spacer */}
+        <div style={{ height: "6px" }} />
+
+        {/* App content */}
+        <div style={{ padding: "0 16px 16px" }}>
+          {/* Title */}
+          <div style={{ textAlign: "center", marginBottom: "14px" }}>
+            <p style={{ color: titleC, fontSize: "13px", fontWeight: 700, lineHeight: 1.3, transition }}>
+              Nova Análise Financeira
+            </p>
+            <p style={{ color: subC, fontSize: "10px", marginTop: "4px", lineHeight: 1.4, transition }}>
+              Carregue o relatório trimestral (PDF) para processamento via IA.
+            </p>
           </div>
 
-          {/* App content */}
-          <div className="px-5 pb-6 transition-all duration-700">
-
-            {/* Header */}
-            <div className="text-center mb-5 mt-2">
-              <p className={`text-base font-bold leading-tight ${title} transition-colors duration-700`}>Nova Análise Financeira</p>
-              <p className={`text-xs mt-1 leading-snug ${sub} transition-colors duration-700`}>
-                Carregue o relatório trimestral (PDF) para processamento via IA.
+          {/* Fields */}
+          {[
+            { label: "EMPRESA", value: "AMAZON" },
+            { label: "ANO", value: "2025" },
+            { label: "TRIMESTRE", value: "1º Trimestre" },
+          ].map(f => (
+            <div key={f.label} style={{ marginBottom: "10px" }}>
+              <p style={{ color: labelC, fontSize: "8px", fontWeight: 700, letterSpacing: "0.08em", marginBottom: "4px", transition }}>
+                {f.label}
               </p>
-            </div>
-
-            {/* Fields */}
-            <div className="space-y-3">
-              {[
-                { label: "EMPRESA", value: "AMAZON" },
-                { label: "ANO",     value: "2025"   },
-                { label: "TRIMESTRE", value: "1º Trimestre" },
-              ].map(f => (
-                <div key={f.label}>
-                  <p className={`text-[9px] font-semibold uppercase tracking-widest mb-1 ${label} transition-colors duration-700`}>{f.label}</p>
-                  <div className={`rounded-xl border px-3 py-2.5 text-xs font-medium ${input} transition-colors duration-700`}>
-                    {f.value}
-                  </div>
-                </div>
-              ))}
-
-              {/* Upload zone */}
-              <div className={`rounded-xl border-2 border-dashed px-4 py-4 text-center mt-1 transition-colors duration-700 ${zone}`}>
-                <UploadCloud size={22} className="mx-auto mb-2 text-blue-500" />
-                <p className={`text-[10px] font-bold ${zoneFile} transition-colors duration-700`}>AMZN-Q1-2025-Earnings-Release.pdf</p>
-                <p className={`text-[9px] mt-0.5 ${zoneText} transition-colors duration-700`}>Suporta PDF de até 10MB</p>
+              <div style={{
+                backgroundColor: inputBg, border: `1px solid ${inputBdr}`,
+                borderRadius: "10px", padding: "8px 12px",
+                color: inputTxt, fontSize: "11px", fontWeight: 500,
+                transition,
+              }}>
+                {f.value}
               </div>
-
-              {/* CTA */}
-              <button className={`w-full rounded-xl py-3 text-xs font-bold flex items-center justify-center gap-2 mt-1 ${btn}`}>
-                <span>✦</span> Gerar Análise Completa
-              </button>
             </div>
+          ))}
+
+          {/* Upload zone */}
+          <div style={{
+            border: `2px dashed ${zoneBdr}`, borderRadius: "10px",
+            backgroundColor: zoneBg, padding: "12px 10px", textAlign: "center",
+            marginBottom: "10px", transition,
+          }}>
+            <div style={{ fontSize: "18px", marginBottom: "4px" }}>☁</div>
+            <p style={{ color: zoneFile, fontSize: "9px", fontWeight: 700, lineHeight: 1.3, transition }}>
+              AMZN-Q1-2025-Earnings-Release.pdf
+            </p>
+            <p style={{ color: zoneSub, fontSize: "8px", marginTop: "2px", transition }}>
+              Suporta PDF de até 10MB
+            </p>
           </div>
+
+          {/* CTA button */}
+          <button style={{
+            width: "100%", backgroundColor: "#2563eb", color: "#fff",
+            borderRadius: "10px", padding: "10px", fontSize: "10px",
+            fontWeight: 700, border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+          }}>
+            ✦ Gerar Análise Completa
+          </button>
         </div>
 
         {/* Home bar */}
-        <div className="flex justify-center pt-2 pb-1">
-          <div className={`w-24 h-1 rounded-full transition-colors duration-700 ${d ? "bg-white/30" : "bg-gray-400/50"}`} />
+        <div style={{ display: "flex", justifyContent: "center", paddingBottom: "8px", marginTop: "auto" }}>
+          <div style={{ width: "64px", height: "4px", borderRadius: "9999px", backgroundColor: barC, transition }} />
         </div>
       </div>
     </motion.div>
@@ -419,32 +471,41 @@ export default function LandingPage() {
         
         {/* BLOCO 1: UPLOAD */}
         <section 
-          className="py-32 lg:py-56 relative bg-cover bg-center bg-no-repeat overflow-hidden"
+          className="py-20 lg:py-56 relative bg-cover bg-center bg-no-repeat overflow-hidden"
           style={{ backgroundImage: "url('/upload.png')" }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="grid lg:grid-cols-12 gap-16 items-center">
-              <div className="lg:col-span-5 lg:col-start-1">
-                <div className="w-16 h-16 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-8 border border-blue-400/30">
-                  <UploadCloud className="text-blue-400 w-8 h-8" />
+
+            {/* Mobile: text on top centered; Desktop: side by side grid */}
+            <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-16 lg:items-center">
+
+              {/* Text — centered on mobile, left-aligned on desktop */}
+              <div className="lg:col-span-5 lg:col-start-1 text-center lg:text-left mb-12 lg:mb-0">
+                <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-400/30 mx-auto lg:mx-0">
+                  <UploadCloud className="text-blue-400 w-7 h-7" />
                 </div>
-                <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
+                <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
                   Upload <br/>Inteligente
                 </h2>
-                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
+                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight max-w-md mx-auto lg:mx-0">
                   Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos.
                 </p>
-                <ul className="space-y-6">
+                <ul className="space-y-4 inline-flex flex-col items-start">
                   <ListItem>Suporte a PDFs de até 10MB</ListItem>
                   <ListItem>Extração automática de métricas</ListItem>
                   <ListItem>Identificação de trimestre e ano</ListItem>
                 </ul>
               </div>
 
-              <div className="lg:col-span-6 lg:col-start-7 relative flex justify-end">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none"></div>
-                <PhoneImage />
+              {/* Phone — full width centered on mobile, right column on desktop */}
+              <div className="lg:col-span-6 lg:col-start-7 relative flex justify-center lg:justify-end">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none" />
+                {/* Mobile: constrain width so phone doesn't overflow */}
+                <div className="w-full max-w-[260px] lg:max-w-none">
+                  <PhoneImage />
+                </div>
               </div>
+
             </div>
           </div>
         </section>
