@@ -688,15 +688,21 @@ export default function LandingPage() {
         </section>
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
-        <section 
-          className="py-16 lg:py-56 relative"
-          style={{ 
-            backgroundImage: "url('/secao3_.png')",
-            backgroundSize: 'cover',
-            backgroundPosition: 'center center',
-            backgroundRepeat: 'no-repeat'
-          }}
-        >
+        <section className="py-16 lg:py-56 relative overflow-hidden">
+          {/* Background Mobile: Gradiente preto e azul claro */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black to-sky-400/40 lg:hidden z-0" />
+          
+          {/* Background Desktop: Imagem */}
+          <div 
+            className="absolute inset-0 hidden lg:block z-0"
+            style={{ 
+              backgroundImage: "url('/secao3_.png')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+              backgroundRepeat: 'no-repeat'
+            }}
+          />
+
           <div className="max-w-7xl mx-auto px-6 relative z-10">
 
             {/* Mobile: text + phone mockup stacked */}
