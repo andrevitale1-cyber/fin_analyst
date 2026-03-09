@@ -615,7 +615,7 @@ export default function FinancialDashboard() {
         {currentView === 'dashboard' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl mx-auto mt-2 md:mt-12 px-0 md:px-0">
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-[60vh] animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-600 dark:text-blue-500 animate-spin mb-6" /><h2 className="text-3xl font-bold animate-pulse text-gray-900 dark:text-white mb-3 text-center">Processando...</h2><p className="text-gray-500 dark:text-gray-400 text-center px-4 font-medium">Nossa IA está estruturando e analisando seu relatório.</p></div>
+              <div className="flex flex-col items-center justify-center h-[60vh] animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-600 dark:text-blue-500 animate-spin mb-6" /><h2 className="text-3xl font-bold animate-pulse text-gray-900 dark:text-white mb-3 text-center">Nossa IA já está analisando o resultado</h2><p className="text-gray-500 dark:text-gray-400 text-center px-4 font-medium">Nossa IA está estruturando e analisando seu relatório.</p></div>
             ) : (
               <>
                 <div className="text-center mb-10 md:mb-12">
