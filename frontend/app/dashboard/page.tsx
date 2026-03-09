@@ -17,7 +17,7 @@ const API_BASE = "https://api-finanalyzer.onrender.com";
 
 // --- CONFIGURAÇÃO DAS COLUNAS ---
 const COLUMN_DEFINITIONS = [
-  { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-black dark:text-white font-bold' },
+  { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-gray-900 dark:text-white font-bold' },
   { key: 'nota_final', label: 'Nota Final', align: 'center', color: 'text-purple-600 dark:text-purple-400 font-bold' },
   { key: 'receita_nota', label: 'Receita', align: 'center', color: 'text-blue-600 dark:text-blue-400' },
   { key: 'lucro_nota', label: 'Lucro', align: 'center', color: 'text-green-600 dark:text-green-400' },
@@ -62,7 +62,6 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="relative w-full max-w-3xl">
 
-        {/* Botão de Fechar */}
         <button 
           onClick={onClose} 
           className="absolute top-2 right-2 md:-top-8 md:-right-8 text-gray-300 hover:text-white bg-gray-800/80 p-2 rounded-full transition-colors z-50"
@@ -70,7 +69,6 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
           <X size={24} />
         </button>
 
-        {/* Toggle Mensal / Anual */}
         <div className="flex flex-col items-center gap-1 mb-4">
           <div className="flex items-center justify-center gap-3">
             <span
@@ -98,10 +96,8 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
           </div>
         </div>
 
-        {/* Grid dos dois cards */}
         <div className="grid md:grid-cols-2 gap-5">
-
-          {/* --- CARD GRATUITO --- */}
+          {/* CARD GRATUITO */}
           <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-2xl p-5 flex flex-col h-full opacity-90 scale-95">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Gratuito</h3>
             <p className="text-gray-500 dark:text-gray-400 text-sm mb-3">Seu plano atual.</p>
@@ -111,7 +107,6 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
               <Feature text="Relatório Resumido na Tela" active />
               <Feature text="Acesso ao histórico simples" active />
               <Feature text="Suporte por email" active />
-              {/* Bloqueios */}
               <Feature text="Upload de arquivos ilimitado" disabled />
               <Feature text="Download da Análise Completa da IA" disabled />
               <Feature text="Tabela Comparativa de Ativos" disabled />
@@ -122,7 +117,7 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
             </button>
           </div>
 
-          {/* --- CARD PREMIUM (DESTAQUE) --- */}
+          {/* CARD PREMIUM */}
           <div className="bg-gray-50 dark:bg-[#0f131a] border-2 border-blue-500 rounded-2xl p-5 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
             {billingCycle === 'yearly' && (
               <div className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
@@ -152,7 +147,6 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
             </button>
             <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
           </div>
-
         </div> 
       </div> 
     </div> 
@@ -177,16 +171,23 @@ export default function FinancialDashboard() {
   // ESTADO DE TEMA (DARK/LIGHT)
   const [isDarkMode, setIsDarkMode] = useState(true);
 
+  // EFEITO REAL PARA TROCAR O TEMA NO HTML DO NAVEGADOR
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDarkMode) {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   
-  // ESTADO PARA O MENU MOBILE
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // ESTADO PARA O MENU DESKTOP
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
-  // Contadores
   const [usageCount, setUsageCount] = useState(0);
   const WEEKLY_LIMIT = 5;
 
@@ -194,7 +195,6 @@ export default function FinancialDashboard() {
   const [historyList, setHistoryList] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
 
-  // Tabela e Filtros
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [showColumnMenu, setShowColumnMenu] = useState(false);
   const columnMenuRef = useRef<HTMLDivElement>(null);
@@ -211,13 +211,10 @@ export default function FinancialDashboard() {
   const [trimestre, setTrimestre] = useState("1T");
   const [file, setFile] = useState<File | null>(null);
 
-  // --- LÓGICA DE PREMIUM REAL ---
   const isPremium = user?.publicMetadata?.plan === 'premium';
 
   useEffect(() => {
-    if (isLoaded && !user) {
-      return; 
-    }
+    if (isLoaded && !user) return; 
 
     if (user) {
       if (!isPremium) {
@@ -282,13 +279,13 @@ export default function FinancialDashboard() {
   };
 
   const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
-    setIsSidebarOpen(false); // Fecha o menu ao clicar em um item
+    setIsSidebarOpen(false);
     if (view === 'table' && !isPremium) setShowUpgradeModal(true);
     else setCurrentView(view);
   };
 
   const handleAnalyze = async () => {
-    if (!file || !empresa || !ano) { alert("Preencha tudo!"); return; }
+    if (!file || !empresa || !ano) { alert("Preencha todos os campos e anexe o PDF!"); return; }
     if (!user) { alert("Aguarde o carregamento do usuário."); return; }
 
     if (!isPremium && usageCount >= WEEKLY_LIMIT) {
@@ -561,289 +558,316 @@ export default function FinancialDashboard() {
   if (!isLoaded) return <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-[#0E1117]"><Loader2 className="animate-spin text-blue-500" /></div>;
 
   return (
-    <div className={isDarkMode ? "dark" : ""}>
-      <div className="flex h-screen bg-gray-50 dark:bg-[#0E1117] text-gray-900 dark:text-gray-100 font-sans overflow-hidden transition-colors duration-300">
-        {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} userId={user?.id} />}
-        
-        {/* --- OVERLAY ESCURO (MOBILE) --- */}
-        {isSidebarOpen && (
-          <div 
-            className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden animate-in fade-in"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
+    <div className="flex h-screen bg-gray-50 dark:bg-[#0E1117] text-gray-900 dark:text-gray-100 font-sans overflow-hidden transition-colors duration-300">
+      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} userId={user?.id} />}
+      
+      {/* --- OVERLAY ESCURO (MOBILE) --- */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden animate-in fade-in"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
-        {/* --- SIDEBAR RESPONSIVA --- */}
-        <aside className={`
-          fixed inset-y-0 left-0 z-50 bg-white dark:bg-[#0d1117] border-r border-gray-200 dark:border-gray-800 flex flex-col p-6 transition-all duration-300 ease-in-out
-          md:relative md:translate-x-0 
-          ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          ${isSidebarCollapsed ? 'md:w-20 md:px-3' : 'w-72'}
-        `}>
-          {/* Header da Sidebar com botão de fechar (Mobile) */}
-          <div className="flex items-center justify-between mb-10 px-2">
-            <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'md:justify-center md:w-full' : ''}`}>
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20 flex-shrink-0">
-                <BarChart3 className="text-white w-5 h-5" />
-              </div>
-              {!isSidebarCollapsed && (
-                <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">FinAnalyzer <span className="text-blue-500">.AI</span></span>
-              )}
+      {/* --- SIDEBAR RESPONSIVA --- */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 bg-white dark:bg-[#0d1117] border-r border-gray-200 dark:border-gray-800 flex flex-col p-6 transition-all duration-300 ease-in-out
+        md:relative md:translate-x-0 
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        ${isSidebarCollapsed ? 'md:w-20 md:px-3' : 'w-72'}
+      `}>
+        {/* Header da Sidebar com botão de fechar (Mobile) */}
+        <div className="flex items-center justify-between mb-10 px-2">
+          <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'md:justify-center md:w-full' : ''}`}>
+            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20 flex-shrink-0">
+              <BarChart3 className="text-white w-5 h-5" />
             </div>
-            {/* Botão Fechar no mobile */}
-            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              <X size={24} />
-            </button>
-            {/* Botão Colapsar no desktop */}
             {!isSidebarCollapsed && (
-              <button onClick={() => setIsSidebarCollapsed(true)} className="hidden md:flex text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-all" title="Esconder menu">
-                <ChevronLeft size={20} />
-              </button>
+              <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">FinAnalyzer <span className="text-blue-500">.AI</span></span>
             )}
           </div>
-
-          <nav className="space-y-2">
-            <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} collapsed={isSidebarCollapsed} />
-            <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} collapsed={isSidebarCollapsed} />
-            <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} collapsed={isSidebarCollapsed} />
-          </nav>
-
-          {/* --- CONTADOR DE ANÁLISES --- */}
-          {!isPremium && (
-            <div className="mt-auto mb-6 px-2">
-              <div className="bg-gray-50 dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 p-4 rounded-xl mb-4">
-                <div className="flex justify-between text-xs mb-2">
-                  <span className="text-gray-600 dark:text-gray-400">Análises Semanais</span>
-                  <span className={`font-bold ${usageCount >= 5 ? 'text-red-500 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>{usageCount}/{WEEKLY_LIMIT}</span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-500 ${usageCount >= 5 ? 'bg-red-500' : 'bg-blue-500'}`} 
-                    style={{ width: `${Math.min((usageCount / WEEKLY_LIMIT) * 100, 100)}%` }} 
-                  />
-                </div>
-              </div>
-              <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-                <Zap size={14} className="text-yellow-300 fill-yellow-300" /> Seja Premium
-              </button>
-            </div>
-          )}
-          
-          {isPremium && <div className="mt-auto" />}
-
-          {/* --- TOGGLE DAY/NIGHT MODE --- */}
+          {/* Botão Fechar no mobile */}
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <X size={24} />
+          </button>
+          {/* Botão Colapsar no desktop */}
           {!isSidebarCollapsed && (
-            <div className="px-2 mt-4 mb-2">
-              <button 
-                onClick={() => setIsDarkMode(!isDarkMode)} 
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-all"
-              >
-                {isDarkMode ? <><Sun size={16} /> Day Mode</> : <><Moon size={16} /> Night Mode</>}
-              </button>
-            </div>
+            <button onClick={() => setIsSidebarCollapsed(true)} className="hidden md:flex text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-all" title="Esconder menu">
+              <ChevronLeft size={20} />
+            </button>
           )}
+        </div>
 
-          {/* --- BOTÃO OFICIAL DO CLERK --- */}
-          <div className="mt-2 px-2 py-3 border-t border-gray-200 dark:border-gray-800">
-            <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-all w-full">
-                <UserButton 
-                  showName={!isSidebarCollapsed} 
-                  appearance={{
-                    elements: {
-                      userButtonBox: "flex flex-row-reverse w-full justify-start gap-3",
-                      userButtonOuterIdentifier: "!text-gray-900 dark:!text-white !font-bold text-sm tracking-wide",
-                      avatarBox: "w-9 h-9 ring-2 ring-gray-200 dark:ring-gray-700"
-                    }
-                  }}
+        <nav className="space-y-2">
+          <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} collapsed={isSidebarCollapsed} />
+          <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} collapsed={isSidebarCollapsed} />
+          <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} collapsed={isSidebarCollapsed} />
+        </nav>
+
+        {/* --- CONTADOR DE ANÁLISES --- */}
+        {!isPremium && (
+          <div className="mt-auto mb-6 px-2">
+            <div className="bg-gray-50 dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 p-4 rounded-xl mb-4">
+              <div className="flex justify-between text-xs mb-2">
+                <span className="text-gray-600 dark:text-gray-400">Análises Semanais</span>
+                <span className={`font-bold ${usageCount >= 5 ? 'text-red-500 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>{usageCount}/{WEEKLY_LIMIT}</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                <div 
+                  className={`h-full transition-all duration-500 ${usageCount >= 5 ? 'bg-red-500' : 'bg-blue-500'}`} 
+                  style={{ width: `${Math.min((usageCount / WEEKLY_LIMIT) * 100, 100)}%` }} 
                 />
+              </div>
             </div>
+            <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+              <Zap size={14} className="text-yellow-300 fill-yellow-300" /> Seja Premium
+            </button>
           </div>
-        </aside>
+        )}
         
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative bg-gray-50 dark:bg-[#0E1117] transition-colors duration-300">
-          
-          {/* Botão para reabrir sidebar no desktop (quando colapsada) */}
-          {isSidebarCollapsed && (
-            <div className="hidden md:flex absolute top-6 left-4 z-10 items-center gap-3">
-              <button
-                onClick={() => setIsSidebarCollapsed(false)}
-                className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:border-blue-500 shadow-sm"
-                title="Mostrar menu"
-              >
-                <Menu size={18} /> Menu
-              </button>
-              
-              <button 
-                onClick={() => setIsDarkMode(!isDarkMode)} 
-                className="p-2 bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-blue-500 shadow-sm transition-all"
-                title="Alternar Tema"
-              >
-                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-              </button>
-            </div>
-          )}
-          
-          {/* --- HEADER MOBILE (MENU + LOGO + USER + THEME) --- */}
-          <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-800">
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setIsSidebarOpen(true)} 
-                className="p-2 bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-95 transition-all shadow-sm"
-              >
-                <Menu size={24} />
-              </button>
-              <span className="font-bold text-lg text-gray-900 dark:text-white tracking-tight">FinAnalyzer <span className="text-blue-500">.AI</span></span>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 text-gray-600 dark:text-gray-400">
-                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
-              </button>
-              {/* User Button no Header Mobile */}
-              <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
-            </div>
-          </div>
+        {isPremium && <div className="mt-auto" />}
 
-          {/* Lógica de renderização das views */}
-          {currentView === 'table' && (
-            <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
-              <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-0">
-                <div><h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base">Visão consolidada do desempenho das empresas.</p></div>
-                <div className="relative" ref={columnMenuRef}>
-                  <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-sm w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white dark:bg-[#161b22] border-gray-300 dark:border-gray-700 hover:border-blue-500 text-gray-700 dark:text-gray-300'}`}>
-                    <Settings2 size={18} /><span>Configurar Colunas</span>
-                  </button>
-                  {showColumnMenu && (
-                    <div className="absolute right-0 mt-3 w-80 bg-white/95 dark:bg-[#161b22]/95 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
-                      <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-[#0d1117]/50"><span className="text-sm font-bold text-gray-900 dark:text-white">Visualização de Colunas</span><button onClick={() => setShowColumnMenu(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><X size={16} /></button></div>
-                      <div className="p-2 max-h-[400px] overflow-y-auto space-y-1">
-                        <p className="px-2 py-1 text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">Arraste para reordenar</p>
-                        {columnOrder.map((colKey, index) => {
-                          const col = columnDefsMap[colKey];
-                          const isVisible = visibleColumns[colKey];
-                          return (
-                            <div key={colKey} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onClick={() => toggleColumn(colKey)} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border border-transparent ${draggedItemIndex === index ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-500/50 opacity-50' : 'hover:bg-gray-50 dark:hover:bg-white/5 hover:border-gray-200 dark:hover:border-gray-700'}`}>
-                              <div className="flex items-center gap-3"><div className="cursor-grab text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-300"><GripVertical size={16} /></div><span className={`text-sm font-medium ${isVisible ? 'text-gray-900 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}`}>{col.label}</span></div>
-                              <div className={`p-1.5 rounded-lg transition-colors ${isVisible ? 'bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'}`}>{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
+        {/* --- TOGGLE DAY/NIGHT MODE --- */}
+        {!isSidebarCollapsed && (
+          <div className="px-2 mt-4 mb-2">
+            <button 
+              onClick={() => setIsDarkMode(!isDarkMode)} 
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-all shadow-sm"
+            >
+              {isDarkMode ? <><Sun size={16} className="text-yellow-500"/> Modo Claro</> : <><Moon size={16} className="text-blue-400"/> Modo Escuro</>}
+            </button>
+          </div>
+        )}
+
+        {/* --- BOTÃO OFICIAL DO CLERK --- */}
+        <div className="mt-2 px-2 py-3 border-t border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-all w-full">
+              <UserButton 
+                showName={!isSidebarCollapsed} 
+                appearance={{
+                  elements: {
+                    userButtonBox: "flex flex-row-reverse w-full justify-start gap-3",
+                    userButtonOuterIdentifier: "!text-gray-900 dark:!text-white !font-bold text-sm tracking-wide",
+                    avatarBox: "w-9 h-9 ring-2 ring-gray-200 dark:ring-gray-700"
+                  }
+                }}
+              />
+          </div>
+        </div>
+      </aside>
+      
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 relative bg-gray-50 dark:bg-[#0E1117] transition-colors duration-300">
+        
+        {/* Botão para reabrir sidebar no desktop (quando colapsada) */}
+        {isSidebarCollapsed && (
+          <div className="hidden md:flex absolute top-6 left-4 z-10 items-center gap-3">
+            <button
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:border-blue-500 shadow-sm"
+              title="Mostrar menu"
+            >
+              <Menu size={18} /> Menu
+            </button>
+            
+            <button 
+              onClick={() => setIsDarkMode(!isDarkMode)} 
+              className="p-2 bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-blue-500 shadow-sm transition-all"
+              title="Alternar Tema"
+            >
+              {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+          </div>
+        )}
+        
+        {/* --- HEADER MOBILE (MENU + LOGO + USER + THEME) --- */}
+        <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="p-2 bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-lg text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-95 transition-all shadow-sm"
+            >
+              <Menu size={24} />
+            </button>
+            <span className="font-bold text-lg text-gray-900 dark:text-white tracking-tight">FinAnalyzer <span className="text-blue-500">.AI</span></span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <button onClick={() => setIsDarkMode(!isDarkMode)} className="p-2 text-gray-600 dark:text-gray-400 bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-lg shadow-sm">
+              {isDarkMode ? <Sun size={20} className="text-yellow-500" /> : <Moon size={20} className="text-blue-400"/>}
+            </button>
+            {/* User Button no Header Mobile */}
+            <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
+          </div>
+        </div>
+
+        {/* Lógica de renderização das views */}
+        {currentView === 'table' && (
+          <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-0">
+              <div><h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-500 dark:text-gray-400 mt-1 text-sm md:text-base">Visão consolidada do desempenho das empresas.</p></div>
+              <div className="relative" ref={columnMenuRef}>
+                <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-sm w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white dark:bg-[#161b22] border-gray-300 dark:border-gray-700 hover:border-blue-500 text-gray-700 dark:text-gray-300'}`}>
+                  <Settings2 size={18} /><span>Configurar Colunas</span>
+                </button>
+                {showColumnMenu && (
+                  <div className="absolute right-0 mt-3 w-80 bg-white/95 dark:bg-[#161b22]/95 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
+                    <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-[#0d1117]/50"><span className="text-sm font-bold text-gray-900 dark:text-white">Visualização de Colunas</span><button onClick={() => setShowColumnMenu(false)} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"><X size={16} /></button></div>
+                    <div className="p-2 max-h-[400px] overflow-y-auto space-y-1">
+                      <p className="px-2 py-1 text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">Arraste para reordenar</p>
+                      {columnOrder.map((colKey, index) => {
+                        const col = columnDefsMap[colKey];
+                        const isVisible = visibleColumns[colKey];
+                        return (
+                          <div key={colKey} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onClick={() => toggleColumn(colKey)} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border border-transparent ${draggedItemIndex === index ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-500/50 opacity-50' : 'hover:bg-gray-50 dark:hover:bg-white/5 hover:border-gray-200 dark:hover:border-gray-700'}`}>
+                            <div className="flex items-center gap-3"><div className="cursor-grab text-gray-400 dark:text-gray-600 hover:text-gray-600 dark:hover:text-gray-300"><GripVertical size={16} /></div><span className={`text-sm font-medium ${isVisible ? 'text-gray-900 dark:text-gray-200' : 'text-gray-400 dark:text-gray-500'}`}>{col.label}</span></div>
+                            <div className={`p-1.5 rounded-lg transition-colors ${isVisible ? 'bg-blue-100 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600'}`}>{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}</div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                </div>
-              </header>
-              <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm dark:shadow-xl flex flex-col overflow-hidden transition-colors duration-300">
-                <div className="overflow-x-auto w-full">
-                  <table className={`text-left border-collapse ${visibleCount > 8 ? 'min-w-[1200px]' : 'w-full'}`}>
-                    <thead>
-                      <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-500">
-                        {columnOrder.map((colKey, index) => {
+                  </div>
+                )}
+              </div>
+            </header>
+            <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm dark:shadow-xl flex flex-col overflow-hidden transition-colors duration-300">
+              <div className="overflow-x-auto w-full">
+                <table className={`text-left border-collapse ${visibleCount > 8 ? 'min-w-[1200px]' : 'w-full'}`}>
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-500">
+                      {columnOrder.map((colKey, index) => {
+                        const col = columnDefsMap[colKey];
+                        if (!visibleColumns[colKey]) return null;
+                        const isDragging = draggedItemIndex === index;
+                        return (
+                          <th key={col.key} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onDragOver={(e) => e.preventDefault()} onClick={() => handleSort(col.key)} className={`py-3 px-3 font-semibold transition-all relative group select-none cursor-grab active:cursor-grabbing ${col.color || ''} ${col.minWidth || ''} ${isDragging ? 'opacity-30 bg-blue-100 dark:bg-blue-500/10 border-2 border-dashed border-blue-500' : 'hover:bg-gray-100 dark:hover:bg-white/5'}`} style={{ textAlign: col.align as any }}>
+                            <div className={`flex items-center gap-2 ${col.align === 'center' ? 'justify-center' : ''}`}><GripVertical size={12} className="text-gray-400 dark:text-gray-700 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors opacity-0 group-hover:opacity-100" />{col.label}{sortConfig?.key === col.key ? (sortConfig?.direction === 'asc' ? <ArrowUp size={12} className="text-blue-500 dark:text-blue-400"/> : <ArrowDown size={12} className="text-blue-500 dark:text-blue-400"/>) : <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-30 transition-opacity"/>}</div>
+                          </th>
+                        );
+                      })}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
+                    {sortedTableData.map((item: any) => (
+                      <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group">
+                        {columnOrder.map(colKey => {
                           const col = columnDefsMap[colKey];
                           if (!visibleColumns[colKey]) return null;
-                          const isDragging = draggedItemIndex === index;
-                          return (
-                            <th key={col.key} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onDragOver={(e) => e.preventDefault()} onClick={() => handleSort(col.key)} className={`py-3 px-3 font-semibold transition-all relative group select-none cursor-grab active:cursor-grabbing ${col.color || ''} ${col.minWidth || ''} ${isDragging ? 'opacity-30 bg-blue-100 dark:bg-blue-500/10 border-2 border-dashed border-blue-500' : 'hover:bg-gray-100 dark:hover:bg-white/5'}`} style={{ textAlign: col.align as any }}>
-                              <div className={`flex items-center gap-2 ${col.align === 'center' ? 'justify-center' : ''}`}><GripVertical size={12} className="text-gray-400 dark:text-gray-700 group-hover:text-gray-600 dark:group-hover:text-gray-400 transition-colors opacity-0 group-hover:opacity-100" />{col.label}{sortConfig?.key === col.key ? (sortConfig?.direction === 'asc' ? <ArrowUp size={12} className="text-blue-500 dark:text-blue-400"/> : <ArrowDown size={12} className="text-blue-500 dark:text-blue-400"/>) : <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-30 transition-opacity"/>}</div>
-                            </th>
-                          );
+                          return <td key={`${item.id}-${col.key}`} className={`py-3 px-3 ${col.align === 'center' ? 'text-center' : ''} ${col.bg || ''}`}>{renderCellContent(item, col.key, col)}</td>;
                         })}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800 text-sm">
-                      {sortedTableData.map((item: any) => (
-                        <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group">
-                          {columnOrder.map(colKey => {
-                            const col = columnDefsMap[colKey];
-                            if (!visibleColumns[colKey]) return null;
-                            return <td key={`${item.id}-${col.key}`} className={`py-3 px-3 ${col.align === 'center' ? 'text-center' : ''} ${col.bg || ''}`}>{renderCellContent(item, col.key, col)}</td>;
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {sortedTableData.length === 0 && <div className="p-12 text-center text-gray-500">Nenhuma análise disponível.</div>}
-              </div>
-            </div>
-          )}
-          {currentView === 'history' && (
-            <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
-              <header className="flex items-center justify-between mb-8 pt-0"><div><h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-500 dark:text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
-              <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm dark:shadow-xl overflow-hidden transition-colors duration-300">
-               <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px] text-left border-collapse">
-                  <thead><tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-500"><th className="py-5 px-6 font-semibold">Empresa</th><th className="py-5 px-6 font-semibold">Período</th><th className="py-5 px-6 font-semibold">Data</th><th className="py-5 px-6 text-center font-semibold">Score</th><th className="py-5 px-6 text-right font-semibold">Ações</th></tr></thead>
-                  <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {historyList.map((item: any) => (
-                      <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { setResult(item.conteudo); setEmpresa(item.empresa); setCurrentView('result'); }}>
-                        <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-black dark:text-gray-200">{item.empresa?.toUpperCase()}</span></div></td>
-                        <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{item.periodo}</td>
-                        <td className="py-4 px-6 text-gray-500 dark:text-gray-500 text-sm">{formatarData(item.data)}</td>
-                        <td className="py-4 px-6 text-center"><span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold ${item.nota >= 4 ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20' : item.nota >= 3 ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20' : 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20'}`}>{item.nota}</span></td>
-                        <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors flex items-center gap-1">Detalhes <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-               </div> 
-                {historyList.length === 0 && <div className="p-12 text-center text-gray-500">Histórico vazio.</div>}
               </div>
+              {sortedTableData.length === 0 && <div className="p-12 text-center text-gray-500">Nenhuma análise disponível.</div>}
             </div>
-          )}
-          {currentView === 'dashboard' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-3xl mx-auto mt-6 md:mt-10 px-0 md:px-0">
-              {loading ? (
-                <div className="flex flex-col items-center justify-center h-96 animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-6" /><h2 className="text-2xl md:text-3xl font-bold animate-pulse text-gray-900 dark:text-white mb-2 text-center">Analisando Dados...</h2><p className="text-gray-500 dark:text-gray-400 text-center px-4">Nossa IA está processando o relatório e calculando os indicadores.</p></div>
-              ) : (
-                <>
-                  <div className="text-center mb-8 md:mb-12"><h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-3 tracking-tight">Nova Análise Financeira</h1><p className="text-gray-500 dark:text-gray-400 text-base md:text-lg">Carregue o relatório trimestral (PDF) para processamento via IA.</p></div>
-                  
-                  <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-2xl p-4 md:p-8 shadow-md dark:shadow-2xl relative overflow-hidden group hover:border-gray-300 dark:hover:border-gray-700 transition-colors duration-500">
-                    
-                    {/* Grid Responsivo: 1 coluna no mobile, 3 no desktop */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-                      <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa</label><input type="text" placeholder="Ex: Apple" className="w-full bg-gray-50 dark:bg-[#0d1117] border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all uppercase" value={empresa} onChange={(e) => setEmpresa(e.target.value)} /></div>
-                      <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ano</label><input type="text" placeholder="2025" className="w-full bg-gray-50 dark:bg-[#0d1117] border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={ano} onChange={(e) => setAno(e.target.value)} /></div>
-                      <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trimestre</label><select className="w-full bg-gray-50 dark:bg-[#0d1117] border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">1º Trimestre</option><option value="2T">2º Trimestre</option><option value="3T">3º Trimestre</option><option value="4T">4º Trimestre</option></select></div>
-                    </div>
-                    
-                    <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-6 md:p-10 flex flex-col items-center justify-center bg-gray-50 dark:bg-[#0d1117]/50 hover:bg-gray-100 dark:hover:bg-[#0d1117] hover:border-blue-400 dark:hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
-                      <input type="file" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" /><div className="bg-gray-200 dark:bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-500 dark:text-blue-400 w-8 h-8" /></div><p className="text-gray-800 dark:text-gray-300 font-medium text-lg text-center">{file ? file.name : "Clique ou arraste o PDF"}</p><p className="text-gray-500 text-sm mt-2 text-center">Suporta PDF de até 10MB</p>
-                    </div>
-                    <button onClick={handleAnalyze} className="w-full mt-8 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-500/20 dark:shadow-blue-900/20 transition-all duration-300 flex items-center justify-center gap-2"><Activity size={20} /> Gerar Análise Completa</button>
-                  </div>
-                </>
-              )}
+          </div>
+        )}
+        {currentView === 'history' && (
+          <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
+            <header className="flex items-center justify-between mb-8 pt-0"><div><h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-500 dark:text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
+            <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm dark:shadow-xl overflow-hidden transition-colors duration-300">
+             <div className="overflow-x-auto">
+              <table className="w-full min-w-[800px] text-left border-collapse">
+                <thead><tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-500"><th className="py-5 px-6 font-semibold">Empresa</th><th className="py-5 px-6 font-semibold">Período</th><th className="py-5 px-6 font-semibold">Data</th><th className="py-5 px-6 text-center font-semibold">Score</th><th className="py-5 px-6 text-right font-semibold">Ações</th></tr></thead>
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {historyList.map((item: any) => (
+                    <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { setResult(item.conteudo); setEmpresa(item.empresa); setCurrentView('result'); }}>
+                      <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-black dark:text-gray-200">{item.empresa?.toUpperCase()}</span></div></td>
+                      <td className="py-4 px-6 text-gray-600 dark:text-gray-400">{item.periodo}</td>
+                      <td className="py-4 px-6 text-gray-500 dark:text-gray-500 text-sm">{formatarData(item.data)}</td>
+                      <td className="py-4 px-6 text-center"><span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold ${item.nota >= 4 ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20' : item.nota >= 3 ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20' : 'bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20'}`}>{item.nota}</span></td>
+                      <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors flex items-center gap-1">Detalhes <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+             </div> 
+              {historyList.length === 0 && <div className="p-12 text-center text-gray-500">Histórico vazio.</div>}
             </div>
-          )}
-          {currentView === 'result' && result && (
-            <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-                <button onClick={() => setCurrentView('history')} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-200 dark:bg-gray-800 group-hover:bg-gray-300 dark:group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
+          </div>
+        )}
+        {currentView === 'dashboard' && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-4xl mx-auto mt-6 md:mt-10 px-0 md:px-0">
+            {loading ? (
+              <div className="flex flex-col items-center justify-center h-[500px] animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-6" /><h2 className="text-2xl md:text-3xl font-bold animate-pulse text-gray-900 dark:text-white mb-2 text-center">Analisando Dados...</h2><p className="text-gray-500 dark:text-gray-400 text-center px-4">Nossa IA está lendo o relatório e calculando os indicadores.</p></div>
+            ) : (
+              <>
+                <div className="text-center mb-8 md:mb-10">
+                  <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-4 tracking-tight">Nova Análise Financeira</h1>
+                  <p className="text-gray-500 dark:text-gray-400 text-base md:text-lg">Carregue o relatório trimestral (PDF) para processamento via IA.</p>
+                </div>
                 
-                <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-sm transition-all ${isPremium ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-600/20' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'}`}>
-                  {isPremium ? <ExternalLink size={18} /> : <Lock size={18} />} Ver Relatório Completo
-                </button>
-              </div>
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-200 dark:border-gray-800 pb-8">
-                <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-4xl md:text-5xl font-bold text-black dark:text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-600 dark:text-blue-400 font-medium">{result.metadata?.periodo || `${result.metadata?.trimestre}/${result.metadata?.ano}`}</p></div>
-                <div className="flex items-center gap-6 bg-white dark:bg-[#161b22] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm dark:shadow-none w-full md:w-auto justify-between md:justify-start"><div className="text-right"><p className="text-sm text-gray-500 dark:text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-400 dark:text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-500 dark:text-emerald-400' : (result.data?.nota_geral || 0) == 3 ? 'text-amber-500 dark:text-amber-400' : 'text-red-500 dark:text-red-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-400 dark:text-gray-600">/5</span></div></div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-500 dark:text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-500 dark:text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-500 dark:text-red-400" /> }, { label: "ROE", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-500 dark:text-emerald-400" /> }].map((item, idx) => (
-                  <div key={idx} className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl hover:border-gray-300 dark:hover:border-gray-700 shadow-sm dark:shadow-none transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4"><span className="text-gray-500 dark:text-gray-400 text-sm font-medium">{item.label}</span><div className="bg-gray-100 dark:bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
-                    <div className="flex items-end gap-2"><span className="text-3xl font-bold text-gray-900 dark:text-white">{item.val}</span><span className="text-gray-400 dark:text-gray-600 text-sm mb-1">/5</span></div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-800 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${(item.val || 0) >= 4 ? 'bg-green-500' : (item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${((item.val || 0) / 5) * 100}%` }} /></div>
+                <div className="bg-white dark:bg-[#11161d] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-10 shadow-xl dark:shadow-2xl relative overflow-hidden transition-colors duration-500">
+                  
+                  {/* Grid de Inputs mais polidos */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 mb-8">
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Empresa</label>
+                      <input type="text" placeholder="Ex: APPLE" className="w-full bg-gray-50 dark:bg-[#0B0E14] border border-gray-300 dark:border-gray-800 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all uppercase placeholder-gray-400 dark:placeholder-gray-600 font-medium" value={empresa} onChange={(e) => setEmpresa(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Ano</label>
+                      <input type="text" placeholder="2026" className="w-full bg-gray-50 dark:bg-[#0B0E14] border border-gray-300 dark:border-gray-800 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all placeholder-gray-400 dark:placeholder-gray-600 font-medium" value={ano} onChange={(e) => setAno(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Trimestre</label>
+                      <select className="w-full bg-gray-50 dark:bg-[#0B0E14] border border-gray-300 dark:border-gray-800 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none font-medium" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}>
+                        <option value="1T">1º Trimestre</option>
+                        <option value="2T">2º Trimestre</option>
+                        <option value="3T">3º Trimestre</option>
+                        <option value="4T">4º Trimestre</option>
+                      </select>
+                    </div>
                   </div>
-                ))}
-              </div>
-              <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-10 shadow-md dark:shadow-2xl transition-colors duration-300"><h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3"><FileText className="text-blue-500" /> Tese de Investimento</h3><div className="prose dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{result.data?.tese_investimento ? result.data.tese_investimento : "Sem análise textual disponível."}</div></div>
+                  
+                  {/* Área de Upload Repaginada */}
+                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-8 md:p-12 flex flex-col items-center justify-center bg-gray-50/50 dark:bg-[#0B0E14]/50 hover:bg-gray-100 dark:hover:bg-[#0B0E14] hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative group">
+                    <input type="file" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                    
+                    <div className="bg-blue-100 dark:bg-blue-500/10 p-5 rounded-full mb-5 group-hover:scale-110 transition-transform duration-300 shadow-sm dark:shadow-[0_0_30px_rgba(59,130,246,0.15)] relative">
+                      <UploadCloud className="text-blue-600 dark:text-blue-400 w-8 h-8 relative z-10" />
+                    </div>
+                    
+                    <p className="text-gray-900 dark:text-white font-bold text-lg text-center mb-1">{file ? file.name : "Clique ou arraste o PDF"}</p>
+                    <p className="text-gray-500 text-sm text-center font-medium">Suporta PDF de até 10MB</p>
+                  </div>
+
+                  {/* Botão de Geração Melhorado */}
+                  <button onClick={handleAnalyze} className="w-full mt-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-lg py-4 rounded-xl shadow-[0_4px_20px_rgba(37,99,235,0.3)] dark:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all duration-300 flex items-center justify-center gap-3 hover:scale-[1.01]">
+                    <Activity size={22} /> Gerar Análise Completa
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        {currentView === 'result' && result && (
+          <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+              <button onClick={() => setCurrentView('history')} className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-200 dark:bg-gray-800 group-hover:bg-gray-300 dark:group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
+              
+              <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-sm transition-all ${isPremium ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-600/20' : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'}`}>
+                {isPremium ? <ExternalLink size={18} /> : <Lock size={18} />} Ver Relatório Completo
+              </button>
             </div>
-          )}
-        </main>
-      </div>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-200 dark:border-gray-800 pb-8">
+              <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-4xl md:text-5xl font-bold text-black dark:text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-600 dark:text-blue-400 font-medium">{result.metadata?.periodo || `${result.metadata?.trimestre}/${result.metadata?.ano}`}</p></div>
+              <div className="flex items-center gap-6 bg-white dark:bg-[#161b22] p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm dark:shadow-none w-full md:w-auto justify-between md:justify-start"><div className="text-right"><p className="text-sm text-gray-500 dark:text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-400 dark:text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-500 dark:text-emerald-400' : (result.data?.nota_geral || 0) == 3 ? 'text-amber-500 dark:text-amber-400' : 'text-red-500 dark:text-red-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-400 dark:text-gray-600">/5</span></div></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+              {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-500 dark:text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-500 dark:text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-500 dark:text-red-400" /> }, { label: "ROE", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-500 dark:text-emerald-400" /> }].map((item, idx) => (
+                <div key={idx} className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 p-6 rounded-2xl hover:border-gray-300 dark:hover:border-gray-700 shadow-sm dark:shadow-none transition-all duration-300">
+                  <div className="flex items-center justify-between mb-4"><span className="text-gray-500 dark:text-gray-400 text-sm font-medium">{item.label}</span><div className="bg-gray-100 dark:bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
+                  <div className="flex items-end gap-2"><span className="text-3xl font-bold text-gray-900 dark:text-white">{item.val}</span><span className="text-gray-400 dark:text-gray-600 text-sm mb-1">/5</span></div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-800 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${(item.val || 0) >= 4 ? 'bg-green-500' : (item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${((item.val || 0) / 5) * 100}%` }} /></div>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white dark:bg-[#161b22] border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-10 shadow-md dark:shadow-2xl transition-colors duration-300"><h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 flex items-center gap-3"><FileText className="text-blue-500" /> Tese de Investimento</h3><div className="prose dark:prose-invert prose-lg max-w-none text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">{result.data?.tese_investimento ? result.data.tese_investimento : "Sem análise textual disponível."}</div></div>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
