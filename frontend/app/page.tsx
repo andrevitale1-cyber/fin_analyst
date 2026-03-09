@@ -50,28 +50,45 @@ const reportSections = [
     title: "Desempenho de Receita",
     score: 5,
     content: [
-      "A Alphabet entregou uma receita consolidada de $113.8 bilhões no 4T/2025, um aumento robusto de 18% em relação ao mesmo período do ano anterior (ou 17% em moeda constante). Este crescimento foi amplamente impulsionado pelas divisões Google Services e Google Cloud. * Aumentou 14% para $95.9 bilhões. Dentro deste segmento, o Google Search & other apresentou um forte crescimento de 17%, e as receitas de assinaturas, plataformas e dispositivos cresceram 17%, indicando uma bem-sucedida diversificação e retenção de usuários. O YouTube Ads cresceu de forma mais moderada em 9%, embora a receita anual total do YouTube (ads e assinaturas) tenha superado $60 bilhões em 2025. O Google Network, por sua vez, registrou uma leve queda de 1.5% para $7.83 bilhões, sendo um ponto de atenção menor no trimestre. * Demonstrou um crescimento excepcional de 48%, atingindo $17.7 bilhões em receita. Este segmento continua a ser um motor de crescimento vital, com forte demanda pela Google Cloud Platform (GCP), especialmente em infraestrutura e soluções de IA empresarial, alcançando uma taxa de execução anual de mais de $70 bilhões. * A receita diminuiu 7.5% para $370 milhões, sublinhando que essas iniciativas ainda estão em estágios iniciais e não contribuem materialmente para a linha superior no curto prazo. O operacional foi um ponto forte, com o Search apresentando *mais uso do que nunca* e a demanda por produtos de IA impulsionando o crescimento da Cloud, refletindo o sucesso da estratégia de inovação da empresa."
+      "A Alphabet entregou uma receita consolidada de $113.8 bilhões no 4T/2025, um aumento robusto de 18% em relação ao mesmo período do ano anterior (ou 17% em moeda constante). Este crescimento foi amplamente impulsionado pelas divisões Google Services e Google Cloud.",
+      "* Aumentou 14% para $95.9 bilhões. Dentro deste segmento, o Google Search & other apresentou um forte crescimento de 17%, e as receitas de assinaturas, plataformas e dispositivos cresceram 17%, indicando uma bem-sucedida diversificação e retenção de usuários. O YouTube Ads cresceu de forma mais moderada em 9%, embora a receita anual total do YouTube (ads e assinaturas) tenha superado $60 bilhões em 2025. O Google Network, por sua vez, registrou uma leve queda de 1.5% para $7.83 bilhões, sendo um ponto de atenção menor no trimestre.",
+      "* Demonstrou um crescimento excepcional de 48%, atingindo $17.7 bilhões em receita. Este segmento continua a ser um motor de crescimento vital, com forte demanda pela Google Cloud Platform (GCP), especialmente em infraestrutura e soluções de IA empresarial, alcançando uma taxa de execução anual de mais de $70 bilhões.",
+      "* A receita diminuiu 7.5% para $370 milhões, sublinhando que essas iniciativas ainda estão em estágios iniciais e não contribuem materialmente para a linha superior no curto prazo. O operacional foi um ponto forte, com o Search apresentando mais uso do que nunca e a demanda por produtos de IA impulsionando o crescimento da Cloud, refletindo o sucesso da estratégia de inovação da empresa."
     ]
   },
   {
     title: "Rentabilidade e Eficiência",
     score: 4,
     content: [
-      "O lucro operacional consolidado da Alphabet cresceu 16%, atingindo $35.93 bilhões. A margem operacional consolidada foi de 31.6%, uma ligeira redução em comparação aos 32% do 4T/2024. * Apresentou um aumento significativo no lucro operacional, alcançando $40.13 bilhões, indicando que a maior parte do crescimento da receita foi convertida em lucratividade. * Aumentou seu lucro operacional para $5.31 bilhões, mais que dobrando em relação aos $2.09 bilhões do ano anterior. Isso demonstra uma melhora substancial na eficiência operacional e na alavancagem do segmento de nuvem à medida que escala. * O prejuízo operacional se ampliou significativamente para $3.62 bilhões, de $1.17 bilhão no ano anterior, refletindo os contínuos e pesados investimentos em P&D para essas ventures. * As despesas associadas a estas atividades mais que dobraram, chegando a $5.89 bilhões (de $2.78 bilhões), principalmente devido a P&D compartilhado em IA e um encargo de compensação de funcionários de $2.1 bilhões para a Waymo. Este último foi um fator pontual que pressionou a margem operacional consolidada. Apesar da leve compressão da margem consolidada, os segmentos operacionais core (Google Services e Google Cloud) exibiram forte rentabilidade e ganhos de eficiência, compensando os investimentos em *Other Bets* e em IA a nível corporativo. A compressão na margem consolidada é vista como um resultado de investimentos estratégicos de longo prazo, ao invés de uma perda de eficiência fundamental."
+      "O lucro operacional consolidado da Alphabet cresceu 16%, atingindo $35.93 bilhões. A margem operacional consolidada foi de 31.6%, uma ligeira redução em comparação aos 32% do 4T/2024.",
+      "* Apresentou um aumento significativo no lucro operacional, alcançando $40.13 bilhões, indicando que a maior parte do crescimento da receita foi convertida em lucratividade.",
+      "* Aumentou seu lucro operacional para $5.31 bilhões, mais que dobrando em relação aos $2.09 bilhões do ano anterior. Isso demonstra uma melhora substancial na eficiência operacional e na alavancagem do segmento de nuvem à medida que escala.",
+      "* O prejuízo operacional se ampliou significativamente para $3.62 bilhões, de $1.17 bilhão no ano anterior, refletindo os contínuos e pesados investimentos em P&D para essas ventures.",
+      "* As despesas associadas a estas atividades mais que dobraram, chegando a $5.89 bilhões (de $2.78 bilhões), principalmente devido a P&D compartilhado em IA e um encargo de compensação de funcionários de $2.1 bilhões para a Waymo. Este último foi um fator pontual que pressionou a margem operacional consolidada.",
+      "Apesar da leve compressão da margem consolidada, os segmentos operacionais core (Google Services e Google Cloud) exibiram forte rentabilidade e ganhos de eficiência, compensando os investimentos em Other Bets e em IA a nível corporativo. A compressão na margem consolidada é vista como um resultado de investimentos estratégicos de longo prazo, ao invés de uma perda de eficiência fundamental."
     ]
   },
   {
     title: "Estrutura de Capital",
     score: 4,
     content: [
-      "A Alphabet mantém uma posição de liquidez extremamente robusta, com caixa, equivalentes de caixa e títulos negociáveis totalizando $126.84 bilhões no final de 2025, acima dos $95.66 bilhões em 2024. * A dívida de longo prazo aumentou significativamente para $46.55 bilhões, em comparação com $10.88 bilhões no ano anterior. Este aumento foi impulsionado pela emissão de $24.8 bilhões em notas seniores não garantidas em novembro de 2025, destinadas a fins corporativos gerais. Mesmo com este aumento, a Alphabet permanece em uma confortável posição de caixa líquido. * As despesas com juros aumentaram para $298 milhões (de $53 milhões), refletindo a maior dívida, mas permanecem totalmente gerenciáveis dada a escala da empresa. * Houve uma contribuição positiva substancial, que aumentou para $3.18 bilhões (de $1.27 bilhão), impulsionada principalmente por um ganho de $2.30 bilhões em títulos de capital. * A empresa declarou um dividendo trimestral em dinheiro de $0.21 por ação, sinalizando um novo estágio de maturidade e um compromisso com o retorno direto aos acionistas, complementando seu programa de recompra de ações. * A expectativa de CapEx para 2026, entre $175 bilhões e $185 bilhões, é um ponto crucial. Representa um salto gigantesco em relação aos $91.45 bilhões de 2025, indicando um ciclo de investimento agressivo e estratégico em infraestrutura de IA, que será financiado por sua robusta geração de caixa e o capital levantado via dívida. A estrutura de capital permanece sólida, e o aumento da dívida é uma alocação estratégica de capital para financiar um futuro de intensos investimentos em IA, sem comprometer a saúde financeira da empresa."
+      "A Alphabet mantém uma posição de liquidez extremamente robusta, com caixa, equivalentes de caixa e títulos negociáveis totalizando $126.84 bilhões no final de 2025, acima dos $95.66 bilhões em 2024.",
+      "* A dívida de longo prazo aumentou significativamente para $46.55 bilhões, em comparação com $10.88 bilhões no ano anterior. Este aumento foi impulsionado pela emissão de $24.8 bilhões em notas seniores não garantidas em novembro de 2025, destinadas a fins corporativos gerais. Mesmo com este aumento, a Alphabet permanece em uma confortável posição de caixa líquido.",
+      "* As despesas com juros aumentaram para $298 milhões (de $53 milhões), refletindo a maior dívida, mas permanecem totalmente gerenciáveis dada a escala da empresa.",
+      "* Houve uma contribuição positiva substancial, que aumentou para $3.18 bilhões (de $1.27 bilhão), impulsionada principalmente por um ganho de $2.30 bilhões em títulos de capital.",
+      "* A empresa declarou um dividendo trimestral em dinheiro de $0.21 por ação, sinalizando um novo estágio de maturidade e um compromisso com o retorno direto aos acionistas, complementando seu programa de recompra de ações.",
+      "* A expectativa de CapEx para 2026, entre $175 bilhões e $185 bilhões, é um ponto crucial. Representa um salto gigantesco em relação aos $91.45 bilhões de 2025, indicando um ciclo de investimento agressivo e estratégico em infraestrutura de IA, que será financiado por sua robusta geração de caixa e o capital levantado via dívida. A estrutura de capital permanece sólida, e o aumento da dívida é uma alocação estratégica de capital para financiar um futuro de intensos investimentos em IA, sem comprometer a saúde financeira da empresa."
     ]
   },
   {
     title: "Lucratividade",
     score: 4,
     content: [
-      "O Lucro Líquido da Alphabet para o 4T/2025 atingiu $34.46 bilhões, um crescimento notável de 30% em relação ao ano anterior. O Lucro por Ação (EPS) diluído subiu 31% para $2.82. * O principal motor do crescimento do lucro foi o forte desempenho operacional, liderado pelo crescimento robusto da receita em Search e Google Cloud (Seção 1), combinado com a melhoria da rentabilidade e eficiência nessas divisões (Seção 2). Além disso, o aumento nas *Outras Receitas (Despesas), líquidas* (Seção 3), impulsionado por ganhos em títulos de capital, contribuiu positivamente para o lucro final. * * O ganho de $2.30 bilhões em títulos de capital dentro das *Outras Receitas (Despesas), líquidas* é um item não operacional e pode ter componentes não-caixa ou voláteis. Este item adicionou aproximadamente $1.8 bilhão ao lucro líquido. Embora impactante, o lucro líquido, mesmo ajustado para este ganho, teria demonstrado um crescimento forte. * O lucro operacional foi impactado negativamente por um encargo de $2.1 bilhões relacionado à compensação de funcionários da Waymo. Este item, de caráter mais pontual, mostra que o desempenho operacional subjacente foi ainda mais forte do que o reportado. * Apesar desses itens específicos, o crescimento do lucro é de alta qualidade e sustentável, fundamentado na força das operações core da Alphabet. Os investimentos agressivos em IA e infraestrutura para 2026, embora afetem o fluxo de caixa livre no curto prazo, são essenciais para manter a liderança tecnológica e impulsionar o crescimento futuro."
+      "O Lucro Líquido da Alphabet para o 4T/2025 atingiu $34.46 bilhões, um crescimento notável de 30% em relação ao ano anterior. O Lucro por Ação (EPS) diluído subiu 31% para $2.82.",
+      "* O principal motor do crescimento do lucro foi o forte desempenho operacional, liderado pelo crescimento robusto da receita em Search e Google Cloud, combinado com a melhoria da rentabilidade e eficiência nessas divisões. Além disso, o aumento nas Outras Receitas (Despesas), líquidas, impulsionado por ganhos em títulos de capital, contribuiu positivamente para o lucro final.",
+      "** O ganho de $2.30 bilhões em títulos de capital é um item não operacional e pode ter componentes não-caixa ou voláteis. Este item adicionou aproximadamente $1.8 bilhão ao lucro líquido. Embora impactante, o lucro líquido, mesmo ajustado para este ganho, teria demonstrado um crescimento forte.",
+      "* O lucro operacional foi impactado negativamente por um encargo de $2.1 bilhões relacionado à compensação de funcionários da Waymo. Este item, de caráter mais pontual, mostra que o desempenho operacional subjacente foi ainda mais forte do que o reportado.",
+      "* Apesar desses itens específicos, o crescimento do lucro é de alta qualidade e sustentável, fundamentado na força das operações core da Alphabet. Os investimentos agressivos em IA e infraestrutura para 2026, embora afetem o fluxo de caixa livre no curto prazo, são essenciais para manter a liderança tecnológica e impulsionar o crescimento futuro."
     ]
   }
 ];
@@ -362,7 +379,7 @@ function ComparadorMobile() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
 
- const comparadorData = [
+  const comparadorData = [
     { empresa: "AEROVIRONMENT", notaFinal: 2, receita: 4, lucro: 1, divida: 3, rentabilidade: 1,  resultados: 2, media: 2.5, ultimoTri: "2T/2026" },
     { empresa: "AMAZON",        notaFinal: 4, receita: 5, lucro: 3, divida: 4, rentabilidade: 4,  resultados: 1, media: 4,   ultimoTri: "4T/2025" },
     { empresa: "AMD",           notaFinal: 4, receita: 5, lucro: 4, divida: 5, rentabilidade: 4,  resultados: 1, media: 4,   ultimoTri: "4T/2025" },
@@ -435,7 +452,7 @@ function ComparadorMobile() {
   );
 }
 
-// --- EFEITO DE DIGITAÇÃO ---
+// --- EFEITO DE DIGITAÇÃO APRIMORADO ---
 function TypewriterEffect({ text, trigger, delay = 0 }: { text: string, trigger: boolean, delay?: number }) {
   const [displayed, setDisplayed] = useState("");
   const [started, setStarted] = useState(false);
@@ -451,14 +468,14 @@ function TypewriterEffect({ text, trigger, delay = 0 }: { text: string, trigger:
     if (!started) return;
     let i = 0;
     const interval = setInterval(() => {
-      i += 3; // Velocidade da digitação
+      i += 2; // Imprime de 2 em 2 letras garantindo máxima suavidade sem travar
       if (i >= text.length) {
         setDisplayed(text);
         clearInterval(interval);
       } else {
         setDisplayed(text.slice(0, i));
       }
-    }, 10);
+    }, 15); // Dispara muito rápido, parecendo 60fps
     return () => clearInterval(interval);
   }, [started, text]);
 
@@ -466,7 +483,7 @@ function TypewriterEffect({ text, trigger, delay = 0 }: { text: string, trigger:
     <span>
       {displayed}
       {started && displayed.length < text.length && (
-        <span className="inline-block w-1.5 h-3 ml-0.5 bg-blue-500 animate-pulse align-middle" />
+        <span className="inline-block w-1.5 h-3 ml-0.5 bg-blue-500/80 animate-pulse align-middle rounded-sm" />
       )}
     </span>
   );
@@ -645,6 +662,7 @@ function ReportDemoMobile() {
                 ))}
               </div>
 
+              {/* RENDERIZAÇÃO COMPLETA DE TODAS AS SEÇÕES NO MOBILE */}
               {reportSections.map((section, index) => (
                 <div key={index} className="border border-gray-200 rounded-xl p-4 mb-4">
                    <div className="flex justify-between items-center mb-3">
@@ -653,13 +671,27 @@ function ReportDemoMobile() {
                         {section.score}/5
                       </span>
                    </div>
-                   <div className="space-y-2">
-                     <p className="text-[11px] text-gray-700 leading-relaxed font-medium line-clamp-4">
-                       <TypewriterEffect text={section.content[0]} trigger={typingTrigger} delay={index * 500} />
-                     </p>
+                   <div className="space-y-3">
+                     {section.content.map((paragraph, idx) => (
+                       <p key={idx} className="text-[11px] text-gray-700 leading-relaxed font-medium">
+                         <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={(index * 600) + (idx * 300)} />
+                       </p>
+                     ))}
                    </div>
                 </div>
               ))}
+
+              {/* RENDERIZAÇÃO DA TESE DE INVESTIMENTO NO MOBILE */}
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+                 <h3 className="text-[11px] font-bold text-blue-800 uppercase tracking-wider mb-3">Conclusão — Tese e Outlook</h3>
+                 <div className="space-y-3">
+                    {teseContent.map((paragraph, idx) => (
+                      <p key={idx} className="text-[11px] text-gray-700 leading-relaxed font-medium">
+                        <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={2000 + (idx * 400)} />
+                      </p>
+                    ))}
+                 </div>
+              </div>
 
            </div>
         </div>
