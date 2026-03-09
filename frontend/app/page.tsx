@@ -152,7 +152,7 @@ function PhoneImage() {
       if (intervalRef.current) clearInterval(intervalRef.current);
       intervalRef.current = setInterval(() => {
         setIsDark(prev => !prev);
-      }, 3000);
+      }, 2000);
     } else {
       if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
       setIsDark(true);
@@ -179,7 +179,7 @@ function PhoneImage() {
         <div className={`relative rounded-[2.4rem] overflow-hidden transition-colors duration-700 ${screen}`} style={{ minHeight: "620px" }}>
           <div className={`flex items-center justify-between px-6 pt-10 pb-2 text-[10px] font-semibold transition-colors duration-700 ${statusC}`}>
             <span>9:41</span>
-            <div className="flex items-center gap-1"><span>●●● WiFi 🔋</span></div>
+            <div className="flex items-center gap-1"><span>●●● WiFi </span></div>
           </div>
           <div className="px-5 pb-6">
             <div className="text-center mb-5 mt-2">
