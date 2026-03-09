@@ -385,13 +385,153 @@ export default function FinancialDashboard() {
   const handleDownload = () => {
     if (!isPremium) { setShowUpgradeModal(true); return; }
     if (!result) return;
+
     const meta = result.metadata || {};
-    const text = `RELATÓRIO: ${meta.empresa}\n${result.analise_completa || result.data?.tese_investimento}`;
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Relatorio_${meta.empresa}.txt`;
-    link.click();
+    const data = result.data || {};
+    const empresa = (meta.empresa || "EMPRESA").toUpperCase();
+    const trimestre = meta.trimestre || "";
+    const ano = meta.ano || "";
+    const periodo = trimestre + "/" + ano;
+    const notaFinal = data.nota_final ?? result.nota_final ?? "—";
+    const analise: string = result.analise_completa || "";
+    const today = new Date().toLocaleDateString("pt-BR");
+    const year = new Date().getFullYear();
+
+    const scoreColor = (n: number): string => {
+      if (n >= 5) return "#22c55e";
+      if (n >= 4) return "#4ade80";
+      if (n >= 3) return "#eab308";
+      if (n >= 2) return "#f97316";
+      return "#ef4444";
+    };
+
+    const notaFinalColor = scoreColor(Number(notaFinal));
+
+    const sections = [
+      { title: "Performance Core",         label: "Receita",        nota: data.receita_nota       ?? null },
+      { title: "Rentabilidade e Eficiência",label: "Rentabilidade",  nota: data.lucro_nota         ?? null },
+      { title: "Estrutura de Capital",      label: "Capital",        nota: data.divida_nota        ?? null },
+      { title: "Lucro Líquido",             label: "Lucro",          nota: data.rentabilidade_nota ?? null },
+    ];
+
+    const cleanText = (raw: string) =>
+      raw.replace(/\*\*[^*]+\*\*/g, "").replace(/Nota Seção \d+:[^\n]*/g, "").trim();
+
+    const rawSections = analise.match(/\*\*Seção \d+[^*]*\*\*[\s\S]*?(?=\*\*Seção \d+|\*\*Nota Geral|$)/g) || [];
+    const bodies = rawSections.map(cleanText);
+
+    const teseRaw = analise.match(/Seção 5[\s\S]*?(?=\*\*Seção 6|$)/);
+    const teseBody = teseRaw ? cleanText(teseRaw[0]) : (data.tese_investimento || "");
+    const teseParagraphs = teseBody.split("\n\n").filter(Boolean)
+      .map((p: string) => "<p>" + p.replace(/\*\*/g, "") + "</p>").join("");
+
+    const metricCards = sections.map((s) => {
+      const n = Number(s.nota ?? 0);
+      const c = scoreColor(n);
+      const pct = n ? (n / 5 * 100) : 0;
+      return (
+        '<div class="metric">' +
+          '<div class="m-label">' + s.label + '</div>' +
+          '<div class="m-score" style="color:' + c + '">' + (n || "—") + '</div>' +
+          '<div class="m-bar-bg"><div class="m-bar" style="width:' + pct + '%;background:' + c + '"></div></div>' +
+        '</div>'
+      );
+    }).join("");
+
+    const sectionCards = sections.map((s, i) => {
+      const body = bodies[i] || "";
+      const notaVal = s.nota !== null ? Number(s.nota) : null;
+      const cor = notaVal !== null ? scoreColor(notaVal) : "#9ca3af";
+      const badge = notaVal !== null
+        ? '<span class="badge" style="background:' + cor + '20;color:' + cor + ';border:1px solid ' + cor + '40">' + notaVal + '/5</span>'
+        : "";
+      return (
+        '<div class="section">' +
+          '<div class="section-header">' +
+            '<h3>' + s.title + '</h3>' + badge +
+          '</div>' +
+          '<p>' + (body || "—") + '</p>' +
+        '</div>'
+      );
+    }).join("");
+
+    const css = [
+      "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');",
+      "*{margin:0;padding:0;box-sizing:border-box}",
+      "body{font-family:'Inter',sans-serif;background:#fff;color:#111;padding:48px;max-width:900px;margin:0 auto;font-size:14px;line-height:1.65}",
+      ".header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:32px;border-bottom:2px solid #e5e7eb;margin-bottom:36px}",
+      ".brand{display:flex;align-items:center;gap:10px}",
+      ".brand-icon{width:36px;height:36px;background:#2563eb;border-radius:10px;display:flex;align-items:center;justify-content:center}",
+      ".brand-icon svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2}",
+      ".brand-name{font-size:18px;font-weight:800;color:#111}",
+      ".brand-name span{color:#2563eb}",
+      ".meta{text-align:right}",
+      ".meta p{font-size:12px;color:#6b7280}",
+      ".meta p strong{color:#374151}",
+      ".hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:#fff;border-radius:16px;padding:36px 40px;margin-bottom:36px;display:flex;justify-content:space-between;align-items:center}",
+      ".hero-left h1{font-size:38px;font-weight:900;letter-spacing:-1px;margin-bottom:4px}",
+      ".hero-left p{font-size:16px;color:#93c5fd;font-weight:500}",
+      ".hero-left .label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;margin-bottom:8px}",
+      ".score-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:20px 28px;text-align:center}",
+      ".score-card .label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:4px}",
+      ".score-card .score{font-size:52px;font-weight:900;line-height:1;color:" + notaFinalColor + "}",
+      ".score-card .score span{font-size:20px;color:#64748b;font-weight:500}",
+      ".score-card .sub{font-size:10px;color:#64748b;margin-top:4px}",
+      ".metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:36px}",
+      ".metric{border:1px solid #e5e7eb;border-radius:12px;padding:16px;text-align:center}",
+      ".metric .m-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;margin-bottom:8px;font-weight:600}",
+      ".metric .m-score{font-size:28px;font-weight:900}",
+      ".metric .m-bar-bg{height:4px;background:#f3f4f6;border-radius:999px;margin-top:8px}",
+      ".metric .m-bar{height:4px;border-radius:999px}",
+      ".section{border:1px solid #e5e7eb;border-radius:12px;padding:22px 24px;margin-bottom:16px}",
+      ".section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}",
+      ".section-header h3{font-size:13px;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:.04em}",
+      ".badge{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}",
+      ".section p{color:#374151;font-size:13.5px;line-height:1.7}",
+      ".tese{background:#f8faff;border:1px solid #dbeafe;border-radius:12px;padding:24px;margin-bottom:36px}",
+      ".tese h3{font-size:13px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}",
+      ".tese p{color:#374151;font-size:13.5px;line-height:1.75;margin-bottom:10px}",
+      ".footer{border-top:1px solid #e5e7eb;padding-top:20px;font-size:11px;color:#9ca3af;text-align:center}",
+      "@media print{body{padding:0}@page{margin:20mm}}",
+    ].join("\n");
+
+    const html = (
+      "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'/>" +
+      "<title>Relatório " + empresa + " " + periodo + "</title>" +
+      "<style>" + css + "</style></head><body>" +
+      "<div class='header'>" +
+        "<div class='brand'>" +
+          "<div class='brand-icon'><svg viewBox='0 0 24 24'><polyline points='22 12 18 12 15 21 9 3 6 12 2 12'/></svg></div>" +
+          "<div class='brand-name'>FinAnalyzer <span>.AI</span></div>" +
+        "</div>" +
+        "<div class='meta'><p>Gerado em <strong>" + today + "</strong></p><p>Relatório de análise fundamentalista</p></div>" +
+      "</div>" +
+      "<div class='hero'>" +
+        "<div class='hero-left'>" +
+          "<div class='label'>Relatório de Análise</div>" +
+          "<h1>" + empresa + "</h1><p>" + periodo + "</p>" +
+        "</div>" +
+        "<div class='score-card'>" +
+          "<div class='label'>Score IA</div>" +
+          "<div class='score'>" + notaFinal + "<span>/5</span></div>" +
+          "<div class='sub'>Baseado em 4 fundamentos</div>" +
+        "</div>" +
+      "</div>" +
+      "<div class='metrics'>" + metricCards + "</div>" +
+      sectionCards +
+      "<div class='tese'><h3>Conclusão — Tese e Outlook</h3>" + teseParagraphs + "</div>" +
+      "<div class='footer'>" +
+        "<p>Este relatório foi gerado automaticamente pelo FinAnalyzer.AI. Não constitui recomendação de investimento.</p>" +
+        "<p style='margin-top:6px'>© " + year + " FinAnalyzer Inc. · Todos os direitos reservados</p>" +
+      "</div></body></html>"
+    );
+
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => win.print(), 800);
+    }
   };
 
   const renderCellContent = (item: any, key: string, colDef: any) => {
@@ -525,7 +665,7 @@ export default function FinancialDashboard() {
         {/* Lógica de renderização das views */}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-14 md:pt-0">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-0">
               <div><h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-400 mt-1 text-sm md:text-base">Visão consolidada do desempenho das empresas.</p></div>
               <div className="relative" ref={columnMenuRef}>
                 <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#161b22] border-gray-700 hover:border-blue-500 text-gray-300'}`}>
@@ -587,7 +727,7 @@ export default function FinancialDashboard() {
         )}
         {currentView === 'history' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
-            <header className="flex items-center justify-between mb-8 pt-14 md:pt-0"><div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
+            <header className="flex items-center justify-between mb-8 pt-0"><div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
             <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
              <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-left border-collapse">
