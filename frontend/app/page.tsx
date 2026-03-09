@@ -6,7 +6,7 @@ import {
   BarChart3, UploadCloud, ArrowRight, 
   FileText, Layout, Database, Check, X,
   Trash2, ChevronRight, DollarSign, Percent,
-  AlertCircle, TrendingUp, Download, ChevronLeft, Menu
+  AlertCircle, TrendingUp, Download, ChevronLeft, Menu, Activity
 } from "lucide-react";
 
 // --- DATA ---
@@ -20,6 +20,29 @@ const historicoData = [
   { empresa: "TESLA", periodo: "4T/2025", data: "03/03/2026", score: 3 },
   { empresa: "AMAZON", periodo: "4T/2025", data: "27/02/2026", score: 4 },
   { empresa: "COCA COLA", periodo: "4T/2025", data: "26/02/2026", score: 4 },
+];
+
+const scoreMetrics = [
+  { label: "Receita",  icon: DollarSign,   color: "text-blue-400",    score: 5 },
+  { label: "Margem",   icon: Percent,       color: "text-purple-400",  score: 5 },
+  { label: "Dívida",   icon: AlertCircle,   color: "text-red-400",     score: 5 },
+  { label: "ROE",      icon: TrendingUp,    color: "text-emerald-400", score: 5 },
+];
+
+const reportMetrics = [
+  { label: "RECEITA", val: 5, color: "#10b981" },
+  { label: "RENTABILIDADE", val: 4, color: "#34d399" },
+  { label: "CAPITAL", val: 4, color: "#34d399" },
+  { label: "LUCRO", val: 5, color: "#10b981" }
+];
+
+const teseLines = [
+  "A Microsoft entregou um resultado excepcional no quarto trimestre fiscal de 2025, validando e fortalecendo a tese de investimento na empresa como uma líder indiscutível na era da nuvem e da inteligência artificial.",
+  "Os números superaram as expectativas em todas as linhas principais, demonstrando a capacidade da Microsoft de traduzir a demanda do mercado em crescimento lucrativo e eficiente.",
+  "Os principais drivers foram o crescimento robusto e de alta qualidade da receita, impulsionado pelo desempenho estelar do segmento Intelligent Cloud (especialmente Azure) e pela resiliência de Productivity and Business Processes.",
+  "A empresa demonstrou uma notável alavancagem operacional, com o lucro operacional crescendo acima da receita e uma expansão significativa das margens.",
+  "Além disso, a Microsoft reforçou sua já invejável estrutura de capital, com forte geração de fluxo de caixa livre e redução da dívida bruta.",
+  "O outlook da empresa é extremamente positivo, com sua liderança em IA e nuvem assegurando um caminho de crescimento sustentável e de alto valor.",
 ];
 
 // --- SUBCOMPONENTS ---
@@ -38,23 +61,6 @@ function ScoreBadge({ score }: { score: number }) {
     </span>
   );
 }
-
-// --- SCORE DEMO DATA ---
-const scoreMetrics = [
-  { label: "Receita",  icon: DollarSign,   color: "text-blue-400",    score: 5 },
-  { label: "Margem",   icon: Percent,       color: "text-purple-400",  score: 5 },
-  { label: "Dívida",   icon: AlertCircle,   color: "text-red-400",     score: 5 },
-  { label: "ROE",      icon: TrendingUp,    color: "text-emerald-400", score: 5 },
-];
-
-const teseLines = [
-  "A Microsoft entregou um resultado excepcional no quarto trimestre fiscal de 2025, validando e fortalecendo a tese de investimento na empresa como uma líder indiscutível na era da nuvem e da inteligência artificial.",
-  "Os números superaram as expectativas em todas as linhas principais, demonstrando a capacidade da Microsoft de traduzir a demanda do mercado em crescimento lucrativo e eficiente.",
-  "Os principais drivers foram o crescimento robusto e de alta qualidade da receita, impulsionado pelo desempenho estelar do segmento Intelligent Cloud (especialmente Azure) e pela resiliência de Productivity and Business Processes.",
-  "A empresa demonstrou uma notável alavancagem operacional, com o lucro operacional crescendo acima da receita e uma expansão significativa das margens.",
-  "Além disso, a Microsoft reforçou sua já invejável estrutura de capital, com forte geração de fluxo de caixa livre e redução da dívida bruta.",
-  "O outlook da empresa é extremamente positivo, com sua liderança em IA e nuvem assegurando um caminho de crescimento sustentável e de alto valor.",
-];
 
 function ScoreMetricBar({ score, animate }: { score: number; animate: boolean }) {
   return (
@@ -79,7 +85,6 @@ function ScoreDemo() {
     <div className="relative w-full select-none">
       <div className="absolute -inset-6 bg-blue-600/10 blur-[60px] rounded-3xl pointer-events-none" />
       <div className="relative rounded-2xl overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)] border border-white/10">
-        {/* Browser chrome */}
         <div className="bg-[#0e1117] border-b border-white/10 px-4 py-3 flex items-center gap-3">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-500/80" />
@@ -91,10 +96,8 @@ function ScoreDemo() {
           </div>
         </div>
 
-        {/* Scrollable page content */}
         <div className="bg-[#0A0D14] overflow-y-auto scrollbar-thin" style={{ height: "560px", scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.15) transparent" }}>
           <div className="px-6 md:px-8 py-6">
-            {/* App navbar */}
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
                 <Menu size={18} className="text-gray-400" />
@@ -107,7 +110,6 @@ function ScoreDemo() {
               </button>
             </div>
 
-            {/* Header */}
             <div className="flex items-start justify-between mb-8">
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Relatório de Análise</p>
@@ -126,7 +128,6 @@ function ScoreDemo() {
 
             <div className="border-t border-white/5 mb-8" />
 
-            {/* Metric cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
               {scoreMetrics.map((m) => {
                 const Icon = m.icon;
@@ -146,7 +147,6 @@ function ScoreDemo() {
               })}
             </div>
 
-            {/* Tese de Investimento */}
             <div className="bg-[#11141D] border border-white/8 rounded-xl p-6 mb-6">
               <div className="flex items-center gap-3 mb-4">
                 <FileText size={18} className="text-blue-400" />
@@ -162,14 +162,11 @@ function ScoreDemo() {
             <div className="h-16" />
           </div>
         </div>
-
-
       </div>
     </div>
   );
 }
 
-// --- MOBILE SCORE DEMO: vertical layout matching real app on phone ---
 function ScoreDemoMobile() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: false, margin: "-80px" });
@@ -190,16 +187,12 @@ function ScoreDemoMobile() {
       transition={{ duration: 0.7, ease: "easeOut" }}
       className="relative w-full select-none"
     >
-      {/* Phone frame */}
       <div className="relative mx-auto rounded-[2.8rem] bg-[#0d0f14] border border-white/10 shadow-[0_30px_80px_-10px_rgba(0,0,0,0.95)] overflow-hidden" style={{ maxWidth: "320px" }}>
-
-        {/* Status bar */}
         <div className="flex items-center justify-between px-6 pt-8 pb-3 text-[10px] font-semibold text-white/40">
           <span>8:19</span>
           <span>●●● WiFi 🔋</span>
         </div>
 
-        {/* App navbar inside phone */}
         <div className="flex items-center justify-between px-4 pb-3 border-b border-white/8">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#1a1d27] rounded-xl flex items-center justify-center">
@@ -210,11 +203,8 @@ function ScoreDemoMobile() {
           <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold">A</div>
         </div>
 
-        {/* Scrollable content */}
         <div className="overflow-y-auto" style={{ height: "520px", backgroundColor: "#0A0D14", scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.15) transparent" }}>
           <div className="px-4 py-4">
-
-            {/* Back button */}
             <div className="flex items-center gap-2 mb-4">
               <div className="w-7 h-7 rounded-full bg-[#1a1d27] flex items-center justify-center">
                 <ChevronLeft size={14} className="text-gray-300" />
@@ -222,17 +212,14 @@ function ScoreDemoMobile() {
               <span className="text-sm text-gray-300">Voltar para Histórico</span>
             </div>
 
-            {/* Download button */}
             <button className="w-full bg-emerald-500 text-black text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-5">
               <Download size={15} /> Baixar Relatório Completo
             </button>
 
-            {/* Header */}
             <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Relatório de Análise</p>
             <h1 className="text-3xl font-black text-white tracking-tight">MICROSOFT</h1>
             <p className="text-blue-400 font-bold text-lg mt-1 mb-4">2T/2026</p>
 
-            {/* Score card */}
             <div className="bg-[#11141D] border border-white/8 rounded-2xl px-5 py-4 flex items-center justify-between mb-5">
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Score IA</p>
@@ -246,7 +233,6 @@ function ScoreDemoMobile() {
 
             <div className="border-t border-white/5 mb-5" />
 
-            {/* Metric cards — 1 per row like real app */}
             <div className="space-y-3 mb-5">
               {scoreMetrics.map((m) => {
                 const Icon = m.icon;
@@ -268,7 +254,6 @@ function ScoreDemoMobile() {
               })}
             </div>
 
-            {/* Tese de Investimento */}
             <div className="bg-[#11141D] border border-white/8 rounded-2xl p-5 mb-4">
               <div className="flex items-center gap-2 mb-3">
                 <FileText size={16} className="text-blue-400" />
@@ -285,9 +270,6 @@ function ScoreDemoMobile() {
           </div>
         </div>
 
-
-
-        {/* Home bar */}
         <div className="flex justify-center py-2 bg-[#0A0D14]">
           <div className="w-20 h-1 rounded-full bg-white/20" />
         </div>
@@ -296,7 +278,189 @@ function ScoreDemoMobile() {
   );
 }
 
-// --- COMPARADOR MOBILE: recreates the real app's aggregated table ---
+// --- NEW COMPONENTS: REPORT DEMO ---
+
+function ReportDemo() {
+  const [barsVisible, setBarsVisible] = React.useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setBarsVisible(true), 600);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <div className="relative w-full select-none mt-10">
+      <div className="absolute -inset-6 bg-purple-600/10 blur-[60px] rounded-3xl pointer-events-none" />
+      <div className="relative rounded-2xl overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)] border border-white/10">
+        
+        <div className="bg-[#0e1117] border-b border-white/10 px-4 py-3 flex items-center justify-between">
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-red-500/80" />
+            <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
+            <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
+          </div>
+          <div className="flex-1 max-w-sm bg-white/5 rounded-md px-3 py-1 text-[11px] text-gray-500 font-mono text-center mx-4">
+            app.finanalyzer.ai/export/google
+          </div>
+          <div className="w-10"></div>
+        </div>
+
+        <div className="bg-white overflow-y-auto scrollbar-thin" style={{ height: "600px", scrollbarWidth: "thin", scrollbarColor: "rgba(0,0,0,0.1) transparent" }}>
+          <div className="px-10 py-10 max-w-3xl mx-auto">
+            
+            <div className="flex justify-between items-start border-b-2 border-gray-200 pb-6 mb-8">
+               <div className="flex items-center gap-2.5">
+                  <div className="bg-blue-600 p-2 rounded-lg shadow-sm">
+                    <Activity size={18} className="text-white" strokeWidth={2.5}/>
+                  </div>
+                  <span className="font-extrabold text-xl text-gray-900 tracking-tight">FinAnalyzer <span className="text-blue-600">.AI</span></span>
+               </div>
+               <div className="text-right">
+                 <p className="text-xs text-gray-500 mb-0.5">Gerado em <strong className="text-gray-800">08/03/2026</strong></p>
+                 <p className="text-xs text-gray-500">Relatório de análise fundamentalista</p>
+               </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-slate-900 to-[#1e3a5f] rounded-2xl p-8 mb-8 text-white flex justify-between items-center shadow-lg">
+               <div>
+                 <p className="text-[10px] text-blue-200 uppercase tracking-widest mb-2 font-bold">Relatório de Análise</p>
+                 <h1 className="text-4xl font-black mb-1 tracking-tight">GOOGLE</h1>
+                 <p className="text-blue-300 font-bold text-lg">4T/2025</p>
+               </div>
+               <div className="bg-white/10 border border-white/20 rounded-xl p-5 text-center backdrop-blur-sm min-w-[140px]">
+                 <p className="text-[10px] text-slate-300 uppercase tracking-widest mb-1 font-bold">Score IA</p>
+                 <p className="text-5xl font-black text-emerald-400">5<span className="text-xl text-slate-400">/5</span></p>
+               </div>
+            </div>
+
+            <div className="grid grid-cols-4 gap-4 mb-8">
+               {reportMetrics.map((m, i) => (
+                 <div key={i} className="border border-gray-200 rounded-xl p-4 text-center bg-gray-50/50">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">{m.label}</p>
+                    <p className="text-3xl font-black text-gray-900 mb-2">{m.val}</p>
+                    <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                       <div className="h-full rounded-full transition-all duration-1000 ease-out" 
+                            style={{ width: barsVisible ? `${(m.val / 5) * 100}%` : '0%', backgroundColor: m.color }} />
+                    </div>
+                 </div>
+               ))}
+            </div>
+
+            <div className="border border-gray-200 rounded-xl p-6 mb-6">
+               <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Desempenho de Receita</h3>
+                  <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-xs font-bold border border-emerald-200">5/5</span>
+               </div>
+               <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                 A Alphabet entregou uma receita consolidada de $113.8 bilhões no 4T/2025, um aumento robusto de 18% em relação ao mesmo período do ano anterior (ou 17% em moeda constante). Este crescimento foi amplamente impulsionado pelas divisões Google Services e Google Cloud, demonstrando uma notável capacidade de monetização em seus principais canais.
+               </p>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
+               <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wider mb-3">Conclusão — Tese e Outlook</h3>
+               <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                 A tese principal é que a Alphabet está em uma posição privilegiada para capitalizar na era da Inteligência Artificial. Seus resultados demonstram a capacidade de gerar crescimento de receita e lucro em seus segmentos core, enquanto investe agressivamente para garantir relevância e liderança futura. A penalização do lucro operacional por investimentos em IA é plenamente justificada.
+               </p>
+            </div>
+            
+            <div className="border-t border-gray-200 pt-6 mt-8 text-center text-xs text-gray-400 font-medium">
+               Este relatório foi gerado automaticamente pelo FinAnalyzer.AI. Não constitui recomendação de investimento.
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReportDemoMobile() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: false, margin: "-80px" });
+  const [barsVisible, setBarsVisible] = useState(false);
+
+  useEffect(() => {
+    if (isInView) {
+      const t = setTimeout(() => setBarsVisible(true), 400);
+      return () => clearTimeout(t);
+    }
+  }, [isInView]);
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 40 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
+      className="relative w-full select-none mt-8"
+    >
+      <div className="relative mx-auto rounded-[2.8rem] bg-[#0d0f14] border border-white/10 shadow-[0_30px_80px_-10px_rgba(0,0,0,0.95)] overflow-hidden" style={{ maxWidth: "320px" }}>
+        
+        <div className="flex items-center justify-between px-6 pt-8 pb-2 text-[10px] font-semibold text-white/40 bg-[#0e1117]">
+          <span>8:19</span>
+          <span>●●● WiFi 🔋</span>
+        </div>
+
+        <div className="overflow-y-auto bg-white scrollbar-none" style={{ height: "520px", scrollbarWidth: "none" }}>
+           <div className="p-5">
+              
+              <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-5">
+                <div className="flex items-center gap-1.5">
+                    <div className="bg-blue-600 p-1.5 rounded-lg"><Activity size={14} className="text-white" strokeWidth={2.5}/></div>
+                    <span className="font-extrabold text-sm text-gray-900 tracking-tight">FinAnalyzer</span>
+                </div>
+                <div className="text-right text-[9px] text-gray-500 font-medium">Gerado em<br/> <strong className="text-gray-800">08/03/2026</strong></div>
+              </div>
+
+              <div className="bg-gradient-to-br from-slate-900 to-[#1e3a5f] rounded-xl p-5 mb-5 text-white shadow-md">
+                 <p className="text-[8px] text-blue-200 uppercase tracking-widest mb-1 font-bold">Relatório de Análise</p>
+                 <h1 className="text-3xl font-black mb-1 tracking-tight">GOOGLE</h1>
+                 <p className="text-blue-300 text-sm font-bold mb-4">4T/2025</p>
+
+                 <div className="bg-white/10 border border-white/20 rounded-lg p-3 flex justify-between items-center backdrop-blur-sm">
+                   <div>
+                     <p className="text-[9px] text-slate-300 uppercase tracking-widest font-bold">Score IA</p>
+                     <p className="text-[8px] text-slate-400 mt-0.5">Baseado em 4 metas</p>
+                   </div>
+                   <p className="text-3xl font-black text-emerald-400">5<span className="text-sm text-slate-400">/5</span></p>
+                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                {reportMetrics.map((m, i) => (
+                  <div key={i} className="border border-gray-200 rounded-xl p-3 text-center bg-gray-50/50">
+                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">{m.label}</p>
+                    <p className="text-2xl font-black text-gray-900 mb-2">{m.val}</p>
+                    <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                       <div className="h-full rounded-full transition-all duration-1000 ease-out" 
+                            style={{ width: barsVisible ? `${(m.val / 5) * 100}%` : '0%', backgroundColor: m.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border border-gray-200 rounded-xl p-4 mb-4">
+                 <div className="flex justify-between items-center mb-3">
+                    <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-wider">Receita</h3>
+                    <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[9px] font-bold border border-emerald-200">5/5</span>
+                 </div>
+                 <p className="text-[11px] text-gray-700 leading-relaxed font-medium">
+                   A Alphabet entregou uma receita consolidada de $113.8 bilhões no 4T/2025, um aumento robusto de 18% em relação ao mesmo período do ano anterior.
+                 </p>
+              </div>
+
+           </div>
+        </div>
+
+        <div className="flex justify-center py-2 bg-[#0e1117] border-t border-white/5">
+          <div className="w-20 h-1 rounded-full bg-white/20" />
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+// --- COMPARADOR MOBILE ---
 const comparadorData = [
   { empresa: "AEROVIRONMENT", notaFinal: 2, receita: 4, lucro: 1, divida: 3, rentabilidade: 1,  resultados: 2, media: 2.5, ultimoTri: "2T/2026" },
   { empresa: "AMAZON",        notaFinal: 4, receita: 5, lucro: 3, divida: 4, rentabilidade: 4,  resultados: 1, media: 4,   ultimoTri: "4T/2025" },
@@ -317,22 +481,10 @@ function scoreColor(s: number) {
   return "#ef4444";
 }
 
-const comparadorCols = [
-  { key: "notaFinal",    label: "NOTA\nFINAL",           colored: true,  labelColor: "#a855f7" },
-  { key: "receita",      label: "RECEITA",               colored: true,  labelColor: "#3b82f6" },
-  { key: "lucro",        label: "LUCRO",                 colored: true,  labelColor: "#22c55e" },
-  { key: "divida",       label: "DÍVIDA",                colored: true,  labelColor: "#ef4444" },
-  { key: "rentabilidade",label: "RENTABILIDADE",         colored: true,  labelColor: "#eab308" },
-  { key: "resultados",   label: "RESULTADOS\nANALISADOS",colored: false, labelColor: "#e5e7eb" },
-  { key: "media",        label: "MÉDIA",                 colored: true,  labelColor: "#22c55e" },
-  { key: "ultimoTri",    label: "ÚLTIMO\nTRI",           colored: false, labelColor: "#e5e7eb" },
-];
-
 function ComparadorMobile() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
 
-  // All columns shown via horizontal scroll — no pagination needed
   const allCols = [
     { key: "notaFinal",     label: "NOTA\nFINAL",            colored: true,  labelColor: "#a855f7" },
     { key: "receita",       label: "RECEITA",                 colored: true,  labelColor: "#3b82f6" },
@@ -353,18 +505,15 @@ function ComparadorMobile() {
       className="w-full select-none"
     >
       <div className="bg-[#11141D]/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-        {/* Table header */}
         <div className="px-5 py-4 border-b border-white/10">
           <h3 className="text-lg font-bold text-white">Tabela Agregada</h3>
           <p className="text-sm text-gray-400 mt-0.5">Visão consolidada do desempenho.</p>
         </div>
 
-        {/* Horizontally scrollable table */}
         <div className="overflow-x-auto">
           <table style={{ minWidth: "600px" }} className="w-full">
             <thead>
               <tr className="border-b border-white/10">
-                {/* Fixed empresa column */}
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider sticky left-0 bg-[#11141D] z-10">
                   Empresa
                 </th>
@@ -406,7 +555,6 @@ function ComparadorMobile() {
           </table>
         </div>
 
-        {/* Scroll hint */}
         <div className="px-5 py-3 border-t border-white/5 flex items-center justify-end gap-1.5">
           <ChevronRight size={12} className="text-gray-500" />
           <span className="text-xs text-gray-500">Deslize para ver mais</span>
@@ -455,32 +603,20 @@ function PhoneImage() {
       transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }}
       className="w-full max-w-[320px] mx-auto select-none"
     >
-      {/* Phone frame */}
       <div className="relative rounded-[3rem] bg-[#111] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.9)] border border-white/10 overflow-hidden" style={{ padding: "10px" }}>
-
-        {/* Notch */}
         <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-20" />
-
-        {/* Screen */}
         <div className={`relative rounded-[2.4rem] overflow-hidden transition-colors duration-700 ${screen}`} style={{ minHeight: "620px" }}>
-
-          {/* Status bar */}
           <div className={`flex items-center justify-between px-6 pt-10 pb-2 text-[10px] font-semibold transition-colors duration-700 ${statusC}`}>
             <span>9:41</span>
             <div className="flex items-center gap-1"><span>●●● WiFi 🔋</span></div>
           </div>
-
-          {/* App content */}
           <div className="px-5 pb-6">
-            {/* Header */}
             <div className="text-center mb-5 mt-2">
               <p className={`text-base font-bold leading-tight transition-colors duration-700 ${titleC}`}>Nova Análise Financeira</p>
               <p className={`text-xs mt-1 leading-snug transition-colors duration-700 ${subC}`}>
                 Carregue o relatório trimestral (PDF) para processamento via IA.
               </p>
             </div>
-
-            {/* Fields */}
             <div className="space-y-3">
               {[
                 { label: "EMPRESA",   value: "AMAZON"        },
@@ -492,23 +628,17 @@ function PhoneImage() {
                   <div className={`rounded-xl border px-3 py-2.5 text-xs font-medium transition-colors duration-700 ${input}`}>{f.value}</div>
                 </div>
               ))}
-
-              {/* Upload zone */}
               <div className={`rounded-xl border-2 border-dashed px-4 py-4 text-center mt-1 transition-colors duration-700 ${zone}`}>
                 <UploadCloud size={22} className="mx-auto mb-2 text-blue-500" />
                 <p className={`text-[10px] font-bold transition-colors duration-700 ${zoneFile}`}>AMZN-Q1-2025-Earnings-Release.pdf</p>
                 <p className={`text-[9px] mt-0.5 transition-colors duration-700 ${zoneSub}`}>Suporta PDF de até 10MB</p>
               </div>
-
-              {/* CTA */}
               <button className="w-full rounded-xl py-3 text-xs font-bold flex items-center justify-center gap-2 mt-1 bg-blue-600 text-white">
                 <span>✦</span> Gerar Análise Completa
               </button>
             </div>
           </div>
         </div>
-
-        {/* Home bar */}
         <div className="flex justify-center pt-2 pb-1">
           <div className={`w-24 h-1 rounded-full transition-colors duration-700 ${barC}`} />
         </div>
@@ -532,17 +662,6 @@ function Feature({ text, active = false, disabled = false, light = false }: { te
   );
 }
 
-function ListItem({ children }: { children: React.ReactNode }) {
-  return (
-    <li className="flex items-center gap-4 text-white font-medium text-lg tracking-tight">
-      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 border border-blue-500">
-         <Check size={16} className="text-white" strokeWidth={3} />
-      </div>
-      <span>{children}</span>
-    </li>
-  );
-}
-
 // --- MAIN COMPONENT ---
 
 export default function LandingPage() {
@@ -557,7 +676,6 @@ export default function LandingPage() {
       {/* --- NAVBAR --- */}
       <nav className="border-b border-white/10 bg-[#0A0D14]/80 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-5 h-16 md:h-20 flex items-center justify-between">
-          {/* Logo */}
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 md:w-10 md:h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
               <BarChart3 className="text-white w-5 h-5 md:w-6 md:h-6" />
@@ -567,7 +685,6 @@ export default function LandingPage() {
             </span>
           </div>
 
-          {/* Desktop links */}
           <div className="hidden md:flex items-center gap-6">
             <a href="#funcionalidades" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">Funcionalidades</a>
             <a href="#planos" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">Preços</a>
@@ -577,7 +694,6 @@ export default function LandingPage() {
             </a>
           </div>
 
-          {/* Mobile: Login + CTA + hamburger */}
           <div className="flex md:hidden items-center gap-2">
             <a href="/dashboard" className="border border-white/30 text-white px-3 py-2 rounded-full font-semibold text-sm hover:bg-white/10 transition-colors">
               Entrar
@@ -628,11 +744,7 @@ export default function LandingPage() {
           style={{ backgroundImage: "url('/upload.png')" }}
         >
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-
-            {/* Mobile: text on top centered; Desktop: side by side grid */}
             <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-16 lg:items-center">
-
-              {/* Text — centered on mobile, left-aligned on desktop */}
               <div className="lg:col-span-5 lg:col-start-1 text-center lg:text-left mb-12 lg:mb-0">
                 <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-400/30 mx-auto lg:mx-0">
                   <UploadCloud className="text-blue-400 w-7 h-7" />
@@ -645,15 +757,12 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              {/* Phone — full width centered on mobile, right column on desktop */}
               <div className="lg:col-span-6 lg:col-start-7 relative flex justify-center lg:justify-end">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none" />
-                {/* Mobile: constrain width so phone doesn't overflow */}
                 <div className="w-full max-w-[260px] lg:max-w-none">
                   <PhoneImage />
                 </div>
               </div>
-
             </div>
           </div>
         </section>
@@ -676,11 +785,9 @@ export default function LandingPage() {
                 facilitando a identificação imediata de pontos fortes e de atenção na empresa.
               </p>
             </div>
-            {/* Desktop: browser mockup */}
             <div className="hidden md:block">
               <ScoreDemo />
             </div>
-            {/* Mobile: phone mockup matching real app */}
             <div className="md:hidden">
               <ScoreDemoMobile />
             </div>
@@ -689,10 +796,8 @@ export default function LandingPage() {
 
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section className="py-16 lg:py-56 relative overflow-hidden">
-          {/* Background Mobile: Gradiente preto e azul claro */}
           <div className="absolute inset-0 bg-gradient-to-b from-black to-sky-400/40 lg:hidden z-0" />
           
-          {/* Background Desktop: Imagem */}
           <div 
             className="absolute inset-0 hidden lg:block z-0"
             style={{ 
@@ -704,8 +809,6 @@ export default function LandingPage() {
           />
 
           <div className="max-w-7xl mx-auto px-6 relative z-10">
-
-            {/* Mobile: text + phone mockup stacked */}
             <div className="flex flex-col items-center gap-10 lg:hidden">
               <div className="text-center">
                 <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30 mx-auto">
@@ -721,7 +824,6 @@ export default function LandingPage() {
               <ComparadorMobile />
             </div>
 
-            {/* Desktop: text pinned to right */}
             <div className="hidden lg:grid lg:grid-cols-12 gap-0 items-start">
               <div className="lg:col-span-4 lg:col-start-9 text-left">
                 <div className="w-14 h-14 bg-purple-500/20 rounded-2xl flex items-center justify-center mb-6 border border-purple-400/30">
@@ -735,7 +837,6 @@ export default function LandingPage() {
                 </p>
               </div>
             </div>
-
           </div>
         </section>
 
@@ -748,10 +849,8 @@ export default function LandingPage() {
 
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="flex flex-col gap-10 lg:grid lg:grid-cols-12 lg:gap-10 lg:items-center">
-
-              {/* Texto acima no mobile, esquerda no desktop */}
               <div className="lg:col-span-3 lg:col-start-1 order-1 text-center lg:text-left">
-                <div className="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-400/30">
+                <div className="w-14 h-14 bg-yellow-500/20 rounded-2xl flex items-center justify-center mb-6 border border-yellow-400/30 mx-auto lg:mx-0">
                   <Database className="text-yellow-400 w-7 h-7" />
                 </div>
                 <h2 className="text-3xl lg:text-[2.6rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
@@ -762,7 +861,6 @@ export default function LandingPage() {
                 </p>
               </div>
 
-              {/* Tabela na direita — mais larga */}
               <motion.div
                 ref={historicoRef}
                 className="lg:col-span-8 lg:col-start-5 order-2"
@@ -817,7 +915,32 @@ export default function LandingPage() {
                   </div>
                 </div>
               </motion.div>
+            </div>
+          </div>
+        </section>
 
+        {/* BLOCO 5: RELATÓRIO COMPLETO */}
+        <section className="py-16 lg:py-48 relative overflow-hidden bg-[#05080f]">
+          <div className="absolute inset-0 bg-gradient-to-b from-black to-sky-400/40 lg:hidden z-0" />
+          
+          <div className="max-w-6xl mx-auto px-6 relative z-10">
+            <div className="flex flex-col items-center text-center mb-10">
+              <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-4 border border-blue-400/30">
+                <Download className="text-blue-400 w-7 h-7" />
+              </div>
+              <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
+                Relatório Completo
+              </h2>
+              <p className="text-base text-gray-300 leading-relaxed font-medium tracking-tight max-w-xl">
+                Exporte suas análises em um formato limpo, profissional e pronto para impressão. O relatório detalha todos os fundamentos e consolida a tese de investimento.
+              </p>
+            </div>
+            
+            <div className="hidden md:block">
+              <ReportDemo />
+            </div>
+            <div className="md:hidden">
+              <ReportDemoMobile />
             </div>
           </div>
         </section>
@@ -862,7 +985,6 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 gap-12 items-stretch max-w-5xl mx-auto">
             
-            {/* CARD GRATUITO */}
             <div className="bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-14 hover:border-white/30 transition-colors flex flex-col shadow-2xl">
               <h3 className="text-4xl font-bold text-white mb-2 tracking-tight">Gratuito</h3>
               <p className="text-gray-400 text-xl mb-12 font-medium">Para começar a analisar sem custo.</p>
@@ -882,7 +1004,6 @@ export default function LandingPage() {
               </a>
             </div>
 
-            {/* CARD PREMIUM */}
             <div className="bg-blue-600/95 backdrop-blur-2xl border border-blue-400/50 rounded-[2.5rem] p-8 md:p-14 relative shadow-[0_0_80px_-10px_rgba(37,99,235,0.8)] flex flex-col transform hover:-translate-y-4 transition-transform duration-300">
               <h3 className="text-4xl font-bold text-white mb-2 tracking-tight">Premium</h3>
               <div className="flex items-end gap-2 mb-2">
