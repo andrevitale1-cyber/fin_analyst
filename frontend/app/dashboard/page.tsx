@@ -159,10 +159,19 @@ export default function FinancialDashboard() {
   const columnMenuRef = useRef<HTMLDivElement>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>(COLUMN_DEFINITIONS.map(c => c.key));
   const [draggedItemIndex, setDraggedItemIndex] = useState<number | null>(null);
+  
+  // --- CONFIGURAÇÃO DE COLUNAS PADRÃO (Conforme imagem) ---
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
-    empresa: true, ano: true, trimestre: true, nota_final: true, soma_total: true,
-    qtde_tri: true, media: true, last_analysed_quarter: true, receita_nota: false,
-    lucro_nota: true, divida_nota: false, rentabilidade_nota: false
+    empresa: true, 
+    nota_final: true, 
+    receita_nota: true,
+    lucro_nota: true, 
+    divida_nota: true, 
+    rentabilidade_nota: true,
+    soma_total: false, // Ocultado conforme imagem
+    qtde_tri: true, 
+    media: true, 
+    last_analysed_quarter: true // Adicionado "Último Tri" conforme imagem
   });
   
   const [empresa, setEmpresa] = useState("");
@@ -481,7 +490,7 @@ export default function FinancialDashboard() {
 
   const renderCellContent = (item: any, key: string, colDef: any) => {
     if (key === 'empresa') return <span className={`${colDef.color || 'text-gray-900 dark:text-white'} font-bold`}>{item[key]?.toString().toUpperCase()}</span>;
-    if (key === 'trimestre') return <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 py-1.5 px-3 rounded-md text-xs font-bold border border-blue-200 dark:border-blue-500/30">{item[key]}</span>;
+    if (key === 'last_analysed_quarter') return <span className="bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 py-1.5 px-3 rounded-md text-xs font-bold border border-blue-200 dark:border-blue-500/30">{item[key]}</span>;
     if (key === 'media') return <span className={`px-2 py-1 rounded font-bold ${item.media >= 4 ? 'text-green-600 dark:text-green-400' : 'text-yellow-600 dark:text-yellow-400'}`}>{item[key]}</span>;
     if (key.includes('nota') || key === 'nota_final') {
       const val = item[key];
@@ -643,7 +652,7 @@ export default function FinancialDashboard() {
           </div>
         )}
 
-        {/* TABELA E HISTÓRICO... (Mantidos similares, mas herdam as cores corretas via Tailwind) */}
+        {/* TABELA AGREGADA */}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-0">
@@ -731,6 +740,7 @@ export default function FinancialDashboard() {
           </div>
         )}
 
+        {/* TELA DE RESULTADOS */}
         {currentView === 'result' && result && (
           <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
