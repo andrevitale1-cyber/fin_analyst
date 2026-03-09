@@ -7,7 +7,7 @@ import {
   BarChart3, TrendingUp, DollarSign, Percent, Activity, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
   GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check, Menu, ExternalLink,
-  Sun, Moon
+  Sun, Moon, Search
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DO STRIPE E API ---
@@ -153,6 +153,7 @@ export default function FinancialDashboard() {
   const WEEKLY_LIMIT = 5;
   const [result, setResult] = useState<any>(null);
   const [historyList, setHistoryList] = useState<any[]>([]);
+  const [historySearch, setHistorySearch] = useState("");
   const [tableData, setTableData] = useState<any[]>([]);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [showColumnMenu, setShowColumnMenu] = useState(false);
@@ -160,7 +161,7 @@ export default function FinancialDashboard() {
   const [columnOrder, setColumnOrder] = useState<string[]>(COLUMN_DEFINITIONS.map(c => c.key));
   const [draggedItemIndex, setDraggedItemIndex] = useState<number | null>(null);
   
-  // --- CONFIGURAÇÃO DE COLUNAS PADRÃO (Conforme imagem) ---
+  // --- CONFIGURAÇÃO DE COLUNAS PADRÃO ---
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
     empresa: true, 
     nota_final: true, 
@@ -168,10 +169,10 @@ export default function FinancialDashboard() {
     lucro_nota: true, 
     divida_nota: true, 
     rentabilidade_nota: true,
-    soma_total: false, // Ocultado conforme imagem
+    soma_total: false, 
     qtde_tri: true, 
     media: true, 
-    last_analysed_quarter: true // Adicionado "Último Tri" conforme imagem
+    last_analysed_quarter: true 
   });
   
   const [empresa, setEmpresa] = useState("");
@@ -336,6 +337,15 @@ export default function FinancialDashboard() {
       return 0;
     });
   }, [tableData, sortConfig]);
+
+  const filteredHistory = useMemo(() => {
+    if (!historySearch.trim()) return historyList;
+    const lowerSearch = historySearch.toLowerCase();
+    return historyList.filter(item => 
+      item.empresa?.toLowerCase().includes(lowerSearch) || 
+      item.periodo?.toLowerCase().includes(lowerSearch)
+    );
+  }, [historyList, historySearch]);
 
   const handleDownload = () => {
     if (!isPremium) { setShowUpgradeModal(true); return; }
@@ -717,13 +727,33 @@ export default function FinancialDashboard() {
 
         {currentView === 'history' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
-            <header className="flex items-center justify-between mb-8 pt-0"><div><h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">Gerencie suas análises individuais.</p></div></header>
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-0">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">Histórico Detalhado</h1>
+                <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">Gerencie suas análises individuais.</p>
+              </div>
+              
+              {/* BARRA DE BUSCA */}
+              <div className="relative w-full md:w-80">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none">
+                  <Search size={18} className="text-gray-400 dark:text-gray-500" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Buscar empresa ou período..."
+                  className="w-full bg-white dark:bg-[#11161d] border border-gray-200 dark:border-gray-800 rounded-xl pl-10 pr-4 py-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-sm placeholder-gray-400 dark:placeholder-gray-600 font-medium"
+                  value={historySearch}
+                  onChange={(e) => setHistorySearch(e.target.value)}
+                />
+              </div>
+            </header>
+            
             <div className="bg-white dark:bg-[#11161d] border border-gray-200 dark:border-gray-800/60 rounded-[1.5rem] shadow-sm dark:shadow-xl overflow-hidden transition-colors duration-300">
              <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-left border-collapse">
                 <thead><tr className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-[#0A0D14]/50 text-xs uppercase tracking-wider text-gray-600 dark:text-gray-500"><th className="py-5 px-6 font-semibold">Empresa</th><th className="py-5 px-6 font-semibold">Período</th><th className="py-5 px-6 font-semibold">Data</th><th className="py-5 px-6 text-center font-semibold">Score</th><th className="py-5 px-6 text-right font-semibold">Ações</th></tr></thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {historyList.map((item: any) => (
+                  {filteredHistory.map((item: any) => (
                     <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { setResult(item.conteudo); setEmpresa(item.empresa); setCurrentView('result'); }}>
                       <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-bold text-gray-900 dark:text-white">{item.empresa?.toUpperCase()}</span></div></td>
                       <td className="py-4 px-6 text-gray-600 dark:text-gray-400 font-medium">{item.periodo}</td>
@@ -735,7 +765,11 @@ export default function FinancialDashboard() {
                 </tbody>
               </table>
              </div> 
-              {historyList.length === 0 && <div className="p-12 text-center text-gray-500">Histórico vazio.</div>}
+              {filteredHistory.length === 0 && (
+                <div className="p-12 text-center text-gray-500 font-medium">
+                  {historyList.length === 0 ? "Histórico vazio." : "Nenhuma análise encontrada para esta busca."}
+                </div>
+              )}
             </div>
           </div>
         )}
