@@ -468,14 +468,14 @@ function TypewriterEffect({ text, trigger, delay = 0 }: { text: string, trigger:
     if (!started) return;
     let i = 0;
     const interval = setInterval(() => {
-      i += 2; // Imprime de 2 em 2 letras garantindo máxima suavidade sem travar
+      i += 1; // Imprime de 2 em 2 letras garantindo máxima suavidade sem travar
       if (i >= text.length) {
         setDisplayed(text);
         clearInterval(interval);
       } else {
         setDisplayed(text.slice(0, i));
       }
-    }, 8); // Dispara muito rápido, parecendo 60fps
+    }, 25); // Dispara muito rápido, parecendo 60fps
     return () => clearInterval(interval);
   }, [started, text]);
 
