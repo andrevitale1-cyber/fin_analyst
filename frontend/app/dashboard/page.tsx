@@ -6,7 +6,7 @@ import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Activity, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
-  GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check, Menu
+  GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check, Menu, ExternalLink
 } from "lucide-react";
 
 // --- CONFIGURAÇÃO DO STRIPE ---
@@ -210,7 +210,6 @@ export default function FinancialDashboard() {
   // --- LÓGICA DE PREMIUM REAL ---
   const isPremium = user?.publicMetadata?.plan === 'premium';
 
-
   useEffect(() => {
     if (isLoaded && !user) {
       return; 
@@ -389,10 +388,14 @@ export default function FinancialDashboard() {
     const meta = result.metadata || {};
     const data = result.data || {};
     const empresa = (meta.empresa || "EMPRESA").toUpperCase();
+    
+    // Corrige erro onde aparecia apenas "/" sem os valores corretos
     const trimestre = meta.trimestre || "";
     const ano = meta.ano || "";
-    const periodo = trimestre + "/" + ano;
-    const notaFinal = data.nota_final ?? result.nota_final ?? "—";
+    const periodo = meta.periodo || (trimestre && ano ? `${trimestre}/${ano}` : "");
+    
+    // Corrige erro do Score não preenchido corretamente no HTML
+    const notaFinal = data.nota_geral ?? result.nota_geral ?? data.nota_final ?? result.nota_final ?? "—";
     const analise: string = result.analise_completa || "";
     const today = new Date().toLocaleDateString("pt-BR");
     const year = new Date().getFullYear();
@@ -405,13 +408,13 @@ export default function FinancialDashboard() {
       return "#ef4444";
     };
 
-    const notaFinalColor = scoreColor(Number(notaFinal));
+    const notaFinalColor = notaFinal !== "—" ? scoreColor(Number(notaFinal)) : "#9ca3af";
 
     const sections = [
-      { title: "Performance Core",         label: "Receita",        nota: data.receita_nota       ?? null },
-      { title: "Rentabilidade e Eficiência",label: "Rentabilidade",  nota: data.lucro_nota         ?? null },
-      { title: "Estrutura de Capital",      label: "Capital",        nota: data.divida_nota        ?? null },
-      { title: "Lucro Líquido",             label: "Lucro",          nota: data.rentabilidade_nota ?? null },
+      { title: "Desempenho de Receita",  label: "RECEITA",       nota: data.receita_nota       ?? null },
+      { title: "Rentabilidade e Eficiência", label: "RENTABILIDADE", nota: data.rentabilidade_nota ?? null },
+      { title: "Estrutura de Capital",   label: "CAPITAL",       nota: data.divida_nota        ?? null },
+      { title: "Margens e Lucratividade",label: "LUCRO",         nota: data.lucro_nota         ?? null },
     ];
 
     const cleanText = (raw: string) =>
@@ -432,7 +435,7 @@ export default function FinancialDashboard() {
       return (
         '<div class="metric">' +
           '<div class="m-label">' + s.label + '</div>' +
-          '<div class="m-score" style="color:' + c + '">' + (n || "—") + '</div>' +
+          '<div class="m-score" style="color:' + c + '">' + (s.nota !== null ? s.nota : "—") + '</div>' +
           '<div class="m-bar-bg"><div class="m-bar" style="width:' + pct + '%;background:' + c + '"></div></div>' +
         '</div>'
       );
@@ -459,6 +462,9 @@ export default function FinancialDashboard() {
       "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');",
       "*{margin:0;padding:0;box-sizing:border-box}",
       "body{font-family:'Inter',sans-serif;background:#fff;color:#111;padding:48px;max-width:900px;margin:0 auto;font-size:14px;line-height:1.65}",
+      ".print-actions{display:flex;justify-content:flex-end;margin-bottom:24px;}",
+      ".btn-print{background:#22c55e;color:#fff;border:none;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:'Inter',sans-serif;box-shadow:0 4px 12px rgba(34,197,94,0.3);transition:transform 0.2s, background 0.2s;}",
+      ".btn-print:hover{background:#16a34a;transform:scale(1.02);}",
       ".header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:32px;border-bottom:2px solid #e5e7eb;margin-bottom:36px}",
       ".brand{display:flex;align-items:center;gap:10px}",
       ".brand-icon{width:36px;height:36px;background:#2563eb;border-radius:10px;display:flex;align-items:center;justify-content:center}",
@@ -492,13 +498,19 @@ export default function FinancialDashboard() {
       ".tese h3{font-size:13px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}",
       ".tese p{color:#374151;font-size:13.5px;line-height:1.75;margin-bottom:10px}",
       ".footer{border-top:1px solid #e5e7eb;padding-top:20px;font-size:11px;color:#9ca3af;text-align:center}",
-      "@media print{body{padding:0}@page{margin:20mm}}",
+      "@media print{ .print-actions { display: none !important; } body{padding:0} @page{margin:20mm} }",
     ].join("\n");
 
     const html = (
       "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'/>" +
       "<title>Relatório " + empresa + " " + periodo + "</title>" +
       "<style>" + css + "</style></head><body>" +
+      "<div class='print-actions'>" +
+        "<button class='btn-print' onclick='window.print()'>" +
+          "<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9V2h12v7'></path><path d='M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2'></path><path d='M6 14h12v8H6z'></path></svg>" +
+          "Baixar PDF / Imprimir" +
+        "</button>" +
+      "</div>" +
       "<div class='header'>" +
         "<div class='brand'>" +
           "<div class='brand-icon'><svg viewBox='0 0 24 24'><polyline points='22 12 18 12 15 21 9 3 6 12 2 12'/></svg></div>" +
@@ -530,7 +542,8 @@ export default function FinancialDashboard() {
     if (win) {
       win.document.write(html);
       win.document.close();
-      setTimeout(() => win.print(), 800);
+      // O win.print() foi removido daqui para não forçar a impressão direta, 
+      // o usuário clicará no botão dentro da nova aba.
     }
   };
 
@@ -781,11 +794,11 @@ export default function FinancialDashboard() {
               <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
               
               <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${isPremium ? 'bg-green-600 hover:bg-green-500 text-white' : 'bg-gray-700 text-gray-400 cursor-not-allowed'}`}>
-                {isPremium ? <Download size={18} /> : <Lock size={18} />} Baixar Relatório
+                {isPremium ? <ExternalLink size={18} /> : <Lock size={18} />} Ver Relatório Completo
               </button>
             </div>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
-              <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
+              <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo || `${result.metadata?.trimestre}/${result.metadata?.ano}`}</p></div>
               <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800 w-full md:w-auto justify-between md:justify-start"><div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : (result.data?.nota_geral || 0) == 3 ? 'text-amber-400' : 'text-red-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span></div></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
