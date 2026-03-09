@@ -475,7 +475,7 @@ function TypewriterEffect({ text, trigger, delay = 0 }: { text: string, trigger:
       } else {
         setDisplayed(text.slice(0, i));
       }
-    }, 15); // Dispara muito rápido, parecendo 60fps
+    }, 8); // Dispara muito rápido, parecendo 60fps
     return () => clearInterval(interval);
   }, [started, text]);
 
