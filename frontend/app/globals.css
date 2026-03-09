@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* 1. Isso avisa ao Tailwind v4 para ativar o dark mode baseado na classe do nosso botão */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,11 +15,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* 2. Trocamos o @media() do sistema por .dark para assumir o controle manual */
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {
