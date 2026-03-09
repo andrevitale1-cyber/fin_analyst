@@ -12,13 +12,13 @@ import {
 // --- DATA ---
 const historicoData = [
   { empresa: "ITAÚ", periodo: "4T/2026", data: "05/03/2026", score: 5 },
-  { empresa: "PETROBRAS", periodo: "4T/2026", data: "05/03/2026", score: 5 },
-  { empresa: "APPLE", periodo: "4T/2026", data: "04/03/2026", score: 5 },
-  { empresa: "GOOGLE", periodo: "4T/2025", data: "04/03/2026", score: 2 },
+  { empresa: "PETROBRAS", periodo: "4T/2026", data: "05/03/2026", score: 4 },
+  { empresa: "APPLE", periodo: "4T/2026", data: "04/03/2026", score: 3 },
+  { empresa: "GOOGLE", periodo: "4T/2025", data: "04/03/2026", score: 5 },
   { empresa: "BROADCOM", periodo: "1T/2026", data: "04/03/2026", score: 5 },
   { empresa: "RAIA DROGASIL", periodo: "4T/2025", data: "04/03/2026", score: 4 },
-  { empresa: "TESLA", periodo: "4T/2025", data: "03/03/2026", score: 4 },
-  { empresa: "AMAZON", periodo: "4T/2025", data: "27/02/2026", score: 2 },
+  { empresa: "TESLA", periodo: "4T/2025", data: "03/03/2026", score: 3 },
+  { empresa: "AMAZON", periodo: "4T/2025", data: "27/02/2026", score: 4 },
   { empresa: "COCA COLA", periodo: "4T/2025", data: "26/02/2026", score: 4 },
 ];
 

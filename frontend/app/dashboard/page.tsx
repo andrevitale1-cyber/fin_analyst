@@ -363,8 +363,8 @@ export default function FinancialDashboard() {
     const year = new Date().getFullYear();
 
     const scoreColor = (n: number): string => {
-      if (n >= 5) return "#22c55e";
-      if (n >= 4) return "#4ade80";
+      if (n >= 5) return "#06963b";
+      if (n >= 4) return "#32f87a";
       if (n >= 3) return "#eab308";
       if (n >= 2) return "#f97316";
       return "#ef4444";
@@ -375,7 +375,7 @@ export default function FinancialDashboard() {
     const sections = [
       { title: "Desempenho de Receita",  label: "RECEITA",       nota: data.receita_nota       ?? null },
       { title: "Rentabilidade e Eficiência", label: "RENTABILIDADE", nota: data.rentabilidade_nota ?? null },
-      { title: "Estrutura de Capital",   label: "CAPITAL",       nota: data.divida_nota        ?? null },
+      { title: "Estrutura de Capital",   label: "ESTRUTURA DE CAPITAL",       nota: data.divida_nota        ?? null },
       { title: "Margens e Lucratividade",label: "LUCRO",         nota: data.lucro_nota         ?? null },
     ];
 
