@@ -362,11 +362,17 @@ function ComparadorMobile() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
 
-  const comparadorData = [
+ const comparadorData = [
     { empresa: "AEROVIRONMENT", notaFinal: 2, receita: 4, lucro: 1, divida: 3, rentabilidade: 1,  resultados: 2, media: 2.5, ultimoTri: "2T/2026" },
     { empresa: "AMAZON",        notaFinal: 4, receita: 5, lucro: 3, divida: 4, rentabilidade: 4,  resultados: 1, media: 4,   ultimoTri: "4T/2025" },
     { empresa: "AMD",           notaFinal: 4, receita: 5, lucro: 4, divida: 5, rentabilidade: 4,  resultados: 1, media: 4,   ultimoTri: "4T/2025" },
     { empresa: "ARISTA",        notaFinal: 5, receita: 5, lucro: 5, divida: 5, rentabilidade: 4,  resultados: 1, media: 5,   ultimoTri: "4T/2025" },
+    { empresa: "AURA",          notaFinal: 2, receita: 3, lucro: 2, divida: 1, rentabilidade: 4,  resultados: 1, media: 2,   ultimoTri: "4T/2025" },
+    { empresa: "AXON",          notaFinal: 3, receita: 5, lucro: 2, divida: 4, rentabilidade: 4,  resultados: 1, media: 3,   ultimoTri: "4T/2025" },
+    { empresa: "BADGER METERS", notaFinal: 5, receita: 5, lucro: 5, divida: 5, rentabilidade: 5,  resultados: 4, media: 4.5, ultimoTri: "4T/2025" },
+    { empresa: "BB SEGURIDADE", notaFinal: 3, receita: 3, lucro: 4, divida: 5, rentabilidade: 2,  resultados: 1, media: 3,   ultimoTri: "4T/2025" },
+    { empresa: "BROADCOM",      notaFinal: 5, receita: 5, lucro: 5, divida: 4, rentabilidade: 5,  resultados: 1, media: 5,   ultimoTri: "1T/2026" },
+    { empresa: "BR PARTNERS",   notaFinal: 3, receita: 3, lucro: 3, divida: 5, rentabilidade: 4,  resultados: 1, media: 3,   ultimoTri: "4T/2025" },
   ];
 
   const allCols = [
@@ -429,12 +435,59 @@ function ComparadorMobile() {
   );
 }
 
-function ReportDemo() {
-  const [barsVisible, setBarsVisible] = React.useState(false);
-  useEffect(() => { const t = setTimeout(() => setBarsVisible(true), 600); return () => clearTimeout(t); }, []);
+// --- EFEITO DE DIGITAÇÃO ---
+function TypewriterEffect({ text, trigger, delay = 0 }: { text: string, trigger: boolean, delay?: number }) {
+  const [displayed, setDisplayed] = useState("");
+  const [started, setStarted] = useState(false);
+
+  useEffect(() => {
+    if (trigger) {
+      const t = setTimeout(() => setStarted(true), delay);
+      return () => clearTimeout(t);
+    }
+  }, [trigger, delay]);
+
+  useEffect(() => {
+    if (!started) return;
+    let i = 0;
+    const interval = setInterval(() => {
+      i += 3; // Velocidade da digitação
+      if (i >= text.length) {
+        setDisplayed(text);
+        clearInterval(interval);
+      } else {
+        setDisplayed(text.slice(0, i));
+      }
+    }, 10);
+    return () => clearInterval(interval);
+  }, [started, text]);
 
   return (
-    <div className="relative w-full select-none mt-10">
+    <span>
+      {displayed}
+      {started && displayed.length < text.length && (
+        <span className="inline-block w-1.5 h-3 ml-0.5 bg-blue-500 animate-pulse align-middle" />
+      )}
+    </span>
+  );
+}
+
+function ReportDemo() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [barsVisible, setBarsVisible] = React.useState(false);
+  const [typingTrigger, setTypingTrigger] = React.useState(false);
+
+  useEffect(() => { 
+    if (isInView) {
+      const t1 = setTimeout(() => setBarsVisible(true), 600); 
+      const t2 = setTimeout(() => setTypingTrigger(true), 1200); 
+      return () => { clearTimeout(t1); clearTimeout(t2); }
+    }
+  }, [isInView]);
+
+  return (
+    <div ref={ref} className="relative w-full select-none mt-10">
       <div className="absolute -inset-6 bg-purple-600/10 blur-[60px] rounded-3xl pointer-events-none" />
       <div className="relative rounded-2xl overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)] border border-white/10">
         
@@ -502,7 +555,7 @@ function ReportDemo() {
                  <div className="space-y-3">
                    {section.content.map((paragraph, idx) => (
                      <p key={idx} className="text-sm text-gray-700 leading-relaxed font-medium">
-                       {paragraph}
+                       <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={(index * 600) + (idx * 300)} />
                      </p>
                    ))}
                  </div>
@@ -514,7 +567,7 @@ function ReportDemo() {
                <div className="space-y-3">
                   {teseContent.map((paragraph, idx) => (
                     <p key={idx} className="text-sm text-gray-700 leading-relaxed font-medium">
-                      {paragraph}
+                      <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={2000 + (idx * 400)} />
                     </p>
                   ))}
                </div>
@@ -533,13 +586,15 @@ function ReportDemo() {
 
 function ReportDemoMobile() {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, margin: "-80px" });
+  const isInView = useInView(ref, { once: true, margin: "-80px" });
   const [barsVisible, setBarsVisible] = useState(false);
+  const [typingTrigger, setTypingTrigger] = useState(false);
 
   useEffect(() => {
     if (isInView) {
-      const t = setTimeout(() => setBarsVisible(true), 400);
-      return () => clearTimeout(t);
+      const t1 = setTimeout(() => setBarsVisible(true), 400);
+      const t2 = setTimeout(() => setTypingTrigger(true), 800);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
   }, [isInView]);
 
@@ -600,7 +655,7 @@ function ReportDemoMobile() {
                    </div>
                    <div className="space-y-2">
                      <p className="text-[11px] text-gray-700 leading-relaxed font-medium line-clamp-4">
-                       {section.content[0]}
+                       <TypewriterEffect text={section.content[0]} trigger={typingTrigger} delay={index * 500} />
                      </p>
                    </div>
                 </div>
