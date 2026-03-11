@@ -187,6 +187,7 @@ export default function FinancialDashboard() {
   const WEEKLY_LIMIT = 5;
   const [downloadCount, setDownloadCount] = useState(0);
   const WEEKLY_DOWNLOAD_LIMIT = 3;
+  const [downloadedReports, setDownloadedReports] = useState<Set<string>>(new Set());
 
   const [result, setResult] = useState<any>(null);
   const [historyList, setHistoryList] = useState<any[]>([]);
@@ -223,6 +224,7 @@ export default function FinancialDashboard() {
         const usageKey = `usage_${user.id}`;
         const dateKey = `usage_date_${user.id}`;
         const downloadKey = `downloads_${user.id}`;
+        const downloadedReportsKey = `downloaded_reports_${user.id}`;
         
         const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
         const savedDownloads = parseInt(localStorage.getItem(downloadKey) || '0');
@@ -234,12 +236,18 @@ export default function FinancialDashboard() {
         if (!savedDate || (now - parseInt(savedDate)) > oneWeek) {
           localStorage.setItem(usageKey, '0');
           localStorage.setItem(downloadKey, '0');
+          localStorage.setItem(downloadedReportsKey, '[]');
           localStorage.setItem(dateKey, now.toString());
           setUsageCount(0);
           setDownloadCount(0);
+          setDownloadedReports(new Set());
         } else {
           setUsageCount(savedCount);
           setDownloadCount(savedDownloads);
+          try {
+            const saved = JSON.parse(localStorage.getItem(downloadedReportsKey) || '[]');
+            setDownloadedReports(new Set(saved));
+          } catch { setDownloadedReports(new Set()); }
         }
       }
     }
@@ -390,18 +398,23 @@ export default function FinancialDashboard() {
   }, [tableData, sortConfig]);
 
   const handleDownload = () => {
-    if (!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT) {
-      setShowUpgradeModal(true);
-      return;
-    }
     if (!result) return;
 
     const meta = result.metadata || {};
-    const data = result.data || {};
     const empresa = (meta.empresa || "EMPRESA").toUpperCase();
     const trimestre = meta.trimestre || "";
     const ano = meta.ano || "";
     const periodo = trimestre + "/" + ano;
+    const reportKey = empresa + "_" + periodo;
+
+    // Para free: só bloqueia se for relatório NOVO e já atingiu o limite
+    const isNewReport = !downloadedReports.has(reportKey);
+    if (!isPremium && isNewReport && downloadCount >= WEEKLY_DOWNLOAD_LIMIT) {
+      setShowUpgradeModal(true);
+      return;
+    }
+
+    const data = result.data || {};
     const notaFinal = data.nota_geral ?? data.nota_final ?? result.nota_final ?? "—";
     const analise: string = result.analise_completa || "";
     const today = new Date().toLocaleDateString("pt-BR");
@@ -538,10 +551,13 @@ export default function FinancialDashboard() {
 
     const win = window.open("", "_blank");
     if (win) {
-      if (!isPremium) {
+      if (!isPremium && isNewReport) {
         const newDlCount = downloadCount + 1;
+        const newReports = new Set(downloadedReports).add(reportKey);
         setDownloadCount(newDlCount);
+        setDownloadedReports(newReports);
         localStorage.setItem(`downloads_${user?.id}`, newDlCount.toString());
+        localStorage.setItem(`downloaded_reports_${user?.id}`, JSON.stringify([...newReports]));
       }
       win.document.write(html);
       win.document.close();
@@ -808,10 +824,17 @@ export default function FinancialDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
               <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
               
-              <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'}`}>
-                {!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? <Lock size={18} /> : <Download size={18} />}
-                {isPremium ? 'Ver Relatório Completo' : `Ver Relatório Completo (${downloadCount}/${WEEKLY_DOWNLOAD_LIMIT})`}
-              </button>
+              {(() => {
+                const rKey = ((result.metadata?.empresa || "").toUpperCase()) + "_" + (result.metadata?.trimestre || "") + "/" + (result.metadata?.ano || "");
+                const alreadySeen = downloadedReports.has(rKey);
+                const blocked = !isPremium && !alreadySeen && downloadCount >= WEEKLY_DOWNLOAD_LIMIT;
+                return (
+                  <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${blocked ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'}`}>
+                    {blocked ? <Lock size={18} /> : <Download size={18} />}
+                    {isPremium ? 'Ver Relatório Completo' : alreadySeen ? 'Ver Relatório Completo' : `Ver Relatório Completo (${downloadCount}/${WEEKLY_DOWNLOAD_LIMIT})`}
+                  </button>
+                );
+              })()}
             </div>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
               <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
