@@ -187,7 +187,6 @@ export default function FinancialDashboard() {
   const WEEKLY_LIMIT = 5;
   const [downloadCount, setDownloadCount] = useState(0);
   const WEEKLY_DOWNLOAD_LIMIT = 3;
-  const [downloadedReports, setDownloadedReports] = useState<Set<string>>(new Set());
 
   const [result, setResult] = useState<any>(null);
   const [historyList, setHistoryList] = useState<any[]>([]);
@@ -209,6 +208,7 @@ export default function FinancialDashboard() {
   const [ano, setAno] = useState("");
   const [trimestre, setTrimestre] = useState("1T");
   const [file, setFile] = useState<File | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // --- LÓGICA DE PREMIUM REAL ---
   const isPremium = user?.publicMetadata?.plan === 'premium';
@@ -224,7 +224,6 @@ export default function FinancialDashboard() {
         const usageKey = `usage_${user.id}`;
         const dateKey = `usage_date_${user.id}`;
         const downloadKey = `downloads_${user.id}`;
-        const downloadedReportsKey = `downloaded_reports_${user.id}`;
         
         const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
         const savedDownloads = parseInt(localStorage.getItem(downloadKey) || '0');
@@ -236,18 +235,12 @@ export default function FinancialDashboard() {
         if (!savedDate || (now - parseInt(savedDate)) > oneWeek) {
           localStorage.setItem(usageKey, '0');
           localStorage.setItem(downloadKey, '0');
-          localStorage.setItem(downloadedReportsKey, '[]');
           localStorage.setItem(dateKey, now.toString());
           setUsageCount(0);
           setDownloadCount(0);
-          setDownloadedReports(new Set());
         } else {
           setUsageCount(savedCount);
           setDownloadCount(savedDownloads);
-          try {
-            const saved = JSON.parse(localStorage.getItem(downloadedReportsKey) || '[]');
-            setDownloadedReports(new Set(saved));
-          } catch { setDownloadedReports(new Set()); }
         }
       }
     }
@@ -381,6 +374,15 @@ export default function FinancialDashboard() {
   };
   const onDragEnd = () => setDraggedItemIndex(null);
 
+  const filteredHistory = useMemo(() => {
+    if (!searchQuery.trim()) return historyList;
+    const q = searchQuery.toLowerCase();
+    return historyList.filter((item: any) =>
+      item.empresa?.toLowerCase().includes(q) ||
+      item.periodo?.toLowerCase().includes(q)
+    );
+  }, [historyList, searchQuery]);
+
   const sortedTableData = useMemo(() => {
     if (!sortConfig) return tableData;
     return [...tableData].sort((a, b) => {
@@ -398,24 +400,19 @@ export default function FinancialDashboard() {
   }, [tableData, sortConfig]);
 
   const handleDownload = () => {
+    if (!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT) {
+      setShowUpgradeModal(true);
+      return;
+    }
     if (!result) return;
 
     const meta = result.metadata || {};
+    const data = result.data || {};
     const empresa = (meta.empresa || "EMPRESA").toUpperCase();
     const trimestre = meta.trimestre || "";
     const ano = meta.ano || "";
     const periodo = trimestre + "/" + ano;
-    const reportKey = empresa + "_" + periodo;
-
-    // Para free: só bloqueia se for relatório NOVO e já atingiu o limite
-    const isNewReport = !downloadedReports.has(reportKey);
-    if (!isPremium && isNewReport && downloadCount >= WEEKLY_DOWNLOAD_LIMIT) {
-      setShowUpgradeModal(true);
-      return;
-    }
-
-    const data = result.data || {};
-    const notaFinal = data.nota_geral ?? data.nota_final ?? result.nota_final ?? "—";
+    const notaFinal = data.nota_final ?? result.nota_final ?? "—";
     const analise: string = result.analise_completa || "";
     const today = new Date().toLocaleDateString("pt-BR");
     const year = new Date().getFullYear();
@@ -551,16 +548,14 @@ export default function FinancialDashboard() {
 
     const win = window.open("", "_blank");
     if (win) {
-      if (!isPremium && isNewReport) {
+      if (!isPremium) {
         const newDlCount = downloadCount + 1;
-        const newReports = new Set(downloadedReports).add(reportKey);
         setDownloadCount(newDlCount);
-        setDownloadedReports(newReports);
         localStorage.setItem(`downloads_${user?.id}`, newDlCount.toString());
-        localStorage.setItem(`downloaded_reports_${user?.id}`, JSON.stringify([...newReports]));
       }
       win.document.write(html);
       win.document.close();
+      setTimeout(() => win.print(), 800);
     }
   };
 
@@ -771,13 +766,30 @@ export default function FinancialDashboard() {
         )}
         {currentView === 'history' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
-            <header className="flex items-center justify-between mb-8 pt-0"><div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div></header>
+            <header className="flex items-center justify-between mb-8 pt-0">
+              <div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Buscar empresa ou período..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-[#161b22] border border-gray-700 rounded-xl px-4 py-2.5 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-64"
+                />
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+            </header>
             <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
              <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-left border-collapse">
                 <thead><tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500"><th className="py-5 px-6 font-semibold">Empresa</th><th className="py-5 px-6 font-semibold">Período</th><th className="py-5 px-6 font-semibold">Data</th><th className="py-5 px-6 text-center font-semibold">Score</th><th className="py-5 px-6 text-right font-semibold">Ações</th></tr></thead>
                 <tbody className="divide-y divide-gray-800">
-                  {historyList.map((item: any) => (
+                  {filteredHistory.map((item: any) => (
                     <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { setResult(item.conteudo); setEmpresa(item.empresa); setCurrentView('result'); }}>
                       <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-gray-200">{item.empresa?.toUpperCase()}</span></div></td>
                       <td className="py-4 px-6 text-gray-400">{item.periodo}</td>
@@ -789,7 +801,11 @@ export default function FinancialDashboard() {
                 </tbody>
               </table>
              </div> 
-              {historyList.length === 0 && <div className="p-12 text-center text-gray-500">Histórico vazio.</div>}
+              {filteredHistory.length === 0 && (
+                <div className="p-12 text-center text-gray-500">
+                  {searchQuery ? `Nenhum resultado para "${searchQuery}".` : "Histórico vazio."}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -824,17 +840,10 @@ export default function FinancialDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
               <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
               
-              {(() => {
-                const rKey = ((result.metadata?.empresa || "").toUpperCase()) + "_" + (result.metadata?.trimestre || "") + "/" + (result.metadata?.ano || "");
-                const alreadySeen = downloadedReports.has(rKey);
-                const blocked = !isPremium && !alreadySeen && downloadCount >= WEEKLY_DOWNLOAD_LIMIT;
-                return (
-                  <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${blocked ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'}`}>
-                    {blocked ? <Lock size={18} /> : <Download size={18} />}
-                    {isPremium ? 'Ver Relatório Completo' : alreadySeen ? 'Ver Relatório Completo' : `Ver Relatório Completo (${downloadCount}/${WEEKLY_DOWNLOAD_LIMIT})`}
-                  </button>
-                );
-              })()}
+              <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'}`}>
+                {!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? <Lock size={18} /> : <Download size={18} />}
+                {isPremium ? 'Ver Relatório Completo' : `Ver Relatório Completo (${downloadCount}/${WEEKLY_DOWNLOAD_LIMIT})`}
+              </button>
             </div>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
               <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
