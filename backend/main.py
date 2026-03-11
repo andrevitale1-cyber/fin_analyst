@@ -182,7 +182,7 @@ async def analyze_report(
 
 
 
-    **Seção 1: Análise da Performance Core (Top Line)**
+    **Seção 1: Análise da Performance Core (Top Line)** (maximo de 20 linhas)
 
     (Analise a Receita Líquida. Cresceu? Caiu? Foi preço ou volume? O mix de produtos ajudou?)
 
@@ -208,7 +208,7 @@ async def analyze_report(
 
 
 
-    **Seção 3: Estrutura de Capital e Financeiro**
+    **Seção 3: Estrutura de Capital e Financeiro** (maximo de 20 linhas)
 
     (Analise Dívida Líquida/EBITDA, Despesas Financeiras ou Solvência/Basileia para bancos).
 
@@ -218,7 +218,7 @@ async def analyze_report(
 
 
 
-    **Seção 4: Análise do Lucro Líquido (Bottom-Line)**
+    **Seção 4: Análise do Lucro Líquido (Bottom-Line)** (maximo de 20 linhas)
 
     (Analise o Lucro Líquido. Foi limpo ou teve não-recorrentes? É sustentável?)
 
@@ -230,7 +230,7 @@ async def analyze_report(
 
 
 
-    **Seção 5: Conclusão - Tese e Outlook**
+    **Seção 5: Conclusão - Tese e Outlook** (maximo de 15 linhas)
 
     (Sintetize: O resultado foi Bom, Neutro ou Ruim? Qual a perspectiva futura (Guidance)?)
 
