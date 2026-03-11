@@ -402,7 +402,7 @@ export default function FinancialDashboard() {
     const trimestre = meta.trimestre || "";
     const ano = meta.ano || "";
     const periodo = trimestre + "/" + ano;
-    const notaFinal = data.nota_final ?? result.nota_final ?? "—";
+    const notaFinal = data.nota_geral ?? data.nota_final ?? result.nota_final ?? "—";
     const analise: string = result.analise_completa || "";
     const today = new Date().toLocaleDateString("pt-BR");
     const year = new Date().getFullYear();
@@ -545,7 +545,6 @@ export default function FinancialDashboard() {
       }
       win.document.write(html);
       win.document.close();
-      setTimeout(() => win.print(), 800);
     }
   };
 
