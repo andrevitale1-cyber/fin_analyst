@@ -160,11 +160,7 @@ async def analyze_report(
         pdf_text = extract_text_from_pdf_bytes(contents)
         
         prompt = f"""
-    Você é um analista sênior de Equity Research. Analise o resultado de: {empresa} ({trimestre}/{ano}) Sua nota deve avaliar o resultado. Se a empresa for boa e o resultado ruim, a nota deverá ser penalisada. 
-
-
-
-    ### REGRAS DE FORMATAÇÃO E ESTILO:
+   ### REGRAS DE FORMATAÇÃO E ESTILO:
 
     - Seja pragmático, direto e focado no "Bottom-line" (Lucro Líquido e Geração de Valor).
 
@@ -175,6 +171,8 @@ async def analyze_report(
     - Se for banco/seguradora, ignore EBITDA e use métricas do setor (Margem Financeira, Índice de Basileia, etc). Reconheça que o "Resultado Financeiro" (receitas de investimentos/float) é uma parte core e operacional do negócio.
 
     - TODAS AS NOTAS DEVEM SER DADAS APENAS COM OS NÚMEROS INTEIROS: 1/2/3/4/5.
+
+    - CRESCIMENTO INORGÂNICO: Se o crescimento de receita ou lucro vier predominantemente de aquisições, identifique isso explicitamente e separe o crescimento orgânico do inorgânico. NÃO puna a nota por crescimento ser inorgânico — aquisições bem-sucedidas são uma estratégia legítima de alocação de capital. Avalie se a aquisição foi bem integrada, se gerou sinergias ou diluição de margens, e se o crescimento orgânico da base existente foi positivo, neutro ou negativo. A penalização só se justifica se a aquisição destruiu valor (ex: margem caiu, dívida explodiu sem retorno visível).
 
 
 
@@ -192,14 +190,13 @@ async def analyze_report(
 
     Conecte a receita com os indicadores operacionais do setor (ex: Vendas Mesmas Lojas; Volume vs. Preço; Sinistralidade). O operacional foi um ponto forte ou fraco?
 
-    (Para aquisições): Se relevante, identifique o crescimento orgânico.
+    Se houver aquisições relevantes: destaque o crescimento orgânico vs. inorgânico. Avalie se o crescimento da base orgânica foi sólido, modesto ou fraco — mas não penalize a nota pelo fato de o crescimento ser inorgânico. Penalize apenas se a aquisição claramente destruiu valor operacional ou financeiro.
 
     **Nota Seção 1: X/5**
 
 
 
-    **Seção 2: Análise da Rentabilidade e Eficiência** (maximo de 25 linhas)
-
+    **Seção 2: Análise da Rentabilidade e Eficiência**
 
     (Analise EBITDA/Margens ou Resultado Operacional. Houve diluição de custos? Ganho de eficiência?)
 
@@ -209,7 +206,7 @@ async def analyze_report(
 
 
 
-    **Seção 3: Estrutura de Capital e Financeiro** (maximo de 25 linhas)
+    **Seção 3: Estrutura de Capital e Financeiro** (maximo de 20 linhas)
 
     (Analise Dívida Líquida/EBITDA, Despesas Financeiras ou Solvência/Basileia para bancos).
 
@@ -219,7 +216,7 @@ async def analyze_report(
 
 
 
-    **Seção 4: Análise do Lucro Líquido (Bottom-Line)** (maximo de 25 linhas)
+    **Seção 4: Análise do Lucro Líquido (Bottom-Line)** (maximo de 20 linhas)
 
     (Analise o Lucro Líquido. Foi limpo ou teve não-recorrentes? É sustentável?)
 
@@ -246,10 +243,6 @@ async def analyze_report(
     (Dê uma nota geral baseada na tese).
 
     **Nota Geral: X/5**
-
-
-
-    ---
 
     DADOS DO RELEASE (Use apenas o relevante):
     {pdf_text[:40000]}
