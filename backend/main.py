@@ -160,7 +160,7 @@ async def analyze_report(
         pdf_text = extract_text_from_pdf_bytes(contents)
         
         prompt = f"""
-   ### REGRAS DE FORMATAÇÃO E ESTILO:
+  ### REGRAS DE FORMATAÇÃO E ESTILO:
 
     - Seja pragmático, direto e focado no "Bottom-line" (Lucro Líquido e Geração de Valor).
 
@@ -172,7 +172,7 @@ async def analyze_report(
 
     - TODAS AS NOTAS DEVEM SER DADAS APENAS COM OS NÚMEROS INTEIROS: 1/2/3/4/5.
 
-    - CRESCIMENTO INORGÂNICO: Se o crescimento de receita ou lucro vier predominantemente de aquisições, identifique isso explicitamente e separe o crescimento orgânico do inorgânico. NÃO puna a nota por crescimento ser inorgânico — aquisições bem-sucedidas são uma estratégia legítima de alocação de capital. Avalie se a aquisição foi bem integrada, se gerou sinergias ou diluição de margens, e se o crescimento orgânico da base existente foi positivo, neutro ou negativo. A penalização só se justifica se a aquisição destruiu valor (ex: margem caiu, dívida explodiu sem retorno visível).
+    - CRESCIMENTO INORGÂNICO: Se houver aquisições relevantes, analise no texto a composição do crescimento (quanto foi orgânico e quanto foi inorgânico), contextualize o impacto da aquisição nos números (ex: qual linha foi afetada, se houve efeito de consolidação de receita/lucro) e avalie se o crescimento orgânico da base existente foi acelerado, estável ou desacelerado. A nota deve avaliar o resultado total da empresa normalmente, sem qualquer ponderação pela origem do crescimento.
 
 
 
@@ -190,7 +190,7 @@ async def analyze_report(
 
     Conecte a receita com os indicadores operacionais do setor (ex: Vendas Mesmas Lojas; Volume vs. Preço; Sinistralidade). O operacional foi um ponto forte ou fraco?
 
-    Se houver aquisições relevantes: destaque o crescimento orgânico vs. inorgânico. Avalie se o crescimento da base orgânica foi sólido, modesto ou fraco — mas não penalize a nota pelo fato de o crescimento ser inorgânico. Penalize apenas se a aquisição claramente destruiu valor operacional ou financeiro.
+    Se houver aquisições relevantes: decomponha o crescimento entre orgânico e inorgânico, contextualize o impacto da aquisição nas linhas do resultado e avalie a dinâmica do crescimento orgânico da base existente — sem usar a origem do crescimento como critério de nota.
 
     **Nota Seção 1: X/5**
 
