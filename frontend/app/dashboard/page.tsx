@@ -17,7 +17,7 @@ const API_BASE = "https://api-finanalyzer.onrender.com";
 // --- CONFIGURAÇÃO DAS COLUNAS ---
 const COLUMN_DEFINITIONS = [
   { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-white font-bold' },
-  { key: 'nota_final', label: 'Nota Final', align: 'center', color: 'text-purple-400 font-bold' },
+  { key: 'nota_geral', label: 'Nota Final', align: 'center', color: 'text-purple-400 font-bold' },
   { key: 'receita_nota', label: 'Receita', align: 'center', color: 'text-blue-400' },
   { key: 'lucro_nota', label: 'Lucro', align: 'center', color: 'text-green-400' },
   { key: 'divida_nota', label: 'Dívida', align: 'center', color: 'text-red-400' },
