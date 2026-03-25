@@ -17,7 +17,7 @@ const API_BASE = "https://api-finanalyzer.onrender.com";
 // --- CONFIGURAÇÃO DAS COLUNAS ---
 const COLUMN_DEFINITIONS = [
   { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-white font-bold' },
-  { key: 'nota_geral', label: 'Nota Final', align: 'center', color: 'text-purple-400 font-bold' },
+  { key: 'nota_final', label: 'Nota Final', align: 'center', color: 'text-purple-400 font-bold' },
   { key: 'receita_nota', label: 'Receita', align: 'center', color: 'text-blue-400' },
   { key: 'lucro_nota', label: 'Lucro', align: 'center', color: 'text-green-400' },
   { key: 'divida_nota', label: 'Dívida', align: 'center', color: 'text-red-400' },
@@ -27,6 +27,37 @@ const COLUMN_DEFINITIONS = [
   { key: 'media', label: 'Média', align: 'center', bg: 'bg-green-900/10', color: 'text-green-200' },
   { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-bold' },
 ];
+
+// --- FUNÇÕES AUXILIARES DE CORES ---
+const getScoreColorClass = (nota: any) => {
+  const n = Number(nota);
+  if (isNaN(n)) return 'text-gray-400';
+  if (n >= 5) return 'text-green-600';
+  if (n >= 4) return 'text-green-400';
+  if (n >= 3) return 'text-amber-500';
+  if (n >= 2) return 'text-red-400';
+  return 'text-red-600';
+};
+
+const getScoreBgClass = (nota: any) => {
+  const n = Number(nota);
+  if (isNaN(n)) return 'bg-gray-800';
+  if (n >= 5) return 'bg-green-600';
+  if (n >= 4) return 'bg-green-400';
+  if (n >= 3) return 'bg-amber-500';
+  if (n >= 2) return 'bg-red-400';
+  return 'bg-red-600';
+};
+
+const getBadgeClass = (nota: any) => {
+  const n = Number(nota);
+  if (isNaN(n)) return 'bg-gray-800 text-gray-400 border-gray-700';
+  if (n >= 5) return 'bg-green-600/10 text-green-600 border-green-600/20';
+  if (n >= 4) return 'bg-green-400/10 text-green-400 border-green-400/20';
+  if (n >= 3) return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+  if (n >= 2) return 'bg-red-400/10 text-red-400 border-red-400/20';
+  return 'bg-red-600/10 text-red-600 border-red-600/20';
+};
 
 // --- COMPONENTE FEATURE ---
 function Feature({ text, active = false, disabled = false }: any) {
@@ -418,11 +449,11 @@ export default function FinancialDashboard() {
     const year = new Date().getFullYear();
 
     const scoreColor = (n: number): string => {
-      if (n >= 5) return "#22c55e";
-      if (n >= 4) return "#4ade80";
-      if (n >= 3) return "#eab308";
-      if (n >= 2) return "#f97316";
-      return "#ef4444";
+      if (n >= 5) return "#16a34a"; // green-600
+      if (n >= 4) return "#4ade80"; // green-400
+      if (n >= 3) return "#f59e0b"; // amber-500
+      if (n >= 2) return "#f87171"; // red-400
+      return "#dc2626";             // red-600
     };
 
     const notaFinalColor = scoreColor(Number(notaFinal));
@@ -562,10 +593,10 @@ export default function FinancialDashboard() {
   const renderCellContent = (item: any, key: string, colDef: any) => {
     if (key === 'empresa') return <span className={`${colDef.color || 'text-white'} font-bold`}>{item[key]?.toString().toUpperCase()}</span>;
     if (key === 'trimestre') return <span className="bg-blue-900/30 text-blue-300 py-1 px-2 rounded text-xs font-bold border border-blue-500/20">{item[key]}</span>;
-    if (key === 'media') return <span className={`px-2 py-1 rounded font-bold ${item.media >= 4 ? 'text-green-400' : 'text-yellow-400'}`}>{item[key]}</span>;
+    if (key === 'media') return <span className={`px-2 py-1 rounded font-bold ${getScoreColorClass(item.media)}`}>{item[key]}</span>;
     if (key.includes('nota') || key === 'nota_final') {
       const val = item[key];
-      return <span className={`font-bold text-base ${val >= 4 ? 'text-emerald-400' : val >= 3 ? 'text-yellow-400' : 'text-red-400'}`}>{val}</span>;
+      return <span className={`font-bold text-base ${getScoreColorClass(val)}`}>{val}</span>;
     }
     return <span className={`${colDef.color || 'text-gray-300'}`}>{item[key]}</span>;
   };
@@ -794,7 +825,11 @@ export default function FinancialDashboard() {
                       <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-gray-200">{item.empresa?.toUpperCase()}</span></div></td>
                       <td className="py-4 px-6 text-gray-400">{item.periodo}</td>
                       <td className="py-4 px-6 text-gray-500 text-sm">{formatarData(item.data)}</td>
-                      <td className="py-4 px-6 text-center"><span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold ${item.nota >= 4 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : item.nota >= 3 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>{item.nota}</span></td>
+                      <td className="py-4 px-6 text-center">
+                        <span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold border ${getBadgeClass(item.nota)}`}>
+                          {item.nota}
+                        </span>
+                      </td>
                       <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">Detalhes <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
                     </tr>
                   ))}
@@ -847,14 +882,25 @@ export default function FinancialDashboard() {
             </div>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
               <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
-              <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800 w-full md:w-auto justify-between md:justify-start"><div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : (result.data?.nota_geral || 0) == 3 ? 'text-amber-400' : 'text-red-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span></div></div>
+              <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800 w-full md:w-auto justify-between md:justify-start">
+                <div className="text-right">
+                  <p className="text-sm text-gray-400 font-medium uppercase">Score IA</p>
+                  <p className="text-xs text-gray-500">Baseado em 4 fundamentos</p>
+                </div>
+                <div className={`text-4xl font-bold ${getScoreColorClass(result.data?.nota_final ?? result?.nota_final)}`}>
+                  {result.data?.nota_final ?? result?.nota_final ?? "—"}
+                  <span className="text-lg text-gray-600">/5</span>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
               {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "ROE", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
                 <div key={idx} className="bg-[#161b22] border border-gray-800 p-6 rounded-2xl hover:border-gray-700 transition-all duration-300">
                   <div className="flex items-center justify-between mb-4"><span className="text-gray-400 text-sm font-medium">{item.label}</span><div className="bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
                   <div className="flex items-end gap-2"><span className="text-3xl font-bold text-white">{item.val}</span><span className="text-gray-600 text-sm mb-1">/5</span></div>
-                  <div className="w-full bg-gray-800 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${(item.val || 0) >= 4 ? 'bg-green-500' : (item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${((item.val || 0) / 5) * 100}%` }} /></div>
+                  <div className="w-full bg-gray-800 h-1 mt-4 rounded-full overflow-hidden">
+                    <div className={`h-full ${getScoreBgClass(item.val)}`} style={{ width: `${((item.val || 0) / 5) * 100}%` }} />
+                  </div>
                 </div>
               ))}
             </div>
