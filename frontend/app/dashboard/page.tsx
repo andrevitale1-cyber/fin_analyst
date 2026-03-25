@@ -412,7 +412,7 @@ export default function FinancialDashboard() {
     const trimestre = meta.trimestre || "";
     const ano = meta.ano || "";
     const periodo = trimestre + "/" + ano;
-    const notaFinal = data.nota_final ?? result.nota_final ?? "—";
+    const notaFinal = data.nota_geral ?? result.nota_geral ?? "—";
     const analise: string = result.analise_completa || "";
     const today = new Date().toLocaleDateString("pt-BR");
     const year = new Date().getFullYear();
