@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 // 👇 IMPORTAÇÃO DA NOSSA NOVA FUNÇÃO GERADORA DE RELATÓRIO
-import { generateAndPrintReport } from './reportGenerator';
+import ReportTemplate from './ReportTemplate';
 
 // --- CONFIGURAÇÃO DO STRIPE ---
 const STRIPE_CHECKOUT_URL_MONTHLY = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00";
@@ -356,17 +356,19 @@ export default function FinancialDashboard() {
     });
   }, [tableData, sortConfig]);
 
-  // 👇 NOVA FUNÇÃO QUE USA O ARQUIVO AUXILIAR
   const handleDownload = () => {
-    generateAndPrintReport({
-      result,
-      isPremium: isPremium ?? false, // Garante booleano mesmo se undefined
-      user,
-      downloadCount,
-      setDownloadCount,
-      setShowUpgradeModal,
-      WEEKLY_DOWNLOAD_LIMIT
-    });
+    if (!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    // Adiciona ao histórico de downloads se não for premium
+    if (!isPremium && user) {
+      const newDlCount = downloadCount + 1;
+      setDownloadCount(newDlCount);
+      localStorage.setItem(`downloads_${user.id}`, newDlCount.toString());
+    }
+    // Abre a janela nativa de impressão (que salva em PDF)
+    window.print();
   };
 
   const renderCellContent = (item: any, key: string, colDef: any) => {

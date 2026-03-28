@@ -202,6 +202,10 @@ Seção 6: Nota Final
 (Avaliação consolidada da resiliência, crescimento e geração de valor no trimestre).
 Nota Geral: X/5
 
+**Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)**
+No final da sua análise, você DEVE extrair o histórico financeiro dos últimos 4 trimestres disponíveis no relatório (ou o máximo que houver) para a construção de gráficos.
+Apresente esses dados EXATAMENTE no formato de um array JSON dentro de um bloco de código markdown, utilizando as seguintes chaves: "name" (nome do trimestre, ex: "3T24"), "receita" (em bilhões ou milhões, apenas o número), "lucro" (apenas o número), "margemBruta" (apenas o número percentual) e "margemLiquida" (apenas o número percentual).
+
     DADOS DO RELEASE (Use apenas o relevante):
     {pdf_text[:40000]}
         """
