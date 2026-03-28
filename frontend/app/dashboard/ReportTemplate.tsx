@@ -1,8 +1,29 @@
-import React from 'react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import React, { useEffect } from 'react';
+import { BarChart, Bar, LineChart, Line, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { DollarSign, Percent, AlertCircle, TrendingUp, FileText } from 'lucide-react';
 
-export default function ReportTemplate({ result }: { result: any }) {
+export default function ReportTemplate({ result, onPrintComplete }: { result: any, onPrintComplete: () => void }) {
+  
+  // Efeito que aciona a impressão logo após os gráficos renderizarem
+  useEffect(() => {
+    // Dá 800ms para os gráficos calcularem o tamanho e as animações terminarem
+    const timer = setTimeout(() => {
+      window.print();
+    }, 800);
+
+    // Quando o usuário fecha a tela de impressão, volta para o Dashboard
+    const handleAfterPrint = () => {
+      onPrintComplete();
+    };
+
+    window.addEventListener('afterprint', handleAfterPrint);
+    
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, [onPrintComplete]);
+
   if (!result) return null;
 
   const meta = result.metadata || {};
@@ -14,10 +35,8 @@ export default function ReportTemplate({ result }: { result: any }) {
   const notaFinal = data.nota_geral ?? result.nota_geral ?? "—";
   const analise: string = result.analise_completa || "";
 
-  // 1. Limpeza do texto da IA
   const analiseLimpa = analise.trim();
 
-  // 2. Extração dos dados do gráfico gerados pela IA
   let chartData: any[] = [];
   try {
     const jsonMatch = analiseLimpa.match(/```json\s*([\s\S]*?)\s*```/);
@@ -28,14 +47,12 @@ export default function ReportTemplate({ result }: { result: any }) {
     console.error("Erro ao extrair dados para o gráfico:", error);
   }
 
-  // Fallback se a IA não gerar dados numéricos válidos
   if (!chartData || chartData.length === 0) {
     chartData = [
       { name: 'Sem Dados', receita: 0, lucro: 0, margemBruta: 0, margemLiquida: 0 }
     ];
   }
 
-  // Cores dinâmicas para a nota
   const getScoreColor = (n: any) => {
     const num = Number(n);
     if (isNaN(num)) return "text-slate-500 bg-slate-100 border-slate-200";
@@ -51,15 +68,13 @@ export default function ReportTemplate({ result }: { result: any }) {
     { label: "Rentabilidade", nota: data.rentabilidade_nota ?? "—", icon: <TrendingUp size={18} className="text-amber-500"/>, bg: "bg-amber-50 border-amber-100" },
   ];
 
-  // Limpeza de texto da IA para a conclusão
   const cleanText = (raw: string) => raw.replace(/\*\*[^*]+\*\*/g, "").replace(/Nota Seção \d+:[^\n]*/g, "").trim();
   const teseRaw = analise.match(/Seção 5[\s\S]*?(?=\*\*Seção 6|$)/);
   const teseBody = teseRaw ? cleanText(teseRaw[0]) : (data.tese_investimento || "Nenhuma tese detalhada disponível.");
 
   return (
-    <div className="hidden print:block w-full min-h-screen bg-white text-slate-900 font-sans p-10">
+    <div className="w-full min-h-screen bg-white text-slate-900 font-sans p-10">
       
-      {/* HEADER EDITORIAL */}
       <div className="border-b border-slate-200 pb-6 mb-8 flex justify-between items-end">
         <div>
           <span className="text-xs font-bold text-blue-600 uppercase tracking-wider bg-blue-50 px-3 py-1 rounded-full border border-blue-100 mb-4 inline-block">
@@ -70,7 +85,6 @@ export default function ReportTemplate({ result }: { result: any }) {
           </h1>
         </div>
         
-        {/* SCORE CARD */}
         <div className={`px-6 py-4 rounded-xl border ${getScoreColor(notaFinal)} flex items-center gap-6`}>
           <div className="text-right">
             <p className="text-xs font-bold uppercase tracking-wider opacity-80">Score IA</p>
@@ -80,7 +94,6 @@ export default function ReportTemplate({ result }: { result: any }) {
         </div>
       </div>
 
-      {/* MÉTRICAS */}
       <div className="grid grid-cols-4 gap-4 mb-10">
         {sections.map((s, idx) => (
           <div key={idx} className={`p-5 rounded-xl border ${s.bg}`}>
@@ -93,7 +106,6 @@ export default function ReportTemplate({ result }: { result: any }) {
         ))}
       </div>
 
-      {/* GRÁFICOS RECHARTS */}
       <div className="grid grid-cols-2 gap-8 mb-10">
         <div className="border border-slate-200 rounded-xl p-6 bg-white shadow-sm">
           <h3 className="text-sm font-bold text-slate-900 mb-6 border-b border-slate-100 pb-3">Evolução de Receita e Lucro</h3>
@@ -102,8 +114,8 @@ export default function ReportTemplate({ result }: { result: any }) {
               <BarChart data={chartData}>
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
                 <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Bar dataKey="receita" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar dataKey="lucro" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="receita" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={false} />
+                <Bar dataKey="lucro" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} isAnimationActive={false} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -116,22 +128,20 @@ export default function ReportTemplate({ result }: { result: any }) {
               <LineChart data={chartData}>
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} dy={10} />
                 <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                <Line type="monotone" dataKey="margemBruta" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="margemLiquida" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="margemBruta" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} isAnimationActive={false} />
+                <Line type="monotone" dataKey="margemLiquida" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* CONCLUSÃO ESTRATÉGICA */}
       <div className="bg-slate-950 text-white rounded-2xl p-8 break-inside-avoid">
         <div className="flex items-center gap-3 mb-6">
           <FileText className="text-blue-500" />
           <h2 className="text-xl font-bold">Conclusão Estratégica</h2>
         </div>
         <div className="space-y-4 text-slate-300 text-sm leading-relaxed">
-          {/* As variáveis recebem a tipagem explícita (: string, : number) para evitar o erro 7006 */}
           {teseBody.split("\n\n").map((paragraph: string, idx: number) => (
             <p key={idx}>{paragraph.replace(/\*\*/g, "")}</p>
           ))}

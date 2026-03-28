@@ -9,133 +9,109 @@ import {
   GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check, Menu
 } from "lucide-react";
 
-// 👇 IMPORTAÇÃO DA NOSSA NOVA FUNÇÃO GERADORA DE RELATÓRIO
 import ReportTemplate from './ReportTemplate';
 
-// --- CONFIGURAÇÃO DO STRIPE ---
 const STRIPE_CHECKOUT_URL_MONTHLY = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00";
 const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/3cI6oIgdleEBgmNdI967S01"; 
 const API_BASE = "https://api-finanalyzer.onrender.com";
 
-// --- CONFIGURAÇÃO DAS COLUNAS ---
 const COLUMN_DEFINITIONS = [
-  { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-white font-bold' },
-  { key: 'nota_geral', label: 'Nota Final', align: 'center', color: 'text-purple-400 font-bold' },
-  { key: 'receita_nota', label: 'Receita', align: 'center', color: 'text-blue-400' },
-  { key: 'lucro_nota', label: 'Lucro', align: 'center', color: 'text-green-400' },
-  { key: 'divida_nota', label: 'Dívida', align: 'center', color: 'text-red-400' },
-  { key: 'rentabilidade_nota', label: 'Rentabilidade', align: 'center', color: 'text-yellow-400' },
-  { key: 'soma_total', label: 'Soma', align: 'center', bg: 'bg-blue-900/10', color: 'text-blue-200' },
-  { key: 'qtde_tri', label: 'Resultados Analisados', align: 'center', bg: 'bg-purple-900/10', color: 'text-purple-200' },
-  { key: 'media', label: 'Média', align: 'center', bg: 'bg-green-900/10', color: 'text-green-200' },
-  { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-bold' },
+  { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-gray-100 font-medium' },
+  { key: 'nota_geral', label: 'Nota Final', align: 'center', color: 'text-blue-400 font-bold' },
+  { key: 'receita_nota', label: 'Receita', align: 'center', color: 'text-gray-300' },
+  { key: 'lucro_nota', label: 'Lucro', align: 'center', color: 'text-gray-300' },
+  { key: 'divida_nota', label: 'Dívida', align: 'center', color: 'text-gray-300' },
+  { key: 'rentabilidade_nota', label: 'Rentabilidade', align: 'center', color: 'text-gray-300' },
+  { key: 'soma_total', label: 'Soma', align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
+  { key: 'qtde_tri', label: 'Resultados Analisados', align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
+  { key: 'media', label: 'Média', align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
+  { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-medium' },
 ];
 
-// --- COMPONENTE FEATURE ---
 function Feature({ text, active = false, disabled = false }: any) {
   return (
     <li className="flex items-center gap-3">
       {disabled ? (
-        <div className="p-0.5 rounded-full border border-gray-600 text-gray-500"><X size={12} /></div>
+        <div className="p-1 rounded-full text-gray-600"><X size={14} /></div>
       ) : (
-        <div className="p-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/30">
-          <Check size={12} />
-        </div>
+        <div className="p-1 rounded-full text-blue-500"><Check size={14} /></div>
       )}
-      <span className={`text-sm ${disabled ? 'text-gray-500 line-through' : 'text-gray-300'}`}>{text}</span>
+      <span className={`text-sm ${disabled ? 'text-gray-500' : 'text-gray-200 font-medium'}`}>{text}</span>
     </li>
   );
 }
 
-// --- COMPONENTE MODAL DE UPGRADE ---
 function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'monthly' }: { onClose: () => void; userId?: string; billingCycle?: 'monthly' | 'yearly' }) {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
 
   const handleCheckout = () => {
     const baseUrl = billingCycle === "yearly" ? STRIPE_CHECKOUT_URL_YEARLY : STRIPE_CHECKOUT_URL_MONTHLY;
     const url = new URL(baseUrl);
-    if (userId) {
-      url.searchParams.set("client_reference_id", userId);
-    }
+    if (userId) url.searchParams.set("client_reference_id", userId);
     window.open(url.toString(), "_blank");
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="relative w-full max-w-3xl">
-        <button onClick={onClose} className="absolute top-2 right-2 md:-top-8 md:-right-8 text-gray-400 hover:text-white bg-gray-800/50 p-2 rounded-full transition-colors z-50">
-          <X size={24} />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+      <div className="bg-[#0E1117] border border-gray-800 shadow-2xl rounded-2xl w-full max-w-4xl overflow-hidden relative flex flex-col md:flex-row">
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50 bg-[#161b22] p-1.5 rounded-md border border-gray-800">
+          <X size={18} />
         </button>
-
-        <div className="flex flex-col items-center gap-1 mb-4">
-          <div className="flex items-center justify-center gap-3">
-            <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('monthly')}>Mensal</span>
-            <button onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')} className="w-16 h-8 bg-gray-800 rounded-full p-1 relative transition-colors hover:bg-gray-700">
-              <div className={`w-6 h-6 bg-blue-500 rounded-full transition-transform duration-300 shadow-md ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-0'}`} />
-            </button>
-            <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('yearly')}>Anual</span>
+        <div className="w-full md:w-1/2 p-8 border-b md:border-b-0 md:border-r border-gray-800 bg-[#0d1117]/50 flex flex-col">
+          <div className="mb-8">
+            <h3 className="text-xl font-semibold text-white">Plano Básico</h3>
+            <p className="text-sm text-gray-400 mt-1">Seu plano atual. Ideal para testes.</p>
           </div>
-          <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'}`}>
-            <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-3 py-1 rounded-full">2 MESES GRÁTIS</span>
-          </div>
+          <ul className="space-y-4 mb-8 flex-1">
+            <Feature text="5 Análises por semana" active />
+            <Feature text="Relatório Resumido na Tela" active />
+            <Feature text="Suporte Comunitário" active />
+            <Feature text="Download do Relatório Completo" disabled />
+            <Feature text="Tabela Comparativa de Ativos" disabled />
+          </ul>
+          <button onClick={onClose} className="w-full py-2.5 rounded-lg border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+            Continuar no Básico
+          </button>
         </div>
-
-        <div className="grid md:grid-cols-2 gap-5">
-          <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-5 flex flex-col h-full opacity-80 scale-95">
-            <h3 className="text-lg font-bold text-white mb-1">Gratuito</h3>
-            <p className="text-gray-400 text-sm mb-3">Seu plano atual.</p>
-            <ul className="space-y-2 mb-4 flex-1">
-              <Feature text="5 Análises por semana" active />
-              <Feature text="Relatório Resumido na Tela" active />
-              <Feature text="Acesso ao histórico simples" active />
-              <Feature text="Suporte por email" active />
-              <Feature text="Upload de arquivos ilimitado" disabled />
-              <Feature text="Download da Análise Completa da IA" disabled />
-              <Feature text="Tabela Comparativa de Ativos" disabled />
-            </ul>
-            <button onClick={onClose} className="block w-full text-center py-2.5 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 transition-all mt-auto">Continuar Grátis</button>
+        <div className="w-full md:w-1/2 p-8 bg-[#161b22] relative flex flex-col">
+          <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Recomendado</div>
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold text-white flex items-center gap-2">FinAnalyzer Pro <Zap size={16} className="text-blue-500 fill-blue-500" /></h3>
+            <p className="text-sm text-gray-400 mt-1">Desbloqueie todo o poder da IA.</p>
           </div>
-
-          <div className="bg-[#0f131a] border border-blue-500 rounded-2xl p-5 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
-            {billingCycle === 'yearly' && (
-              <div className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">2 Meses Grátis no Anual</div>
-            )}
-            <h3 className="text-lg font-bold text-blue-400 mb-1">Premium</h3>
-            <div className="flex items-end gap-1 mb-2">
-              <span className="text-3xl font-bold text-white">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
-              <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
-            </div>
-            <p className="text-gray-400 text-sm mb-3">Desbloqueie todo o poder da IA.</p>
-            <ul className="space-y-2 mb-4 flex-1">
-              <Feature text="Análises de IA Ilimitadas" active />
-              <Feature text="Relatório Resumido na Tela" active />
-              <Feature text="Acesso ao Histórico Ilimitado" active />
-              <Feature text="Suporte por Email" active />
-              <Feature text="Upload de arquivos ilimitado" active />
-              <Feature text="Download da Análise Completa da IA" active />
-              <Feature text="Tabela Comparativa de Ativos" active />
-              <Feature text="Prioridade máxima na fila" active />
-            </ul>
-            <button onClick={handleCheckout} className="block w-full text-center py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto animate-pulse hover:animate-none">Assinar Agora</button>
-            <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
+          <div className="flex items-center gap-2 mb-6 bg-[#0d1117] p-1 rounded-lg w-fit border border-gray-800">
+            <button onClick={() => setBillingCycle('monthly')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${billingCycle === 'monthly' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}>Mensal</button>
+            <button onClick={() => setBillingCycle('yearly')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${billingCycle === 'yearly' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}>Anual (-20%)</button>
           </div>
-        </div> 
-      </div> 
-    </div> 
+          <div className="flex items-end gap-1 mb-8">
+            <span className="text-4xl font-bold text-white tracking-tight">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
+            <span className="text-gray-500 text-sm mb-1">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
+          </div>
+          <ul className="space-y-4 mb-8 flex-1">
+            <Feature text="Análises de IA Ilimitadas" active />
+            <Feature text="Download de Relatórios Premium (PDF)" active />
+            <Feature text="Tabela Comparativa Desbloqueada" active />
+            <Feature text="Prioridade no Servidor" active />
+          </ul>
+          <button onClick={handleCheckout} className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors shadow-sm">
+            Assinar FinAnalyzer Pro
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
 function NavItem({ icon, label, active = false, onClick, isLocked = false, collapsed = false }: any) {
   return (
-    <button onClick={onClick} title={collapsed ? label : undefined} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative ${collapsed ? 'justify-center px-2' : ''} ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}>
-      {React.cloneElement(icon, { size: 20 })}
-      {!collapsed && <span className="font-medium text-sm">{label}</span>}
-      {!collapsed && isLocked && <Lock size={14} className="ml-auto text-gray-600 group-hover:text-blue-400" />}
+    <button onClick={onClick} title={collapsed ? label : undefined} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${collapsed ? 'justify-center px-2' : ''} ${active ? 'bg-gray-800 text-white font-medium' : 'text-gray-400 hover:text-white hover:bg-[#161b22]'}`}>
+      {React.cloneElement(icon, { size: 18, className: active ? "text-blue-500" : "text-gray-400 group-hover:text-gray-300" })}
+      {!collapsed && <span className="text-sm">{label}</span>}
+      {!collapsed && isLocked && <Lock size={14} className="ml-auto text-gray-600" />}
     </button>
   );
 }
 
-// --- COMPONENTE PRINCIPAL ---
 export default function FinancialDashboard() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
@@ -143,9 +119,11 @@ export default function FinancialDashboard() {
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  
+  // ESTADO QUE CONTROLA SE ESTAMOS VENDO A TELA DE IMPRESSÃO
+  const [isPrinting, setIsPrinting] = useState(false);
   
   const [usageCount, setUsageCount] = useState(0);
   const WEEKLY_LIMIT = 5;
@@ -177,16 +155,13 @@ export default function FinancialDashboard() {
 
   useEffect(() => {
     if (isLoaded && !user) return; 
-
     if (user && !isPremium) {
       const usageKey = `usage_${user.id}`;
       const dateKey = `usage_date_${user.id}`;
       const downloadKey = `downloads_${user.id}`;
-      
       const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
       const savedDownloads = parseInt(localStorage.getItem(downloadKey) || '0');
       const savedDate = localStorage.getItem(dateKey);
-      
       const now = Date.now();
       const oneWeek = 7 * 24 * 60 * 60 * 1000;
 
@@ -205,10 +180,8 @@ export default function FinancialDashboard() {
 
   const formatarData = (dataString: string) => {
     if (!dataString) return "-";
-    try {
-      const data = new Date(dataString);
-      return new Intl.DateTimeFormat('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric'}).format(data);
-    } catch (e) { return dataString; }
+    try { return new Intl.DateTimeFormat('pt-BR', {day: '2-digit', month: '2-digit', year: 'numeric'}).format(new Date(dataString)); } 
+    catch (e) { return dataString; }
   };
 
   const columnDefsMap = useMemo(() => COLUMN_DEFINITIONS.reduce((acc, col) => { acc[col.key] = col; return acc; }, {} as any), []);
@@ -218,8 +191,7 @@ export default function FinancialDashboard() {
     if (!user) return;
     try {
       const res = await fetch(`${API_BASE}/api/history?user_id=${user.id}`);
-      const data = await res.json();
-      setHistoryList(data);
+      setHistoryList(await res.json());
     } catch (error) { console.error("Erro histórico", error); }
   };
 
@@ -227,17 +199,15 @@ export default function FinancialDashboard() {
     if (!user) return;
     try {
       const res = await fetch(`${API_BASE}/api/table-data?user_id=${user.id}`);
-      const data = await res.json();
-      setTableData(data);
+      setTableData(await res.json());
     } catch (error) { console.error("Erro tabela", error); }
   };
 
   const handleDelete = async (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
-    if (!confirm("Tem certeza?")) return;
+    if (!confirm("Tem certeza que deseja excluir esta análise?")) return;
     try {
-      const res = await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error("Erro delete");
+      await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
       fetchHistory();
       fetchTableData();
     } catch (error) { alert("Erro ao excluir."); }
@@ -250,13 +220,9 @@ export default function FinancialDashboard() {
   };
 
   const handleAnalyze = async () => {
-    if (!file || !empresa || !ano) { alert("Preencha tudo!"); return; }
-    if (!user) { alert("Aguarde o carregamento do usuário."); return; }
-
-    if (!isPremium && usageCount >= WEEKLY_LIMIT) {
-      setShowUpgradeModal(true);
-      return;
-    }
+    if (!file || !empresa || !ano) { alert("Preencha todos os campos e anexe o PDF."); return; }
+    if (!user) return;
+    if (!isPremium && usageCount >= WEEKLY_LIMIT) { setShowUpgradeModal(true); return; }
 
     setLoading(true);
     try {
@@ -268,13 +234,7 @@ export default function FinancialDashboard() {
       formData.append("user_id", user.id);
 
       const response = await fetch(`${API_BASE}/api/analyze`, { method: "POST", body: formData });
-
-      if (response.status === 403) {
-        setLoading(false);
-        setShowUpgradeModal(true);
-        return;
-      }
-
+      if (response.status === 403) { setLoading(false); setShowUpgradeModal(true); return; }
       if (!response.ok) throw new Error("Erro API");
       
       if (!isPremium) {
@@ -282,7 +242,7 @@ export default function FinancialDashboard() {
         setUsageCount(newCount);
         localStorage.setItem(`usage_${user.id}`, newCount.toString());
       }
-
+      
       const data = await response.json();
       setResult(data);
       setCurrentView('result');
@@ -306,7 +266,7 @@ export default function FinancialDashboard() {
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [currentView, user, isPremium]); 
+  }, [currentView, user, isPremium]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) setFile(e.target.files[0]);
@@ -361,14 +321,13 @@ export default function FinancialDashboard() {
       setShowUpgradeModal(true);
       return;
     }
-    // Adiciona ao histórico de downloads se não for premium
     if (!isPremium && user) {
       const newDlCount = downloadCount + 1;
       setDownloadCount(newDlCount);
       localStorage.setItem(`downloads_${user.id}`, newDlCount.toString());
     }
-    // Abre a janela nativa de impressão (que salva em PDF)
-    window.print();
+    // Muda o estado para imprimir. Isso vai mostrar o componente <ReportTemplate> temporariamente.
+    setIsPrinting(true);
   };
 
   const renderCellContent = (item: any, key: string, colDef: any) => {
@@ -383,6 +342,11 @@ export default function FinancialDashboard() {
   };
 
   if (!isLoaded) return <div className="flex h-screen items-center justify-center bg-[#0E1117]"><Loader2 className="animate-spin text-blue-500" /></div>;
+
+  // SE ESTIVER IMPRIMINDO, MOSTRA APENAS O RELATÓRIO
+  if (isPrinting) {
+    return <ReportTemplate result={result} onPrintComplete={() => setIsPrinting(false)} />;
+  }
 
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
@@ -579,14 +543,14 @@ export default function FinancialDashboard() {
             </div>
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
               <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
-              <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800 w-full md:w-auto justify-between md:justify-start"><div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : (result.data?.nota_geral || 0) == 3 ? 'text-amber-400' : 'text-red-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span></div></div>
+              <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800 w-full md:w-auto justify-between md:justify-start"><div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${Number(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : Number(result.data?.nota_geral || 0) >= 3 ? 'text-amber-400' : 'text-red-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span></div></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
               {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "ROE", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
                 <div key={idx} className="bg-[#161b22] border border-gray-800 p-6 rounded-2xl hover:border-gray-700 transition-all duration-300">
                   <div className="flex items-center justify-between mb-4"><span className="text-gray-400 text-sm font-medium">{item.label}</span><div className="bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
                   <div className="flex items-end gap-2"><span className="text-3xl font-bold text-white">{item.val}</span><span className="text-gray-600 text-sm mb-1">/5</span></div>
-                  <div className="w-full bg-gray-800 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${(item.val || 0) >= 4 ? 'bg-green-500' : (item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${((item.val || 0) / 5) * 100}%` }} /></div>
+                  <div className="w-full bg-gray-800 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${Number(item.val || 0) >= 4 ? 'bg-green-500' : Number(item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${(Number(item.val || 0) / 5) * 100}%` }} /></div>
                 </div>
               ))}
             </div>
