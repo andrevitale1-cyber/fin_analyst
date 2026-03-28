@@ -9,6 +9,9 @@ import {
   GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check, Menu
 } from "lucide-react";
 
+// 👇 IMPORTAÇÃO DA NOSSA NOVA FUNÇÃO GERADORA DE RELATÓRIO
+import { generateAndPrintReport } from './reportGenerator';
+
 // --- CONFIGURAÇÃO DO STRIPE ---
 const STRIPE_CHECKOUT_URL_MONTHLY = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00";
 const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/3cI6oIgdleEBgmNdI967S01"; 
@@ -60,73 +63,42 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="relative w-full max-w-3xl">
-
-        {/* Botão de Fechar */}
-        <button 
-          onClick={onClose} 
-          className="absolute top-2 right-2 md:-top-8 md:-right-8 text-gray-400 hover:text-white bg-gray-800/50 p-2 rounded-full transition-colors z-50"
-        >
+        <button onClick={onClose} className="absolute top-2 right-2 md:-top-8 md:-right-8 text-gray-400 hover:text-white bg-gray-800/50 p-2 rounded-full transition-colors z-50">
           <X size={24} />
         </button>
 
-        {/* Toggle Mensal / Anual */}
         <div className="flex flex-col items-center gap-1 mb-4">
           <div className="flex items-center justify-center gap-3">
-            <span
-              className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`}
-              onClick={() => setBillingCycle('monthly')}
-            >
-              Mensal
-            </span>
-            <button 
-              onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-              className="w-16 h-8 bg-gray-800 rounded-full p-1 relative transition-colors hover:bg-gray-700"
-            >
+            <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('monthly')}>Mensal</span>
+            <button onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')} className="w-16 h-8 bg-gray-800 rounded-full p-1 relative transition-colors hover:bg-gray-700">
               <div className={`w-6 h-6 bg-blue-500 rounded-full transition-transform duration-300 shadow-md ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-0'}`} />
             </button>
-            <span
-              className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`}
-              onClick={() => setBillingCycle('yearly')}
-            >
-              Anual
-            </span>
+            <span className={`text-base font-bold cursor-pointer transition-colors ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`} onClick={() => setBillingCycle('yearly')}>Anual</span>
           </div>
-
           <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'}`}>
             <span className="bg-orange-500/20 text-orange-400 text-xs font-bold px-3 py-1 rounded-full">2 MESES GRÁTIS</span>
           </div>
         </div>
 
-        {/* Grid dos dois cards */}
         <div className="grid md:grid-cols-2 gap-5">
-
-          {/* --- CARD GRATUITO --- */}
           <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-5 flex flex-col h-full opacity-80 scale-95">
             <h3 className="text-lg font-bold text-white mb-1">Gratuito</h3>
             <p className="text-gray-400 text-sm mb-3">Seu plano atual.</p>
-            
             <ul className="space-y-2 mb-4 flex-1">
               <Feature text="5 Análises por semana" active />
               <Feature text="Relatório Resumido na Tela" active />
               <Feature text="Acesso ao histórico simples" active />
               <Feature text="Suporte por email" active />
-              {/* Bloqueios */}
               <Feature text="Upload de arquivos ilimitado" disabled />
               <Feature text="Download da Análise Completa da IA" disabled />
               <Feature text="Tabela Comparativa de Ativos" disabled />
             </ul>
-
-            <button onClick={onClose} className="block w-full text-center py-2.5 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 transition-all mt-auto">
-              Continuar Grátis
-            </button>
+            <button onClick={onClose} className="block w-full text-center py-2.5 rounded-xl border border-gray-600 text-white font-bold hover:bg-gray-700 transition-all mt-auto">Continuar Grátis</button>
           </div>
 
-          {/* --- CARD PREMIUM (DESTAQUE) --- */}
           <div className="bg-[#0f131a] border border-blue-500 rounded-2xl p-5 relative shadow-2xl shadow-blue-900/10 transform hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
             {billingCycle === 'yearly' && (
-              <div className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">
-                2 Meses Grátis no Anual
-              </div>
+              <div className="absolute top-2 right-2 bg-orange-100 text-orange-800 text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider">2 Meses Grátis no Anual</div>
             )}
             <h3 className="text-lg font-bold text-blue-400 mb-1">Premium</h3>
             <div className="flex items-end gap-1 mb-2">
@@ -134,7 +106,6 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
               <span className="text-gray-500 mb-1 text-lg">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
             </div>
             <p className="text-gray-400 text-sm mb-3">Desbloqueie todo o poder da IA.</p>
-        
             <ul className="space-y-2 mb-4 flex-1">
               <Feature text="Análises de IA Ilimitadas" active />
               <Feature text="Relatório Resumido na Tela" active />
@@ -145,13 +116,9 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
               <Feature text="Tabela Comparativa de Ativos" active />
               <Feature text="Prioridade máxima na fila" active />
             </ul>
-
-            <button onClick={handleCheckout} className="block w-full text-center py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto animate-pulse hover:animate-none">
-              Assinar Agora
-            </button>
+            <button onClick={handleCheckout} className="block w-full text-center py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-900/20 transition-all mt-auto animate-pulse hover:animate-none">Assinar Agora</button>
             <p className="text-center text-xs text-gray-500 mt-4">Cancele quando quiser.</p>
           </div>
-
         </div> 
       </div> 
     </div> 
@@ -177,12 +144,9 @@ export default function FinancialDashboard() {
   const [loading, setLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   
-  // ESTADO PARA O MENU MOBILE
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // ESTADO PARA O MENU DESKTOP
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
-  // Contadores
   const [usageCount, setUsageCount] = useState(0);
   const WEEKLY_LIMIT = 5;
   const [downloadCount, setDownloadCount] = useState(0);
@@ -192,7 +156,6 @@ export default function FinancialDashboard() {
   const [historyList, setHistoryList] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
 
-  // Tabela e Filtros
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [showColumnMenu, setShowColumnMenu] = useState(false);
   const columnMenuRef = useRef<HTMLDivElement>(null);
@@ -210,38 +173,32 @@ export default function FinancialDashboard() {
   const [file, setFile] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // --- LÓGICA DE PREMIUM REAL ---
   const isPremium = user?.publicMetadata?.plan === 'premium';
 
-
   useEffect(() => {
-    if (isLoaded && !user) {
-      return; 
-    }
+    if (isLoaded && !user) return; 
 
-    if (user) {
-      if (!isPremium) {
-        const usageKey = `usage_${user.id}`;
-        const dateKey = `usage_date_${user.id}`;
-        const downloadKey = `downloads_${user.id}`;
-        
-        const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
-        const savedDownloads = parseInt(localStorage.getItem(downloadKey) || '0');
-        const savedDate = localStorage.getItem(dateKey);
-        
-        const now = Date.now();
-        const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    if (user && !isPremium) {
+      const usageKey = `usage_${user.id}`;
+      const dateKey = `usage_date_${user.id}`;
+      const downloadKey = `downloads_${user.id}`;
+      
+      const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
+      const savedDownloads = parseInt(localStorage.getItem(downloadKey) || '0');
+      const savedDate = localStorage.getItem(dateKey);
+      
+      const now = Date.now();
+      const oneWeek = 7 * 24 * 60 * 60 * 1000;
 
-        if (!savedDate || (now - parseInt(savedDate)) > oneWeek) {
-          localStorage.setItem(usageKey, '0');
-          localStorage.setItem(downloadKey, '0');
-          localStorage.setItem(dateKey, now.toString());
-          setUsageCount(0);
-          setDownloadCount(0);
-        } else {
-          setUsageCount(savedCount);
-          setDownloadCount(savedDownloads);
-        }
+      if (!savedDate || (now - parseInt(savedDate)) > oneWeek) {
+        localStorage.setItem(usageKey, '0');
+        localStorage.setItem(downloadKey, '0');
+        localStorage.setItem(dateKey, now.toString());
+        setUsageCount(0);
+        setDownloadCount(0);
+      } else {
+        setUsageCount(savedCount);
+        setDownloadCount(savedDownloads);
       }
     }
   }, [isLoaded, user, isPremium]);
@@ -287,7 +244,7 @@ export default function FinancialDashboard() {
   };
 
   const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
-    setIsSidebarOpen(false); // Fecha o menu ao clicar em um item
+    setIsSidebarOpen(false); 
     if (view === 'table' && !isPremium) setShowUpgradeModal(true);
     else setCurrentView(view);
   };
@@ -399,164 +356,17 @@ export default function FinancialDashboard() {
     });
   }, [tableData, sortConfig]);
 
+  // 👇 NOVA FUNÇÃO QUE USA O ARQUIVO AUXILIAR
   const handleDownload = () => {
-    if (!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT) {
-      setShowUpgradeModal(true);
-      return;
-    }
-    if (!result) return;
-
-    const meta = result.metadata || {};
-    const data = result.data || {};
-    const empresa = (meta.empresa || "EMPRESA").toUpperCase();
-    const trimestre = meta.trimestre || "";
-    const ano = meta.ano || "";
-    const periodo = trimestre + "/" + ano;
-    const notaFinal = data.nota_geral ?? result.nota_geral ?? "—";
-    const analise: string = result.analise_completa || "";
-    const today = new Date().toLocaleDateString("pt-BR");
-    const year = new Date().getFullYear();
-
-    const scoreColor = (n: number): string => {
-      if (n >= 5) return "#22c55e";
-      if (n >= 4) return "#4ade80";
-      if (n >= 3) return "#eab308";
-      if (n >= 2) return "#f97316";
-      return "#ef4444";
-    };
-
-    const notaFinalColor = scoreColor(Number(notaFinal));
-
-    const sections = [
-      { title: "Performance Core",         label: "Receita",        nota: data.receita_nota       ?? null },
-      { title: "Rentabilidade e Eficiência",label: "Rentabilidade",  nota: data.lucro_nota         ?? null },
-      { title: "Estrutura de Capital",      label: "Capital",        nota: data.divida_nota        ?? null },
-      { title: "Lucro Líquido",             label: "Lucro",          nota: data.rentabilidade_nota ?? null },
-    ];
-
-    const cleanText = (raw: string) =>
-      raw.replace(/\*\*[^*]+\*\*/g, "").replace(/Nota Seção \d+:[^\n]*/g, "").trim();
-
-    const rawSections = analise.match(/\*\*Seção \d+[^*]*\*\*[\s\S]*?(?=\*\*Seção \d+|\*\*Nota Geral|$)/g) || [];
-    const bodies = rawSections.map(cleanText);
-
-    const teseRaw = analise.match(/Seção 5[\s\S]*?(?=\*\*Seção 6|$)/);
-    const teseBody = teseRaw ? cleanText(teseRaw[0]) : (data.tese_investimento || "");
-    const teseParagraphs = teseBody.split("\n\n").filter(Boolean)
-      .map((p: string) => "<p>" + p.replace(/\*\*/g, "") + "</p>").join("");
-
-    const metricCards = sections.map((s) => {
-      const n = Number(s.nota ?? 0);
-      const c = scoreColor(n);
-      const pct = n ? (n / 5 * 100) : 0;
-      return (
-        '<div class="metric">' +
-          '<div class="m-label">' + s.label + '</div>' +
-          '<div class="m-score" style="color:' + c + '">' + (n || "—") + '</div>' +
-          '<div class="m-bar-bg"><div class="m-bar" style="width:' + pct + '%;background:' + c + '"></div></div>' +
-        '</div>'
-      );
-    }).join("");
-
-    const sectionCards = sections.map((s, i) => {
-      const body = bodies[i] || "";
-      const notaVal = s.nota !== null ? Number(s.nota) : null;
-      const cor = notaVal !== null ? scoreColor(notaVal) : "#9ca3af";
-      const badge = notaVal !== null
-        ? '<span class="badge" style="background:' + cor + '20;color:' + cor + ';border:1px solid ' + cor + '40">' + notaVal + '/5</span>'
-        : "";
-      return (
-        '<div class="section">' +
-          '<div class="section-header">' +
-            '<h3>' + s.title + '</h3>' + badge +
-          '</div>' +
-          '<p>' + (body || "—") + '</p>' +
-        '</div>'
-      );
-    }).join("");
-
-    const css = [
-      "@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');",
-      "*{margin:0;padding:0;box-sizing:border-box}",
-      "body{font-family:'Inter',sans-serif;background:#fff;color:#111;padding:48px;max-width:900px;margin:0 auto;font-size:14px;line-height:1.65}",
-      ".header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:32px;border-bottom:2px solid #e5e7eb;margin-bottom:36px}",
-      ".brand{display:flex;align-items:center;gap:10px}",
-      ".brand-icon{width:36px;height:36px;background:#2563eb;border-radius:10px;display:flex;align-items:center;justify-content:center}",
-      ".brand-icon svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2}",
-      ".brand-name{font-size:18px;font-weight:800;color:#111}",
-      ".brand-name span{color:#2563eb}",
-      ".meta{text-align:right}",
-      ".meta p{font-size:12px;color:#6b7280}",
-      ".meta p strong{color:#374151}",
-      ".hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);color:#fff;border-radius:16px;padding:36px 40px;margin-bottom:36px;display:flex;justify-content:space-between;align-items:center}",
-      ".hero-left h1{font-size:38px;font-weight:900;letter-spacing:-1px;margin-bottom:4px}",
-      ".hero-left p{font-size:16px;color:#93c5fd;font-weight:500}",
-      ".hero-left .label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#64748b;margin-bottom:8px}",
-      ".score-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:20px 28px;text-align:center}",
-      ".score-card .label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:4px}",
-      ".score-card .score{font-size:52px;font-weight:900;line-height:1;color:" + notaFinalColor + "}",
-      ".score-card .score span{font-size:20px;color:#64748b;font-weight:500}",
-      ".score-card .sub{font-size:10px;color:#64748b;margin-top:4px}",
-      ".metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:36px}",
-      ".metric{border:1px solid #e5e7eb;border-radius:12px;padding:16px;text-align:center}",
-      ".metric .m-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;margin-bottom:8px;font-weight:600}",
-      ".metric .m-score{font-size:28px;font-weight:900}",
-      ".metric .m-bar-bg{height:4px;background:#f3f4f6;border-radius:999px;margin-top:8px}",
-      ".metric .m-bar{height:4px;border-radius:999px}",
-      ".section{border:1px solid #e5e7eb;border-radius:12px;padding:22px 24px;margin-bottom:16px}",
-      ".section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}",
-      ".section-header h3{font-size:13px;font-weight:700;color:#111;text-transform:uppercase;letter-spacing:.04em}",
-      ".badge{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700}",
-      ".section p{color:#374151;font-size:13.5px;line-height:1.7}",
-      ".tese{background:#f8faff;border:1px solid #dbeafe;border-radius:12px;padding:24px;margin-bottom:36px}",
-      ".tese h3{font-size:13px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px}",
-      ".tese p{color:#374151;font-size:13.5px;line-height:1.75;margin-bottom:10px}",
-      ".footer{border-top:1px solid #e5e7eb;padding-top:20px;font-size:11px;color:#9ca3af;text-align:center}",
-      "@media print{body{padding:0}@page{margin:20mm}}",
-    ].join("\n");
-
-    const html = (
-      "<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'/>" +
-      "<title>Relatório " + empresa + " " + periodo + "</title>" +
-      "<style>" + css + "</style></head><body>" +
-      "<div class='header'>" +
-        "<div class='brand'>" +
-          "<div class='brand-icon'><svg viewBox='0 0 24 24'><polyline points='22 12 18 12 15 21 9 3 6 12 2 12'/></svg></div>" +
-          "<div class='brand-name'>FinAnalyzer <span>.AI</span></div>" +
-        "</div>" +
-        "<div class='meta'><p>Gerado em <strong>" + today + "</strong></p><p>Relatório de análise fundamentalista</p></div>" +
-      "</div>" +
-      "<div class='hero'>" +
-        "<div class='hero-left'>" +
-          "<div class='label'>Relatório de Análise</div>" +
-          "<h1>" + empresa + "</h1><p>" + periodo + "</p>" +
-        "</div>" +
-        "<div class='score-card'>" +
-          "<div class='label'>Score IA</div>" +
-          "<div class='score'>" + notaFinal + "<span>/5</span></div>" +
-          "<div class='sub'>Baseado em 4 fundamentos</div>" +
-        "</div>" +
-      "</div>" +
-      "<div class='metrics'>" + metricCards + "</div>" +
-      sectionCards +
-      "<div class='tese'><h3>Conclusão — Tese e Outlook</h3>" + teseParagraphs + "</div>" +
-      "<div class='footer'>" +
-        "<p>Este relatório foi gerado automaticamente pelo FinAnalyzer.AI. Não constitui recomendação de investimento.</p>" +
-        "<p style='margin-top:6px'>© " + year + " FinAnalyzer Inc. · Todos os direitos reservados</p>" +
-      "</div></body></html>"
-    );
-
-    const win = window.open("", "_blank");
-    if (win) {
-      if (!isPremium) {
-        const newDlCount = downloadCount + 1;
-        setDownloadCount(newDlCount);
-        localStorage.setItem(`downloads_${user?.id}`, newDlCount.toString());
-      }
-      win.document.write(html);
-      win.document.close();
-      setTimeout(() => win.print(), 800);
-    }
+    generateAndPrintReport({
+      result,
+      isPremium: isPremium ?? false, // Garante booleano mesmo se undefined
+      user,
+      downloadCount,
+      setDownloadCount,
+      setShowUpgradeModal,
+      WEEKLY_DOWNLOAD_LIMIT
+    });
   };
 
   const renderCellContent = (item: any, key: string, colDef: any) => {
@@ -576,22 +386,11 @@ export default function FinancialDashboard() {
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
       {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} userId={user?.id} />}
       
-      {/* --- OVERLAY ESCURO (MOBILE) --- */}
       {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden animate-in fade-in"
-          onClick={() => setIsSidebarOpen(false)}
-        />
+        <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden animate-in fade-in" onClick={() => setIsSidebarOpen(false)} />
       )}
 
-      {/* --- SIDEBAR RESPONSIVA --- */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 transition-all duration-300 ease-in-out
-        md:relative md:translate-x-0 
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        ${isSidebarCollapsed ? 'md:w-20 md:px-3' : 'w-72'}
-      `}>
-        {/* Header da Sidebar com botão de fechar (Mobile) */}
+      <aside className={`fixed inset-y-0 left-0 z-50 bg-[#0d1117] border-r border-gray-800 flex flex-col p-6 transition-all duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarCollapsed ? 'md:w-20 md:px-3' : 'w-72'}`}>
         <div className="flex items-center justify-between mb-10 px-2">
           <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'md:justify-center md:w-full' : ''}`}>
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20 flex-shrink-0">
@@ -601,15 +400,9 @@ export default function FinancialDashboard() {
               <span className="text-xl font-bold tracking-tight text-white">FinAnalyzer <span className="text-blue-500">.AI</span></span>
             )}
           </div>
-          {/* Botão Fechar no mobile */}
-          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white">
-            <X size={24} />
-          </button>
-          {/* Botão Colapsar no desktop */}
+          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white"><X size={24} /></button>
           {!isSidebarCollapsed && (
-            <button onClick={() => setIsSidebarCollapsed(true)} className="hidden md:flex text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all" title="Esconder menu">
-              <ChevronLeft size={20} />
-            </button>
+            <button onClick={() => setIsSidebarCollapsed(true)} className="hidden md:flex text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all" title="Esconder menu"><ChevronLeft size={20} /></button>
           )}
         </div>
 
@@ -619,33 +412,16 @@ export default function FinancialDashboard() {
           <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} collapsed={isSidebarCollapsed} />
         </nav>
 
-        {/* --- CONTADOR DE ANÁLISES --- */}
         {!isPremium && (
           <div className="mt-auto mb-6 px-2">
             <div className="bg-[#161b22] border border-gray-800 p-4 rounded-xl mb-4 space-y-3">
               <div>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-gray-400">Análises Semanais</span>
-                  <span className={`font-bold ${usageCount >= WEEKLY_LIMIT ? 'text-red-400' : 'text-white'}`}>{usageCount}/{WEEKLY_LIMIT}</span>
-                </div>
-                <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-500 ${usageCount >= WEEKLY_LIMIT ? 'bg-red-500' : 'bg-blue-500'}`} 
-                    style={{ width: `${Math.min((usageCount / WEEKLY_LIMIT) * 100, 100)}%` }} 
-                  />
-                </div>
+                <div className="flex justify-between text-xs mb-1.5"><span className="text-gray-400">Análises</span><span className={`font-bold ${usageCount >= WEEKLY_LIMIT ? 'text-red-400' : 'text-white'}`}>{usageCount}/{WEEKLY_LIMIT}</span></div>
+                <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden"><div className={`h-full transition-all duration-500 ${usageCount >= WEEKLY_LIMIT ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${Math.min((usageCount / WEEKLY_LIMIT) * 100, 100)}%` }} /></div>
               </div>
               <div>
-                <div className="flex justify-between text-xs mb-1.5">
-                  <span className="text-gray-400">Downloads Semanais</span>
-                  <span className={`font-bold ${downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'text-red-400' : 'text-white'}`}>{downloadCount}/{WEEKLY_DOWNLOAD_LIMIT}</span>
-                </div>
-                <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all duration-500 ${downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'bg-red-500' : 'bg-green-500'}`} 
-                    style={{ width: `${Math.min((downloadCount / WEEKLY_DOWNLOAD_LIMIT) * 100, 100)}%` }} 
-                  />
-                </div>
+                <div className="flex justify-between text-xs mb-1.5"><span className="text-gray-400">Downloads</span><span className={`font-bold ${downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'text-red-400' : 'text-white'}`}>{downloadCount}/{WEEKLY_DOWNLOAD_LIMIT}</span></div>
+                <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden"><div className={`h-full transition-all duration-500 ${downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${Math.min((downloadCount / WEEKLY_DOWNLOAD_LIMIT) * 100, 100)}%` }} /></div>
               </div>
             </div>
             <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
@@ -656,60 +432,29 @@ export default function FinancialDashboard() {
         
         {isPremium && <div className="mt-auto" />}
 
-        {/* --- BOTÃO OFICIAL DO CLERK --- */}
         <div className="mt-4 px-2 py-3 border-t border-gray-800">
            <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all w-full">
-              <UserButton 
-                showName={true} 
-                appearance={{
-                  elements: {
-                    userButtonBox: "flex flex-row-reverse w-full justify-start gap-3",
-                    userButtonOuterIdentifier: "!text-white !font-bold text-sm tracking-wide",
-                    avatarBox: "w-9 h-9 ring-2 ring-gray-700"
-                  }
-                }}
-              />
+              <UserButton showName={true} appearance={{ elements: { userButtonBox: "flex flex-row-reverse w-full justify-start gap-3", userButtonOuterIdentifier: "!text-white !font-bold text-sm tracking-wide", avatarBox: "w-9 h-9 ring-2 ring-gray-700" } }} />
            </div>
         </div>
       </aside>
       
       <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
-        
-        {/* Botão para reabrir sidebar no desktop (quando colapsada) */}
         {isSidebarCollapsed && (
-          <button
-            onClick={() => setIsSidebarCollapsed(false)}
-            className="hidden md:flex absolute top-6 left-4 z-10 items-center gap-2 text-gray-400 hover:text-white bg-[#161b22] border border-gray-800 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:border-blue-500"
-            title="Mostrar menu"
-          >
-            <Menu size={18} /> Menu
-          </button>
+          <button onClick={() => setIsSidebarCollapsed(false)} className="hidden md:flex absolute top-6 left-4 z-10 items-center gap-2 text-gray-400 hover:text-white bg-[#161b22] border border-gray-800 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:border-blue-500"><Menu size={18} /> Menu</button>
         )}
         
-        {/* --- HEADER MOBILE (MENU + LOGO + USER) --- */}
         <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setIsSidebarOpen(true)} 
-              className="p-2 bg-[#161b22] border border-gray-800 rounded-lg text-white hover:bg-gray-800 active:scale-95 transition-all"
-            >
-              <Menu size={24} />
-            </button>
-            <span className="font-bold text-lg text-white tracking-tight">FinAnalyzer <span className="text-blue-500">.AI</span></span>
-          </div>
-          {/* User Button no Header Mobile para fácil acesso */}
+          <div className="flex items-center gap-3"><button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-[#161b22] border border-gray-800 rounded-lg text-white hover:bg-gray-800 active:scale-95 transition-all"><Menu size={24} /></button><span className="font-bold text-lg text-white tracking-tight">FinAnalyzer <span className="text-blue-500">.AI</span></span></div>
           <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
         </div>
 
-        {/* Lógica de renderização das views */}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-0">
               <div><h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-400 mt-1 text-sm md:text-base">Visão consolidada do desempenho das empresas.</p></div>
               <div className="relative" ref={columnMenuRef}>
-                <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#161b22] border-gray-700 hover:border-blue-500 text-gray-300'}`}>
-                  <Settings2 size={18} /><span>Configurar Colunas</span>
-                </button>
+                <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#161b22] border-gray-700 hover:border-blue-500 text-gray-300'}`}><Settings2 size={18} /><span>Configurar Colunas</span></button>
                 {showColumnMenu && (
                   <div className="absolute right-0 mt-3 w-80 bg-[#161b22]/95 backdrop-blur-md border border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
                     <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-[#0d1117]/50"><span className="text-sm font-bold text-white">Visualização de Colunas</span><button onClick={() => setShowColumnMenu(false)} className="text-gray-400 hover:text-white"><X size={16} /></button></div>
@@ -764,24 +509,15 @@ export default function FinancialDashboard() {
             </div>
           </div>
         )}
+        
         {currentView === 'history' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
             <header className="flex items-center justify-between mb-8 pt-0">
               <div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div>
               <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Buscar empresa ou período..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-[#161b22] border border-gray-700 rounded-xl px-4 py-2.5 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-64"
-                />
+                <input type="text" placeholder="Buscar empresa ou período..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-[#161b22] border border-gray-700 rounded-xl px-4 py-2.5 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-64" />
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                {searchQuery && (
-                  <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors">
-                    <X size={14} />
-                  </button>
-                )}
+                {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"><X size={14} /></button>}
               </div>
             </header>
             <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
@@ -801,14 +537,11 @@ export default function FinancialDashboard() {
                 </tbody>
               </table>
              </div> 
-              {filteredHistory.length === 0 && (
-                <div className="p-12 text-center text-gray-500">
-                  {searchQuery ? `Nenhum resultado para "${searchQuery}".` : "Histórico vazio."}
-                </div>
-              )}
+              {filteredHistory.length === 0 && <div className="p-12 text-center text-gray-500">{searchQuery ? `Nenhum resultado para "${searchQuery}".` : "Histórico vazio."}</div>}
             </div>
           </div>
         )}
+
         {currentView === 'dashboard' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-3xl mx-auto mt-6 md:mt-10 px-0 md:px-0">
             {loading ? (
@@ -816,16 +549,12 @@ export default function FinancialDashboard() {
             ) : (
               <>
                 <div className="text-center mb-8 md:mb-12"><h1 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">Nova Análise Financeira</h1><p className="text-gray-400 text-base md:text-lg">Carregue o relatório trimestral (PDF) para processamento via IA.</p></div>
-                
                 <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-4 md:p-8 shadow-2xl relative overflow-hidden group hover:border-gray-700 transition-colors duration-500">
-                  
-                  {/* Grid Responsivo: 1 coluna no mobile, 3 no desktop */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa</label><input type="text" placeholder="Ex: Apple" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all uppercase" value={empresa} onChange={(e) => setEmpresa(e.target.value)} /></div>
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ano</label><input type="text" placeholder="2025" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={ano} onChange={(e) => setAno(e.target.value)} /></div>
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trimestre</label><select className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">1º Trimestre</option><option value="2T">2º Trimestre</option><option value="3T">3º Trimestre</option><option value="4T">4º Trimestre</option></select></div>
                   </div>
-                  
                   <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 md:p-10 flex flex-col items-center justify-center bg-[#0d1117]/50 hover:bg-[#0d1117] hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
                     <input type="file" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" /><div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div><p className="text-gray-300 font-medium text-lg text-center">{file ? file.name : "Clique ou arraste o PDF"}</p><p className="text-gray-500 text-sm mt-2 text-center">Suporta PDF de até 10MB</p>
                   </div>
@@ -835,6 +564,7 @@ export default function FinancialDashboard() {
             )}
           </div>
         )}
+
         {currentView === 'result' && result && (
           <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">

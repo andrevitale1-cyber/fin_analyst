@@ -160,89 +160,47 @@ async def analyze_report(
         pdf_text = extract_text_from_pdf_bytes(contents)
         
         prompt = f"""
-  ### REGRAS DE FORMATAÇÃO E ESTILO:
+ REGRAS DE FORMATAÇÃO E ESTILO (Padrão Editorial / Equity Research Sênior):
+Tom de Voz: Seja profissional, elegante, analítico e jornalístico. Crie uma narrativa fluida em vez de apenas jogar dados. Foque na geração de valor.
 
-    - Seja pragmático, direto e focado no "Bottom-line" (Lucro Líquido e Geração de Valor).
+Formatação Visual: Utilize Tabelas em Markdown (ex: Segmento | 3T24 | 3T25 | Variação) sempre que houver quebra de receitas por segmento, linhas de crédito ou revisão de Guidance. Use bullet points para listar destaques operacionais.
 
-    - NÃO use LaTeX. Escreva números como texto normal (ex: "Receita de 10 bilhões", "Margem de 20%").
+Apresentação Numérica: Escreva os números por extenso com até duas casas decimais (ex: "R$ 11,87 bilhões", "aumento de 13,1%", "expansão de 0,6 p.p."). NÃO use LaTeX.
 
-    - Use no máximo duas casas decimais.
+Especificidade Setorial: - Se for Instituição Financeira: Fale em Margem Financeira (NII), ROE, Índice de Eficiência, Custo de Crédito (NPL/Inadimplência) e Basileia (CET1).
 
-    - Se for banco/seguradora, ignore EBITDA e use métricas do setor (Margem Financeira, Índice de Basileia, etc). Reconheça que o "Resultado Financeiro" (receitas de investimentos/float) é uma parte core e operacional do negócio.
+Se for Varejo/Indústria: Fale em Receita Líquida, EBITDA, Margem Bruta/EBITDA, Dívida Líquida/EBITDA e Vendas Mesmas Lojas (SSS).
 
-    - TODAS AS NOTAS DEVEM SER DADAS APENAS COM OS NÚMEROS INTEIROS: 1/2/3/4/5.
+Crescimento Inorgânico: Contextualize aquisições no meio do texto, separando o crescimento orgânico da consolidação de M&As, mas não penalize a nota final apenas por isso.
 
-    - CRESCIMENTO INORGÂNICO: Se houver aquisições relevantes, analise no texto a composição do crescimento (quanto foi orgânico e quanto foi inorgânico), contextualize o impacto da aquisição nos números (ex: qual linha foi afetada, se houve efeito de consolidação de receita/lucro) e avalie se o crescimento orgânico da base existente foi acelerado, estável ou desacelerado. A nota deve avaliar o resultado total da empresa normalmente, sem qualquer ponderação pela origem do crescimento.
+SISTEMA DE NOTAS: Todas as notas devem ser estritamente números inteiros (1, 2, 3, 4 ou 5) e seguir exatamente o formato Nota Seção X: Y/5.
 
+ESTRUTURA OBRIGATÓRIA DE RESPOSTA:
+[Parágrafo Introdutório]
+(Escreva um parágrafo inicial de 3 a 5 linhas resumindo o trimestre da empresa, destacando se o resultado foi sólido, fraco ou desafiador, e qual foi o principal motor desse desempenho. Sem título de seção para este parágrafo).
 
+Seção 1: Evolução Operacional e Top Line
+(Analise o crescimento da Receita Líquida, Carteira de Crédito ou Volume de Vendas. Como foi a dinâmica de preços vs. volume? Desconstrua o crescimento por segmento. É altamente recomendável inserir uma tabela em Markdown aqui mostrando os principais segmentos e suas variações anuais/trimestrais).
+Nota Seção 1: X/5
 
-    ### ESTRUTURA OBRIGATÓRIA DE RESPOSTA:
+Seção 2: Rentabilidade e Margens
+(Analise o EBITDA, Margem Financeira, Índice de Eficiência ou Resultado Operacional. Houve alavancagem operacional? Os custos foram diluídos ou pressionaram a margem? Use bullet points para detalhar as despesas operacionais ou linhas de serviços/seguros, se houver).
+Nota Seção 2: X/5
 
+Seção 3: Estrutura de Capital e Gestão de Risco
+(Se for banco: analise a Qualidade do Crédito, Inadimplência > 90 dias, Custo do Crédito e Índice de Basileia. Se for empresa real: analise a Geração de Caixa Livre, Dívida Líquida/EBITDA, perfil da dívida e despesas financeiras).
+Nota Seção 3: X/5
 
+Seção 4: Sumário Executivo do Lucro Líquido
+(Analise o Bottom-Line. Qual foi o Lucro Líquido e o ROE (Retorno sobre Patrimônio)? O resultado foi limpo ou impactado por efeitos não-recorrentes, marcação a mercado ou créditos tributários? Conecte este lucro à eficiência descrita nas seções anteriores).
+Nota Seção 4: X/5
 
-    **Seção 1: Análise da Performance Core (Top Line)** (maximo de 25 linhas)
+Seção 5: Conclusão Estratégica e Outlook
+(Sintetize a análise de forma coesa. O resultado superou, atendeu ou frustrou as expectativas? Avalie a sustentabilidade desse resultado para os próximos trimestres. Se houver Revisão de Guidance, insira uma tabela comparando o Guidance Anterior com o Revisado).
 
-    (Analise a Receita Líquida. Cresceu? Caiu? Foi preço ou volume? O mix de produtos ajudou?)
-
-    Apresente a Receita Líquida (Não-Financeiras) ou Prêmios Emitidos / Margem Financeira (Financeiras) e sua variação.
-
-    Desconstrua o crescimento por segmento.
-
-    Conecte a receita com os indicadores operacionais do setor (ex: Vendas Mesmas Lojas; Volume vs. Preço; Sinistralidade). O operacional foi um ponto forte ou fraco?
-
-    Se houver aquisições relevantes: decomponha o crescimento entre orgânico e inorgânico, contextualize o impacto da aquisição nas linhas do resultado e avalie a dinâmica do crescimento orgânico da base existente — sem usar a origem do crescimento como critério de nota.
-
-    **Nota Seção 1: X/5**
-
-
-
-    **Seção 2: Análise da Rentabilidade e Eficiência**
-
-    (Analise EBITDA/Margens ou Resultado Operacional. Houve diluição de custos? Ganho de eficiência?)
-
-    ...
-
-    **Nota Seção 2: X/5**
-
-
-
-    **Seção 3: Estrutura de Capital e Financeiro** (maximo de 20 linhas)
-
-    (Analise Dívida Líquida/EBITDA, Despesas Financeiras ou Solvência/Basileia para bancos).
-
-    ...
-
-    **Nota Seção 3: X/5**
-
-
-
-    **Seção 4: Análise do Lucro Líquido (Bottom-Line)** (maximo de 20 linhas)
-
-    (Analise o Lucro Líquido. Foi limpo ou teve não-recorrentes? É sustentável?)
-
-    Indentifique os Drivers: Conecte o lucro final aos componentes das seções 1, 2 e 3.
-
-    Qualifique o Lucro: Identifique fatores não recorrentes, não-caixa ou cíclicos (ex: créditos tributários, deflação/inflação de índices, Selic) que tenham impulsionado ou prejudicado o resultado.
-
-    **Nota Seção 4: X/5**
-
-
-
-    **Seção 5: Conclusão - Tese e Outlook** (maximo de 15 linhas)
-
-    (Sintetize: O resultado foi Bom, Neutro ou Ruim? Qual a perspectiva futura (Guidance)?)
-
-    Sintetize a análise de forma coesa. Comece pela conclusão principal (ex: "A empresa entregou um resultado forte/recorde..." ou "O resultado foi fraco...").
-
-    Em seguida, explique os drivers, balanceando os fatores (ex: "...apesar de um operacional modesto, isso foi impulsionado por um resultado financeiro excepcional..." ou "...o forte crescimento operacional foi consumido por despesas financeiras...").
-
-    Conclua sobre a tese principal que o resultado do trimestre suporta.
-
-    **Seção 6: Nota Final**
-
-    (Dê uma nota geral baseada na tese).
-
-    **Nota Geral: X/5**
+Seção 6: Nota Final
+(Avaliação consolidada da resiliência, crescimento e geração de valor no trimestre).
+Nota Geral: X/5
 
     DADOS DO RELEASE (Use apenas o relevante):
     {pdf_text[:40000]}
