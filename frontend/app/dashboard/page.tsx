@@ -9,11 +9,10 @@ import {
   GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check, Menu
 } from "lucide-react";
 
-import ReportTemplate from './ReportTemplate';
-
+// API_BASE configurada para o seu Render
+const API_BASE = "https://api-finanalyzer.onrender.com";
 const STRIPE_CHECKOUT_URL_MONTHLY = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00";
 const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/3cI6oIgdleEBgmNdI967S01"; 
-const API_BASE = "https://api-finanalyzer.onrender.com";
 
 const COLUMN_DEFINITIONS = [
   { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-gray-100 font-medium' },
@@ -28,7 +27,7 @@ const COLUMN_DEFINITIONS = [
   { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-medium' },
 ];
 
-function Feature({ text, active = false, disabled = false }: any) {
+function Feature({ text, disabled = false }: any) {
   return (
     <li className="flex items-center gap-3">
       {disabled ? (
@@ -63,9 +62,9 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
             <p className="text-sm text-gray-400 mt-1">Seu plano atual. Ideal para testes.</p>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
-            <Feature text="5 Análises por semana" active />
-            <Feature text="Relatório Resumido na Tela" active />
-            <Feature text="Suporte Comunitário" active />
+            <Feature text="5 Análises por semana" />
+            <Feature text="Relatório Resumido na Tela" />
+            <Feature text="Suporte Comunitário" />
             <Feature text="Download do Relatório Completo" disabled />
             <Feature text="Tabela Comparativa de Ativos" disabled />
           </ul>
@@ -88,10 +87,10 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
             <span className="text-gray-500 text-sm mb-1">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
-            <Feature text="Análises de IA Ilimitadas" active />
-            <Feature text="Download de Relatórios Premium (PDF)" active />
-            <Feature text="Tabela Comparativa Desbloqueada" active />
-            <Feature text="Prioridade no Servidor" active />
+            <Feature text="Análises de IA Ilimitadas" />
+            <Feature text="Download de Relatórios Premium (HTML/PDF)" />
+            <Feature text="Tabela Comparativa Desbloqueada" />
+            <Feature text="Prioridade no Servidor" />
           </ul>
           <button onClick={handleCheckout} className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors shadow-sm">
             Assinar FinAnalyzer Pro
@@ -121,9 +120,6 @@ export default function FinancialDashboard() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  
-  // ESTADO QUE CONTROLA SE ESTAMOS VENDO A TELA DE IMPRESSÃO
-  const [isPrinting, setIsPrinting] = useState(false);
   
   const [usageCount, setUsageCount] = useState(0);
   const WEEKLY_LIMIT = 5;
@@ -244,7 +240,8 @@ export default function FinancialDashboard() {
       }
       
       const data = await response.json();
-      setResult(data);
+      // Garantimos que o ID da nova análise seja injetado no resultado para download imediato
+      setResult({ ...data, id: data.id });
       setCurrentView('result');
       fetchHistory();
       fetchTableData();
@@ -316,18 +313,26 @@ export default function FinancialDashboard() {
     });
   }, [tableData, sortConfig]);
 
+  // FUNÇÃO ATUALIZADA: Chama o endpoint de relatório do Backend
   const handleDownload = () => {
+    const id = result?.id; 
+    
     if (!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT) {
       setShowUpgradeModal(true);
       return;
     }
-    if (!isPremium && user) {
-      const newDlCount = downloadCount + 1;
-      setDownloadCount(newDlCount);
-      localStorage.setItem(`downloads_${user.id}`, newDlCount.toString());
+
+    if (id) {
+      if (!isPremium && user) {
+        const newDlCount = downloadCount + 1;
+        setDownloadCount(newDlCount);
+        localStorage.setItem(`downloads_${user.id}`, newDlCount.toString());
+      }
+      // Abre o relatório gerado pelo backend em uma nova aba
+      window.open(`${API_BASE}/api/report/${id}`, '_blank');
+    } else {
+      alert("ID do relatório não encontrado. Tente abrir pelo histórico.");
     }
-    // Muda o estado para imprimir. Isso vai mostrar o componente <ReportTemplate> temporariamente.
-    setIsPrinting(true);
   };
 
   const renderCellContent = (item: any, key: string, colDef: any) => {
@@ -342,11 +347,6 @@ export default function FinancialDashboard() {
   };
 
   if (!isLoaded) return <div className="flex h-screen items-center justify-center bg-[#0E1117]"><Loader2 className="animate-spin text-blue-500" /></div>;
-
-  // SE ESTIVER IMPRIMINDO, MOSTRA APENAS O RELATÓRIO
-  if (isPrinting) {
-    return <ReportTemplate result={result} onPrintComplete={() => setIsPrinting(false)} />;
-  }
 
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
@@ -492,7 +492,12 @@ export default function FinancialDashboard() {
                 <thead><tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500"><th className="py-5 px-6 font-semibold">Empresa</th><th className="py-5 px-6 font-semibold">Período</th><th className="py-5 px-6 font-semibold">Data</th><th className="py-5 px-6 text-center font-semibold">Score</th><th className="py-5 px-6 text-right font-semibold">Ações</th></tr></thead>
                 <tbody className="divide-y divide-gray-800">
                   {filteredHistory.map((item: any) => (
-                    <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { setResult(item.conteudo); setEmpresa(item.empresa); setCurrentView('result'); }}>
+                    <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { 
+                      // Injetamos o id no resultado para permitir download pelo histórico
+                      setResult({ ...item.conteudo, id: item.id }); 
+                      setEmpresa(item.empresa); 
+                      setCurrentView('result'); 
+                    }}>
                       <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-gray-200">{item.empresa?.toUpperCase()}</span></div></td>
                       <td className="py-4 px-6 text-gray-400">{item.periodo}</td>
                       <td className="py-4 px-6 text-gray-500 text-sm">{formatarData(item.data)}</td>

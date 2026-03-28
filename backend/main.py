@@ -12,6 +12,8 @@ import asyncio
 import stripe
 from pypdf import PdfReader
 from dotenv import load_dotenv
+from report_generator import router as report_router
+
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
@@ -20,6 +22,8 @@ load_dotenv()
 
 # --- CONFIGURAÇÕES GERAIS ---
 app = FastAPI(title="API Analisador Financeiro")
+
+app.include_router(report_router)
 
 # --- CONFIGURAÇÃO DO CORS ---
 origins = ["*"]
