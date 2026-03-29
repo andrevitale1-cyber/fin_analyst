@@ -248,8 +248,8 @@ No final da sua análise, você DEVE extrair o histórico financeiro dos último
 Apresente esses dados EXATAMENTE no formato de um array JSON dentro de um bloco de código markdown.
 As chaves obrigatórias são: 
 "name" (nome do trimestre, ex: "3T24"), 
-"receita" (apenas o número, na mesma grandeza para todos), 
-"lucro" (apenas o número, na mesma grandeza), 
+"receita" (valor financeiro ABSOLUTO REAL e completo, sem abreviações. Ex: se for 664,5 milhões, retorne 664500000. Se for 1,2 bilhão, retorne 1200000000), 
+"lucro" (valor financeiro ABSOLUTO REAL, na mesma regra da receita. Ex: 175833000), 
 "margemBruta" (número percentual), 
 "margemLiquida" (número percentual),
 "var_pessoal" (variação da despesa de pessoal em p.p., use positivo para eficiência/ganho e negativo para retração/pressão. Ex: 1.1),
@@ -416,7 +416,6 @@ def fix_database_clerk():
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # Tenta converter a coluna. O 'USING user_id::text' garante que IDs antigos (1, 2) virem strings ("1", "2")
         cur.execute("ALTER TABLE historico ALTER COLUMN user_id TYPE TEXT USING user_id::text;")
         conn.commit()
         return {"message": "Sucesso! Banco de dados atualizado para aceitar usuários do Clerk."}

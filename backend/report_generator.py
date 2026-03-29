@@ -167,7 +167,6 @@ def _parse_sections(text: str) -> list:
         if b:
             secs.append({"num": 0, "title": "Visão Geral do Trimestre", "body": b, "nota": None})
     
-    # Reduzido de 6 para 5 para não gerar o bloco HTML da Seção 5
     for n in range(1, 5):
         pat = rf"\*?\*?Se[cç][aã]o\s*{n}[:\s\–\-].*?\n([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*{n+1}|\Z)"
         m = re.search(pat, text or "", re.IGNORECASE)
@@ -192,7 +191,7 @@ def _parse_sections(text: str) -> list:
 # ═══════════════════════════════════════════════════════════════
 
 SECTION_CHARTS = {
-    # Seção 0 (intro) — overview: receita + lucro barras
+    # Seção 0 (intro)
     0: [
         {
             "id": "cS0A",
@@ -206,7 +205,7 @@ SECTION_CHARTS = {
         },
     ],
 
-    # Seção 1 (Top Line) — receita barras + margem bruta linha
+    # Seção 1 (Top Line)
     1: [
         {
             "id": "cS1A",
@@ -230,7 +229,7 @@ SECTION_CHARTS = {
         },
     ],
 
-    # Seção 2 (Margens) — margem bruta vs líquida linha + variação p.p. de despesas
+    # Seção 2 (Margens)
     2: [
         {
             "id": "cS2A",
@@ -253,7 +252,6 @@ SECTION_CHARTS = {
             const lastData = CD[CD.length - 1] || {};
             const varLabels = ['Outras Rec. Oper.', 'G&A (ex-D&A)', 'Pessoal (Vendas)', 'Fretes', 'Serviços Prof.', 'Marketing'];
             
-            // Fallback para ilustrar caso o texto atual ainda não tenha sido re-analisado
             const varData = [
                 lastData.var_outras !== undefined ? lastData.var_outras : 5.0,
                 lastData.var_ga !== undefined ? lastData.var_ga : 1.1,
@@ -279,25 +277,18 @@ SECTION_CHARTS = {
                 },
                 options:{
                     ...BASE,
-                    indexAxis: 'y', // Faz as barras serem horizontais
+                    indexAxis: 'y',
                     scales:{
-                        x: {
-                            grid:{color:'#F1F5F9'}, 
-                            border:{display:false}, 
-                            ticks:{color:'#9CA3AF', font:{size:10}, callback:v=>v>0?'+'+v:v}
-                        },
-                        y: {
-                            grid:{display:false}, 
-                            border:{display:false}, 
-                            ticks:{color:'#6B7280', font:{size:11}}
-                        }
+                        x: { grid:{color:'#F1F5F9'}, border:{display:false}, ticks:{color:'#9CA3AF', font:{size:10}, callback:v=>v>0?'+'+v:v} },
+                        y: { grid:{display:false}, border:{display:false}, ticks:{color:'#6B7280', font:{size:11}} }
                     }
                 }
             });"""
         },
     ],
 
-    # Seção 3 (Capital/Dívida) — lucro linha + lucro barras 
+    # Seção 3 (Capital/Dívida) 
+    # NOTA: datalabels: { display: false } adicionado na linha para não sobrepor com a barra
     3: [
         {
             "id": "cS3A",
@@ -305,14 +296,14 @@ SECTION_CHARTS = {
             "sub": "Lucro acumulado — proxy de fluxo de caixa",
             "legend": [("Lucro","#059669")],
             "js": """new Chart(document.getElementById('cS3A'),{type:'line',data:{labels,datasets:[
-  {label:'Lucro',data:luc,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',
-   fill:true,borderWidth:2.5,pointBackgroundColor:'#059669',pointRadius:4,tension:.35},
+  {label:'Lucro (linha)',data:luc,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',
+   fill:true,borderWidth:2.5,pointBackgroundColor:'#059669',pointRadius:4,tension:.35, datalabels: { display: false }},
   {label:'Lucro',data:luc,backgroundColor:'rgba(5,150,105,.8)',borderRadius:4,maxBarThickness:30}
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
     ],
 
-    # Seção 4 (Lucro) — lucro barras + margem líquida linha
+    # Seção 4 (Lucro)
     4: [
         {
             "id": "cS4A",
@@ -425,7 +416,6 @@ def generate_report_html(resultado: dict) -> str:
         charts_cfg = SECTION_CHARTS.get(s["num"], [])
         has_charts = bool(charts_cfg and cd)
 
-        # nota box
         nota_box = ""
         if t:
             nota_box = f"""
@@ -435,7 +425,6 @@ def generate_report_html(resultado: dict) -> str:
   <div class="nota-box-tag" style="background:{t['badge_bg']};color:{t['badge_text']}">{t['icon']} {t['label']}</div>
 </div>"""
 
-        # chart panels HTML (max 2 charts per section)
         chart_panels_html = ""
         for cfg in charts_cfg[:2]:
             legend_html = "".join(
@@ -453,7 +442,6 @@ def generate_report_html(resultado: dict) -> str:
                 f"if(document.getElementById('{cfg['id']}')&&CD.length){{{cfg['js']}}}"
             )
 
-        # aside: nota box on top, then charts
         aside_html = ""
         if nota_box or chart_panels_html:
             aside_html = f'<div class="sec-aside">{nota_box}{chart_panels_html}</div>'
@@ -481,7 +469,6 @@ def generate_report_html(resultado: dict) -> str:
     secs_html    = "".join(_section_block(s) for s in secs)
     charts_js    = "\n".join(all_chart_js)
 
-    # ── VERDICT ─────────────────────────────────────────────
     verdict_labels = {
         "Muito Ruim": ("vtag-sell",  "Resultado Muito Fraco"),
         "Ruim":       ("vtag-sell",  "Resultado Fraco"),
@@ -501,6 +488,7 @@ def generate_report_html(resultado: dict) -> str:
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <style>
 *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
 html{{font-size:16px;scroll-behavior:smooth}}
@@ -807,8 +795,28 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 </div>
 
 <script>
+// Registra o Plugin de Rótulos de Dados GLOBALMENTE
+Chart.register(ChartDataLabels);
+
 const CD    = __CHART_JSON__;
 const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral:__G__ }};
+
+/* Formatação Inteligente de Valores Absolutos para M/Bi/K */
+const formatBRL = (v) => {{
+  let n = Number(String(v ?? '').replace(',', '.'));
+  if (!Number.isFinite(n)) return '0';
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return (n / 1e9).toFixed(2) + ' Bi';
+  if (abs >= 1e6) return (n / 1e6).toFixed(2) + ' M';
+  if (abs >= 1e3) return (n / 1e3).toFixed(2) + ' K';
+  return n.toFixed(2);
+}};
+
+/* Formatação Segura para Porcentagens */
+const formatPct = (v) => {{
+  let n = Number(String(v ?? '').replace(',', '.'));
+  return Number.isFinite(n) ? n.toFixed(2) + '%' : '0%';
+}};
 
 /* score ring counter */
 (()=>{{
@@ -835,8 +843,6 @@ const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral
     return Number.isFinite(n) ? n : 0;
   }};
   
-  const fmt = v => {{ let n=toNum(v); if(n<10) n=n*1000; return (Math.round(n*100)/100).toString(); }}
-  
   const sorted = [...CD].sort((a, b) => {{
     const A = a?.name || '';
     const B = b?.name || '';
@@ -850,17 +856,19 @@ const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral
   }});
   const last = sorted[sorted.length - 1];
   const prev = sorted.length > 1 ? sorted[sorted.length - 2] : null;
+  
   const delta = (a, b) => {{
     const aa = toNum(a), bb = toNum(b);
     if (!bb) return '<span class="sum-d d-ne">—</span>';
     const d = ((aa - bb) / Math.abs(bb) * 100).toFixed(1);
     return `<span class="sum-d ${{d>=0?'d-up':'d-dn'}}">${{d>=0?'▲':'▼'}} ${{Math.abs(d)}}%</span>`;
   }};
+  
   [
-    {{v: fmt(last.receita), l: 'Receita',      d: delta(last.receita, prev?.receita)}},
-    {{v: fmt(last.lucro),   l: 'Lucro',        d: delta(last.lucro, prev?.lucro)}},
-    {{v: `${{fmt(last.margemBruta)}}%`,  l: 'Mg. Bruta',  d: delta(last.margemBruta, prev?.margemBruta)}},
-    {{v: `${{fmt(last.margemLiquida)}}%`,l: 'Mg. Líquida',d: delta(last.margemLiquida, prev?.margemLiquida)}},
+    {{v: formatBRL(last.receita),   l: 'Receita',    d: delta(last.receita, prev?.receita)}},
+    {{v: formatBRL(last.lucro),     l: 'Lucro',      d: delta(last.lucro, prev?.lucro)}},
+    {{v: formatPct(last.margemBruta),    l: 'Mg. Bruta',  d: delta(last.margemBruta, prev?.margemBruta)}},
+    {{v: formatPct(last.margemLiquida),  l: 'Mg. Líquida',d: delta(last.margemLiquida, prev?.margemLiquida)}},
     {{v: NOTAS.geral.toFixed(1)+'/5', l: 'Score IA', d: ''}},
   ].forEach(it => {{
     const c = document.createElement('div');
@@ -875,10 +883,34 @@ const TT = {{ backgroundColor:'#0F172A', titleColor:'#fff', bodyColor:'#CBD5E1',
               borderColor:'#1E293B', borderWidth:1, cornerRadius:8, padding:10 }};
 const XA = {{ grid:{{display:false}}, ticks:{{color:'#9CA3AF',font:{{size:10}}}}, border:{{display:false}} }};
 const YA = {{ grid:{{color:'#F1F5F9'}}, border:{{display:false}}, ticks:{{color:'#9CA3AF',font:{{size:10}}}} }};
+
 const BASE = {{
-  responsive:true, maintainAspectRatio:false,
-  animation:{{duration:800, easing:'easeOutQuart'}},
-  plugins:{{legend:{{display:false}}, tooltip:TT}},
+  responsive: true, 
+  maintainAspectRatio: false,
+  animation: {{duration: 800, easing: 'easeOutQuart'}},
+  layout: {{ padding: {{ top: 25, right: 15 }} }}, /* Espaço extra para os rótulos não cortarem */
+  plugins: {{
+    legend: {{display: false}}, 
+    tooltip: TT,
+    datalabels: {{
+      color: '#475569',
+      font: {{ weight: '600', size: 10 }},
+      anchor: 'end',
+      /* Alinha no topo se for barra vertical/linha, ou a direita se for barra horizontal */
+      align: function(context) {{
+          return context.chart.config.options.indexAxis === 'y' ? 'right' : 'top';
+      }},
+      offset: 4,
+      formatter: function(value, context) {{
+          const lbl = context.dataset.label || '';
+          const cId = context.chart.canvas.id;
+          
+          if (cId === 'cS2B') return (value > 0 ? '+' : '') + value.toFixed(1) + ' p.p.';
+          if (lbl.includes('Margem') || lbl.includes('Spread')) return value.toFixed(1) + '%';
+          return formatBRL(value);
+      }}
+    }}
+  }}
 }};
 
 /* section charts (only if data exists) */
