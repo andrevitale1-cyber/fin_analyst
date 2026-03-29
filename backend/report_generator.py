@@ -66,8 +66,12 @@ def _extract_charts(text: str) -> list:
                         "name": item.get("name") or item.get("periodo") or item.get("label") or "",
                         "receita": _f(item.get("receita")),
                         "lucro": _f(item.get("lucro")),
+                        "divida": _f(item.get("divida")),
+                        "ebitda": _f(item.get("ebitda")),
                         "margemBruta": _f(item.get("margemBruta")),
                         "margemLiquida": _f(item.get("margemLiquida")),
+                        "segmentos": item.get("segmentos") if isinstance(item.get("segmentos"), list) else [],
+                        "despesas_var": item.get("despesas_var") if isinstance(item.get("despesas_var"), list) else [],
                     })
                 cleaned.sort(key=lambda d: _quarter_sort_key(d.get("name")))
                 return cleaned
@@ -168,9 +172,10 @@ SECTION_CHARTS = {
         {
             "id": "cS1B", "title": "Composição da Receita", "sub": "Share por Segmento (Último Trimestre)",
             "js": """
-            const lastData = CD[CD.length - 1] || {};
-            const segs = lastData.segmentos || [];
-            
+            let segs = [];
+            for(let i=CD.length-1; i>=0; i--){
+                if(CD[i].segmentos && CD[i].segmentos.length > 0) { segs = CD[i].segmentos; break; }
+            }
             const segLabels = segs.length ? segs.map(s => s.nome) : ['Principal', 'Outros'];
             const segData   = segs.length ? segs.map(s => parseFloat(s.valor)) : [70, 30];
             
@@ -221,8 +226,10 @@ SECTION_CHARTS = {
         {
             "id": "cS2B", "title": "Variação de Despesas YoY", "sub": "Crescimento/Queda de Gastos (% ou p.p.)",
             "js": """
-            const lastData = CD[CD.length - 1] || {};
-            const desp = lastData.despesas_var || [];
+            let desp = [];
+            for(let i=CD.length-1; i>=0; i--){
+                if(CD[i].despesas_var && CD[i].despesas_var.length > 0) { desp = CD[i].despesas_var; break; }
+            }
             
             const varLabels = desp.length ? desp.map(d => d.nome) : ['P&D', 'Vendas/Mkt', 'G&A'];
             const varData   = desp.length ? desp.map(d => parseFloat(d.var_pct)) : [7.1, 0.1, -9.1];
@@ -262,12 +269,13 @@ SECTION_CHARTS = {
     ],
     3: [
         {
-            "id": "cS3A", "title": "Geração de Resultado", "sub": "Lucro acumulado — proxy de fluxo de caixa",
-            "evo_var": "luc",
-            "js": """new Chart(document.getElementById('cS3A'),{type:'line',data:{labels,datasets:[
-  {label:'Lucro (linha)',data:luc,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',
-   fill:true,borderWidth:2.5,pointBackgroundColor:'#059669',pointRadius:4,tension:.35, datalabels: { display: false }},
-  {label:'Lucro',data:luc,backgroundColor:'rgba(5,150,105,.8)',borderRadius:4,maxBarThickness:30}
+            "id": "cS3A", "title": "Dívida vs EBITDA", "sub": "Evolução do Endividamento e Geração de Caixa",
+            "evo_var": "divida",
+            "evo_invert": True,  # Faz o sistema pintar evolução negativa de verde (Dívida caiu)
+            "js": """new Chart(document.getElementById('cS3A'),{type:'bar',data:{labels,datasets:[
+  {label:'Dívida',data:divida,type:'line',borderColor:'#DC2626',backgroundColor:'rgba(220,38,38,0.05)',
+   fill:true,borderWidth:2.5,pointBackgroundColor:'#DC2626',pointRadius:4,tension:.35},
+  {label:'EBITDA/L.Oper',data:ebitda,backgroundColor:'rgba(5,150,105,.8)',borderRadius:4,maxBarThickness:30}
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
     ],
@@ -387,7 +395,8 @@ def generate_report_html(resultado: dict) -> str:
             
             js_snippet = f"if(document.getElementById('{cfg['id']}')&&CD.length){{{cfg['js']}}}"
             if has_evo:
-                js_snippet += f" setTimeout(()=>renderEvo('{cfg['id']}', {cfg['evo_var']}), 100);"
+                invert_flag = str(cfg.get('evo_invert', 'false')).lower()
+                js_snippet += f" setTimeout(()=>renderEvo('{cfg['id']}', {cfg['evo_var']}, {invert_flag}), 100);"
             
             all_chart_js.append(js_snippet)
 
@@ -780,7 +789,7 @@ const formatPct = (v) => {{
   return Number.isFinite(n) ? n.toFixed(2) + '%' : '0%';
 }};
 
-const renderEvo = (chartId, dataArr) => {{
+const renderEvo = (chartId, dataArr, invertColor = false) => {{
   if (!dataArr || dataArr.length < 2) return;
   const first = dataArr[0], last = dataArr[dataArr.length - 1];
   if (!first || first === 0) return;
@@ -789,8 +798,11 @@ const renderEvo = (chartId, dataArr) => {{
   const el = document.getElementById('evo-' + chartId);
   if (el) {{
       const isPositive = pct >= 0;
-      const color = isPositive ? '#10B981' : '#EF4444';
-      const bg    = isPositive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+      let isGood = isPositive;
+      if (invertColor) isGood = !isPositive; // Ex: Dívida caiu é bom
+
+      const color = isGood ? '#10B981' : '#EF4444';
+      const bg    = isGood ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
       const icon  = isPositive ? '↗' : '↘';
       
       el.innerHTML = `<span style="display:inline-flex; align-items:center; gap:3px; color:${{color}}; font-weight:700; font-size:11px; background:${{bg}}; padding:3px 8px; border-radius:6px; letter-spacing:0.03em;">${{icon}} ${{Math.abs(pct).toFixed(1)}}%</span>`;
@@ -931,6 +943,8 @@ function closeModal(e) {{
   const labels = CD.map(d => d.name || '');
   const rec    = CD.map(d => d.receita || 0);
   const luc    = CD.map(d => d.lucro || 0);
+  const divida = CD.map(d => d.divida || 0);
+  const ebitda = CD.map(d => d.ebitda || 0);
   const mB     = CD.map(d => d.margemBruta || 0);
   const mL     = CD.map(d => d.margemLiquida || 0);
   {charts_js}

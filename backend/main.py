@@ -137,6 +137,8 @@ def parse_results(text):
                     "name": item.get("name") or item.get("periodo") or item.get("label") or "",
                     "receita": to_float(item.get("receita")),
                     "lucro": to_float(item.get("lucro")),
+                    "divida": to_float(item.get("divida")),
+                    "ebitda": to_float(item.get("ebitda")),
                     "margemBruta": to_float(item.get("margemBruta")),
                     "margemLiquida": to_float(item.get("margemLiquida")),
                     "segmentos": item.get("segmentos", []),
@@ -233,6 +235,8 @@ Chaves obrigatórias em todos os trimestres:
 "name" (nome do trimestre, ex: "3T25"), 
 "receita" (valor financeiro ABSOLUTO. Ex: 664500000), 
 "lucro" (valor financeiro ABSOLUTO), 
+"divida" (valor financeiro absoluto da Dívida Líquida ou Bruta. Se não houver, 0),
+"ebitda" (valor financeiro absoluto do EBITDA ou Lucro Operacional. Se não houver, 0),
 "margemBruta" (número percentual), 
 "margemLiquida" (número percentual).
 
@@ -259,7 +263,6 @@ IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as se
             "INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s) RETURNING id",
             (empresa, ano, trimestre, json.dumps(objeto_final), str(user_id))
         )
-        # Pega o ID recém criado no banco para devolver pro frontend
         inserted_id = cur.fetchone()[0]
         objeto_final["id"] = inserted_id
         
