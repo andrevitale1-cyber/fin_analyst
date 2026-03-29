@@ -1,3 +1,42 @@
+# Prompt enviado para o Gemini:
+# [
+# 	{
+# 		"resource": "/c:/Users/André Vitale/Documents/projeto_analise1/backend/report_generator.py",
+# 		"owner": "Pylance",
+# 		"severity": 8,
+# 		"message": "Unterminated expression in f-string; expecting \"}\"",
+# 		"source": "Pylance",
+# 		"startLineNumber": 800,
+# 		"startColumn": 26,
+# 		"endLineNumber": 800,
+# 		"endColumn": 27,
+# 		"modelVersionId": 22,
+# 		"origin": "extHost1"
+# 	},{
+# 		"resource": "/c:/Users/André Vitale/Documents/projeto_analise1/backend/report_generator.py",
+# 		"owner": "Pylance",
+# 		"code": {
+# 			"value": "reportUndefinedVariable",
+# 			"target": {
+# 				"$mid": 1,
+# 				"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
+# 				"scheme": "https",
+# 				"authority": "github.com"
+# 			}
+# 		},
+# 		"severity": 4,
+# 		"message": "\"let\" is not defined",
+# 		"source": "Pylance",
+# 		"startLineNumber": 800,
+# 		"startColumn": 22,
+# 		"endLineNumber": 800,
+# 		"endColumn": 25,
+# 		"modelVersionId": 22,
+# 		"origin": "extHost1"
+# 	}
+# ]
+# esses sao os ultimos erros
+
 """
 report_generator.py  —  FinAnalyzer v4
 ════════════════════════════════════════════════════════════════
@@ -182,8 +221,6 @@ def _parse_sections(text: str) -> list:
 
 # ═══════════════════════════════════════════════════════════════
 # CHART CONFIG PER SECTION
-# Each entry: canvas id, title, subtitle, JS snippet that uses
-#   `labels`, `rec`, `luc`, `mB`, `mL`  (already defined in page JS)
 # ═══════════════════════════════════════════════════════════════
 
 SECTION_CHARTS = {
@@ -253,7 +290,7 @@ new Chart(document.getElementById('cS2B'),{type:'bar',data:{labels,datasets:[
         },
     ],
 
-    # Seção 3 (Capital/Dívida) — lucro linha + receita barras (proxy de geração de caixa)
+    # Seção 3 (Capital/Dívida) — lucro linha + lucro barras 
     3: [
         {
             "id": "cS3A",
@@ -263,16 +300,7 @@ new Chart(document.getElementById('cS2B'),{type:'bar',data:{labels,datasets:[
             "js": """new Chart(document.getElementById('cS3A'),{type:'line',data:{labels,datasets:[
   {label:'Lucro',data:luc,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',
    fill:true,borderWidth:2.5,pointBackgroundColor:'#059669',pointRadius:4,tension:.35},
-]},options:{...BASE,scales:{x:XA,y:YA}}});"""
-        },
-        {
-            "id": "cS3B",
-            "title": "Receita vs Lucro — Cobertura",
-            "sub": "Proporção lucro/receita por trimestre",
-            "legend": [("Receita","#94A3B8"), ("Lucro","#059669")],
-            "js": """new Chart(document.getElementById('cS3B'),{type:'bar',data:{labels,datasets:[
-  {label:'Receita',data:rec,backgroundColor:'rgba(148,163,184,.35)',borderRadius:4,maxBarThickness:30},
-  {label:'Lucro',  data:luc,backgroundColor:'rgba(5,150,105,.8)' ,borderRadius:4,maxBarThickness:30},
+  {label:'Lucro',data:luc,backgroundColor:'rgba(5,150,105,.8)',borderRadius:4,maxBarThickness:30}
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
     ],
@@ -325,7 +353,12 @@ def generate_report_html(resultado: dict) -> str:
 
     tg   = _score_theme(g)
     secs = _parse_sections(analise)
-    cd   = sorted((data.get("chart_data") or _extract_charts(analise)), key=lambda d: _quarter_sort_key(d.get("name")))
+    raw_cd = data.get("chart_data") or _extract_charts(analise)
+    # keep only quarters mentioned in analysis text to avoid hallucinations
+    cd = [d for d in raw_cd if str(d.get("name","")) in analise]
+    if not cd:
+        cd = raw_cd
+    cd = sorted(cd, key=lambda d: _quarter_sort_key(d.get("name")))
     cj   = json.dumps(cd)
 
     tese_c    = re.sub(r"\*\*|\*", "", tese).strip()
@@ -666,7 +699,6 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 </head>
 <body>
 
-<!-- TOPBAR -->
 <nav class="topbar no-print">
   <div class="tb-brand">
     <div class="tb-cube">
@@ -695,7 +727,6 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
   </div>
 </nav>
 
-<!-- HERO -->
 <div class="hero">
   <div class="hero-inner">
     <div class="hero-row">
@@ -717,20 +748,16 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
       </div>
     </div>
 
-    <!-- PILLARS -->
     <div id="indicadores" class="pillars">
       {pillars_html}
     </div>
   </div>
 </div>
 
-<!-- SUMMARY BAR -->
 <div class="sumbar"><div class="sumbar-inner" id="sumbarInner"></div></div>
 
-<!-- MAIN -->
 <div class="main">
 
-  <!-- ANALYSIS SECTIONS -->
   <div id="analise">
     <div class="sec-label">Análise Completa por IA</div>
     <div class="sec-heading">Leitura dos Resultados</div>
@@ -739,7 +766,6 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 
   <div class="divider page-break"></div>
 
-  <!-- CONCLUSION -->
   <div id="conclusao">
     <div class="conclusion">
       <div class="c-eyebrow">Tese de Investimento</div>
@@ -801,7 +827,10 @@ const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral
     const n = Number(String(v ?? '').replace(',', '.'));
     return Number.isFinite(n) ? n : 0;
   }};
-  const fmt = v => (Math.round(toNum(v) * 100) / 100).toString();
+  
+  // FIX: Chaves duplicadas adicionadas abaixo
+  const fmt = v => {{ let n=toNum(v); if(n<10) n=n*1000; return (Math.round(n*100)/100).toString(); }}
+  
   const sorted = [...CD].sort((a, b) => {{
     const A = a?.name || '';
     const B = b?.name || '';
