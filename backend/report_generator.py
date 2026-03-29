@@ -175,7 +175,10 @@ SECTION_CHARTS = {
             let segs = [];
             for(let i=CD.length-1; i>=0; i--){
                 if(CD[i].segmentos && CD[i].segmentos.length > 0) { segs = CD[i].segmentos; break; }
-            }         
+            }
+            const segLabels = segs.length ? segs.map(s => s.nome) : ['Principal', 'Outros'];
+            const segData   = segs.length ? segs.map(s => parseFloat(s.valor)) : [70, 30];
+            
             new Chart(document.getElementById('cS1B'),{
                 type:'doughnut',
                 data:{
@@ -188,7 +191,7 @@ SECTION_CHARTS = {
                 },
                 options:{
                     ...BASE, cutout:'55%', 
-                    layout: { padding: 25 },
+                    layout: { padding: { top: 30, bottom: 30, left: 30, right: 30 } },
                     scales:{x:{display:false},y:{display:false}},
                     plugins: { 
                         ...BASE.plugins, 
@@ -198,8 +201,10 @@ SECTION_CHARTS = {
                             color: '#111827',
                             anchor: 'end',
                             align: 'end',
+                            offset: 5,
                             formatter: (v, ctx) => {
                                 const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                if (total === 0) return '0%';
                                 const pct = (v/total*100).toFixed(1)+'%';
                                 return pct;
                             } 
@@ -268,11 +273,11 @@ SECTION_CHARTS = {
         {
             "id": "cS3A", "title": "Dívida vs EBITDA", "sub": "Evolução do Endividamento e Geração de Caixa",
             "evo_var": "divida",
-            "evo_invert": True,  # Faz o sistema pintar evolução negativa de verde (Dívida caiu)
+            "evo_invert": True,
             "js": """new Chart(document.getElementById('cS3A'),{type:'bar',data:{labels,datasets:[
   {label:'Dívida',data:divida,type:'line',borderColor:'#DC2626',backgroundColor:'rgba(220,38,38,0.05)',
-   fill:true,borderWidth:2.5,pointBackgroundColor:'#DC2626',pointRadius:4,tension:.35},
-  {label:'EBITDA/L.Oper',data:ebitda,backgroundColor:'rgba(5,150,105,.8)',borderRadius:4,maxBarThickness:30}
+   fill:true,borderWidth:2.5,pointBackgroundColor:'#DC2626',pointRadius:4,tension:.35, datalabels: { align: 'top', anchor: 'end' } },
+  {label:'EBITDA/L.Oper',data:ebitda,backgroundColor:'rgba(5,150,105,.8)',borderRadius:4,maxBarThickness:30, datalabels: { align: 'bottom', anchor: 'end' } }
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
     ],
@@ -467,13 +472,12 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
   .no-print{{display:none!important}}
   .page-break{{break-before:page}}
   .sec-block{{break-inside:avoid}}
-  .fade-in{{opacity:1!important;transform:none!important;animation:none!important}}
   .chart-panel {{ break-inside: avoid; }}
-  .cp-wrap {{ height: 260px !important; }}
+  .cp-wrap {{ height: 280px !important; }}
 }}
 
 @keyframes fadeUp{{from{{opacity:0;transform:translateY(14px)}}to{{opacity:1;transform:none}}}}
-.fade-in{{opacity:0;animation:fadeUp .5s ease forwards;animation-play-state:paused}}
+.fade-in{{animation:fadeUp .6s ease-out forwards;}} /* Removido o IntersectionObserver para evitar tela branca em caso de erro JS */
 
 ::-webkit-scrollbar{{width:5px;height:5px}}
 ::-webkit-scrollbar-thumb{{background:#CBD5E1;border-radius:3px}}
@@ -765,7 +769,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 </div>
 
 <script>
-Chart.register(ChartDataLabels);
+try {{ Chart.register(ChartDataLabels); }} catch(e) {{ console.error("DataLabels error", e); }}
 
 const CD    = __CHART_JSON__;
 const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral:__G__ }};
@@ -796,7 +800,7 @@ const renderEvo = (chartId, dataArr, invertColor = false) => {{
   if (el) {{
       const isPositive = pct >= 0;
       let isGood = isPositive;
-      if (invertColor) isGood = !isPositive; // Ex: Dívida caiu é bom
+      if (invertColor) isGood = !isPositive; 
 
       const color = isGood ? '#10B981' : '#EF4444';
       const bg    = isGood ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
@@ -806,62 +810,63 @@ const renderEvo = (chartId, dataArr, invertColor = false) => {{
   }}
 }};
 
-(()=>{{
-  const el  = document.querySelector('.hero-right svg text');
-  if (!el) return;
-  const tgt = NOTAS.geral; let st = null;
-  const run = ts => {{
-    if (!st) st = ts;
-    const p = Math.min((ts - st) / 800, 1);
-    el.textContent = (tgt * (1 - Math.pow(1-p,3))).toFixed(1);
-    if (p < 1) requestAnimationFrame(run);
-    else el.textContent = tgt.toFixed(1);
-  }};
-  setTimeout(() => requestAnimationFrame(run), 400);
-}})();
+try {{
+    const el  = document.querySelector('.hero-right svg text');
+    if (el) {{
+        const tgt = NOTAS.geral; let st = null;
+        const run = ts => {{
+            if (!st) st = ts;
+            const p = Math.min((ts - st) / 800, 1);
+            el.textContent = (tgt * (1 - Math.pow(1-p,3))).toFixed(1);
+            if (p < 1) requestAnimationFrame(run);
+            else el.textContent = tgt.toFixed(1);
+        }};
+        setTimeout(() => requestAnimationFrame(run), 400);
+    }}
+}} catch(e) {{ console.error("Ring error", e); }}
 
-(()=>{{
+try {{
   const bar = document.getElementById('sumbarInner');
-  if (!bar || !CD.length) {{ document.querySelector('.sumbar').style.display='none'; return; }}
-
-  const toNum = v => {{
-    const n = Number(String(v ?? '').replace(',', '.'));
-    return Number.isFinite(n) ? n : 0;
-  }};
-  
-  const sorted = [...CD].sort((a, b) => {{
-    const A = a?.name || ''; const B = b?.name || '';
-    const ma = String(A).toUpperCase().match(/(\d)\s*T\s*(\d{{2,4}})/);
-    const mb = String(B).toUpperCase().match(/(\d)\s*T\s*(\d{{2,4}})/);
-    const key = (m) => m ? [Number(m[2]) < 100 ? 2000 + Number(m[2]) : Number(m[2]), Number(m[1])] : [9999, 9];
-    const ka = key(ma), kb = key(mb);
-    if (ka[0] !== kb[0]) return ka[0] - kb[0];
-    if (ka[1] !== kb[1]) return ka[1] - kb[1];
-    return String(A).localeCompare(String(B));
-  }});
-  const last = sorted[sorted.length - 1];
-  const prev = sorted.length > 1 ? sorted[sorted.length - 2] : null;
-  
-  const delta = (a, b) => {{
-    const aa = toNum(a), bb = toNum(b);
-    if (!bb) return '<span class="sum-d d-ne">—</span>';
-    const d = ((aa - bb) / Math.abs(bb) * 100).toFixed(1);
-    return `<span class="sum-d ${{d>=0?'d-up':'d-dn'}}">${{d>=0?'▲':'▼'}} ${{Math.abs(d)}}%</span>`;
-  }};
-  
-  [
-    {{v: formatBRL(last.receita),   l: 'Receita',    d: delta(last.receita, prev?.receita)}},
-    {{v: formatBRL(last.lucro),     l: 'Lucro',      d: delta(last.lucro, prev?.lucro)}},
-    {{v: formatPct(last.margemBruta),    l: 'Mg. Bruta',  d: delta(last.margemBruta, prev?.margemBruta)}},
-    {{v: formatPct(last.margemLiquida),  l: 'Mg. Líquida',d: delta(last.margemLiquida, prev?.margemLiquida)}},
-    {{v: NOTAS.geral.toFixed(1)+'/5', l: 'Score IA', d: ''}},
-  ].forEach(it => {{
-    const c = document.createElement('div');
-    c.className = 'sum-cell';
-    c.innerHTML = `<div class="sum-val">${{it.v}}</div><div class="sum-lbl">${{it.l}}</div>${{it.d}}`;
-    bar.appendChild(c);
-  }});
-}})();
+  if (bar && CD.length) {{
+      const toNum = v => {{
+        const n = Number(String(v ?? '').replace(',', '.'));
+        return Number.isFinite(n) ? n : 0;
+      }};
+      
+      const sorted = [...CD].sort((a, b) => {{
+        const A = a?.name || ''; const B = b?.name || '';
+        const ma = String(A).toUpperCase().match(/(\d)\s*T\s*(\d{{2,4}})/);
+        const mb = String(B).toUpperCase().match(/(\d)\s*T\s*(\d{{2,4}})/);
+        const key = (m) => m ? [Number(m[2]) < 100 ? 2000 + Number(m[2]) : Number(m[2]), Number(m[1])] : [9999, 9];
+        const ka = key(ma), kb = key(mb);
+        if (ka[0] !== kb[0]) return ka[0] - kb[0];
+        if (ka[1] !== kb[1]) return ka[1] - kb[1];
+        return String(A).localeCompare(String(B));
+      }});
+      const last = sorted[sorted.length - 1];
+      const prev = sorted.length > 1 ? sorted[sorted.length - 2] : null;
+      
+      const delta = (a, b) => {{
+        const aa = toNum(a), bb = toNum(b);
+        if (!bb) return '<span class="sum-d d-ne">—</span>';
+        const d = ((aa - bb) / Math.abs(bb) * 100).toFixed(1);
+        return `<span class="sum-d ${{d>=0?'d-up':'d-dn'}}">${{d>=0?'▲':'▼'}} ${{Math.abs(d)}}%</span>`;
+      }};
+      
+      [
+        {{v: formatBRL(last.receita),   l: 'Receita',    d: delta(last.receita, prev?.receita)}},
+        {{v: formatBRL(last.lucro),     l: 'Lucro',      d: delta(last.lucro, prev?.lucro)}},
+        {{v: formatPct(last.margemBruta),    l: 'Mg. Bruta',  d: delta(last.margemBruta, prev?.margemBruta)}},
+        {{v: formatPct(last.margemLiquida),  l: 'Mg. Líquida',d: delta(last.margemLiquida, prev?.margemLiquida)}},
+        {{v: NOTAS.geral.toFixed(1)+'/5', l: 'Score IA', d: ''}},
+      ].forEach(it => {{
+        const c = document.createElement('div');
+        c.className = 'sum-cell';
+        c.innerHTML = `<div class="sum-val">${{it.v}}</div><div class="sum-lbl">${{it.l}}</div>${{it.d}}`;
+        bar.appendChild(c);
+      }});
+  }} else if(bar) {{ document.querySelector('.sumbar').style.display='none'; }}
+}} catch(e) {{ console.error("Summary bar error", e); }}
 
 const TT = {{ backgroundColor:'#0F172A', titleColor:'#fff', bodyColor:'#CBD5E1', borderColor:'#1E293B', borderWidth:1, cornerRadius:8, padding:10 }};
 
@@ -883,7 +888,7 @@ const YA = {{
 const BASE = {{
   responsive: true, maintainAspectRatio: false,
   animation: {{duration: 800, easing: 'easeOutQuart'}},
-  layout: {{ padding: {{ top: 35, right: 35, bottom: 10 }} }}, 
+  layout: {{ padding: {{ top: 35, right: 35, bottom: 10, left: 10 }} }}, 
   plugins: {{
     legend: {{display: false}}, 
     tooltip: TT,
@@ -935,22 +940,19 @@ function closeModal(e) {{
     }}
 }}
 
-(()=>{{
-  if (!CD.length) return;
-  const labels = CD.map(d => d.name || '');
-  const rec    = CD.map(d => d.receita || 0);
-  const luc    = CD.map(d => d.lucro || 0);
-  const divida = CD.map(d => d.divida || 0);
-  const ebitda = CD.map(d => d.ebitda || 0);
-  const mB     = CD.map(d => d.margemBruta || 0);
-  const mL     = CD.map(d => d.margemLiquida || 0);
-  {charts_js}
-}})();
+try {{
+  if (CD.length > 0) {{
+      const labels = CD.map(d => d.name || '');
+      const rec    = CD.map(d => d.receita || 0);
+      const luc    = CD.map(d => d.lucro || 0);
+      const divida = CD.map(d => d.divida || 0);
+      const ebitda = CD.map(d => d.ebitda || 0);
+      const mB     = CD.map(d => d.margemBruta || 0);
+      const mL     = CD.map(d => d.margemLiquida || 0);
+      {charts_js}
+  }}
+}} catch(e) {{ console.error("Chart generation error:", e); }}
 
-const io = new IntersectionObserver(entries => entries.forEach(e => {{
-  if (e.isIntersecting) e.target.style.animationPlayState = 'running';
-}}), {{ threshold: 0.06 }});
-document.querySelectorAll('.fade-in').forEach(el => {{ el.style.animationPlayState = 'paused'; io.observe(el); }});
 </script>
 </body>
 </html>
