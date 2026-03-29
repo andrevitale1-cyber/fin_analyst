@@ -327,6 +327,11 @@ def generate_report_html(resultado: dict) -> str:
     raw_cd = data.get("chart_data") or _extract_charts(analise)
     cd = [d for d in raw_cd if str(d.get("name","")) in analise]
     if not cd: cd = raw_cd
+    
+    # NOVO: Filtro para limpar os dados e evitar o "vale para o zero" no meio do gráfico
+    # Removemos qualquer trimestre onde a IA não encontrou/extraiu a receita.
+    cd = [d for d in cd if _f(d.get("receita", 0)) > 0]
+    
     cd = sorted(cd, key=lambda d: _quarter_sort_key(d.get("name")))
     cj   = json.dumps(cd)
 
@@ -477,7 +482,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 }}
 
 @keyframes fadeUp{{from{{opacity:0;transform:translateY(14px)}}to{{opacity:1;transform:none}}}}
-.fade-in{{animation:fadeUp .6s ease-out forwards;}} /* Removido o IntersectionObserver para evitar tela branca em caso de erro JS */
+.fade-in{{animation:fadeUp .6s ease-out forwards;}} 
 
 ::-webkit-scrollbar{{width:5px;height:5px}}
 ::-webkit-scrollbar-thumb{{background:#CBD5E1;border-radius:3px}}
@@ -791,8 +796,11 @@ const formatPct = (v) => {{
 }};
 
 const renderEvo = (chartId, dataArr, invertColor = false) => {{
-  if (!dataArr || dataArr.length < 2) return;
-  const first = dataArr[0], last = dataArr[dataArr.length - 1];
+  if (!dataArr) return;
+  // Filtra dados ignorando undefined/null/0 para comparação YoY real
+  const validData = dataArr.filter(v => v !== 0 && v !== null && v !== undefined);
+  if (validData.length < 2) return;
+  const first = validData[0], last = validData[validData.length - 1];
   if (!first || first === 0) return;
   const pct = ((last - first) / Math.abs(first)) * 100;
   

@@ -133,9 +133,15 @@ def parse_results(text):
                     except:
                         return default
                 
+                receita = to_float(item.get("receita"))
+                
+                # Ignora o trimestre se a IA não extraiu a receita (evita o "vale" pro zero no gráfico)
+                if receita == 0:
+                    continue
+                
                 cleaned_item = {
                     "name": item.get("name") or item.get("periodo") or item.get("label") or "",
-                    "receita": to_float(item.get("receita")),
+                    "receita": receita,
                     "lucro": to_float(item.get("lucro")),
                     "divida": to_float(item.get("divida")),
                     "ebitda": to_float(item.get("ebitda")),
