@@ -147,19 +147,16 @@ def _parse_sections(text: str) -> list:
 # ═══════════════════════════════════════════════════════════════
 
 SECTION_CHARTS = {
-    # Seção 0
     0: [
         {
             "id": "cS0A", "title": "Receita & Lucro — Visão Geral", "sub": "Evolução nos últimos trimestres",
-            "evo_var": "rec", # Sinaliza para o JS renderizar o badge de evolução calculando em cima da variável 'rec'
+            "evo_var": "rec", 
             "js": """new Chart(document.getElementById('cS0A'),{type:'bar',data:{labels,datasets:[
   {label:'Receita',data:rec,backgroundColor:'rgba(30,64,175,.18)',borderColor:'#1E40AF',borderWidth:2,borderRadius:5,maxBarThickness:32},
   {label:'Lucro',  data:luc,backgroundColor:'rgba(5,150,105,.75)',borderRadius:5,maxBarThickness:32},
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
     ],
-
-    # Seção 1 
     1: [
         {
             "id": "cS1A", "title": "Evolução da Receita", "sub": "Crescimento trimestral absoluto",
@@ -188,15 +185,28 @@ SECTION_CHARTS = {
                     }]
                 },
                 options:{
-                    ...BASE, cutout:'65%', 
+                    ...BASE, cutout:'55%', 
+                    layout: { padding: 25 },
                     scales:{x:{display:false},y:{display:false}},
-                    plugins: { ...BASE.plugins, datalabels: { ...BASE.plugins.datalabels, formatter: (v) => formatBRL(v) } }
+                    plugins: { 
+                        ...BASE.plugins, 
+                        legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
+                        datalabels: { 
+                            ...BASE.plugins.datalabels, 
+                            color: '#111827',
+                            anchor: 'end',
+                            align: 'end',
+                            formatter: (v, ctx) => {
+                                const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                const pct = (v/total*100).toFixed(1)+'%';
+                                return pct;
+                            } 
+                        } 
+                    }
                 }
             });"""
         },
     ],
-
-    # Seção 2
     2: [
         {
             "id": "cS2A", "title": "Margens Bruta e Líquida (%)", "sub": "Comparativo trimestral de margens",
@@ -217,7 +227,6 @@ SECTION_CHARTS = {
             const varLabels = desp.length ? desp.map(d => d.nome) : ['P&D', 'Vendas/Mkt', 'G&A'];
             const varData   = desp.length ? desp.map(d => parseFloat(d.var_pct)) : [7.1, 0.1, -9.1];
 
-            // Lógica de cores: Se for linha de receita (+ = verde). Se for despesa (- = verde/eficiência, + = vermelho/aumento).
             const bgColors = varData.map((v, i) => {
                 const nameL = varLabels[i].toLowerCase();
                 const isRev = nameL.includes('receita') || nameL.includes('rec.');
@@ -251,8 +260,6 @@ SECTION_CHARTS = {
             });"""
         },
     ],
-
-    # Seção 3 
     3: [
         {
             "id": "cS3A", "title": "Geração de Resultado", "sub": "Lucro acumulado — proxy de fluxo de caixa",
@@ -264,8 +271,6 @@ SECTION_CHARTS = {
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
     ],
-
-    # Seção 4 
     4: [
         {
             "id": "cS4A", "title": "Lucro Líquido por Trimestre", "sub": "Evolução do bottom-line",
@@ -318,7 +323,6 @@ def generate_report_html(resultado: dict) -> str:
     tese_c    = re.sub(r"\*\*|\*", "", tese).strip()
     tese_html = "".join(f"<p>{_h.escape(p.strip())}</p>" for p in tese_c.split("\n\n") if p.strip()) or f"<p>{_h.escape(tese_c)}</p>"
 
-    # ── HERO SCORE RING ─────────────────────────────────────
     def _hero_ring(nota, size=110):
         t  = _score_theme(nota)
         R  = size // 2 - 10
@@ -381,7 +385,6 @@ def generate_report_html(resultado: dict) -> str:
             has_evo = "evo_var" in cfg
             evo_html = f'<div id="evo-{cfg["id"]}" class="cp-evo"></div>' if has_evo else ""
             
-            # Adiciona o JS para o chart e para calcular a evolução
             js_snippet = f"if(document.getElementById('{cfg['id']}')&&CD.length){{{cfg['js']}}}"
             if has_evo:
                 js_snippet += f" setTimeout(()=>renderEvo('{cfg['id']}', {cfg['evo_var']}), 100);"
@@ -397,7 +400,9 @@ def generate_report_html(resultado: dict) -> str:
       </div>
       {evo_html}
   </div>
-  <div class="cp-wrap"><canvas id="{cfg['id']}"></canvas></div>
+  <div class="cp-wrap" title="Clique para expandir" style="cursor: zoom-in;">
+    <canvas id="{cfg['id']}" onclick="openModal('{cfg['id']}')"></canvas>
+  </div>
 </div>"""
 
         aside_html = ""
@@ -457,6 +462,8 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
   .page-break{{break-before:page}}
   .sec-block{{break-inside:avoid}}
   .fade-in{{opacity:1!important;transform:none!important;animation:none!important}}
+  .chart-panel {{ break-inside: avoid; }}
+  .cp-wrap {{ height: 260px !important; }}
 }}
 
 @keyframes fadeUp{{from{{opacity:0;transform:translateY(14px)}}to{{opacity:1;transform:none}}}}
@@ -590,7 +597,27 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 .cp-top {{display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;}}
 .cp-title{{font-size:12px;font-weight:600;color:#111827;margin-bottom:2px}}
 .cp-sub{{font-size:11px;color:#9CA3AF;}}
-.cp-wrap{{position:relative;width:100%;height:160px; margin-top: 10px;}}
+.cp-wrap{{position:relative;width:100%;height:260px; margin-top: 10px;}}
+
+/* ─── MODAL (LIGHTBOX) ─── */
+.modal {{
+  display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%;
+  background-color: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}}
+.modal-content {{
+  background: #fff; border-radius: 12px; padding: 24px;
+  width: 90%; max-width: 900px; height: 80vh;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+}}
+.modal-close {{
+  position: absolute; top: -15px; right: -15px; background: #EF4444; color: #fff;
+  border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer;
+  font-size: 16px; font-weight: bold; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}}
+.modal-canvas-wrap {{ position: relative; width: 100%; height: 100%; }}
 
 /* ─── CONCLUSION ─── */
 .conclusion{{
@@ -640,6 +667,15 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 </style>
 </head>
 <body>
+
+<div id="chartModal" class="modal no-print" onclick="closeModal(event)">
+  <div class="modal-content" onclick="event.stopPropagation()">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-canvas-wrap">
+      <canvas id="modalCanvas"></canvas>
+    </div>
+  </div>
+</div>
 
 <nav class="topbar no-print">
   <div class="tb-brand">
@@ -744,7 +780,6 @@ const formatPct = (v) => {{
   return Number.isFinite(n) ? n.toFixed(2) + '%' : '0%';
 }};
 
-// Função que calcula a evolução (A/A ou Tri/Tri) no próprio JS e injeta o selo no DOM
 const renderEvo = (chartId, dataArr) => {{
   if (!dataArr || dataArr.length < 2) return;
   const first = dataArr[0], last = dataArr[dataArr.length - 1];
@@ -827,7 +862,6 @@ const XA = {{
     border:{{display:false}} 
 }};
 
-// Callback no Eixo Y chamando o formatBRL
 const YA = {{ 
     grid:{{color:'#F1F5F9'}}, 
     border:{{display:false}}, 
@@ -840,7 +874,7 @@ const YA = {{
 const BASE = {{
   responsive: true, maintainAspectRatio: false,
   animation: {{duration: 800, easing: 'easeOutQuart'}},
-  layout: {{ padding: {{ top: 25, right: 20 }} }}, 
+  layout: {{ padding: {{ top: 35, right: 35, bottom: 10 }} }}, 
   plugins: {{
     legend: {{display: false}}, 
     tooltip: TT,
@@ -860,6 +894,37 @@ const BASE = {{
     }}
   }}
 }};
+
+/* ─── LÓGICA DO MODAL (LIGHTBOX) ─── */
+let activeModalChart = null;
+
+function openModal(chartId) {{
+    const originalChart = Chart.getChart(chartId);
+    if(!originalChart) return;
+    
+    document.getElementById('chartModal').style.display = 'flex';
+    const ctx = document.getElementById('modalCanvas').getContext('2d');
+    
+    if(activeModalChart) activeModalChart.destroy();
+    
+    activeModalChart = new Chart(ctx, {{
+        type: originalChart.config.type,
+        data: originalChart.config.data,
+        options: {{
+            ...originalChart.config.options,
+            maintainAspectRatio: false,
+            responsive: true
+        }}
+    }});
+}}
+
+function closeModal(e) {{
+    document.getElementById('chartModal').style.display = 'none';
+    if(activeModalChart) {{
+        activeModalChart.destroy();
+        activeModalChart = null;
+    }}
+}}
 
 (()=>{{
   if (!CD.length) return;
@@ -885,7 +950,6 @@ document.querySelectorAll('.fade-in').forEach(el => {{ el.style.animationPlaySta
    .replace("__REN__", str(ren))\
    .replace("__G__",   str(g))\
    .replace("{charts_js}", charts_js)
-
 
 @router.get("/api/report/{item_id}", response_class=HTMLResponse)
 def get_report(item_id: int):

@@ -91,11 +91,6 @@ def init_db():
 
 init_db()
 
-# --- MODELOS ---
-class UsuarioLogin(BaseModel):
-    email: str
-    senha: str
-
 # --- AUXILIARES ---
 def extract_text_from_pdf_bytes(file_bytes):
     try:
@@ -174,7 +169,6 @@ else:
     model = None
 
 # --- ROTAS ---
-
 @app.get("/")
 def read_root():
     return {"message": "FinAnalyst Backend está Online (Clerk Compatible) 🚀"}
@@ -205,51 +199,46 @@ Formatação Visual: Utilize Tabelas em Markdown (ex: Segmento | 3T24 | 3T25 | V
 
 Apresentação Numérica: Escreva os números por extenso com até duas casas decimais (ex: "R$ 11,87 bilhões", "aumento de 13,1%", "expansão de 0,6 p.p."). NÃO use LaTeX.
 
-Especificidade Setorial: - Se for Instituição Financeira: Fale em Margem Financeira (NII), ROE, Índice de Eficiência, Custo de Crédito (NPL/Inadimplência) e Basileia (CET1).
-Se for Varejo/Indústria: Fale em Receita Líquida, EBITDA, Margem Bruta/EBITDA, Dívida Líquida/EBITDA e Vendas Mesmas Lojas (SSS).
-
 SISTEMA DE NOTAS: Todas as notas devem ser estritamente números inteiros (1, 2, 3, 4 ou 5) e seguir exatamente o formato Nota Seção X: Y/5.
 
 ESTRUTURA OBRIGATÓRIA DE RESPOSTA:
 [Parágrafo Introdutório]
-(Resuma o trimestre da empresa, destacando o principal motor do desempenho).
+(Resuma o trimestre da empresa).
 
 Seção 1: Evolução Operacional e Top Line
 (Analise o crescimento da Receita Líquida. Desconstrua o crescimento por segmento em uma tabela Markdown).
 Nota Seção 1: X/5
 
 Seção 2: Rentabilidade e Margens
-(Analise o EBITDA, Margens e Despesas Operacionais. Houve alavancagem operacional? Use bullet points para detalhar as variações das despesas - ex: G&A, P&D, S&M).
+(Analise o EBITDA, Margens e Despesas Operacionais).
 Nota Seção 2: X/5
 
 Seção 3: Estrutura de Capital e Gestão de Risco
-(Analise a Geração de Caixa Livre, Dívida Líquida/EBITDA, perfil da dívida).
+(Analise a Geração de Caixa Livre, Dívida).
 Nota Seção 3: X/5
 
 Seção 4: Sumário Executivo do Lucro Líquido
-(Analise o Bottom-Line. Lucro Líquido e ROE).
+(Analise o Bottom-Line).
 Nota Seção 4: X/5
 
 Seção 5: Conclusão Estratégica e Outlook
-(Sintetize a análise de forma coesa. Sustentabilidade do resultado e Guidance).
+(Sintetize a análise de forma coesa).
 
 Seção 6: Nota Final
-(Avaliação consolidada).
 Nota Geral: X/5
 
 **Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)**
 Extraia o histórico financeiro dos trimestres disponíveis EXATAMENTE no formato de um array JSON dentro de um bloco de código markdown.
 Chaves obrigatórias em todos os trimestres: 
 "name" (nome do trimestre, ex: "3T25"), 
-"receita" (valor financeiro ABSOLUTO. Ex: se for 664,5 milhões, retorne 664500000. Se 1,2 bilhão, 1200000000), 
-"lucro" (valor financeiro ABSOLUTO, na mesma regra. Ex: 175833000), 
+"receita" (valor financeiro ABSOLUTO. Ex: 664500000), 
+"lucro" (valor financeiro ABSOLUTO), 
 "margemBruta" (número percentual), 
 "margemLiquida" (número percentual).
 
 IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as seguintes chaves adicionais:
-1. "segmentos": Uma lista de dicionários com a quebra de receita. Ex: [{{"nome": "Nuvem", "valor": 300000000}}, {{"nome": "Licenças", "valor": 150000000}}]
-2. "despesas_var": Uma lista de dicionários com a variação percentual A/A das linhas de despesa citadas na Seção 2. 
-ATENÇÃO AOS SINAIS: Aumento de custo/despesa = número positivo (ex: 7.1). Queda/Redução de despesa = número negativo (ex: -9.1). Se for linha de Receita Operacional, aumento = positivo. Ex: [{{"nome": "P&D", "var_pct": 7.1}}, {{"nome": "S&M", "var_pct": 0.1}}, {{"nome": "G&A", "var_pct": -9.1}}, {{"nome": "Outras Despesas", "var_pct": -27.0}}].
+1. "segmentos": Uma lista de dicionários com a quebra exata de RECEITA POR SEGMENTO descrita na Seção 1. OBRIGATÓRIO extrair todos os segmentos citados. Ex: [{{"nome": "Productivity and Business", "valor": 29944000000}}, {{"nome": "Intelligent Cloud", "valor": 26751000000}}]. Os valores devem ser numéricos e absolutos.
+2. "despesas_var": Uma lista de dicionários com a variação percentual A/A das linhas de despesa citadas na Seção 2. Aumento de custo = positivo (ex: 7.1). Queda de custo = negativo (ex: -9.1). Ex: [{{"nome": "P&D", "var_pct": 7.1}}, {{"nome": "G&A", "var_pct": -9.1}}].
 
     DADOS DO RELEASE (Use apenas o relevante):
     {pdf_text[:40000]}
@@ -267,9 +256,13 @@ ATENÇÃO AOS SINAIS: Aumento de custo/despesa = número positivo (ex: 7.1). Que
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s)",
+            "INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s) RETURNING id",
             (empresa, ano, trimestre, json.dumps(objeto_final), str(user_id))
         )
+        # Pega o ID recém criado no banco para devolver pro frontend
+        inserted_id = cur.fetchone()[0]
+        objeto_final["id"] = inserted_id
+        
         conn.commit()
         cur.close()
         
@@ -290,7 +283,6 @@ def get_table_data(user_id: str):
         rows = cur.fetchall()
 
         grouped_data = {}
-        
         for row in rows:
             empresa = row[0]
             try:
