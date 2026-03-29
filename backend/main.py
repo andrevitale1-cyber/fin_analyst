@@ -119,6 +119,37 @@ def parse_results(text):
                 return 0.0
         return 0.0
 
+    def get_chart_data(txt):
+        try:
+            m = re.search(r"```json\s*([\s\S]*?)\s*```", txt or "", re.IGNORECASE)
+            if not m:
+                return []
+            raw = json.loads(m.group(1))
+            if not isinstance(raw, list):
+                return []
+            cleaned = []
+            for item in raw:
+                if not isinstance(item, dict):
+                    continue
+                def to_float(v):
+                    try:
+                        s = str(v).strip()
+                        if not s:
+                            return 0.0
+                        return float(s.replace(',', '.'))
+                    except:
+                        return 0.0
+                cleaned.append({
+                    "name": item.get("name") or item.get("periodo") or item.get("label") or "",
+                    "receita": to_float(item.get("receita")),
+                    "lucro": to_float(item.get("lucro")),
+                    "margemBruta": to_float(item.get("margemBruta")),
+                    "margemLiquida": to_float(item.get("margemLiquida")),
+                })
+            return cleaned
+        except:
+            return []
+
     conclusao_match = re.search(r'(?:Seção 5|Conclusão).*?[\:\–\-]\s*(.*?)(?=(?:Seção 6|Nota Final|Nota Geral|\*\*Nota Geral|$))', text, re.DOTALL | re.IGNORECASE)
     conclusao = conclusao_match.group(1).strip() if conclusao_match else "Ver análise completa no texto."
 
@@ -129,6 +160,7 @@ def parse_results(text):
         "lucro_nota": get_note(r'Seção 4.*?(\d(?:[\.,]\d)?)\/5', text),
         "nota_geral": get_note(r'Nota Geral.*?(\d(?:[\.,]\d)?)\/5', text),
         "tese_investimento": conclusao.replace('*', ''),
+        "chart_data": get_chart_data(text),
     }
 
 # --- CONFIGURAÇÃO GEMINI ---

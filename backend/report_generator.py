@@ -36,29 +36,58 @@ def _score_theme(n: float) -> dict:
     if n <= 1.5:
         return dict(label="Muito Ruim", text="#7F1D1D", bg="#FEF2F2",
                     border="#FECACA", bar="#DC2626", badge_bg="#FEE2E2",
-                    badge_text="#991B1B", icon="✗")
+                    badge_text="#991B1B", icon="")
     if n <= 2.5:
         return dict(label="Ruim",      text="#9A3412", bg="#FFF7ED",
                     border="#FED7AA", bar="#EA580C", badge_bg="#FFEDD5",
-                    badge_text="#9A3412", icon="↓")
+                    badge_text="#9A3412", icon="")
     if n <= 3.5:
         return dict(label="Regular",   text="#78350F", bg="#FFFBEB",
                     border="#FDE68A", bar="#D97706", badge_bg="#FEF3C7",
-                    badge_text="#92400E", icon="~")
+                    badge_text="#92400E", icon="")
     if n <= 4.5:
         return dict(label="Bom",       text="#14532D", bg="#F0FDF4",
                     border="#BBF7D0", bar="#16A34A", badge_bg="#DCFCE7",
-                    badge_text="#15803D", icon="↑")
+                    badge_text="#15803D", icon="")
     return         dict(label="Excelente",text="#052E16", bg="#ECFDF5",
                     border="#6EE7B7", bar="#059669", badge_bg="#D1FAE5",
-                    badge_text="#065F46", icon="★")
+                    badge_text="#065F46", icon="")
+
+
+def _quarter_sort_key(name: str):
+    """Sort helper for labels like 3T24, 4T2024, 1T25."""
+    if not name:
+        return (9999, 9, "")
+    s = str(name).strip().upper()
+    m = re.search(r"(\d)\s*T\s*(\d{2,4})", s)
+    if not m:
+        return (9999, 9, s)
+    q = int(m.group(1))
+    y = int(m.group(2))
+    if y < 100:
+        y += 2000
+    return (y, q, s)
 
 
 def _extract_charts(text: str) -> list:
     try:
         m = re.search(r"```json\s*([\s\S]*?)\s*```", text or "")
         if m:
-            return json.loads(m.group(1))
+            raw = json.loads(m.group(1))
+            if isinstance(raw, list):
+                cleaned = []
+                for item in raw:
+                    if not isinstance(item, dict):
+                        continue
+                    cleaned.append({
+                        "name": item.get("name") or item.get("periodo") or item.get("label") or "",
+                        "receita": _f(item.get("receita")),
+                        "lucro": _f(item.get("lucro")),
+                        "margemBruta": _f(item.get("margemBruta")),
+                        "margemLiquida": _f(item.get("margemLiquida")),
+                    })
+                cleaned.sort(key=lambda d: _quarter_sort_key(d.get("name")))
+                return cleaned
     except Exception:
         pass
     return []
@@ -272,45 +301,6 @@ new Chart(document.getElementById('cS2B'),{type:'bar',data:{labels,datasets:[
 ]},options:{...BASE,scales:{x:XA,y:{...YA,ticks:{...YA.ticks,callback:v=>v+'%'}}}}});"""
         },
     ],
-
-    # Seção 5 (Conclusão) — radar + receita line
-    5: [
-        {
-            "id": "cS5A",
-            "title": "Radar dos Fundamentos",
-            "sub": "Avaliação por pilar (escala 0–5)",
-            "legend": [("Score IA","#1E40AF")],
-            "js": """/* filled by notas via __NOTAS__ placeholder */
-new Chart(document.getElementById('cS5A'),{type:'radar',data:{
-  labels:['Receita','Margem','Dívida','ROE'],
-  datasets:[{
-    data:[NOTAS.receita,NOTAS.lucro,NOTAS.divida,NOTAS.roe],
-    backgroundColor:'rgba(30,64,175,.1)',borderColor:'#1E40AF',
-    pointBackgroundColor:'#1E40AF',pointRadius:4,borderWidth:2,
-  }],
-},options:{responsive:true,maintainAspectRatio:false,
-  animation:{duration:900},
-  plugins:{legend:{display:false},tooltip:TT},
-  scales:{r:{min:0,max:5,
-    ticks:{stepSize:1,color:'#9CA3AF',font:{size:10},backdropColor:'transparent'},
-    grid:{color:'#E5E7EB'},
-    pointLabels:{color:'#374151',font:{size:11,weight:'500'}},
-  }},
-}});"""
-        },
-        {
-            "id": "cS5B",
-            "title": "Tendência de Receita",
-            "sub": "Visão consolidada do crescimento",
-            "legend": [("Receita","#1E40AF"), ("Lucro","#059669")],
-            "js": """new Chart(document.getElementById('cS5B'),{type:'line',data:{labels,datasets:[
-  {label:'Receita',data:rec,borderColor:'#1E40AF',backgroundColor:'rgba(30,64,175,.07)',
-   fill:true,borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#1E40AF',tension:.3},
-  {label:'Lucro',  data:luc,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.07)',
-   fill:true,borderWidth:2,  pointRadius:3,pointBackgroundColor:'#059669',tension:.3},
-]},options:{...BASE,scales:{x:XA,y:YA}}});"""
-        },
-    ],
 }
 
 
@@ -335,7 +325,7 @@ def generate_report_html(resultado: dict) -> str:
 
     tg   = _score_theme(g)
     secs = _parse_sections(analise)
-    cd   = _extract_charts(analise)
+    cd   = sorted((data.get("chart_data") or _extract_charts(analise)), key=lambda d: _quarter_sort_key(d.get("name")))
     cj   = json.dumps(cd)
 
     tese_c    = re.sub(r"\*\*|\*", "", tese).strip()
@@ -366,10 +356,10 @@ def generate_report_html(resultado: dict) -> str:
 
     # ── PILLAR CARDS ────────────────────────────────────────
     pillars = [
-        {"label": "Receita",           "nota": rn,  "icon": "📈"},
-        {"label": "Margem & Lucro",    "nota": ln,  "icon": "📊"},
-        {"label": "Dívida & Risco",    "nota": dn,  "icon": "🛡"},
-        {"label": "Rentabilidade ROE", "nota": ren, "icon": "💡"},
+        {"label": "Receita",           "nota": rn,  "icon": "REV"},
+        {"label": "Margem & Lucro",    "nota": ln,  "icon": "M&L"},
+        {"label": "Dívida & Risco",    "nota": dn,  "icon": "RISC"},
+        {"label": "Rentabilidade ROE", "nota": ren, "icon": "ROE"},
     ]
 
     def _pillar(p):
@@ -806,18 +796,36 @@ const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral
 (()=>{{
   const bar = document.getElementById('sumbarInner');
   if (!bar || !CD.length) {{ document.querySelector('.sumbar').style.display='none'; return; }}
-  const last = CD[CD.length - 1];
-  const prev = CD.length > 1 ? CD[CD.length - 2] : null;
+
+  const toNum = v => {{
+    const n = Number(String(v ?? '').replace(',', '.'));
+    return Number.isFinite(n) ? n : 0;
+  }};
+  const fmt = v => (Math.round(toNum(v) * 100) / 100).toString();
+  const sorted = [...CD].sort((a, b) => {{
+    const A = a?.name || '';
+    const B = b?.name || '';
+    const ma = String(A).toUpperCase().match(/(\d)\s*T\s*(\d{{2,4}})/);
+    const mb = String(B).toUpperCase().match(/(\d)\s*T\s*(\d{{2,4}})/);
+    const key = (m, s) => m ? [Number(m[2]) < 100 ? 2000 + Number(m[2]) : Number(m[2]), Number(m[1])] : [9999, 9];
+    const ka = key(ma, A), kb = key(mb, B);
+    if (ka[0] !== kb[0]) return ka[0] - kb[0];
+    if (ka[1] !== kb[1]) return ka[1] - kb[1];
+    return String(A).localeCompare(String(B));
+  }});
+  const last = sorted[sorted.length - 1];
+  const prev = sorted.length > 1 ? sorted[sorted.length - 2] : null;
   const delta = (a, b) => {{
-    if (!b) return '<span class="sum-d d-ne">—</span>';
-    const d = ((a - b) / Math.abs(b) * 100).toFixed(1);
+    const aa = toNum(a), bb = toNum(b);
+    if (!bb) return '<span class="sum-d d-ne">—</span>';
+    const d = ((aa - bb) / Math.abs(bb) * 100).toFixed(1);
     return `<span class="sum-d ${{d>=0?'d-up':'d-dn'}}">${{d>=0?'▲':'▼'}} ${{Math.abs(d)}}%</span>`;
   }};
   [
-    {{v: last.receita,      l: 'Receita',      d: delta(last.receita, prev?.receita)}},
-    {{v: last.lucro,        l: 'Lucro',        d: delta(last.lucro, prev?.lucro)}},
-    {{v: last.margemBruta+'%',  l: 'Mg. Bruta',  d: delta(last.margemBruta, prev?.margemBruta)}},
-    {{v: last.margemLiquida+'%',l: 'Mg. Líquida',d: delta(last.margemLiquida, prev?.margemLiquida)}},
+    {{v: fmt(last.receita), l: 'Receita',      d: delta(last.receita, prev?.receita)}},
+    {{v: fmt(last.lucro),   l: 'Lucro',        d: delta(last.lucro, prev?.lucro)}},
+    {{v: `${{fmt(last.margemBruta)}}%`,  l: 'Mg. Bruta',  d: delta(last.margemBruta, prev?.margemBruta)}},
+    {{v: `${{fmt(last.margemLiquida)}}%`,l: 'Mg. Líquida',d: delta(last.margemLiquida, prev?.margemLiquida)}},
     {{v: NOTAS.geral.toFixed(1)+'/5', l: 'Score IA', d: ''}},
   ].forEach(it => {{
     const c = document.createElement('div');
@@ -841,11 +849,11 @@ const BASE = {{
 /* section charts (only if data exists) */
 (()=>{{
   if (!CD.length) return;
-  const labels = CD.map(d => d.name  || '');
-  const rec    = CD.map(d => d.receita      || 0);
-  const luc    = CD.map(d => d.lucro        || 0);
-  const mB     = CD.map(d => d.margemBruta  || 0);
-  const mL     = CD.map(d => d.margemLiquida|| 0);
+  const labels = CD.map(d => d.name || '');
+  const rec    = CD.map(d => d.receita || 0);
+  const luc    = CD.map(d => d.lucro || 0);
+  const mB     = CD.map(d => d.margemBruta || 0);
+  const mL     = CD.map(d => d.margemLiquida || 0);
   {charts_js}
 }})();
 
