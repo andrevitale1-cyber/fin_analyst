@@ -15,7 +15,7 @@ router = APIRouter()
 # Configuração da API do Gemini (Certifique-se de definir a variável de ambiente)
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 if not GOOGLE_API_KEY:
-    raise ValueError("A variável de ambiente GOOGLE_API_KEY não foi definida.")
+    raise ValueError("A variável de ambiente GOOGLE_API_KEY não foi definidA.")
 genai.configure(api_key=GOOGLE_API_KEY)
 
 # --- DADOS BRUTOS DO RELEASE (Simulação - Em produção, viria do banco) ---
