@@ -1,42 +1,3 @@
-# Prompt enviado para o Gemini:
-# [
-# 	{
-# 		"resource": "/c:/Users/André Vitale/Documents/projeto_analise1/backend/report_generator.py",
-# 		"owner": "Pylance",
-# 		"severity": 8,
-# 		"message": "Unterminated expression in f-string; expecting \"}\"",
-# 		"source": "Pylance",
-# 		"startLineNumber": 800,
-# 		"startColumn": 26,
-# 		"endLineNumber": 800,
-# 		"endColumn": 27,
-# 		"modelVersionId": 22,
-# 		"origin": "extHost1"
-# 	},{
-# 		"resource": "/c:/Users/André Vitale/Documents/projeto_analise1/backend/report_generator.py",
-# 		"owner": "Pylance",
-# 		"code": {
-# 			"value": "reportUndefinedVariable",
-# 			"target": {
-# 				"$mid": 1,
-# 				"path": "/microsoft/pylance-release/blob/main/docs/diagnostics/reportUndefinedVariable.md",
-# 				"scheme": "https",
-# 				"authority": "github.com"
-# 			}
-# 		},
-# 		"severity": 4,
-# 		"message": "\"let\" is not defined",
-# 		"source": "Pylance",
-# 		"startLineNumber": 800,
-# 		"startColumn": 22,
-# 		"endLineNumber": 800,
-# 		"endColumn": 25,
-# 		"modelVersionId": 22,
-# 		"origin": "extHost1"
-# 	}
-# ]
-# esses sao os ultimos erros
-
 """
 report_generator.py  —  FinAnalyzer v4
 ════════════════════════════════════════════════════════════════
@@ -124,10 +85,12 @@ def _extract_charts(text: str) -> list:
                         "lucro": _f(item.get("lucro")),
                         "margemBruta": _f(item.get("margemBruta")),
                         "margemLiquida": _f(item.get("margemLiquida")),
-                        "opex_ga": _f(item.get("opex_ga", 35)),
-                        "opex_mk": _f(item.get("opex_mk", 25)),
-                        "opex_da": _f(item.get("opex_da", 15)),
-                        "opex_outras": _f(item.get("opex_outras", 25)),
+                        "var_pessoal": _f(item.get("var_pessoal")),
+                        "var_marketing": _f(item.get("var_marketing")),
+                        "var_servicos": _f(item.get("var_servicos")),
+                        "var_fretes": _f(item.get("var_fretes")),
+                        "var_ga": _f(item.get("var_ga")),
+                        "var_outras": _f(item.get("var_outras")),
                     })
                 cleaned.sort(key=lambda d: _quarter_sort_key(d.get("name")))
                 return cleaned
@@ -203,7 +166,9 @@ def _parse_sections(text: str) -> list:
         b = intro.group(1).strip().replace("**", "")
         if b:
             secs.append({"num": 0, "title": "Visão Geral do Trimestre", "body": b, "nota": None})
-    for n in range(1, 6):
+    
+    # Reduzido de 6 para 5 para não gerar o bloco HTML da Seção 5
+    for n in range(1, 5):
         pat = rf"\*?\*?Se[cç][aã]o\s*{n}[:\s\–\-].*?\n([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*{n+1}|\Z)"
         m = re.search(pat, text or "", re.IGNORECASE)
         if not m:
@@ -265,7 +230,7 @@ SECTION_CHARTS = {
         },
     ],
 
-    # Seção 2 (Margens) — margem bruta vs líquida linha
+    # Seção 2 (Margens) — margem bruta vs líquida linha + variação p.p. de despesas
     2: [
         {
             "id": "cS2A",
@@ -279,38 +244,54 @@ SECTION_CHARTS = {
    borderWidth:2,borderDash:[5,3],pointBackgroundColor:'#D97706',pointRadius:4,tension:.35},
 ]},options:{...BASE,scales:{x:XA,y:{...YA,ticks:{...YA.ticks,callback:v=>v+'%'}}}}});"""
         },
-       {
+        {
             "id": "cS2B",
-            "title": "Composição das Despesas (OPEX)",
-            "sub": "Share de cada despesa no OPEX total - Último Trimestre",
-            "legend": [("G&A","#1E3A8A"), ("Marketing","#9CA3AF"), ("D&A","#059669"), ("Outras","#D97706")],
+            "title": "Variação de Despesas / Eficiência",
+            "sub": "Impacto na margem em pontos percentuais (p.p.)",
+            "legend": [("Eficiência/Ganho","#059669"), ("Pressão/Retração","#DC2626")],
             "js": """
-            // Extrai os dados do último trimestre (o último item no array CD)
-            const lastData = CD[CD.length - 1];
-            const opexLabels = ['Gerais e Administrativas', 'Marketing e Vendas', 'Depreciação e Amortização', 'Outras Despesas'];
+            const lastData = CD[CD.length - 1] || {};
+            const varLabels = ['Outras Rec. Oper.', 'G&A (ex-D&A)', 'Pessoal (Vendas)', 'Fretes', 'Serviços Prof.', 'Marketing'];
             
-            // Usa os dados extraídos ou os fallbacks
-            const opexData = [
-                lastData.opex_ga || 35, 
-                lastData.opex_mk || 25, 
-                lastData.opex_da || 15, 
-                lastData.opex_outras || 25
-            ]; 
+            // Fallback para ilustrar caso o texto atual ainda não tenha sido re-analisado
+            const varData = [
+                lastData.var_outras !== undefined ? lastData.var_outras : 5.0,
+                lastData.var_ga !== undefined ? lastData.var_ga : 1.1,
+                lastData.var_pessoal !== undefined ? lastData.var_pessoal : 1.1,
+                lastData.var_fretes !== undefined ? lastData.var_fretes : -0.6,
+                lastData.var_servicos !== undefined ? lastData.var_servicos : -0.7,
+                lastData.var_marketing !== undefined ? lastData.var_marketing : -1.3,
+            ];
+
+            const bgColors = varData.map(v => v >= 0 ? 'rgba(5, 150, 105, 0.8)' : 'rgba(220, 38, 38, 0.8)');
             
             new Chart(document.getElementById('cS2B'),{
-                type:'doughnut',
+                type: 'bar',
                 data:{
-                    labels: opexLabels,
+                    labels: varLabels,
                     datasets:[{
-                        data: opexData,
-                        backgroundColor: ['#1E3A8A','#9CA3AF','#059669','#D97706'],
-                        borderWidth: 2,
-                        hoverOffset: 4
+                        label: 'Variação (p.p.)',
+                        data: varData,
+                        backgroundColor: bgColors,
+                        borderRadius: 4,
+                        barPercentage: 0.7
                     }]
                 },
                 options:{
                     ...BASE,
-                    cutout:'65%'
+                    indexAxis: 'y', // Faz as barras serem horizontais
+                    scales:{
+                        x: {
+                            grid:{color:'#F1F5F9'}, 
+                            border:{display:false}, 
+                            ticks:{color:'#9CA3AF', font:{size:10}, callback:v=>v>0?'+'+v:v}
+                        },
+                        y: {
+                            grid:{display:false}, 
+                            border:{display:false}, 
+                            ticks:{color:'#6B7280', font:{size:11}}
+                        }
+                    }
                 }
             });"""
         },
@@ -854,7 +835,6 @@ const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral
     return Number.isFinite(n) ? n : 0;
   }};
   
-  // FIX: Chaves duplicadas adicionadas abaixo
   const fmt = v => {{ let n=toNum(v); if(n<10) n=n*1000; return (Math.round(n*100)/100).toString(); }}
   
   const sorted = [...CD].sort((a, b) => {{
