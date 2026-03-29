@@ -124,6 +124,10 @@ def _extract_charts(text: str) -> list:
                         "lucro": _f(item.get("lucro")),
                         "margemBruta": _f(item.get("margemBruta")),
                         "margemLiquida": _f(item.get("margemLiquida")),
+                        "opex_ga": _f(item.get("opex_ga", 35)),
+                        "opex_mk": _f(item.get("opex_mk", 25)),
+                        "opex_da": _f(item.get("opex_da", 15)),
+                        "opex_outras": _f(item.get("opex_outras", 25)),
                     })
                 cleaned.sort(key=lambda d: _quarter_sort_key(d.get("name")))
                 return cleaned
@@ -192,7 +196,6 @@ def _parse_sections(text: str) -> list:
         2: "Rentabilidade e Margens",
         3: "Estrutura de Capital e Gestão de Risco",
         4: "Sumário Executivo do Lucro Líquido",
-        5: "Conclusão Estratégica e Outlook",
     }
     secs = []
     intro = re.search(r"^([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*1)", text or "", re.IGNORECASE)
@@ -276,17 +279,40 @@ SECTION_CHARTS = {
    borderWidth:2,borderDash:[5,3],pointBackgroundColor:'#D97706',pointRadius:4,tension:.35},
 ]},options:{...BASE,scales:{x:XA,y:{...YA,ticks:{...YA.ticks,callback:v=>v+'%'}}}}});"""
         },
-        {
+       {
             "id": "cS2B",
-            "title": "Spread de Margens",
-            "sub": "Diferença entre margem bruta e líquida",
-            "legend": [("Spread positivo","#059669"), ("Compressão","#DC2626")],
-            "js": """const spread=mB.map((b,i)=>parseFloat((b-mL[i]).toFixed(2)));
-new Chart(document.getElementById('cS2B'),{type:'bar',data:{labels,datasets:[
-  {label:'Spread',data:spread,
-   backgroundColor:spread.map(v=>v>=0?'rgba(5,150,105,.7)':'rgba(220,38,38,.65)'),
-   borderRadius:4,maxBarThickness:30},
-]},options:{...BASE,scales:{x:XA,y:{...YA,ticks:{...YA.ticks,callback:v=>v+'%'}}}}});"""
+            "title": "Composição das Despesas (OPEX)",
+            "sub": "Share de cada despesa no OPEX total - Último Trimestre",
+            "legend": [("G&A","#1E3A8A"), ("Marketing","#9CA3AF"), ("D&A","#059669"), ("Outras","#D97706")],
+            "js": """
+            // Extrai os dados do último trimestre (o último item no array CD)
+            const lastData = CD[CD.length - 1];
+            const opexLabels = ['Gerais e Administrativas', 'Marketing e Vendas', 'Depreciação e Amortização', 'Outras Despesas'];
+            
+            // Usa os dados extraídos ou os fallbacks
+            const opexData = [
+                lastData.opex_ga || 35, 
+                lastData.opex_mk || 25, 
+                lastData.opex_da || 15, 
+                lastData.opex_outras || 25
+            ]; 
+            
+            new Chart(document.getElementById('cS2B'),{
+                type:'doughnut',
+                data:{
+                    labels: opexLabels,
+                    datasets:[{
+                        data: opexData,
+                        backgroundColor: ['#1E3A8A','#9CA3AF','#059669','#D97706'],
+                        borderWidth: 2,
+                        hoverOffset: 4
+                    }]
+                },
+                options:{
+                    ...BASE,
+                    cutout:'65%'
+                }
+            });"""
         },
     ],
 

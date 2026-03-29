@@ -145,6 +145,10 @@ def parse_results(text):
                     "lucro": to_float(item.get("lucro")),
                     "margemBruta": to_float(item.get("margemBruta")),
                     "margemLiquida": to_float(item.get("margemLiquida")),
+                    "opex_ga": to_float(item.get("opex_ga", 35)),
+                    "opex_mk": to_float(item.get("opex_mk", 25)),
+                    "opex_da": to_float(item.get("opex_da", 15)),
+                    "opex_outras": to_float(item.get("opex_outras", 25)),
                 })
             return cleaned
         except:
@@ -240,12 +244,22 @@ Nota Geral: X/5
 
 **Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)**
 No final da sua análise, você DEVE extrair o histórico financeiro dos últimos 4 trimestres disponíveis no relatório (ou o máximo que houver) para a construção de gráficos.
-Apresente esses dados EXATAMENTE no formato de um array JSON dentro de um bloco de código markdown, utilizando as seguintes chaves: "name" (nome do trimestre, ex: "3T24"), "receita" (em bilhões ou milhões, apenas o número), "lucro" (apenas o número), "margemBruta" (apenas o número percentual) e "margemLiquida" (apenas o número percentual).
+Apresente esses dados EXATAMENTE no formato de um array JSON dentro de um bloco de código markdown.
+As chaves obrigatórias são: 
+"name" (nome do trimestre, ex: "3T24"), 
+"receita" (apenas o número, na mesma grandeza para todos), 
+"lucro" (apenas o número, na mesma grandeza), 
+"margemBruta" (número percentual), 
+"margemLiquida" (número percentual),
+"opex_ga" (despesas gerais e administrativas como % do opex total, ex: 35.5),
+"opex_mk" (despesas de marketing/vendas como % do opex total, ex: 25.0),
+"opex_da" (depreciação e amortização como % do opex total, ex: 15.0),
+"opex_outras" (outras despesas operacionais como % do opex total, ex: 24.5).
+A soma de opex_ga + opex_mk + opex_da + opex_outras deve ser obrigatoriamente igual a 100. Se o relatório não fornecer a quebra exata, estime a proporção com base no texto ou use 25 para cada.
 
     DADOS DO RELEASE (Use apenas o relevante):
     {pdf_text[:40000]}
         """
-
         response = await asyncio.to_thread(model.generate_content, prompt)
         dados_estruturados = parse_results(response.text)
         
