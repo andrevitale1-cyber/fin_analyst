@@ -175,10 +175,7 @@ SECTION_CHARTS = {
             let segs = [];
             for(let i=CD.length-1; i>=0; i--){
                 if(CD[i].segmentos && CD[i].segmentos.length > 0) { segs = CD[i].segmentos; break; }
-            }
-            const segLabels = segs.length ? segs.map(s => s.nome) : ['Principal', 'Outros'];
-            const segData   = segs.length ? segs.map(s => parseFloat(s.valor)) : [70, 30];
-            
+            }         
             new Chart(document.getElementById('cS1B'),{
                 type:'doughnut',
                 data:{
