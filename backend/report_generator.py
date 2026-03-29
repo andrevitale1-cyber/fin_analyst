@@ -27,47 +27,31 @@ def _f(v) -> float:
     except Exception:
         return 0.0
 
-
 def _score_theme(n: float) -> dict:
-    """
-    1 → vermelho forte   2 → vermelho suave
-    3 → âmbar/amarelo    4 → verde suave    5 → verde forte
-    """
     if n <= 1.5:
         return dict(label="Muito Ruim", text="#7F1D1D", bg="#FEF2F2",
-                    border="#FECACA", bar="#DC2626", badge_bg="#FEE2E2",
-                    badge_text="#991B1B", icon="")
+                    border="#FECACA", bar="#DC2626", badge_bg="#FEE2E2", badge_text="#991B1B", icon="")
     if n <= 2.5:
         return dict(label="Ruim",      text="#9A3412", bg="#FFF7ED",
-                    border="#FED7AA", bar="#EA580C", badge_bg="#FFEDD5",
-                    badge_text="#9A3412", icon="")
+                    border="#FED7AA", bar="#EA580C", badge_bg="#FFEDD5", badge_text="#9A3412", icon="")
     if n <= 3.5:
         return dict(label="Regular",   text="#78350F", bg="#FFFBEB",
-                    border="#FDE68A", bar="#D97706", badge_bg="#FEF3C7",
-                    badge_text="#92400E", icon="")
+                    border="#FDE68A", bar="#D97706", badge_bg="#FEF3C7", badge_text="#92400E", icon="")
     if n <= 4.5:
         return dict(label="Bom",       text="#14532D", bg="#F0FDF4",
-                    border="#BBF7D0", bar="#16A34A", badge_bg="#DCFCE7",
-                    badge_text="#15803D", icon="")
+                    border="#BBF7D0", bar="#16A34A", badge_bg="#DCFCE7", badge_text="#15803D", icon="")
     return         dict(label="Excelente",text="#052E16", bg="#ECFDF5",
-                    border="#6EE7B7", bar="#059669", badge_bg="#D1FAE5",
-                    badge_text="#065F46", icon="")
-
+                    border="#6EE7B7", bar="#059669", badge_bg="#D1FAE5", badge_text="#065F46", icon="")
 
 def _quarter_sort_key(name: str):
-    """Sort helper for labels like 3T24, 4T2024, 1T25."""
-    if not name:
-        return (9999, 9, "")
+    if not name: return (9999, 9, "")
     s = str(name).strip().upper()
     m = re.search(r"(\d)\s*T\s*(\d{2,4})", s)
-    if not m:
-        return (9999, 9, s)
+    if not m: return (9999, 9, s)
     q = int(m.group(1))
     y = int(m.group(2))
-    if y < 100:
-        y += 2000
+    if y < 100: y += 2000
     return (y, q, s)
-
 
 def _extract_charts(text: str) -> list:
     try:
@@ -77,20 +61,13 @@ def _extract_charts(text: str) -> list:
             if isinstance(raw, list):
                 cleaned = []
                 for item in raw:
-                    if not isinstance(item, dict):
-                        continue
+                    if not isinstance(item, dict): continue
                     cleaned.append({
                         "name": item.get("name") or item.get("periodo") or item.get("label") or "",
                         "receita": _f(item.get("receita")),
                         "lucro": _f(item.get("lucro")),
                         "margemBruta": _f(item.get("margemBruta")),
                         "margemLiquida": _f(item.get("margemLiquida")),
-                        "var_pessoal": _f(item.get("var_pessoal")),
-                        "var_marketing": _f(item.get("var_marketing")),
-                        "var_servicos": _f(item.get("var_servicos")),
-                        "var_fretes": _f(item.get("var_fretes")),
-                        "var_ga": _f(item.get("var_ga")),
-                        "var_outras": _f(item.get("var_outras")),
                     })
                 cleaned.sort(key=lambda d: _quarter_sort_key(d.get("name")))
                 return cleaned
@@ -98,60 +75,46 @@ def _extract_charts(text: str) -> list:
         pass
     return []
 
-
 def _clean_md(text: str) -> str:
-    """Markdown → HTML limpo: tabelas, bold, bullets, parágrafos."""
-    if not text:
-        return ""
+    if not text: return ""
     lines = text.split("\n")
     out, in_table, in_ul = [], False, False
     for line in lines:
         s = line.strip()
         if s.startswith("|") and s.endswith("|"):
             if not in_table:
-                if in_ul:
-                    out.append("</ul>")
-                    in_ul = False
+                if in_ul: out.append("</ul>"); in_ul = False
                 out.append('<div class="tbl-wrap"><table class="tbl"><tbody>')
                 in_table = True
             cells = [c.strip() for c in s.strip("|").split("|")]
-            if all(re.match(r"^[-:]+$", c) for c in cells):
-                continue
+            if all(re.match(r"^[-:]+$", c) for c in cells): continue
             is_hdr = not any("<td>" in r for r in out[-6:])
             tag = "th" if is_hdr else "td"
             row = "".join(f"<{tag}>{_h.escape(c)}</{tag}>" for c in cells)
             out.append(f"<tr>{row}</tr>")
             continue
         if in_table:
-            out.append("</tbody></table></div>")
-            in_table = False
+            out.append("</tbody></table></div>"); in_table = False
         if re.match(r"^[-•*]\s", s):
-            if not in_ul:
-                out.append('<ul class="md-ul">')
-                in_ul = True
+            if not in_ul: out.append('<ul class="md-ul">'); in_ul = True
             body = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s[2:])
             out.append(f"<li>{body}</li>")
             continue
         if in_ul:
-            out.append("</ul>")
-            in_ul = False
+            out.append("</ul>"); in_ul = False
         if s:
             s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
             out.append(s)
-    if in_table:
-        out.append("</tbody></table></div>")
-    if in_ul:
-        out.append("</ul>")
+    if in_table: out.append("</tbody></table></div>")
+    if in_ul: out.append("</ul>")
     combined = "\n".join(out)
     paras = re.split(r"\n{2,}", combined)
     result = []
     for p in paras:
         p = p.strip()
-        if not p:
-            continue
+        if not p: continue
         result.append(p if p.startswith("<") else f"<p>{p}</p>")
     return "\n".join(result)
-
 
 def _parse_sections(text: str) -> list:
     titles = {
@@ -164,23 +127,16 @@ def _parse_sections(text: str) -> list:
     intro = re.search(r"^([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*1)", text or "", re.IGNORECASE)
     if intro:
         b = intro.group(1).strip().replace("**", "")
-        if b:
-            secs.append({"num": 0, "title": "Visão Geral do Trimestre", "body": b, "nota": None})
+        if b: secs.append({"num": 0, "title": "Visão Geral do Trimestre", "body": b, "nota": None})
     
     for n in range(1, 5):
         pat = rf"\*?\*?Se[cç][aã]o\s*{n}[:\s\–\-].*?\n([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*{n+1}|\Z)"
         m = re.search(pat, text or "", re.IGNORECASE)
-        if not m:
-            continue
+        if not m: continue
         body = m.group(1).strip()
-        nm = re.search(
-            rf"Nota\s+Se[cç][aã]o\s+{n}[:\s]+(\d[.,]?\d?)\s*/\s*5",
-            body, re.IGNORECASE,
-        )
+        nm = re.search(rf"Nota\s+Se[cç][aã]o\s+{n}[:\s]+(\d[.,]?\d?)\s*/\s*5", body, re.IGNORECASE)
         nota = _f(nm.group(1)) if nm else None
-        body = re.sub(
-            rf"\*?\*?Nota\s+Se[cç][aã]o\s+{n}[:\s]+\d[.,]?\d?\s*/\s*5\*?\*?", "", body
-        ).strip()
+        body = re.sub(rf"\*?\*?Nota\s+Se[cç][aã]o\s+{n}[:\s]+\d[.,]?\d?\s*/\s*5\*?\*?", "", body).strip()
         body = re.sub(r"```json[\s\S]*?```", "", body).strip()
         secs.append({"num": n, "title": titles.get(n, f"Seção {n}"), "body": body, "nota": nota})
     return secs
@@ -191,13 +147,11 @@ def _parse_sections(text: str) -> list:
 # ═══════════════════════════════════════════════════════════════
 
 SECTION_CHARTS = {
-    # Seção 0 (intro)
+    # Seção 0
     0: [
         {
-            "id": "cS0A",
-            "title": "Receita & Lucro — Visão Geral",
-            "sub": "Evolução nos últimos trimestres",
-            "legend": [("Receita","#1E40AF"), ("Lucro","#059669")],
+            "id": "cS0A", "title": "Receita & Lucro — Visão Geral", "sub": "Evolução nos últimos trimestres",
+            "evo_var": "rec", # Sinaliza para o JS renderizar o badge de evolução calculando em cima da variável 'rec'
             "js": """new Chart(document.getElementById('cS0A'),{type:'bar',data:{labels,datasets:[
   {label:'Receita',data:rec,backgroundColor:'rgba(30,64,175,.18)',borderColor:'#1E40AF',borderWidth:2,borderRadius:5,maxBarThickness:32},
   {label:'Lucro',  data:luc,backgroundColor:'rgba(5,150,105,.75)',borderRadius:5,maxBarThickness:32},
@@ -205,37 +159,48 @@ SECTION_CHARTS = {
         },
     ],
 
-    # Seção 1 (Top Line)
+    # Seção 1 
     1: [
         {
-            "id": "cS1A",
-            "title": "Evolução da Receita",
-            "sub": "Crescimento trimestral",
-            "legend": [("Receita","#1E40AF"), ("Lucro","#059669")],
+            "id": "cS1A", "title": "Evolução da Receita", "sub": "Crescimento trimestral absoluto",
+            "evo_var": "rec",
             "js": """new Chart(document.getElementById('cS1A'),{type:'bar',data:{labels,datasets:[
   {label:'Receita',data:rec,backgroundColor:'rgba(30,64,175,.18)',borderColor:'#1E40AF',borderWidth:2,borderRadius:5,maxBarThickness:32},
-  {label:'Lucro',  data:luc,backgroundColor:'rgba(5,150,105,.75)',borderRadius:5,maxBarThickness:32},
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
         {
-            "id": "cS1B",
-            "title": "Margem Bruta (%)",
-            "sub": "Tendência da margem bruta ao longo do tempo",
-            "legend": [("Margem Bruta","#7C3AED")],
-            "js": """new Chart(document.getElementById('cS1B'),{type:'line',data:{labels,datasets:[
-  {label:'Margem Bruta',data:mB,borderColor:'#7C3AED',backgroundColor:'rgba(124,58,237,.08)',
-   fill:true,borderWidth:2.5,pointBackgroundColor:'#7C3AED',pointRadius:4,tension:.35},
-]},options:{...BASE,scales:{x:XA,y:{...YA,ticks:{...YA.ticks,callback:v=>v+'%'}}}}});"""
+            "id": "cS1B", "title": "Composição da Receita", "sub": "Share por Segmento (Último Trimestre)",
+            "js": """
+            const lastData = CD[CD.length - 1] || {};
+            const segs = lastData.segmentos || [];
+            
+            const segLabels = segs.length ? segs.map(s => s.nome) : ['Principal', 'Outros'];
+            const segData   = segs.length ? segs.map(s => parseFloat(s.valor)) : [70, 30];
+            
+            new Chart(document.getElementById('cS1B'),{
+                type:'doughnut',
+                data:{
+                    labels: segLabels,
+                    datasets:[{
+                        data: segData,
+                        backgroundColor: ['#1E3A8A','#059669','#D97706','#7C3AED', '#9CA3AF', '#3B82F6'],
+                        borderWidth: 2, hoverOffset: 4
+                    }]
+                },
+                options:{
+                    ...BASE, cutout:'65%', 
+                    scales:{x:{display:false},y:{display:false}},
+                    plugins: { ...BASE.plugins, datalabels: { ...BASE.plugins.datalabels, formatter: (v) => formatBRL(v) } }
+                }
+            });"""
         },
     ],
 
-    # Seção 2 (Margens)
+    # Seção 2
     2: [
         {
-            "id": "cS2A",
-            "title": "Margens Bruta e Líquida (%)",
-            "sub": "Comparativo trimestral de margens",
-            "legend": [("Bruta","#7C3AED"), ("Líquida","#D97706")],
+            "id": "cS2A", "title": "Margens Bruta e Líquida (%)", "sub": "Comparativo trimestral de margens",
+            "evo_var": "mL",
             "js": """new Chart(document.getElementById('cS2A'),{type:'line',data:{labels,datasets:[
   {label:'Margem Bruta',  data:mB,borderColor:'#7C3AED',backgroundColor:'rgba(124,58,237,.07)',
    fill:true,borderWidth:2.5,pointBackgroundColor:'#7C3AED',pointRadius:4,tension:.35},
@@ -244,57 +209,54 @@ SECTION_CHARTS = {
 ]},options:{...BASE,scales:{x:XA,y:{...YA,ticks:{...YA.ticks,callback:v=>v+'%'}}}}});"""
         },
         {
-            "id": "cS2B",
-            "title": "Variação de Despesas / Eficiência",
-            "sub": "Impacto na margem em pontos percentuais (p.p.)",
-            "legend": [("Eficiência/Ganho","#059669"), ("Pressão/Retração","#DC2626")],
+            "id": "cS2B", "title": "Variação de Despesas YoY", "sub": "Crescimento/Queda de Gastos (% ou p.p.)",
             "js": """
             const lastData = CD[CD.length - 1] || {};
-            const varLabels = ['Outras Rec. Oper.', 'G&A (ex-D&A)', 'Pessoal (Vendas)', 'Fretes', 'Serviços Prof.', 'Marketing'];
+            const desp = lastData.despesas_var || [];
             
-            const varData = [
-                lastData.var_outras !== undefined ? lastData.var_outras : 5.0,
-                lastData.var_ga !== undefined ? lastData.var_ga : 1.1,
-                lastData.var_pessoal !== undefined ? lastData.var_pessoal : 1.1,
-                lastData.var_fretes !== undefined ? lastData.var_fretes : -0.6,
-                lastData.var_servicos !== undefined ? lastData.var_servicos : -0.7,
-                lastData.var_marketing !== undefined ? lastData.var_marketing : -1.3,
-            ];
+            const varLabels = desp.length ? desp.map(d => d.nome) : ['P&D', 'Vendas/Mkt', 'G&A'];
+            const varData   = desp.length ? desp.map(d => parseFloat(d.var_pct)) : [7.1, 0.1, -9.1];
 
-            const bgColors = varData.map(v => v >= 0 ? 'rgba(5, 150, 105, 0.8)' : 'rgba(220, 38, 38, 0.8)');
+            // Lógica de cores: Se for linha de receita (+ = verde). Se for despesa (- = verde/eficiência, + = vermelho/aumento).
+            const bgColors = varData.map((v, i) => {
+                const nameL = varLabels[i].toLowerCase();
+                const isRev = nameL.includes('receita') || nameL.includes('rec.');
+                if (isRev) return v >= 0 ? 'rgba(16, 185, 129, 0.85)' : 'rgba(239, 68, 68, 0.85)';
+                return v <= 0 ? 'rgba(16, 185, 129, 0.85)' : 'rgba(239, 68, 68, 0.85)';
+            });
             
             new Chart(document.getElementById('cS2B'),{
                 type: 'bar',
                 data:{
                     labels: varLabels,
                     datasets:[{
-                        label: 'Variação (p.p.)',
+                        label: 'Variação',
                         data: varData,
                         backgroundColor: bgColors,
                         borderRadius: 4,
-                        barPercentage: 0.7
+                        barPercentage: 0.6
                     }]
                 },
                 options:{
-                    ...BASE,
-                    indexAxis: 'y',
+                    ...BASE, indexAxis: 'y',
+                    plugins: {
+                       ...BASE.plugins,
+                       datalabels: { ...BASE.plugins.datalabels, align: 'right', anchor: 'end', formatter: v => (v > 0 ? '+' : '') + v.toFixed(1) + '%' }
+                    },
                     scales:{
-                        x: { grid:{color:'#F1F5F9'}, border:{display:false}, ticks:{color:'#9CA3AF', font:{size:10}, callback:v=>v>0?'+'+v:v} },
-                        y: { grid:{display:false}, border:{display:false}, ticks:{color:'#6B7280', font:{size:11}} }
+                        x: { grid:{color:'#F1F5F9'}, border:{display:false}, ticks:{color:'#9CA3AF', font:{size:10}, callback:v=>v+'%'} },
+                        y: { grid:{display:false}, border:{display:false}, ticks:{color:'#475569', font:{size:11, weight:'500'}} }
                     }
                 }
             });"""
         },
     ],
 
-    # Seção 3 (Capital/Dívida) 
-    # NOTA: datalabels: { display: false } adicionado na linha para não sobrepor com a barra
+    # Seção 3 
     3: [
         {
-            "id": "cS3A",
-            "title": "Geração de Resultado",
-            "sub": "Lucro acumulado — proxy de fluxo de caixa",
-            "legend": [("Lucro","#059669")],
+            "id": "cS3A", "title": "Geração de Resultado", "sub": "Lucro acumulado — proxy de fluxo de caixa",
+            "evo_var": "luc",
             "js": """new Chart(document.getElementById('cS3A'),{type:'line',data:{labels,datasets:[
   {label:'Lucro (linha)',data:luc,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',
    fill:true,borderWidth:2.5,pointBackgroundColor:'#059669',pointRadius:4,tension:.35, datalabels: { display: false }},
@@ -303,13 +265,11 @@ SECTION_CHARTS = {
         },
     ],
 
-    # Seção 4 (Lucro)
+    # Seção 4 
     4: [
         {
-            "id": "cS4A",
-            "title": "Lucro Líquido por Trimestre",
-            "sub": "Evolução do bottom-line",
-            "legend": [("Lucro","#059669")],
+            "id": "cS4A", "title": "Lucro Líquido por Trimestre", "sub": "Evolução do bottom-line",
+            "evo_var": "luc",
             "js": """new Chart(document.getElementById('cS4A'),{type:'bar',data:{labels,datasets:[
   {label:'Lucro',data:luc,
    backgroundColor:luc.map((_,i)=>i===luc.length-1?'rgba(5,150,105,.9)':'rgba(5,150,105,.35)'),
@@ -317,10 +277,8 @@ SECTION_CHARTS = {
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
         {
-            "id": "cS4B",
-            "title": "Margem Líquida (%)",
-            "sub": "Rentabilidade sobre a receita",
-            "legend": [("Margem Líquida","#D97706")],
+            "id": "cS4B", "title": "Margem Líquida (%)", "sub": "Rentabilidade sobre a receita",
+            "evo_var": "mL",
             "js": """new Chart(document.getElementById('cS4B'),{type:'line',data:{labels,datasets:[
   {label:'Margem Líquida',data:mL,borderColor:'#D97706',backgroundColor:'rgba(217,119,6,.08)',
    fill:true,borderWidth:2.5,pointBackgroundColor:'#D97706',pointRadius:4,tension:.35},
@@ -352,17 +310,13 @@ def generate_report_html(resultado: dict) -> str:
     tg   = _score_theme(g)
     secs = _parse_sections(analise)
     raw_cd = data.get("chart_data") or _extract_charts(analise)
-    # keep only quarters mentioned in analysis text to avoid hallucinations
     cd = [d for d in raw_cd if str(d.get("name","")) in analise]
-    if not cd:
-        cd = raw_cd
+    if not cd: cd = raw_cd
     cd = sorted(cd, key=lambda d: _quarter_sort_key(d.get("name")))
     cj   = json.dumps(cd)
 
     tese_c    = re.sub(r"\*\*|\*", "", tese).strip()
-    tese_html = "".join(
-        f"<p>{_h.escape(p.strip())}</p>" for p in tese_c.split("\n\n") if p.strip()
-    ) or f"<p>{_h.escape(tese_c)}</p>"
+    tese_html = "".join(f"<p>{_h.escape(p.strip())}</p>" for p in tese_c.split("\n\n") if p.strip()) or f"<p>{_h.escape(tese_c)}</p>"
 
     # ── HERO SCORE RING ─────────────────────────────────────
     def _hero_ring(nota, size=110):
@@ -385,7 +339,6 @@ def generate_report_html(resultado: dict) -> str:
             f'</svg>'
         )
 
-    # ── PILLAR CARDS ────────────────────────────────────────
     pillars = [
         {"label": "Receita",           "nota": rn,  "icon": "REV"},
         {"label": "Margem & Lucro",    "nota": ln,  "icon": "M&L"},
@@ -408,13 +361,11 @@ def generate_report_html(resultado: dict) -> str:
 
     pillars_html = "".join(_pillar(p) for p in pillars)
 
-    # ── BUILD SECTION BLOCKS ────────────────────────────────
-    all_chart_js = []   # collect all chart JS snippets
+    all_chart_js = []
 
     def _section_block(s):
         t  = _score_theme(s["nota"]) if s["nota"] is not None else None
         charts_cfg = SECTION_CHARTS.get(s["num"], [])
-        has_charts = bool(charts_cfg and cd)
 
         nota_box = ""
         if t:
@@ -427,20 +378,27 @@ def generate_report_html(resultado: dict) -> str:
 
         chart_panels_html = ""
         for cfg in charts_cfg[:2]:
-            legend_html = "".join(
-                f'<span class="leg-i"><span class="leg-dot" style="background:{c}"></span>{lbl}</span>'
-                for lbl, c in cfg["legend"]
-            )
+            has_evo = "evo_var" in cfg
+            evo_html = f'<div id="evo-{cfg["id"]}" class="cp-evo"></div>' if has_evo else ""
+            
+            # Adiciona o JS para o chart e para calcular a evolução
+            js_snippet = f"if(document.getElementById('{cfg['id']}')&&CD.length){{{cfg['js']}}}"
+            if has_evo:
+                js_snippet += f" setTimeout(()=>renderEvo('{cfg['id']}', {cfg['evo_var']}), 100);"
+            
+            all_chart_js.append(js_snippet)
+
             chart_panels_html += f"""
 <div class="chart-panel">
-  <div class="cp-title">{cfg['title']}</div>
-  <div class="cp-sub">{cfg['sub']}</div>
-  <div class="cp-legend">{legend_html}</div>
+  <div class="cp-top">
+      <div>
+          <div class="cp-title">{cfg['title']}</div>
+          <div class="cp-sub">{cfg['sub']}</div>
+      </div>
+      {evo_html}
+  </div>
   <div class="cp-wrap"><canvas id="{cfg['id']}"></canvas></div>
 </div>"""
-            all_chart_js.append(
-                f"if(document.getElementById('{cfg['id']}')&&CD.length){{{cfg['js']}}}"
-            )
 
         aside_html = ""
         if nota_box or chart_panels_html:
@@ -478,7 +436,6 @@ def generate_report_html(resultado: dict) -> str:
     }
     vcls, vtitle = verdict_labels.get(tg["label"], ("vtag-watch", "—"))
 
-    # ── FINAL HTML ──────────────────────────────────────────
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -600,11 +557,9 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 .sec-title{{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;
   color:#0F172A;letter-spacing:-.01em}}
 
-/* text | aside two-column */
 .sec-layout{{display:grid;grid-template-columns:1fr 300px;gap:28px;align-items:start}}
 .sec-layout--full{{display:block}}
 
-/* ─── ANALYSIS TEXT ─── */
 .abody{{font-size:14px;line-height:1.85;color:#374151}}
 .abody p{{margin-bottom:12px}}
 .abody p:last-child{{margin-bottom:0}}
@@ -620,10 +575,8 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 .tbl tbody tr:last-child td{{border-bottom:none}}
 .tbl tbody tr:hover td{{background:#F8FAFC}}
 
-/* ─── ASIDE (nota + charts) ─── */
 .sec-aside{{display:flex;flex-direction:column;gap:14px}}
 
-/* nota box */
 .nota-box{{border-radius:10px;padding:16px;text-align:center}}
 .nota-box-label{{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
   color:#6B7280;display:block;margin-bottom:6px}}
@@ -633,17 +586,11 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 .nota-box-tag{{font-size:11px;font-weight:700;padding:4px 10px;
   border-radius:4px;display:inline-block}}
 
-/* chart panel */
 .chart-panel{{border:1px solid #E5E7EB;border-radius:10px;padding:16px;background:#FAFAFA}}
+.cp-top {{display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;}}
 .cp-title{{font-size:12px;font-weight:600;color:#111827;margin-bottom:2px}}
-.cp-sub{{font-size:11px;color:#9CA3AF;margin-bottom:10px}}
-.cp-legend{{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}}
-.leg-i{{display:flex;align-items:center;gap:5px;font-size:11px;color:#6B7280}}
-.leg-dot{{width:8px;height:8px;border-radius:2px;flex-shrink:0}}
-.cp-wrap{{position:relative;width:100%;height:160px}}
-
-/* ─── DIVIDER ─── */
-.divider{{height:1px;background:#E5E7EB;margin:36px 0}}
+.cp-sub{{font-size:11px;color:#9CA3AF;}}
+.cp-wrap{{position:relative;width:100%;height:160px; margin-top: 10px;}}
 
 /* ─── CONCLUSION ─── */
 .conclusion{{
@@ -697,10 +644,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 <nav class="topbar no-print">
   <div class="tb-brand">
     <div class="tb-cube">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="white">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-        <polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
-      </svg>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/></svg>
     </div>
     <span class="tb-name">FinAnalyzer</span>
   </div>
@@ -712,12 +656,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
   <div class="tb-right">
     <span><span class="tb-score-lbl">Score IA</span><span class="tb-score">{g:.1f}/5</span></span>
     <button class="print-btn" onclick="window.print()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="6 9 6 2 18 2 18 9"/>
-        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-        <rect x="6" y="14" width="12" height="8"/>
-      </svg>
-      Salvar PDF
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Salvar PDF
     </button>
   </div>
 </nav>
@@ -726,15 +665,9 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
   <div class="hero-inner">
     <div class="hero-row">
       <div class="hero-left">
-        <div class="hero-period">
-          <div class="hero-dot"></div>
-          {_h.escape(periodo)} · Resultados Trimestrais
-        </div>
+        <div class="hero-period"><div class="hero-dot"></div>{_h.escape(periodo)} · Resultados Trimestrais</div>
         <h1 class="hero-empresa">{_h.escape(empresa.title())}</h1>
-        <p class="hero-desc">
-          Relatório completo gerado por IA com base no release de resultados oficial.
-          Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica.
-        </p>
+        <p class="hero-desc">Relatório completo gerado por IA com base no release de resultados oficial. Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica.</p>
       </div>
       <div class="hero-right">
         <span class="hero-score-lbl">Score IA — Média Ponderada</span>
@@ -742,17 +675,13 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
         <div class="hero-score-verdict">{tg['label']}</div>
       </div>
     </div>
-
-    <div id="indicadores" class="pillars">
-      {pillars_html}
-    </div>
+    <div id="indicadores" class="pillars">{pillars_html}</div>
   </div>
 </div>
 
 <div class="sumbar"><div class="sumbar-inner" id="sumbarInner"></div></div>
 
 <div class="main">
-
   <div id="analise">
     <div class="sec-label">Análise Completa por IA</div>
     <div class="sec-heading">Leitura dos Resultados</div>
@@ -786,7 +715,6 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
       </div>
     </div>
   </div>
-
 </div>
 
 <div class="footer no-print">
@@ -795,30 +723,45 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 </div>
 
 <script>
-// Registra o Plugin de Rótulos de Dados GLOBALMENTE
 Chart.register(ChartDataLabels);
 
 const CD    = __CHART_JSON__;
 const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral:__G__ }};
 
-/* Formatação Inteligente de Valores Absolutos para M/Bi/K */
 const formatBRL = (v) => {{
   let n = Number(String(v ?? '').replace(',', '.'));
-  if (!Number.isFinite(n)) return '0';
+  if (!Number.isFinite(n) || n === 0) return '0';
   const abs = Math.abs(n);
-  if (abs >= 1e9) return (n / 1e9).toFixed(2) + ' Bi';
-  if (abs >= 1e6) return (n / 1e6).toFixed(2) + ' M';
-  if (abs >= 1e3) return (n / 1e3).toFixed(2) + ' K';
-  return n.toFixed(2);
+  const sign = n < 0 ? '-' : '';
+  if (abs >= 1e9) return sign + (abs / 1e9).toFixed(2) + ' Bi';
+  if (abs >= 1e6) return sign + (abs / 1e6).toFixed(2) + ' M';
+  if (abs >= 1e3) return sign + (abs / 1e3).toFixed(2) + ' K';
+  return sign + abs.toFixed(2);
 }};
 
-/* Formatação Segura para Porcentagens */
 const formatPct = (v) => {{
   let n = Number(String(v ?? '').replace(',', '.'));
   return Number.isFinite(n) ? n.toFixed(2) + '%' : '0%';
 }};
 
-/* score ring counter */
+// Função que calcula a evolução (A/A ou Tri/Tri) no próprio JS e injeta o selo no DOM
+const renderEvo = (chartId, dataArr) => {{
+  if (!dataArr || dataArr.length < 2) return;
+  const first = dataArr[0], last = dataArr[dataArr.length - 1];
+  if (!first || first === 0) return;
+  const pct = ((last - first) / Math.abs(first)) * 100;
+  
+  const el = document.getElementById('evo-' + chartId);
+  if (el) {{
+      const isPositive = pct >= 0;
+      const color = isPositive ? '#10B981' : '#EF4444';
+      const bg    = isPositive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+      const icon  = isPositive ? '↗' : '↘';
+      
+      el.innerHTML = `<span style="display:inline-flex; align-items:center; gap:3px; color:${{color}}; font-weight:700; font-size:11px; background:${{bg}}; padding:3px 8px; border-radius:6px; letter-spacing:0.03em;">${{icon}} ${{Math.abs(pct).toFixed(1)}}%</span>`;
+  }}
+}};
+
 (()=>{{
   const el  = document.querySelector('.hero-right svg text');
   if (!el) return;
@@ -833,7 +776,6 @@ const formatPct = (v) => {{
   setTimeout(() => requestAnimationFrame(run), 400);
 }})();
 
-/* summary bar */
 (()=>{{
   const bar = document.getElementById('sumbarInner');
   if (!bar || !CD.length) {{ document.querySelector('.sumbar').style.display='none'; return; }}
@@ -844,12 +786,11 @@ const formatPct = (v) => {{
   }};
   
   const sorted = [...CD].sort((a, b) => {{
-    const A = a?.name || '';
-    const B = b?.name || '';
+    const A = a?.name || ''; const B = b?.name || '';
     const ma = String(A).toUpperCase().match(/(\d)\s*T\s*(\d{{2,4}})/);
     const mb = String(B).toUpperCase().match(/(\d)\s*T\s*(\d{{2,4}})/);
-    const key = (m, s) => m ? [Number(m[2]) < 100 ? 2000 + Number(m[2]) : Number(m[2]), Number(m[1])] : [9999, 9];
-    const ka = key(ma, A), kb = key(mb, B);
+    const key = (m) => m ? [Number(m[2]) < 100 ? 2000 + Number(m[2]) : Number(m[2]), Number(m[1])] : [9999, 9];
+    const ka = key(ma), kb = key(mb);
     if (ka[0] !== kb[0]) return ka[0] - kb[0];
     if (ka[1] !== kb[1]) return ka[1] - kb[1];
     return String(A).localeCompare(String(B));
@@ -878,17 +819,28 @@ const formatPct = (v) => {{
   }});
 }})();
 
-/* shared chart.js config */
-const TT = {{ backgroundColor:'#0F172A', titleColor:'#fff', bodyColor:'#CBD5E1',
-              borderColor:'#1E293B', borderWidth:1, cornerRadius:8, padding:10 }};
-const XA = {{ grid:{{display:false}}, ticks:{{color:'#9CA3AF',font:{{size:10}}}}, border:{{display:false}} }};
-const YA = {{ grid:{{color:'#F1F5F9'}}, border:{{display:false}}, ticks:{{color:'#9CA3AF',font:{{size:10}}}} }};
+const TT = {{ backgroundColor:'#0F172A', titleColor:'#fff', bodyColor:'#CBD5E1', borderColor:'#1E293B', borderWidth:1, cornerRadius:8, padding:10 }};
+
+const XA = {{ 
+    grid:{{display:false}}, 
+    ticks:{{color:'#9CA3AF', font:{{size:10}}}}, 
+    border:{{display:false}} 
+}};
+
+// Callback no Eixo Y chamando o formatBRL
+const YA = {{ 
+    grid:{{color:'#F1F5F9'}}, 
+    border:{{display:false}}, 
+    ticks:{{
+        color:'#9CA3AF', font:{{size:10}}, 
+        callback: function(value) {{ return formatBRL(value); }}
+    }} 
+}};
 
 const BASE = {{
-  responsive: true, 
-  maintainAspectRatio: false,
+  responsive: true, maintainAspectRatio: false,
   animation: {{duration: 800, easing: 'easeOutQuart'}},
-  layout: {{ padding: {{ top: 25, right: 15 }} }}, /* Espaço extra para os rótulos não cortarem */
+  layout: {{ padding: {{ top: 25, right: 20 }} }}, 
   plugins: {{
     legend: {{display: false}}, 
     tooltip: TT,
@@ -896,16 +848,12 @@ const BASE = {{
       color: '#475569',
       font: {{ weight: '600', size: 10 }},
       anchor: 'end',
-      /* Alinha no topo se for barra vertical/linha, ou a direita se for barra horizontal */
       align: function(context) {{
           return context.chart.config.options.indexAxis === 'y' ? 'right' : 'top';
       }},
       offset: 4,
       formatter: function(value, context) {{
           const lbl = context.dataset.label || '';
-          const cId = context.chart.canvas.id;
-          
-          if (cId === 'cS2B') return (value > 0 ? '+' : '') + value.toFixed(1) + ' p.p.';
           if (lbl.includes('Margem') || lbl.includes('Spread')) return value.toFixed(1) + '%';
           return formatBRL(value);
       }}
@@ -913,7 +861,6 @@ const BASE = {{
   }}
 }};
 
-/* section charts (only if data exists) */
 (()=>{{
   if (!CD.length) return;
   const labels = CD.map(d => d.name || '');
@@ -924,14 +871,10 @@ const BASE = {{
   {charts_js}
 }})();
 
-/* intersection observer for fade-in */
 const io = new IntersectionObserver(entries => entries.forEach(e => {{
   if (e.isIntersecting) e.target.style.animationPlayState = 'running';
 }}), {{ threshold: 0.06 }});
-document.querySelectorAll('.fade-in').forEach(el => {{
-  el.style.animationPlayState = 'paused';
-  io.observe(el);
-}});
+document.querySelectorAll('.fade-in').forEach(el => {{ el.style.animationPlayState = 'paused'; io.observe(el); }});
 </script>
 </body>
 </html>
@@ -943,10 +886,6 @@ document.querySelectorAll('.fade-in').forEach(el => {{
    .replace("__G__",   str(g))\
    .replace("{charts_js}", charts_js)
 
-
-# ═══════════════════════════════════════════════════════════════
-# FASTAPI ENDPOINT
-# ═══════════════════════════════════════════════════════════════
 
 @router.get("/api/report/{item_id}", response_class=HTMLResponse)
 def get_report(item_id: int):

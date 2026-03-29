@@ -59,7 +59,6 @@ def init_db():
         conn = get_db_connection()
         cur = conn.cursor()
         
-        # IMPORTANTE: user_id agora é TEXT para suportar Clerk
         cur.execute('''
             CREATE TABLE IF NOT EXISTS historico (
                 id SERIAL PRIMARY KEY,
@@ -138,19 +137,17 @@ def parse_results(text):
                         return float(s.replace(',', '.'))
                     except:
                         return default
-                cleaned.append({
+                
+                cleaned_item = {
                     "name": item.get("name") or item.get("periodo") or item.get("label") or "",
                     "receita": to_float(item.get("receita")),
                     "lucro": to_float(item.get("lucro")),
                     "margemBruta": to_float(item.get("margemBruta")),
                     "margemLiquida": to_float(item.get("margemLiquida")),
-                    "var_pessoal": to_float(item.get("var_pessoal"), 0.0),
-                    "var_marketing": to_float(item.get("var_marketing"), 0.0),
-                    "var_servicos": to_float(item.get("var_servicos"), 0.0),
-                    "var_fretes": to_float(item.get("var_fretes"), 0.0),
-                    "var_ga": to_float(item.get("var_ga"), 0.0),
-                    "var_outras": to_float(item.get("var_outras"), 0.0),
-                })
+                    "segmentos": item.get("segmentos", []),
+                    "despesas_var": item.get("despesas_var", [])
+                }
+                cleaned.append(cleaned_item)
             return cleaned
         except:
             return []
@@ -188,7 +185,7 @@ async def analyze_report(
     empresa: str = Form(...),
     ano: str = Form(...),
     trimestre: str = Form(...),
-    user_id: str = Form(...)  # ALTERADO PARA STRING (CLERK)
+    user_id: str = Form(...) 
 ):
     print(f"🔄 Análise para User {user_id}: {empresa}")
     
@@ -209,56 +206,50 @@ Formatação Visual: Utilize Tabelas em Markdown (ex: Segmento | 3T24 | 3T25 | V
 Apresentação Numérica: Escreva os números por extenso com até duas casas decimais (ex: "R$ 11,87 bilhões", "aumento de 13,1%", "expansão de 0,6 p.p."). NÃO use LaTeX.
 
 Especificidade Setorial: - Se for Instituição Financeira: Fale em Margem Financeira (NII), ROE, Índice de Eficiência, Custo de Crédito (NPL/Inadimplência) e Basileia (CET1).
-
 Se for Varejo/Indústria: Fale em Receita Líquida, EBITDA, Margem Bruta/EBITDA, Dívida Líquida/EBITDA e Vendas Mesmas Lojas (SSS).
-
-Crescimento Inorgânico: Contextualize aquisições no meio do texto, separando o crescimento orgânico da consolidação de M&As, mas não penalize a nota final apenas por isso.
 
 SISTEMA DE NOTAS: Todas as notas devem ser estritamente números inteiros (1, 2, 3, 4 ou 5) e seguir exatamente o formato Nota Seção X: Y/5.
 
 ESTRUTURA OBRIGATÓRIA DE RESPOSTA:
 [Parágrafo Introdutório]
-(Escreva um parágrafo inicial de 3 a 5 linhas resumindo o trimestre da empresa, destacando se o resultado foi sólido, fraco ou desafiador, e qual foi o principal motor desse desempenho. Sem título de seção para este parágrafo).
+(Resuma o trimestre da empresa, destacando o principal motor do desempenho).
 
 Seção 1: Evolução Operacional e Top Line
-(Analise o crescimento da Receita Líquida, Carteira de Crédito ou Volume de Vendas. Como foi a dinâmica de preços vs. volume? Desconstrua o crescimento por segmento. É altamente recomendável inserir uma tabela em Markdown aqui mostrando os principais segmentos e suas variações anuais/trimestrais).
+(Analise o crescimento da Receita Líquida. Desconstrua o crescimento por segmento em uma tabela Markdown).
 Nota Seção 1: X/5
 
 Seção 2: Rentabilidade e Margens
-(Analise o EBITDA, Margem Financeira, Índice de Eficiência ou Resultado Operacional. Houve alavancagem operacional? Os custos foram diluídos ou pressionaram a margem? Use bullet points para detalhar as despesas operacionais ou linhas de serviços/seguros, se houver).
+(Analise o EBITDA, Margens e Despesas Operacionais. Houve alavancagem operacional? Use bullet points para detalhar as variações das despesas - ex: G&A, P&D, S&M).
 Nota Seção 2: X/5
 
 Seção 3: Estrutura de Capital e Gestão de Risco
-(Se for banco: analise a Qualidade do Crédito, Inadimplência > 90 dias, Custo do Crédito e Índice de Basileia. Se for empresa real: analise a Geração de Caixa Livre, Dívida Líquida/EBITDA, perfil da dívida e despesas financeiras).
+(Analise a Geração de Caixa Livre, Dívida Líquida/EBITDA, perfil da dívida).
 Nota Seção 3: X/5
 
 Seção 4: Sumário Executivo do Lucro Líquido
-(Analise o Bottom-Line. Qual foi o Lucro Líquido e o ROE (Retorno sobre Patrimônio)? O resultado foi limpo ou impactado por efeitos não-recorrentes, marcação a mercado ou créditos tributários? Conecte este lucro à eficiência descrita nas seções anteriores).
+(Analise o Bottom-Line. Lucro Líquido e ROE).
 Nota Seção 4: X/5
 
 Seção 5: Conclusão Estratégica e Outlook
-(Sintetize a análise de forma coesa. O resultado superou, atendeu ou frustrou as expectativas? Avalie a sustentabilidade desse resultado para os próximos trimestres. Se houver Revisão de Guidance, insira uma tabela comparando o Guidance Anterior com o Revisado).
+(Sintetize a análise de forma coesa. Sustentabilidade do resultado e Guidance).
 
 Seção 6: Nota Final
-(Avaliação consolidada da resiliência, crescimento e geração de valor no trimestre).
+(Avaliação consolidada).
 Nota Geral: X/5
 
 **Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)**
-No final da sua análise, você DEVE extrair o histórico financeiro dos últimos 4 trimestres disponíveis no relatório (ou o máximo que houver) para a construção de gráficos.
-Apresente esses dados EXATAMENTE no formato de um array JSON dentro de um bloco de código markdown.
-As chaves obrigatórias são: 
-"name" (nome do trimestre, ex: "3T24"), 
-"receita" (valor financeiro ABSOLUTO REAL e completo, sem abreviações. Ex: se for 664,5 milhões, retorne 664500000. Se for 1,2 bilhão, retorne 1200000000), 
-"lucro" (valor financeiro ABSOLUTO REAL, na mesma regra da receita. Ex: 175833000), 
+Extraia o histórico financeiro dos trimestres disponíveis EXATAMENTE no formato de um array JSON dentro de um bloco de código markdown.
+Chaves obrigatórias em todos os trimestres: 
+"name" (nome do trimestre, ex: "3T25"), 
+"receita" (valor financeiro ABSOLUTO. Ex: se for 664,5 milhões, retorne 664500000. Se 1,2 bilhão, 1200000000), 
+"lucro" (valor financeiro ABSOLUTO, na mesma regra. Ex: 175833000), 
 "margemBruta" (número percentual), 
-"margemLiquida" (número percentual),
-"var_pessoal" (variação da despesa de pessoal em p.p., use positivo para eficiência/ganho e negativo para retração/pressão. Ex: 1.1),
-"var_marketing" (variação da despesa de marketing em p.p. Ex: -1.3),
-"var_servicos" (variação da despesa de serviços profissionais em p.p. Ex: -0.7),
-"var_fretes" (variação da despesa de fretes em p.p. Ex: -0.6),
-"var_ga" (variação de Despesas Gerais e Administrativas em p.p. Ex: 1.1),
-"var_outras" (variação de Outras Receitas/Despesas Operacionais em p.p. Ex: 5.0).
-Se alguma dessas variações não for citada no texto, envie 0.0.
+"margemLiquida" (número percentual).
+
+IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as seguintes chaves adicionais:
+1. "segmentos": Uma lista de dicionários com a quebra de receita. Ex: [{{"nome": "Nuvem", "valor": 300000000}}, {{"nome": "Licenças", "valor": 150000000}}]
+2. "despesas_var": Uma lista de dicionários com a variação percentual A/A das linhas de despesa citadas na Seção 2. 
+ATENÇÃO AOS SINAIS: Aumento de custo/despesa = número positivo (ex: 7.1). Queda/Redução de despesa = número negativo (ex: -9.1). Se for linha de Receita Operacional, aumento = positivo. Ex: [{{"nome": "P&D", "var_pct": 7.1}}, {{"nome": "S&M", "var_pct": 0.1}}, {{"nome": "G&A", "var_pct": -9.1}}, {{"nome": "Outras Despesas", "var_pct": -27.0}}].
 
     DADOS DO RELEASE (Use apenas o relevante):
     {pdf_text[:40000]}
@@ -275,7 +266,6 @@ Se alguma dessas variações não for citada no texto, envie 0.0.
 
         conn = get_db_connection()
         cur = conn.cursor()
-        # Salva user_id como TEXTO agora
         cur.execute(
             "INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s)",
             (empresa, ano, trimestre, json.dumps(objeto_final), str(user_id))
@@ -292,11 +282,10 @@ Se alguma dessas variações não for citada no texto, envie 0.0.
         if conn: conn.close()
 
 @app.get("/api/table-data")
-def get_table_data(user_id: str): # ALTERADO PARA STRING
+def get_table_data(user_id: str): 
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        # Busca tratando o ID como texto
         cur.execute("SELECT empresa, ano, trimestre, resultado_json FROM historico WHERE CAST(user_id AS TEXT) = %s ORDER BY empresa, ano DESC, trimestre DESC", (str(user_id),))
         rows = cur.fetchall()
 
@@ -308,7 +297,6 @@ def get_table_data(user_id: str): # ALTERADO PARA STRING
                 conteudo = json.loads(row[3])
                 data_content = conteudo.get('data', {})
                 
-                # Helpers
                 def safe_float(val):
                     try:
                         if val is None or val == "": return 0.0
@@ -367,7 +355,7 @@ def get_table_data(user_id: str): # ALTERADO PARA STRING
         conn.close()
 
 @app.get("/api/history")
-def get_history(user_id: str): # ALTERADO PARA STRING
+def get_history(user_id: str):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -409,10 +397,8 @@ def delete_history_item(item_id: int):
         cur.close()
         conn.close()
 
-# --- ROTA DE CORREÇÃO DO BANCO (CLERK MIGRATION) ---
 @app.get("/api/fix-database-clerk")
 def fix_database_clerk():
-    """Converte a coluna user_id de INTEGER para TEXT para aceitar IDs do Clerk"""
     conn = get_db_connection()
     cur = conn.cursor()
     try:
