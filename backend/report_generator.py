@@ -13,10 +13,10 @@ import seaborn as sns
 router = APIRouter()
 
 # Configuração da API do Gemini (Certifique-se de definir a variável de ambiente)
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-if not GOOGLE_API_KEY:
-    raise ValueError("A variável de ambiente GOOGLE_API_KEY não foi definida.")
-genai.configure(api_key=GOOGLE_API_KEY)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("A variável de ambiente GEMINI_API_KEY não foi definida.")
+genai.configure(api_key=GEMINI_API_KEY)
 
 # --- DADOS BRUTOS DO RELEASE (Simulação - Em produção, viria do banco) ---
 # Em um cenário real, esses dados seriam extraídos do PDF e passados para esta função.
