@@ -1,7 +1,7 @@
 """
-report_generator.py  —  FinAnalyzer v2
+report_generator.py  —  FinAnalyzer v4
 ════════════════════════════════════════════════════════════════
-Coloque na mesma pasta do main.py e adicione 2 linhas:
+Adicione ao main.py (2 linhas):
 
     from report_generator import router as report_router
     app.include_router(report_router)   # logo após app = FastAPI(...)
@@ -17,319 +17,451 @@ from fastapi.responses import HTMLResponse
 
 router = APIRouter()
 
-# ─────────── helpers ───────────
+# ═══════════════════════════════════════════════════════════════
+# HELPERS
+# ═══════════════════════════════════════════════════════════════
 
 def _f(v) -> float:
-    try: return float(str(v).replace(",",".").strip())
-    except: return 0.0
+    try:
+        return float(str(v).replace(",", ".").strip())
+    except Exception:
+        return 0.0
 
-def _score(n):
-    if n>=4: return {"text":"#0A6640","bg":"#D1FAE5","border":"#6EE7B7","label":"Excelente","hex":"#0A6640"}
-    if n>=3: return {"text":"#1D4ED8","bg":"#DBEAFE","border":"#93C5FD","label":"Bom",      "hex":"#1D4ED8"}
-    if n>=2: return {"text":"#92400E","bg":"#FEF3C7","border":"#FDE68A","label":"Regular",  "hex":"#D97706"}
-    return         {"text":"#991B1B","bg":"#FEE2E2","border":"#FCA5A5","label":"Fraco",     "hex":"#DC2626"}
 
-def _extract_charts(text):
+def _score_theme(n: float) -> dict:
+    """
+    1 → vermelho forte   2 → vermelho suave
+    3 → âmbar/amarelo    4 → verde suave    5 → verde forte
+    """
+    if n <= 1.5:
+        return dict(label="Muito Ruim", text="#7F1D1D", bg="#FEF2F2",
+                    border="#FECACA", bar="#DC2626", badge_bg="#FEE2E2",
+                    badge_text="#991B1B", icon="✗")
+    if n <= 2.5:
+        return dict(label="Ruim",      text="#9A3412", bg="#FFF7ED",
+                    border="#FED7AA", bar="#EA580C", badge_bg="#FFEDD5",
+                    badge_text="#9A3412", icon="↓")
+    if n <= 3.5:
+        return dict(label="Regular",   text="#78350F", bg="#FFFBEB",
+                    border="#FDE68A", bar="#D97706", badge_bg="#FEF3C7",
+                    badge_text="#92400E", icon="~")
+    if n <= 4.5:
+        return dict(label="Bom",       text="#14532D", bg="#F0FDF4",
+                    border="#BBF7D0", bar="#16A34A", badge_bg="#DCFCE7",
+                    badge_text="#15803D", icon="↑")
+    return         dict(label="Excelente",text="#052E16", bg="#ECFDF5",
+                    border="#6EE7B7", bar="#059669", badge_bg="#D1FAE5",
+                    badge_text="#065F46", icon="★")
+
+
+def _extract_charts(text: str) -> list:
     try:
         m = re.search(r"```json\s*([\s\S]*?)\s*```", text or "")
-        if m: return json.loads(m.group(1))
-    except: pass
+        if m:
+            return json.loads(m.group(1))
+    except Exception:
+        pass
     return []
 
-def _clean_md(text):
-    if not text: return ""
+
+def _clean_md(text: str) -> str:
+    """Markdown → HTML limpo: tabelas, bold, bullets, parágrafos."""
+    if not text:
+        return ""
     lines = text.split("\n")
     out, in_table, in_ul = [], False, False
     for line in lines:
         s = line.strip()
         if s.startswith("|") and s.endswith("|"):
             if not in_table:
-                if in_ul: out.append("</ul>"); in_ul=False
-                out.append('<div class="tbl-wrap"><table class="tbl">')
-                in_table=True
-            cells=[c.strip() for c in s.strip("|").split("|")]
-            if all(re.match(r"^[-:]+$",c) for c in cells): continue
-            is_hdr = not any("<td>" in r for r in out[-5:])
-            tag="th" if is_hdr else "td"
-            row="".join(f"<{tag}>{_h.escape(c)}</{tag}>" for c in cells)
-            out.append(f"<tr>{row}</tr>"); continue
-        if in_table: out.append("</table></div>"); in_table=False
-        if re.match(r"^[-•*]\s",s):
-            if not in_ul: out.append("<ul>"); in_ul=True
-            body=re.sub(r"\*\*(.+?)\*\*",r"<strong>\1</strong>",s[2:])
-            out.append(f"<li>{body}</li>"); continue
-        if in_ul: out.append("</ul>"); in_ul=False
+                if in_ul:
+                    out.append("</ul>")
+                    in_ul = False
+                out.append('<div class="tbl-wrap"><table class="tbl"><tbody>')
+                in_table = True
+            cells = [c.strip() for c in s.strip("|").split("|")]
+            if all(re.match(r"^[-:]+$", c) for c in cells):
+                continue
+            is_hdr = not any("<td>" in r for r in out[-6:])
+            tag = "th" if is_hdr else "td"
+            row = "".join(f"<{tag}>{_h.escape(c)}</{tag}>" for c in cells)
+            out.append(f"<tr>{row}</tr>")
+            continue
+        if in_table:
+            out.append("</tbody></table></div>")
+            in_table = False
+        if re.match(r"^[-•*]\s", s):
+            if not in_ul:
+                out.append('<ul class="md-ul">')
+                in_ul = True
+            body = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s[2:])
+            out.append(f"<li>{body}</li>")
+            continue
+        if in_ul:
+            out.append("</ul>")
+            in_ul = False
         if s:
-            s=re.sub(r"\*\*(.+?)\*\*",r"<strong>\1</strong>",s)
+            s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
             out.append(s)
-    if in_table: out.append("</table></div>")
-    if in_ul: out.append("</ul>")
-    combined="\n".join(out)
-    paras=re.split(r"\n{2,}",combined)
-    res=[]
+    if in_table:
+        out.append("</tbody></table></div>")
+    if in_ul:
+        out.append("</ul>")
+    combined = "\n".join(out)
+    paras = re.split(r"\n{2,}", combined)
+    result = []
     for p in paras:
-        p=p.strip()
-        if not p: continue
-        res.append(p if p.startswith("<") else f"<p>{p}</p>")
-    return "\n".join(res)
+        p = p.strip()
+        if not p:
+            continue
+        result.append(p if p.startswith("<") else f"<p>{p}</p>")
+    return "\n".join(result)
 
-def _parse_sections(text):
-    titles={1:"Evolução Operacional e Top Line",2:"Rentabilidade e Margens",
-            3:"Estrutura de Capital e Gestão de Risco",4:"Sumário Executivo do Lucro Líquido",
-            5:"Conclusão Estratégica e Outlook"}
-    secs=[]
-    intro=re.search(r"^([\s\S]*?)(?=\*?\*?Seção\s*1)",text or "",re.IGNORECASE)
+
+def _parse_sections(text: str) -> list:
+    titles = {
+        1: "Evolução Operacional e Top Line",
+        2: "Rentabilidade e Margens",
+        3: "Estrutura de Capital e Gestão de Risco",
+        4: "Sumário Executivo do Lucro Líquido",
+        5: "Conclusão Estratégica e Outlook",
+    }
+    secs = []
+    intro = re.search(r"^([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*1)", text or "", re.IGNORECASE)
     if intro:
-        b=intro.group(1).strip().replace("**","")
-        if b: secs.append({"num":0,"title":"Visão Geral do Trimestre","body":b,"nota":None})
-    for n in range(1,6):
-        pat=rf"\*?\*?Seção\s*{n}[:\s\–\-].*?\n([\s\S]*?)(?=\*?\*?Seção\s*{n+1}|\Z)"
-        m=re.search(pat,text or "",re.IGNORECASE)
-        if not m: continue
-        body=m.group(1).strip()
-        nm=re.search(rf"Nota\s+Seção\s+{n}[:\s]+(\d[.,]?\d?)\s*/\s*5",body,re.IGNORECASE)
-        nota=_f(nm.group(1)) if nm else None
-        body=re.sub(rf"\*?\*?Nota\s+Seção\s+{n}[:\s]+\d[.,]?\d?\s*/\s*5\*?\*?","",body).strip()
-        body=re.sub(r"```json[\s\S]*?```","",body).strip()
-        secs.append({"num":n,"title":titles.get(n,f"Seção {n}"),"body":body,"nota":nota})
+        b = intro.group(1).strip().replace("**", "")
+        if b:
+            secs.append({"num": 0, "title": "Visão Geral do Trimestre", "body": b, "nota": None})
+    for n in range(1, 6):
+        pat = rf"\*?\*?Se[cç][aã]o\s*{n}[:\s\–\-].*?\n([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*{n+1}|\Z)"
+        m = re.search(pat, text or "", re.IGNORECASE)
+        if not m:
+            continue
+        body = m.group(1).strip()
+        nm = re.search(
+            rf"Nota\s+Se[cç][aã]o\s+{n}[:\s]+(\d[.,]?\d?)\s*/\s*5",
+            body, re.IGNORECASE,
+        )
+        nota = _f(nm.group(1)) if nm else None
+        body = re.sub(
+            rf"\*?\*?Nota\s+Se[cç][aã]o\s+{n}[:\s]+\d[.,]?\d?\s*/\s*5\*?\*?", "", body
+        ).strip()
+        body = re.sub(r"```json[\s\S]*?```", "", body).strip()
+        secs.append({"num": n, "title": titles.get(n, f"Seção {n}"), "body": body, "nota": nota})
     return secs
 
-# ─────────── main generator ───────────
+
+# ═══════════════════════════════════════════════════════════════
+# CHART CONFIG PER SECTION
+# Each entry: canvas id, title, subtitle, JS snippet that uses
+#   `labels`, `rec`, `luc`, `mB`, `mL`  (already defined in page JS)
+# ═══════════════════════════════════════════════════════════════
+
+SECTION_CHARTS = {
+    # Seção 0 (intro) — overview: receita + lucro barras
+    0: [
+        {
+            "id": "cS0A",
+            "title": "Receita & Lucro — Visão Geral",
+            "sub": "Evolução nos últimos trimestres",
+            "legend": [("Receita","#1E40AF"), ("Lucro","#059669")],
+            "js": """new Chart(document.getElementById('cS0A'),{type:'bar',data:{labels,datasets:[
+  {label:'Receita',data:rec,backgroundColor:'rgba(30,64,175,.18)',borderColor:'#1E40AF',borderWidth:2,borderRadius:5,maxBarThickness:32},
+  {label:'Lucro',  data:luc,backgroundColor:'rgba(5,150,105,.75)',borderRadius:5,maxBarThickness:32},
+]},options:{...BASE,scales:{x:XA,y:YA}}});"""
+        },
+    ],
+
+    # Seção 1 (Top Line) — receita barras + margem bruta linha
+    1: [
+        {
+            "id": "cS1A",
+            "title": "Evolução da Receita",
+            "sub": "Crescimento trimestral",
+            "legend": [("Receita","#1E40AF"), ("Lucro","#059669")],
+            "js": """new Chart(document.getElementById('cS1A'),{type:'bar',data:{labels,datasets:[
+  {label:'Receita',data:rec,backgroundColor:'rgba(30,64,175,.18)',borderColor:'#1E40AF',borderWidth:2,borderRadius:5,maxBarThickness:32},
+  {label:'Lucro',  data:luc,backgroundColor:'rgba(5,150,105,.75)',borderRadius:5,maxBarThickness:32},
+]},options:{...BASE,scales:{x:XA,y:YA}}});"""
+        },
+        {
+            "id": "cS1B",
+            "title": "Margem Bruta (%)",
+            "sub": "Tendência da margem bruta ao longo do tempo",
+            "legend": [("Margem Bruta","#7C3AED")],
+            "js": """new Chart(document.getElementById('cS1B'),{type:'line',data:{labels,datasets:[
+  {label:'Margem Bruta',data:mB,borderColor:'#7C3AED',backgroundColor:'rgba(124,58,237,.08)',
+   fill:true,borderWidth:2.5,pointBackgroundColor:'#7C3AED',pointRadius:4,tension:.35},
+]},options:{...BASE,scales:{x:XA,y:{...YA,ticks:{...YA.ticks,callback:v=>v+'%'}}}}});"""
+        },
+    ],
+
+    # Seção 2 (Margens) — margem bruta vs líquida linha
+    2: [
+        {
+            "id": "cS2A",
+            "title": "Margens Bruta e Líquida (%)",
+            "sub": "Comparativo trimestral de margens",
+            "legend": [("Bruta","#7C3AED"), ("Líquida","#D97706")],
+            "js": """new Chart(document.getElementById('cS2A'),{type:'line',data:{labels,datasets:[
+  {label:'Margem Bruta',  data:mB,borderColor:'#7C3AED',backgroundColor:'rgba(124,58,237,.07)',
+   fill:true,borderWidth:2.5,pointBackgroundColor:'#7C3AED',pointRadius:4,tension:.35},
+  {label:'Margem Líquida',data:mL,borderColor:'#D97706',backgroundColor:'transparent',
+   borderWidth:2,borderDash:[5,3],pointBackgroundColor:'#D97706',pointRadius:4,tension:.35},
+]},options:{...BASE,scales:{x:XA,y:{...YA,ticks:{...YA.ticks,callback:v=>v+'%'}}}}});"""
+        },
+        {
+            "id": "cS2B",
+            "title": "Spread de Margens",
+            "sub": "Diferença entre margem bruta e líquida",
+            "legend": [("Spread positivo","#059669"), ("Compressão","#DC2626")],
+            "js": """const spread=mB.map((b,i)=>parseFloat((b-mL[i]).toFixed(2)));
+new Chart(document.getElementById('cS2B'),{type:'bar',data:{labels,datasets:[
+  {label:'Spread',data:spread,
+   backgroundColor:spread.map(v=>v>=0?'rgba(5,150,105,.7)':'rgba(220,38,38,.65)'),
+   borderRadius:4,maxBarThickness:30},
+]},options:{...BASE,scales:{x:XA,y:{...YA,ticks:{...YA.ticks,callback:v=>v+'%'}}}}});"""
+        },
+    ],
+
+    # Seção 3 (Capital/Dívida) — lucro linha + receita barras (proxy de geração de caixa)
+    3: [
+        {
+            "id": "cS3A",
+            "title": "Geração de Resultado",
+            "sub": "Lucro acumulado — proxy de fluxo de caixa",
+            "legend": [("Lucro","#059669")],
+            "js": """new Chart(document.getElementById('cS3A'),{type:'line',data:{labels,datasets:[
+  {label:'Lucro',data:luc,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.08)',
+   fill:true,borderWidth:2.5,pointBackgroundColor:'#059669',pointRadius:4,tension:.35},
+]},options:{...BASE,scales:{x:XA,y:YA}}});"""
+        },
+        {
+            "id": "cS3B",
+            "title": "Receita vs Lucro — Cobertura",
+            "sub": "Proporção lucro/receita por trimestre",
+            "legend": [("Receita","#94A3B8"), ("Lucro","#059669")],
+            "js": """new Chart(document.getElementById('cS3B'),{type:'bar',data:{labels,datasets:[
+  {label:'Receita',data:rec,backgroundColor:'rgba(148,163,184,.35)',borderRadius:4,maxBarThickness:30},
+  {label:'Lucro',  data:luc,backgroundColor:'rgba(5,150,105,.8)' ,borderRadius:4,maxBarThickness:30},
+]},options:{...BASE,scales:{x:XA,y:YA}}});"""
+        },
+    ],
+
+    # Seção 4 (Lucro) — lucro barras + margem líquida linha
+    4: [
+        {
+            "id": "cS4A",
+            "title": "Lucro Líquido por Trimestre",
+            "sub": "Evolução do bottom-line",
+            "legend": [("Lucro","#059669")],
+            "js": """new Chart(document.getElementById('cS4A'),{type:'bar',data:{labels,datasets:[
+  {label:'Lucro',data:luc,
+   backgroundColor:luc.map((_,i)=>i===luc.length-1?'rgba(5,150,105,.9)':'rgba(5,150,105,.35)'),
+   borderColor:'#059669',borderWidth:1.5,borderRadius:6,maxBarThickness:36},
+]},options:{...BASE,scales:{x:XA,y:YA}}});"""
+        },
+        {
+            "id": "cS4B",
+            "title": "Margem Líquida (%)",
+            "sub": "Rentabilidade sobre a receita",
+            "legend": [("Margem Líquida","#D97706")],
+            "js": """new Chart(document.getElementById('cS4B'),{type:'line',data:{labels,datasets:[
+  {label:'Margem Líquida',data:mL,borderColor:'#D97706',backgroundColor:'rgba(217,119,6,.08)',
+   fill:true,borderWidth:2.5,pointBackgroundColor:'#D97706',pointRadius:4,tension:.35},
+]},options:{...BASE,scales:{x:XA,y:{...YA,ticks:{...YA.ticks,callback:v=>v+'%'}}}}});"""
+        },
+    ],
+
+    # Seção 5 (Conclusão) — radar + receita line
+    5: [
+        {
+            "id": "cS5A",
+            "title": "Radar dos Fundamentos",
+            "sub": "Avaliação por pilar (escala 0–5)",
+            "legend": [("Score IA","#1E40AF")],
+            "js": """/* filled by notas via __NOTAS__ placeholder */
+new Chart(document.getElementById('cS5A'),{type:'radar',data:{
+  labels:['Receita','Margem','Dívida','ROE'],
+  datasets:[{
+    data:[NOTAS.receita,NOTAS.lucro,NOTAS.divida,NOTAS.roe],
+    backgroundColor:'rgba(30,64,175,.1)',borderColor:'#1E40AF',
+    pointBackgroundColor:'#1E40AF',pointRadius:4,borderWidth:2,
+  }],
+},options:{responsive:true,maintainAspectRatio:false,
+  animation:{duration:900},
+  plugins:{legend:{display:false},tooltip:TT},
+  scales:{r:{min:0,max:5,
+    ticks:{stepSize:1,color:'#9CA3AF',font:{size:10},backdropColor:'transparent'},
+    grid:{color:'#E5E7EB'},
+    pointLabels:{color:'#374151',font:{size:11,weight:'500'}},
+  }},
+}});"""
+        },
+        {
+            "id": "cS5B",
+            "title": "Tendência de Receita",
+            "sub": "Visão consolidada do crescimento",
+            "legend": [("Receita","#1E40AF"), ("Lucro","#059669")],
+            "js": """new Chart(document.getElementById('cS5B'),{type:'line',data:{labels,datasets:[
+  {label:'Receita',data:rec,borderColor:'#1E40AF',backgroundColor:'rgba(30,64,175,.07)',
+   fill:true,borderWidth:2.5,pointRadius:3,pointBackgroundColor:'#1E40AF',tension:.3},
+  {label:'Lucro',  data:luc,borderColor:'#059669',backgroundColor:'rgba(5,150,105,.07)',
+   fill:true,borderWidth:2,  pointRadius:3,pointBackgroundColor:'#059669',tension:.3},
+]},options:{...BASE,scales:{x:XA,y:YA}}});"""
+        },
+    ],
+}
+
+
+# ═══════════════════════════════════════════════════════════════
+# MAIN GENERATOR
+# ═══════════════════════════════════════════════════════════════
 
 def generate_report_html(resultado: dict) -> str:
-    meta    = resultado.get("metadata",{})
-    data    = resultado.get("data",{})
-    analise = resultado.get("analise_completa","")
+    meta    = resultado.get("metadata", {})
+    data    = resultado.get("data", {})
+    analise = resultado.get("analise_completa", "")
 
     empresa = (meta.get("empresa") or "Empresa").upper()
     periodo = meta.get("periodo") or ""
 
-    rn  = _f(data.get("receita_nota",0))
-    ln  = _f(data.get("lucro_nota",0))
-    dn  = _f(data.get("divida_nota",0))
-    ren = _f(data.get("rentabilidade_nota",0))
-    g   = _f(data.get("nota_geral",0))
-    tese= data.get("tese_investimento","")
-    sc  = _score(g)
+    rn  = _f(data.get("receita_nota", 0))
+    ln  = _f(data.get("lucro_nota", 0))
+    dn  = _f(data.get("divida_nota", 0))
+    ren = _f(data.get("rentabilidade_nota", 0))
+    g   = _f(data.get("nota_geral", 0))
+    tese = data.get("tese_investimento", "")
 
-    secs   = _parse_sections(analise)
-    charts = _extract_charts(analise)
-    cj     = json.dumps(charts)
+    tg   = _score_theme(g)
+    secs = _parse_sections(analise)
+    cd   = _extract_charts(analise)
+    cj   = json.dumps(cd)
 
-    tese_clean = re.sub(r"\*\*|\*","",tese).strip()
-    tese_html  = "".join(
-        f"<p>{_h.escape(p.strip())}</p>" for p in tese_clean.split("\n\n") if p.strip()
-    ) or f"<p>{_h.escape(tese_clean)}</p>"
+    tese_c    = re.sub(r"\*\*|\*", "", tese).strip()
+    tese_html = "".join(
+        f"<p>{_h.escape(p.strip())}</p>" for p in tese_c.split("\n\n") if p.strip()
+    ) or f"<p>{_h.escape(tese_c)}</p>"
 
-    # pillar cards
-    pillars=[
-        {"label":"Receita",          "nota":rn,  "accent":"#003087","icon_bg":"#EEF3FF",
-         "icon":'<path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'},
-        {"label":"Margem / Lucro",   "nota":ln,  "accent":"#0A6640","icon_bg":"#D1FAE5",
-         "icon":'<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>'},
-        {"label":"Dívida / Risco",   "nota":dn,  "accent":"#DC2626","icon_bg":"#FEE2E2",
-         "icon":'<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>'},
-        {"label":"Rentabilidade ROE","nota":ren, "accent":"#D97706","icon_bg":"#FEF3C7",
-         "icon":'<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>'},
+    # ── HERO SCORE RING ─────────────────────────────────────
+    def _hero_ring(nota, size=110):
+        t  = _score_theme(nota)
+        R  = size // 2 - 10
+        cx = cy = size // 2
+        C  = 2 * 3.14159 * R
+        dash = C * (nota / 5)
+        gap  = C - dash
+        off  = C * 0.25
+        return (
+            f'<svg width="{size}" height="{size}" viewBox="0 0 {size} {size}">'
+            f'<circle cx="{cx}" cy="{cy}" r="{R}" fill="none" stroke="#E5E7EB" stroke-width="10"/>'
+            f'<circle cx="{cx}" cy="{cy}" r="{R}" fill="none" stroke="{t["bar"]}" stroke-width="10"'
+            f' stroke-dasharray="{dash:.1f} {gap:.1f}" stroke-dashoffset="{off:.1f}" stroke-linecap="round"/>'
+            f'<text x="{cx}" y="{cy-6}" text-anchor="middle" dominant-baseline="middle"'
+            f' style="font-family:\'DM Sans\',sans-serif;font-size:{size//4}px;font-weight:700;fill:{t["bar"]}">{nota:.1f}</text>'
+            f'<text x="{cx}" y="{cy+14}" text-anchor="middle"'
+            f' style="font-family:\'DM Sans\',sans-serif;font-size:11px;fill:#9CA3AF;">/5</text>'
+            f'</svg>'
+        )
+
+    # ── PILLAR CARDS ────────────────────────────────────────
+    pillars = [
+        {"label": "Receita",           "nota": rn,  "icon": "📈"},
+        {"label": "Margem & Lucro",    "nota": ln,  "icon": "📊"},
+        {"label": "Dívida & Risco",    "nota": dn,  "icon": "🛡"},
+        {"label": "Rentabilidade ROE", "nota": ren, "icon": "💡"},
     ]
-    def pkard(p):
-        c=_score(p["nota"]); pct=min(100,int(p["nota"]/5*100))
-        return f"""<div class="kpi-card" style="--acc:{p['accent']};">
-          <div class="kpi-icon" style="background:{p['icon_bg']};">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{p['accent']}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">{p['icon']}</svg>
-          </div>
-          <div class="kpi-label">{p['label']}</div>
-          <div class="kpi-value">{p['nota']:.1f}<span class="kpi-denom">/5</span></div>
-          <div class="kpi-track"><div class="kpi-fill" style="width:{pct}%;background:{p['accent']};"></div></div>
-          <span class="kpi-badge" style="background:{c['bg']};color:{c['text']};">{c['label']}</span>
-        </div>"""
-    kpis = "".join(pkard(p) for p in pillars)
 
-    # section blocks
-    icons={0:"🔍",1:"📊",2:"📈",3:"🏦",4:"💰",5:"🎯"}
-    def sblock(s):
-        nb=""
-        if s["nota"] is not None:
-            c=_score(s["nota"])
-            nb=f'<span class="sec-badge" style="background:{c["bg"]};color:{c["text"]};border-color:{c["border"]};">{s["nota"]:.1f}/5 — {c["label"]}</span>'
-        nl=f'<span class="sec-num">Seção {s["num"]}</span>' if s["num"]>0 else ""
-        return f"""<div class="sec-block fade-in">
-          <div class="sec-hdr">
-            <div class="sec-hdr-l">
-              <div class="sec-ico">{icons.get(s['num'],'📋')}</div>
-              <div>{nl}<h2 class="sec-title">{_h.escape(s['title'])}</h2></div>
-            </div>{nb}
-          </div>
-          <div class="abody">{_clean_md(s['body'])}</div>
-        </div>"""
-    secs_html="".join(sblock(s) for s in secs)
+    def _pillar(p):
+        t   = _score_theme(p["nota"])
+        pct = int(p["nota"] / 5 * 100)
+        return f"""<div class="pillar" style="border-top:3px solid {t['bar']}">
+  <div class="pillar-top">
+    <span class="pillar-icon">{p['icon']}</span>
+    <span class="pillar-badge" style="background:{t['badge_bg']};color:{t['badge_text']};">{t['icon']} {t['label']}</span>
+  </div>
+  <div class="pillar-nota" style="color:{t['bar']}">{p['nota']:.1f}<span class="pillar-denom">/5</span></div>
+  <div class="pillar-label">{p['label']}</div>
+  <div class="pillar-track"><div class="pillar-fill" style="width:{pct}%;background:{t['bar']}"></div></div>
+</div>"""
 
-    if g>=4:   vt,vc="Resultado Sólido","tag-buy"
-    elif g>=3: vt,vc="Resultado Moderado","tag-watch"
-    else:      vt,vc="Resultado Fraco","tag-neutral"
+    pillars_html = "".join(_pillar(p) for p in pillars)
 
-    CSS = """
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --blue:#003087;--blue-bg:#EEF3FF;
-  --green:#0A6640;--green-bg:#D1FAE5;
-  --red:#DC2626;--red-bg:#FEE2E2;
-  --amber:#D97706;--amber-bg:#FEF3C7;
-  --ink:#0F172A;--ink60:#475569;--ink40:#94A3B8;--ink20:#E2E8F0;--ink10:#F8FAFC;
-  --page:#F7F8FA;--white:#fff;--r:12px;--rsm:6px;
-}
-html{font-size:16px;scroll-behavior:smooth}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--page);color:var(--ink);line-height:1.65;-webkit-font-smoothing:antialiased}
-@media print{
-  body{background:#fff}
-  .no-print{display:none!important}
-  .page-break{break-before:page}
-  .avoid-break{break-inside:avoid}
-  .fade-in{opacity:1!important;transform:none!important;animation:none!important}
-}
-@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-@keyframes barGrow{from{width:0!important}to{}}
-@keyframes scoreCount{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
-.fade-in{opacity:0;animation:fadeUp .55s ease forwards;animation-play-state:paused}
-::-webkit-scrollbar{width:5px;height:5px}
-::-webkit-scrollbar-thumb{background:var(--ink20);border-radius:3px}
+    # ── BUILD SECTION BLOCKS ────────────────────────────────
+    all_chart_js = []   # collect all chart JS snippets
 
-/* PRINT BTN */
-.print-btn{
-  position:fixed;top:20px;right:20px;background:var(--blue);color:#fff;
-  border:none;border-radius:var(--rsm);padding:10px 18px;
-  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
-  cursor:pointer;display:flex;align-items:center;gap:8px;
-  z-index:999;box-shadow:0 4px 20px rgba(0,48,135,.35);
-  transition:transform .15s,box-shadow .15s;
-}
-.print-btn:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(0,48,135,.4)}
+    def _section_block(s):
+        t  = _score_theme(s["nota"]) if s["nota"] is not None else None
+        charts_cfg = SECTION_CHARTS.get(s["num"], [])
+        has_charts = bool(charts_cfg and cd)
 
-/* COVER */
-.cover{min-height:100vh;display:flex;flex-direction:column;justify-content:space-between;padding:60px 72px;background:var(--white);border-bottom:1px solid var(--ink20);position:relative;overflow:hidden}
-.cgrad{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 55% 55% at 95% 5%,#EEF3FF 0%,transparent 60%),radial-gradient(ellipse 25% 35% at 2% 98%,rgba(10,102,64,.06) 0%,transparent 50%)}
-.chdr{display:flex;justify-content:space-between;align-items:flex-start;position:relative}
-.brand{display:flex;align-items:center;gap:12px}
-.bcube{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center}
-.bname{font-weight:600;font-size:15px;color:var(--blue);letter-spacing:-.02em}
-.bsub{font-size:11px;color:var(--ink40);display:block;margin-top:-2px}
-.ppill{background:var(--blue-bg);border:1px solid #C7D7F5;border-radius:999px;padding:6px 16px;font-size:12px;font-weight:500;color:var(--blue);letter-spacing:.04em;text-transform:uppercase}
-.cbody{flex:1;display:flex;flex-direction:column;justify-content:center;padding:80px 0 56px;position:relative}
-.ceyebrow{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink40);margin-bottom:20px}
-.ctitle{font-family:'Playfair Display',serif;font-size:clamp(48px,7vw,86px);font-weight:900;line-height:.95;letter-spacing:-.03em;color:var(--ink);margin-bottom:28px}
-.ctitle span{color:var(--blue)}
-.cdesc{font-size:17px;color:var(--ink60);font-weight:300;max-width:540px;line-height:1.6;margin-bottom:52px}
-.srow{display:flex;align-items:center;gap:40px;padding-top:36px;border-top:1px solid var(--ink20)}
-.snum{font-family:'Playfair Display',serif;font-size:88px;font-weight:900;line-height:1;letter-spacing:-.04em;animation:scoreCount .8s ease .4s both}
-.sdenom{font-size:28px;color:var(--ink40);font-weight:300}
-.slbl{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink40)}
-.sdesc{font-size:20px;font-weight:600;margin-top:4px}
-.cfooter{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink40);position:relative}
-.bwarn{display:flex;align-items:center;gap:6px;background:#FEF3C7;border:1px solid #FDE68A;border-radius:4px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--amber);letter-spacing:.06em;text-transform:uppercase}
+        # nota box
+        nota_box = ""
+        if t:
+            nota_box = f"""
+<div class="nota-box" style="background:{t['bg']};border:1px solid {t['border']};">
+  <div class="nota-box-label">Nota desta seção</div>
+  <div class="nota-box-val" style="color:{t['bar']}">{s['nota']:.0f}<span class="nota-box-denom">/5</span></div>
+  <div class="nota-box-tag" style="background:{t['badge_bg']};color:{t['badge_text']}">{t['icon']} {t['label']}</div>
+</div>"""
 
-/* CONTENT */
-.content{max-width:1120px;margin:0 auto;padding:80px 48px}
-.slabel{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--blue);margin-bottom:8px}
-.stitle{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--ink);margin-bottom:40px;letter-spacing:-.02em}
-.divider{height:1px;background:var(--ink20);margin:72px 0}
+        # chart panels HTML (max 2 charts per section)
+        chart_panels_html = ""
+        for cfg in charts_cfg[:2]:
+            legend_html = "".join(
+                f'<span class="leg-i"><span class="leg-dot" style="background:{c}"></span>{lbl}</span>'
+                for lbl, c in cfg["legend"]
+            )
+            chart_panels_html += f"""
+<div class="chart-panel">
+  <div class="cp-title">{cfg['title']}</div>
+  <div class="cp-sub">{cfg['sub']}</div>
+  <div class="cp-legend">{legend_html}</div>
+  <div class="cp-wrap"><canvas id="{cfg['id']}"></canvas></div>
+</div>"""
+            all_chart_js.append(
+                f"if(document.getElementById('{cfg['id']}')&&CD.length){{{cfg['js']}}}"
+            )
 
-/* KPIs */
-.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:64px}
-.kpi-card{background:var(--white);border:1px solid var(--ink20);border-radius:var(--r);padding:24px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:default}
-.kpi-card:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.08)}
-.kpi-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--acc);border-radius:var(--r) var(--r) 0 0}
-.kpi-icon{width:38px;height:38px;border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;margin-bottom:16px}
-.kpi-label{font-size:12px;color:var(--ink40);font-weight:500;margin-bottom:8px}
-.kpi-value{font-family:'Playfair Display',serif;font-size:38px;font-weight:700;line-height:1;color:var(--ink)}
-.kpi-denom{font-size:16px;color:var(--ink40);font-family:'DM Sans',sans-serif;font-weight:300}
-.kpi-track{height:4px;background:var(--ink20);border-radius:99px;margin-top:14px;overflow:hidden}
-.kpi-fill{height:100%;border-radius:99px;animation:barGrow 1s ease .6s both}
-.kpi-badge{display:inline-block;margin-top:10px;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:600}
+        # aside: nota box on top, then charts
+        aside_html = ""
+        if nota_box or chart_panels_html:
+            aside_html = f'<div class="sec-aside">{nota_box}{chart_panels_html}</div>'
 
-/* GAUGE ROW */
-.grow{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:64px}
-.gcard{background:var(--white);border:1px solid var(--ink20);border-radius:var(--r);padding:24px;text-align:center;transition:transform .2s,box-shadow .2s}
-.gcard:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(0,0,0,.07)}
-.gval{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;line-height:1;margin-bottom:4px}
-.glbl{font-size:12px;color:var(--ink40)}
+        num_label = f'<span class="sec-num">Seção {s["num"]}</span>' if s["num"] > 0 else ""
+        acc = t["bar"] if t else "#E5E7EB"
 
-/* STATS STRIP */
-.sstrip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1px;background:var(--ink20);border:1px solid var(--ink20);border-radius:var(--r);overflow:hidden;margin-bottom:64px}
-.scell{background:var(--white);padding:20px 24px;transition:background .15s}
-.scell:hover{background:var(--ink10)}
-.sval{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--blue);line-height:1;margin-bottom:4px}
-.slab{font-size:11px;color:var(--ink40)}
-.sdelta{font-size:11px;font-weight:600;margin-top:6px;display:inline-block;padding:2px 6px;border-radius:4px}
-.dup{background:var(--green-bg);color:var(--green)}
-.ddn{background:var(--red-bg);color:var(--red)}
+        return f"""
+<section class="sec-block fade-in" style="--acc:{acc}">
+  <div class="sec-accent-bar"></div>
+  <div class="sec-inner">
+    <div class="sec-head">
+      <div>
+        {num_label}
+        <h2 class="sec-title">{_h.escape(s['title'])}</h2>
+      </div>
+    </div>
+    <div class="sec-layout{'--full' if not aside_html else ''}">
+      <div class="sec-text abody">{_clean_md(s['body'])}</div>
+      {aside_html}
+    </div>
+  </div>
+</section>"""
 
-/* CHARTS */
-.c2{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px}
-.c3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;margin-bottom:24px}
-.ccard{background:var(--white);border:1px solid var(--ink20);border-radius:var(--r);padding:28px}
-.ccard-full{background:var(--white);border:1px solid var(--ink20);border-radius:var(--r);padding:32px;margin-bottom:24px}
-.ctit{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:3px}
-.csub{font-size:12px;color:var(--ink40);margin-bottom:18px}
-.cleg{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px}
-.cleg-i{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink60)}
-.cdot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
-.cwrap{position:relative;width:100%}
-.h180{height:180px}.h220{height:220px}.h260{height:260px}.h300{height:300px}
+    secs_html    = "".join(_section_block(s) for s in secs)
+    charts_js    = "\n".join(all_chart_js)
 
-/* SECTIONS */
-.sec-block{background:var(--white);border:1px solid var(--ink20);border-radius:var(--r);padding:40px;margin-bottom:20px;transition:box-shadow .2s}
-.sec-block:hover{box-shadow:0 4px 22px rgba(0,0,0,.06)}
-.sec-hdr{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--ink20)}
-.sec-hdr-l{display:flex;align-items:flex-start;gap:14px;flex:1}
-.sec-ico{font-size:22px;margin-top:2px;flex-shrink:0}
-.sec-num{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink40);display:block;margin-bottom:2px}
-.sec-title{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
-.sec-badge{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:700;border:1px solid;white-space:nowrap;flex-shrink:0}
-.abody{font-size:15px;line-height:1.85;color:var(--ink60)}
-.abody p{margin-bottom:14px}
-.abody strong{color:var(--ink);font-weight:600}
-.abody ul{margin:10px 0 14px 20px}
-.abody li{margin-bottom:6px}
-.tbl-wrap{overflow-x:auto;margin:16px 0}
-.tbl{width:100%;border-collapse:collapse;font-size:13px}
-.tbl th,.tbl td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--ink20)}
-.tbl th{background:var(--blue-bg);color:var(--blue);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
-.tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover td{background:var(--ink10)}
+    # ── VERDICT ─────────────────────────────────────────────
+    verdict_labels = {
+        "Muito Ruim": ("vtag-sell",  "Resultado Muito Fraco"),
+        "Ruim":       ("vtag-sell",  "Resultado Fraco"),
+        "Regular":    ("vtag-watch", "Resultado Regular"),
+        "Bom":        ("vtag-buy",   "Resultado Bom"),
+        "Excelente":  ("vtag-buy",   "Resultado Excelente"),
+    }
+    vcls, vtitle = verdict_labels.get(tg["label"], ("vtag-watch", "—"))
 
-/* CONCLUSION */
-.concl{background:var(--ink);border-radius:var(--r);padding:56px 64px;margin-bottom:64px;position:relative;overflow:hidden}
-.concl::before{content:'"';position:absolute;top:-20px;left:44px;font-family:'Playfair Display',serif;font-size:240px;color:rgba(255,255,255,.04);line-height:1;pointer-events:none}
-.clbl{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#60A5FA;margin-bottom:22px;display:flex;align-items:center;gap:8px}
-.clbl::before{content:'';display:block;width:24px;height:1px;background:#60A5FA}
-.ctitle2{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:#fff;line-height:1.2;margin-bottom:24px;letter-spacing:-.02em}
-.cbody2{font-size:15px;color:#CBD5E1;line-height:1.85;max-width:720px}
-.cbody2 p{margin-bottom:16px}
-.vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;border-top:1px solid rgba(255,255,255,.1);padding-top:36px;margin-top:36px}
-.vlbl{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#64748B;margin-bottom:8px}
-.vval{font-size:15px;font-weight:600;color:#fff}
-.tag{display:inline-block;padding:4px 12px;border-radius:4px;font-size:12px;font-weight:700;margin-top:8px;letter-spacing:.04em;text-transform:uppercase}
-.tag-buy{background:rgba(16,185,129,.2);color:#34D399;border:1px solid rgba(16,185,129,.3)}
-.tag-watch{background:rgba(251,191,36,.15);color:#FBBF24;border:1px solid rgba(251,191,36,.25)}
-.tag-neutral{background:rgba(148,163,184,.15);color:#94A3B8;border:1px solid rgba(148,163,184,.2)}
-.footer{border-top:1px solid var(--ink20);padding:28px 48px;max-width:1120px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink40)}
-
-@media(max-width:900px){
-  .kgrid{grid-template-columns:repeat(2,1fr)}
-  .grow{grid-template-columns:repeat(2,1fr)}
-  .c2,.c3{grid-template-columns:1fr}
-  .cover{padding:36px 24px}
-  .content{padding:40px 20px}
-  .ctitle{font-size:42px}
-  .snum{font-size:60px}
-  .concl{padding:36px 28px}
-  .vgrid{grid-template-columns:1fr 1fr}
-  .sec-block{padding:24px}
-  .sec-hdr{flex-direction:column}
-  .sstrip{grid-template-columns:repeat(2,1fr)}
-}
-"""
-
+    # ── FINAL HTML ──────────────────────────────────────────
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -339,166 +471,307 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--page);color:var
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<style>{CSS}</style>
+<style>
+*,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
+html{{font-size:16px;scroll-behavior:smooth}}
+body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#111827;line-height:1.65;-webkit-font-smoothing:antialiased}}
+
+@media print{{
+  body{{background:#fff}}
+  .no-print{{display:none!important}}
+  .page-break{{break-before:page}}
+  .sec-block{{break-inside:avoid}}
+  .fade-in{{opacity:1!important;transform:none!important;animation:none!important}}
+}}
+
+@keyframes fadeUp{{from{{opacity:0;transform:translateY(14px)}}to{{opacity:1;transform:none}}}}
+.fade-in{{opacity:0;animation:fadeUp .5s ease forwards;animation-play-state:paused}}
+
+::-webkit-scrollbar{{width:5px;height:5px}}
+::-webkit-scrollbar-thumb{{background:#CBD5E1;border-radius:3px}}
+
+/* ─── TOPBAR ─── */
+.topbar{{
+  position:sticky;top:0;z-index:200;height:50px;
+  background:rgba(255,255,255,.96);backdrop-filter:blur(8px);
+  border-bottom:1px solid #E5E7EB;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 36px;
+}}
+.tb-brand{{display:flex;align-items:center;gap:10px}}
+.tb-cube{{width:28px;height:28px;background:#1E3A8A;border-radius:6px;display:flex;align-items:center;justify-content:center}}
+.tb-name{{font-weight:600;font-size:14px;color:#1E3A8A;letter-spacing:-.01em}}
+.tb-nav{{display:flex;gap:4px}}
+.tb-link{{font-size:11px;font-weight:500;color:#6B7280;padding:5px 11px;border-radius:6px;text-decoration:none;transition:all .15s;border:1px solid transparent}}
+.tb-link:hover{{background:#F8FAFC;color:#111827;border-color:#E5E7EB}}
+.tb-right{{display:flex;align-items:center;gap:12px}}
+.tb-score{{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:{tg['bar']}}}
+.tb-score-lbl{{font-size:11px;color:#9CA3AF;margin-right:4px}}
+.print-btn{{background:#1E3A8A;color:#fff;border:none;border-radius:6px;padding:7px 14px;
+  font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;gap:5px;transition:opacity .15s}}
+.print-btn:hover{{opacity:.85}}
+
+/* ─── HERO ─── */
+.hero{{background:#fff;border-bottom:1px solid #E5E7EB;padding:44px 36px 36px}}
+.hero-inner{{max-width:1100px;margin:0 auto}}
+.hero-row{{display:flex;gap:40px;align-items:flex-start;margin-bottom:36px}}
+.hero-left{{flex:1;min-width:0}}
+.hero-period{{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#EFF6FF;border:1px solid #BFDBFE;
+  border-radius:999px;padding:4px 12px;
+  font-size:11px;font-weight:600;color:#1D4ED8;
+  letter-spacing:.05em;text-transform:uppercase;margin-bottom:14px;
+}}
+.hero-dot{{width:5px;height:5px;background:#3B82F6;border-radius:50%}}
+.hero-empresa{{font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,56px);font-weight:900;
+  line-height:.95;letter-spacing:-.03em;color:#0F172A;margin-bottom:12px}}
+.hero-desc{{font-size:15px;color:#6B7280;font-weight:300;max-width:460px;line-height:1.6}}
+.hero-right{{flex-shrink:0;display:flex;flex-direction:column;align-items:center;
+  padding:24px 32px;background:{tg['bg']};border:1.5px solid {tg['border']};
+  border-radius:16px;text-align:center;min-width:180px}}
+.hero-score-lbl{{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:{tg['text']};margin-bottom:10px;opacity:.7}}
+.hero-score-verdict{{font-size:14px;font-weight:700;color:{tg['text']};margin-top:8px}}
+
+/* ─── PILLARS ─── */
+.pillars{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}}
+.pillar{{background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:18px 20px;
+  transition:transform .18s,box-shadow .18s}}
+.pillar:hover{{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.07)}}
+.pillar-top{{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}}
+.pillar-icon{{font-size:18px}}
+.pillar-badge{{font-size:10px;font-weight:700;padding:3px 7px;border-radius:4px}}
+.pillar-nota{{font-family:'DM Mono',monospace;font-size:30px;font-weight:500;line-height:1}}
+.pillar-denom{{font-size:13px;color:#9CA3AF;font-weight:400}}
+.pillar-label{{font-size:12px;color:#6B7280;margin-top:2px;margin-bottom:10px}}
+.pillar-track{{height:4px;background:#F1F5F9;border-radius:99px;overflow:hidden}}
+.pillar-fill{{height:100%;border-radius:99px}}
+
+/* ─── SUMMARY BAR ─── */
+.sumbar{{background:#0F172A;padding:0}}
+.sumbar-inner{{max-width:1100px;margin:0 auto;display:flex}}
+.sum-cell{{flex:1;padding:16px 24px;border-right:1px solid rgba(255,255,255,.07);transition:background .15s}}
+.sum-cell:last-child{{border-right:none}}
+.sum-cell:hover{{background:rgba(255,255,255,.04)}}
+.sum-val{{font-family:'DM Mono',monospace;font-size:17px;font-weight:500;color:#fff;line-height:1;margin-bottom:3px}}
+.sum-lbl{{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.4)}}
+.sum-d{{font-size:11px;font-weight:600;margin-top:3px;display:inline-block}}
+.d-up{{color:#34D399}}.d-dn{{color:#F87171}}.d-ne{{color:rgba(255,255,255,.3)}}
+
+/* ─── MAIN LAYOUT ─── */
+.main{{max-width:1100px;margin:0 auto;padding:36px 36px 80px}}
+.sec-label{{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:#6B7280;margin-bottom:6px}}
+.sec-heading{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;
+  color:#0F172A;margin-bottom:28px;letter-spacing:-.02em}}
+
+/* ─── SECTION BLOCK ─── */
+.sec-block{{
+  background:#fff;border-radius:14px;border:1px solid #E5E7EB;
+  overflow:hidden;margin-bottom:18px;
+  transition:box-shadow .2s;
+}}
+.sec-block:hover{{box-shadow:0 4px 18px rgba(0,0,0,.06)}}
+.sec-accent-bar{{height:4px;background:var(--acc)}}
+.sec-inner{{padding:28px 32px}}
+.sec-head{{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #F1F5F9}}
+.sec-num{{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:#9CA3AF;display:block;margin-bottom:3px}}
+.sec-title{{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;
+  color:#0F172A;letter-spacing:-.01em}}
+
+/* text | aside two-column */
+.sec-layout{{display:grid;grid-template-columns:1fr 300px;gap:28px;align-items:start}}
+.sec-layout--full{{display:block}}
+
+/* ─── ANALYSIS TEXT ─── */
+.abody{{font-size:14px;line-height:1.85;color:#374151}}
+.abody p{{margin-bottom:12px}}
+.abody p:last-child{{margin-bottom:0}}
+.abody strong{{color:#111827;font-weight:600}}
+.abody ul.md-ul{{margin:8px 0 12px 18px}}
+.abody ul.md-ul li{{margin-bottom:5px}}
+.tbl-wrap{{overflow-x:auto;margin:12px 0}}
+.tbl{{width:100%;border-collapse:collapse;font-size:13px}}
+.tbl th{{background:#F8FAFC;color:#374151;font-weight:600;font-size:11px;
+  letter-spacing:.05em;text-transform:uppercase;padding:8px 12px;
+  border-bottom:2px solid #E5E7EB;text-align:left}}
+.tbl td{{padding:8px 12px;border-bottom:1px solid #F1F5F9;color:#374151}}
+.tbl tbody tr:last-child td{{border-bottom:none}}
+.tbl tbody tr:hover td{{background:#F8FAFC}}
+
+/* ─── ASIDE (nota + charts) ─── */
+.sec-aside{{display:flex;flex-direction:column;gap:14px}}
+
+/* nota box */
+.nota-box{{border-radius:10px;padding:16px;text-align:center}}
+.nota-box-label{{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:#6B7280;display:block;margin-bottom:6px}}
+.nota-box-val{{font-family:'DM Mono',monospace;font-size:38px;font-weight:500;
+  line-height:1;display:block;margin-bottom:6px}}
+.nota-box-denom{{font-size:15px;color:#9CA3AF;font-weight:400}}
+.nota-box-tag{{font-size:11px;font-weight:700;padding:4px 10px;
+  border-radius:4px;display:inline-block}}
+
+/* chart panel */
+.chart-panel{{border:1px solid #E5E7EB;border-radius:10px;padding:16px;background:#FAFAFA}}
+.cp-title{{font-size:12px;font-weight:600;color:#111827;margin-bottom:2px}}
+.cp-sub{{font-size:11px;color:#9CA3AF;margin-bottom:10px}}
+.cp-legend{{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}}
+.leg-i{{display:flex;align-items:center;gap:5px;font-size:11px;color:#6B7280}}
+.leg-dot{{width:8px;height:8px;border-radius:2px;flex-shrink:0}}
+.cp-wrap{{position:relative;width:100%;height:160px}}
+
+/* ─── DIVIDER ─── */
+.divider{{height:1px;background:#E5E7EB;margin:36px 0}}
+
+/* ─── CONCLUSION ─── */
+.conclusion{{
+  background:linear-gradient(135deg,#0F172A 0%,#1E3A8A 100%);
+  border-radius:16px;padding:44px 52px;
+  position:relative;overflow:hidden;
+}}
+.conclusion::after{{content:'';position:absolute;right:-60px;top:-60px;
+  width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.03)}}
+.c-eyebrow{{font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:#93C5FD;margin-bottom:14px;display:flex;align-items:center;gap:8px}}
+.c-eyebrow::before{{content:'';display:block;width:20px;height:1px;background:#93C5FD}}
+.c-title{{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;
+  color:#fff;line-height:1.2;margin-bottom:18px;letter-spacing:-.02em}}
+.c-body{{font-size:14px;color:#CBD5E1;line-height:1.85;margin-bottom:28px}}
+.c-body p{{margin-bottom:12px}}
+.c-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+  border-top:1px solid rgba(255,255,255,.1);padding-top:24px}}
+.c-cell-lbl{{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
+  color:#64748B;margin-bottom:5px}}
+.c-cell-val{{font-size:14px;font-weight:600;color:#fff}}
+.vtag{{display:inline-block;padding:4px 10px;border-radius:4px;font-size:11px;
+  font-weight:700;margin-top:6px;letter-spacing:.04em;text-transform:uppercase}}
+.vtag-buy{{background:rgba(16,185,129,.2);color:#34D399;border:1px solid rgba(16,185,129,.3)}}
+.vtag-watch{{background:rgba(251,191,36,.15);color:#FBBF24;border:1px solid rgba(251,191,36,.25)}}
+.vtag-sell{{background:rgba(239,68,68,.2);color:#F87171;border:1px solid rgba(239,68,68,.3)}}
+
+/* ─── FOOTER ─── */
+.footer{{border-top:1px solid #E5E7EB;padding:22px 36px;
+  max-width:1100px;margin:0 auto;
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:11px;color:#9CA3AF}}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:860px){{
+  .pillars{{grid-template-columns:1fr 1fr}}
+  .hero-row{{flex-direction:column}}
+  .hero-right{{width:100%;flex-direction:row;align-items:center;justify-content:space-between}}
+  .sec-layout{{grid-template-columns:1fr}}
+  .main{{padding:24px 16px 60px}}
+  .topbar,.hero,.footer{{padding-left:16px;padding-right:16px}}
+  .conclusion{{padding:32px 24px}}
+  .c-grid{{grid-template-columns:1fr 1fr}}
+  .sumbar-inner{{flex-wrap:wrap}}
+  .sum-cell{{min-width:50%;border-right:none;border-bottom:1px solid rgba(255,255,255,.07)}}
+}}
+</style>
 </head>
 <body>
 
-<button class="print-btn no-print" onclick="window.print()">
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="6 9 6 2 18 2 18 9"/>
-    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-    <rect x="6" y="14" width="12" height="8"/>
-  </svg>Salvar PDF
-</button>
-
-<!-- CAPA -->
-<div class="cover">
-  <div class="cgrad"></div>
-  <div class="chdr">
-    <div class="brand">
-      <div class="bcube">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-          <polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
-        </svg>
-      </div>
-      <div><span class="bname">FinAnalyzer</span><span class="bsub">Análise Fundamentalista por IA</span></div>
+<!-- TOPBAR -->
+<nav class="topbar no-print">
+  <div class="tb-brand">
+    <div class="tb-cube">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="white">
+        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+        <polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/>
+      </svg>
     </div>
-    <div class="ppill">{_h.escape(periodo)} · Resultados Trimestrais</div>
+    <span class="tb-name">FinAnalyzer</span>
   </div>
+  <nav class="tb-nav">
+    <a href="#indicadores" class="tb-link">Indicadores</a>
+    <a href="#analise"     class="tb-link">Análise</a>
+    <a href="#conclusao"   class="tb-link">Conclusão</a>
+  </nav>
+  <div class="tb-right">
+    <span><span class="tb-score-lbl">Score IA</span><span class="tb-score">{g:.1f}/5</span></span>
+    <button class="print-btn" onclick="window.print()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="6 9 6 2 18 2 18 9"/>
+        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+        <rect x="6" y="14" width="12" height="8"/>
+      </svg>
+      Salvar PDF
+    </button>
+  </div>
+</nav>
 
-  <div class="cbody">
-    <div class="ceyebrow">Relatório de Análise Fundamentalista</div>
-    <h1 class="ctitle">{_h.escape(empresa.title())}<br><span>{_h.escape(periodo)}</span></h1>
-    <p class="cdesc">Relatório completo gerado por IA com base no release de resultados oficial. Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica.</p>
-    <div class="srow">
-      <div style="display:flex;align-items:baseline;gap:6px;">
-        <span class="snum" style="color:{sc['hex']};" id="scoreNum">0.0</span>
-        <span class="sdenom">/5</span>
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-row">
+      <div class="hero-left">
+        <div class="hero-period">
+          <div class="hero-dot"></div>
+          {_h.escape(periodo)} · Resultados Trimestrais
+        </div>
+        <h1 class="hero-empresa">{_h.escape(empresa.title())}</h1>
+        <p class="hero-desc">
+          Relatório completo gerado por IA com base no release de resultados oficial.
+          Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica.
+        </p>
       </div>
-      <div>
-        <div class="slbl">Score IA — Média Ponderada</div>
-        <div class="sdesc" style="color:{sc['hex']};">{sc['label']}</div>
+      <div class="hero-right">
+        <span class="hero-score-lbl">Score IA — Média Ponderada</span>
+        {_hero_ring(g, 110)}
+        <div class="hero-score-verdict">{tg['label']}</div>
       </div>
     </div>
-  </div>
 
-  <div class="cfooter">
-    <span>Gerado automaticamente · Dados do release oficial</span>
-    <div class="bwarn">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      Não é recomendação de investimento
+    <!-- PILLARS -->
+    <div id="indicadores" class="pillars">
+      {pillars_html}
     </div>
   </div>
 </div>
 
-<!-- CONTENT -->
-<div class="content">
+<!-- SUMMARY BAR -->
+<div class="sumbar"><div class="sumbar-inner" id="sumbarInner"></div></div>
 
-  <!-- KPIs -->
-  <div style="margin-bottom:40px;">
-    <div class="slabel">Avaliação Fundamentalista</div>
-    <div class="stitle">Notas por Pilar</div>
-  </div>
-  <div class="kgrid">{kpis}</div>
+<!-- MAIN -->
+<div class="main">
 
-  <!-- GAUGES -->
-  <div class="slabel" style="margin-bottom:16px;">Visualização Radial dos Pilares</div>
-  <div class="grow" id="gaugeRow"></div>
-
-  <!-- STATS STRIP -->
-  <div class="sstrip" id="statsStrip"></div>
-
-  <!-- CHARTS LABEL -->
-  <div class="slabel" style="margin-bottom:8px;">Desempenho Trimestral</div>
-  <div class="stitle">Evolução dos Indicadores</div>
-
-  <!-- CHARTS 2-col -->
-  <div class="c2 avoid-break" id="c2block">
-    <div class="ccard">
-      <div class="ctit">Receita vs Lucro</div>
-      <div class="csub">Evolução trimestral extraída do release</div>
-      <div class="cleg">
-        <div class="cleg-i"><div class="cdot" style="background:#003087"></div>Receita</div>
-        <div class="cleg-i"><div class="cdot" style="background:#0A6640"></div>Lucro</div>
-      </div>
-      <div class="cwrap h220"><canvas id="cRecLuc"></canvas></div>
-    </div>
-    <div class="ccard">
-      <div class="ctit">Margens (%)</div>
-      <div class="csub">Margem bruta e líquida ao longo dos trimestres</div>
-      <div class="cleg">
-        <div class="cleg-i"><div class="cdot" style="background:#7C3AED"></div>Bruta</div>
-        <div class="cleg-i"><div class="cdot" style="background:#D97706"></div>Líquida</div>
-      </div>
-      <div class="cwrap h220"><canvas id="cMargens"></canvas></div>
-    </div>
-  </div>
-
-  <!-- CHART FULL -->
-  <div class="ccard-full avoid-break" id="cfullblock">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;">
-      <div>
-        <div class="ctit" style="font-size:16px;">Receita Total — Evolução Histórica</div>
-        <div class="csub">Barras agrupadas por trimestre</div>
-      </div>
-      <div class="cleg">
-        <div class="cleg-i"><div class="cdot" style="background:#C7D7F5"></div>Receita</div>
-        <div class="cleg-i"><div class="cdot" style="background:#003087"></div>Lucro</div>
-      </div>
-    </div>
-    <div class="cwrap h260"><canvas id="cArea"></canvas></div>
-  </div>
-
-  <!-- CHARTS 3-col -->
-  <div class="c3 avoid-break" id="c3block">
-    <div class="ccard">
-      <div class="ctit">Spread de Margens</div>
-      <div class="csub">Diferença entre margem bruta e líquida</div>
-      <div class="cwrap h180"><canvas id="cSpread"></canvas></div>
-    </div>
-    <div class="ccard">
-      <div class="ctit">Radar dos Fundamentos</div>
-      <div class="csub">Visão comparativa dos 4 pilares (escala 0–5)</div>
-      <div class="cwrap h180"><canvas id="cRadar"></canvas></div>
-    </div>
-    <div class="ccard">
-      <div class="ctit">Composição do Score</div>
-      <div class="csub">Peso relativo de cada dimensão avaliada</div>
-      <div class="cwrap h180"><canvas id="cDonut"></canvas></div>
-    </div>
+  <!-- ANALYSIS SECTIONS -->
+  <div id="analise">
+    <div class="sec-label">Análise Completa por IA</div>
+    <div class="sec-heading">Leitura dos Resultados</div>
+    {secs_html}
   </div>
 
   <div class="divider page-break"></div>
 
-  <!-- ANÁLISE -->
-  <div style="margin-bottom:40px;">
-    <div class="slabel">Análise Completa por IA</div>
-    <div class="stitle">Leitura dos Resultados</div>
-  </div>
-  {secs_html}
-
-  <div class="divider page-break"></div>
-
-  <!-- CONCLUSÃO -->
-  <div class="concl avoid-break">
-    <div class="clbl">Tese de Investimento</div>
-    <h2 class="ctitle2">Conclusão Estratégica e Outlook</h2>
-    <div class="cbody2">{tese_html}</div>
-    <div class="vgrid">
-      <div>
-        <div class="vlbl">Score Final</div>
-        <div class="vval">{g:.1f} / 5</div>
-        <span class="tag {vc}">{vt}</span>
-      </div>
-      <div>
-        <div class="vlbl">Empresa · Período</div>
-        <div class="vval">{_h.escape(empresa.title())}</div>
-        <div style="font-size:13px;color:#64748B;margin-top:4px;">{_h.escape(periodo)}</div>
-      </div>
-      <div>
-        <div class="vlbl">Aviso Legal</div>
-        <div class="vval" style="font-size:13px;line-height:1.5;color:#94A3B8;">Gerado por IA. Não constitui recomendação de investimento.</div>
+  <!-- CONCLUSION -->
+  <div id="conclusao">
+    <div class="conclusion">
+      <div class="c-eyebrow">Tese de Investimento</div>
+      <h2 class="c-title">Conclusão Estratégica e Outlook</h2>
+      <div class="c-body">{tese_html}</div>
+      <div class="c-grid">
+        <div>
+          <div class="c-cell-lbl">Score Final</div>
+          <div class="c-cell-val">{g:.1f} / 5</div>
+          <span class="vtag {vcls}">{vtitle}</span>
+        </div>
+        <div>
+          <div class="c-cell-lbl">Empresa · Período</div>
+          <div class="c-cell-val">{_h.escape(empresa.title())}</div>
+          <div style="font-size:12px;color:#64748B;margin-top:3px">{_h.escape(periodo)}</div>
+        </div>
+        <div>
+          <div class="c-cell-lbl">Aviso Legal</div>
+          <div class="c-cell-val" style="font-size:12px;line-height:1.5;color:#94A3B8">
+            Gerado por IA. Não constitui recomendação de investimento.
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -506,167 +779,99 @@ body{font-family:'DM Sans',system-ui,sans-serif;background:var(--page);color:var
 </div>
 
 <div class="footer no-print">
-  <span>Gerado pelo FinAnalyzer · Dados do release oficial · Não é recomendação de investimento</span>
-  <span style="font-weight:600;color:var(--ink60);">{_h.escape(empresa.title())} · {_h.escape(periodo)}</span>
+  <span>Gerado pelo <strong style="color:#6B7280">FinAnalyzer</strong> · Dados do release oficial · Não é recomendação de investimento</span>
+  <span>{_h.escape(empresa.title())} · {_h.escape(periodo)}</span>
 </div>
 
 <script>
-const CD={charts};
-const NOTAS={{receita:{rn},lucro:{ln},divida:{dn},roe:{ren},geral:{g}}};
+const CD    = __CHART_JSON__;
+const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral:__G__ }};
 
-/* score counter */
+/* score ring counter */
 (()=>{{
-  const el=document.getElementById('scoreNum');
-  const tgt=NOTAS.geral; let st=null;
-  const step=ts=>{{
-    if(!st)st=ts;
-    const p=Math.min((ts-st)/900,1);
-    const e=1-Math.pow(1-p,3);
-    el.textContent=(tgt*e).toFixed(1);
-    if(p<1)requestAnimationFrame(step);
-    else el.textContent=tgt.toFixed(1);
+  const el  = document.querySelector('.hero-right svg text');
+  if (!el) return;
+  const tgt = NOTAS.geral; let st = null;
+  const run = ts => {{
+    if (!st) st = ts;
+    const p = Math.min((ts - st) / 800, 1);
+    el.textContent = (tgt * (1 - Math.pow(1-p,3))).toFixed(1);
+    if (p < 1) requestAnimationFrame(run);
+    else el.textContent = tgt.toFixed(1);
   }};
-  setTimeout(()=>requestAnimationFrame(step),400);
+  setTimeout(() => requestAnimationFrame(run), 400);
 }})();
 
-/* gauges */
+/* summary bar */
 (()=>{{
-  const pillars=[
-    {{l:'Receita',v:NOTAS.receita,c:'#003087'}},
-    {{l:'Margem', v:NOTAS.lucro,  c:'#0A6640'}},
-    {{l:'Dívida', v:NOTAS.divida, c:'#DC2626'}},
-    {{l:'ROE',    v:NOTAS.roe,    c:'#D97706'}},
-  ];
-  const row=document.getElementById('gaugeRow');
-  const R=44,cx=52,cy=52,circ=2*Math.PI*R;
-  pillars.forEach(p=>{{
-    const dash=(p.v/5*circ).toFixed(2);
-    const gap=(circ-p.v/5*circ).toFixed(2);
-    const off=(circ*.25).toFixed(2);
-    const div=document.createElement('div');
-    div.className='gcard fade-in';
-    div.innerHTML=`<svg style="display:block;margin:0 auto 12px" width="104" height="104" viewBox="0 0 104 104">
-      <circle cx="52" cy="52" r="44" fill="none" stroke="#E2E8F0" stroke-width="9"/>
-      <circle cx="52" cy="52" r="44" fill="none" stroke="${{p.c}}" stroke-width="9"
-        stroke-dasharray="${{dash}} ${{gap}}" stroke-dashoffset="${{off}}"
-        stroke-linecap="round" style="transition:stroke-dasharray 1.2s cubic-bezier(.4,0,.2,1);"/>
-      <text x="52" y="48" text-anchor="middle" dominant-baseline="middle"
-        style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700;fill:${{p.c}}">${{p.v.toFixed(1)}}</text>
-      <text x="52" y="65" text-anchor="middle"
-        style="font-family:'DM Sans',sans-serif;font-size:11px;fill:#94A3B8;">/5</text>
-    </svg>
-    <div class="gval" style="color:${{p.c}}">${{p.v.toFixed(1)}}</div>
-    <div class="glbl">${{p.l}}</div>`;
-    row.appendChild(div);
-  }});
-}})();
-
-/* stats strip */
-(()=>{{
-  const strip=document.getElementById('statsStrip');
-  if(!CD.length){{strip.style.display='none';return;}}
-  const last=CD[CD.length-1];
-  const prev=CD.length>1?CD[CD.length-2]:null;
-  const delta=(a,b)=>{{
-    if(b==null||b===0)return'';
-    const d=((a-b)/Math.abs(b)*100).toFixed(1);
-    return`<span class="sdelta ${{d>=0?'dup':'ddn'}}">${{d>=0?'▲':'▼'}} ${{Math.abs(d)}}%</span>`;
+  const bar = document.getElementById('sumbarInner');
+  if (!bar || !CD.length) {{ document.querySelector('.sumbar').style.display='none'; return; }}
+  const last = CD[CD.length - 1];
+  const prev = CD.length > 1 ? CD[CD.length - 2] : null;
+  const delta = (a, b) => {{
+    if (!b) return '<span class="sum-d d-ne">—</span>';
+    const d = ((a - b) / Math.abs(b) * 100).toFixed(1);
+    return `<span class="sum-d ${{d>=0?'d-up':'d-dn'}}">${{d>=0?'▲':'▼'}} ${{Math.abs(d)}}%</span>`;
   }};
   [
-    {{v:last.receita,     l:'Receita (último tri)',d:delta(last.receita,prev?.receita)}},
-    {{v:last.lucro,       l:'Lucro (último tri)', d:delta(last.lucro,prev?.lucro)}},
-    {{v:last.margemBruta, l:'Margem Bruta (%)',   d:delta(last.margemBruta,prev?.margemBruta)}},
-    {{v:last.margemLiquida,l:'Margem Líquida (%)',d:delta(last.margemLiquida,prev?.margemLiquida)}},
-    {{v:NOTAS.geral,      l:'Score IA Final',     d:''}},
-  ].forEach(it=>{{
-    const c=document.createElement('div');
-    c.className='scell';
-    const suf=it.l.includes('%')?'%':'';
-    c.innerHTML=`<div class="sval">${{it.v!=null?it.v+suf:'—'}}</div><div class="slab">${{it.l}}</div>${{it.d}}`;
-    strip.appendChild(c);
+    {{v: last.receita,      l: 'Receita',      d: delta(last.receita, prev?.receita)}},
+    {{v: last.lucro,        l: 'Lucro',        d: delta(last.lucro, prev?.lucro)}},
+    {{v: last.margemBruta+'%',  l: 'Mg. Bruta',  d: delta(last.margemBruta, prev?.margemBruta)}},
+    {{v: last.margemLiquida+'%',l: 'Mg. Líquida',d: delta(last.margemLiquida, prev?.margemLiquida)}},
+    {{v: NOTAS.geral.toFixed(1)+'/5', l: 'Score IA', d: ''}},
+  ].forEach(it => {{
+    const c = document.createElement('div');
+    c.className = 'sum-cell';
+    c.innerHTML = `<div class="sum-val">${{it.v}}</div><div class="sum-lbl">${{it.l}}</div>${{it.d}}`;
+    bar.appendChild(c);
   }});
 }})();
 
-/* charts */
+/* shared chart.js config */
+const TT = {{ backgroundColor:'#0F172A', titleColor:'#fff', bodyColor:'#CBD5E1',
+              borderColor:'#1E293B', borderWidth:1, cornerRadius:8, padding:10 }};
+const XA = {{ grid:{{display:false}}, ticks:{{color:'#9CA3AF',font:{{size:10}}}}, border:{{display:false}} }};
+const YA = {{ grid:{{color:'#F1F5F9'}}, border:{{display:false}}, ticks:{{color:'#9CA3AF',font:{{size:10}}}} }};
+const BASE = {{
+  responsive:true, maintainAspectRatio:false,
+  animation:{{duration:800, easing:'easeOutQuart'}},
+  plugins:{{legend:{{display:false}}, tooltip:TT}},
+}};
+
+/* section charts (only if data exists) */
 (()=>{{
-  if(!CD.length){{
-    ['c2block','cfullblock','c3block'].forEach(id=>{{const e=document.getElementById(id);if(e)e.style.display='none';}});
-    return;
-  }}
-  const labels=CD.map(d=>d.name||'');
-  const rec=CD.map(d=>d.receita||0);
-  const luc=CD.map(d=>d.lucro||0);
-  const mB=CD.map(d=>d.margemBruta||0);
-  const mL=CD.map(d=>d.margemLiquida||0);
-  const xA={{grid:{{display:false}},ticks:{{color:'#94A3B8',font:{{size:11}}}},border:{{display:false}}}};
-  const yA={{grid:{{color:'#F1F5F9'}},border:{{display:false}},ticks:{{color:'#94A3B8',font:{{size:11}}}}}};
-  const tt={{backgroundColor:'#0F172A',titleColor:'#fff',bodyColor:'#CBD5E1',borderColor:'#334155',borderWidth:1,cornerRadius:8,padding:10}};
-  const base={{responsive:true,maintainAspectRatio:false,animation:{{duration:900,easing:'easeOutQuart'}},plugins:{{legend:{{display:false}}}}}};
-
-  new Chart(document.getElementById('cRecLuc'),{{type:'bar',
-    data:{{labels,datasets:[
-      {{label:'Receita',data:rec,backgroundColor:'#C7D7F5',borderRadius:5,maxBarThickness:36}},
-      {{label:'Lucro',  data:luc,backgroundColor:'#0A6640',borderRadius:5,maxBarThickness:36}},
-    ]}},
-    options:{{...base,scales:{{x:xA,y:yA}},plugins:{{...base.plugins,tooltip:{{...tt}}}}}}}});
-
-  new Chart(document.getElementById('cMargens'),{{type:'line',
-    data:{{labels,datasets:[
-      {{label:'Margem Bruta',   data:mB,borderColor:'#7C3AED',backgroundColor:'rgba(124,58,237,.08)',fill:true,borderWidth:2.5,pointBackgroundColor:'#7C3AED',pointRadius:4,tension:.35}},
-      {{label:'Margem Líquida', data:mL,borderColor:'#D97706',backgroundColor:'transparent',borderWidth:2,borderDash:[5,3],pointBackgroundColor:'#D97706',pointRadius:4,tension:.35}},
-    ]}},
-    options:{{...base,scales:{{x:xA,y:{{...yA,ticks:{{...yA.ticks,callback:v=>v+'%'}}}}}},plugins:{{...base.plugins,tooltip:{{...tt}}}}}}}});
-
-  new Chart(document.getElementById('cArea'),{{type:'bar',
-    data:{{labels,datasets:[
-      {{label:'Receita',data:rec,backgroundColor:'rgba(0,48,135,.15)',borderColor:'#003087',borderWidth:2,borderRadius:4,maxBarThickness:48}},
-      {{label:'Lucro',  data:luc,backgroundColor:'rgba(10,102,64,.75)',borderRadius:4,maxBarThickness:48}},
-    ]}},
-    options:{{...base,scales:{{x:xA,y:yA}},plugins:{{...base.plugins,tooltip:{{...tt}}}}}}}});
-
-  const spread=mB.map((b,i)=>parseFloat((b-mL[i]).toFixed(2)));
-  new Chart(document.getElementById('cSpread'),{{type:'bar',
-    data:{{labels,datasets:[{{label:'Spread',data:spread,
-      backgroundColor:spread.map(v=>v>=0?'rgba(0,48,135,.7)':'rgba(220,38,38,.6)'),
-      borderRadius:4,maxBarThickness:32
-    }}]}},
-    options:{{...base,scales:{{x:xA,y:{{...yA,ticks:{{...yA.ticks,callback:v=>v+'%'}}}}}},plugins:{{...base.plugins,tooltip:{{...tt,callbacks:{{label:c=>`Spread: ${{c.raw}}%`}}}}}}}}}});
-
-  new Chart(document.getElementById('cRadar'),{{type:'radar',
-    data:{{labels:['Receita','Margem','Dívida','ROE'],datasets:[{{
-      data:[NOTAS.receita,NOTAS.lucro,NOTAS.divida,NOTAS.roe],
-      backgroundColor:'rgba(0,48,135,.1)',borderColor:'#003087',
-      pointBackgroundColor:'#003087',pointRadius:4,borderWidth:2,
-    }}]}},
-    options:{{responsive:true,maintainAspectRatio:false,animation:{{duration:900}},
-      plugins:{{legend:{{display:false}},tooltip:{{...tt}}}},
-      scales:{{r:{{min:0,max:5,ticks:{{stepSize:1,color:'#94A3B8',font:{{size:10}},backdropColor:'transparent'}},
-        grid:{{color:'#E2E8F0'}},
-        pointLabels:{{color:'#475569',font:{{size:11,weight:'500'}}}}
-      }}}}
-    }}}});
-
-  const dcols=['#003087','#0A6640','#DC2626','#D97706'];
-  new Chart(document.getElementById('cDonut'),{{type:'doughnut',
-    data:{{labels:['Receita','Margem','Dívida','ROE'],datasets:[{{
-      data:[NOTAS.receita,NOTAS.lucro,NOTAS.divida,NOTAS.roe],
-      backgroundColor:dcols.map(c=>c+'CC'),borderColor:dcols,borderWidth:2,hoverOffset:6,
-    }}]}},
-    options:{{responsive:true,maintainAspectRatio:false,cutout:'68%',
-      animation:{{duration:900,animateRotate:true}},
-      plugins:{{legend:{{display:false}},tooltip:{{...tt,callbacks:{{label:c=>`${{c.label}}: ${{c.raw.toFixed(1)}}/5`}}}}}}
-    }}}});
+  if (!CD.length) return;
+  const labels = CD.map(d => d.name  || '');
+  const rec    = CD.map(d => d.receita      || 0);
+  const luc    = CD.map(d => d.lucro        || 0);
+  const mB     = CD.map(d => d.margemBruta  || 0);
+  const mL     = CD.map(d => d.margemLiquida|| 0);
+  {charts_js}
 }})();
 
 /* intersection observer for fade-in */
-const io=new IntersectionObserver(entries=>entries.forEach(e=>{{if(e.isIntersecting)e.target.style.animationPlayState='running';}}),{{threshold:0.08}});
-document.querySelectorAll('.fade-in').forEach(el=>{{el.style.animationPlayState='paused';io.observe(el);}});
+const io = new IntersectionObserver(entries => entries.forEach(e => {{
+  if (e.isIntersecting) e.target.style.animationPlayState = 'running';
+}}), {{ threshold: 0.06 }});
+document.querySelectorAll('.fade-in').forEach(el => {{
+  el.style.animationPlayState = 'paused';
+  io.observe(el);
+}});
 </script>
 </body>
-</html>""".replace("{charts}", cj).replace("{rn}", str(rn)).replace("{ln}", str(ln)).replace("{dn}", str(dn)).replace("{ren}", str(ren)).replace("{g}", str(g))
+</html>
+""".replace("__CHART_JSON__", cj)\
+   .replace("__RN__",  str(rn))\
+   .replace("__LN__",  str(ln))\
+   .replace("__DN__",  str(dn))\
+   .replace("__REN__", str(ren))\
+   .replace("__G__",   str(g))\
+   .replace("{charts_js}", charts_js)
 
 
-# ─────────── endpoint ───────────
+# ═══════════════════════════════════════════════════════════════
+# FASTAPI ENDPOINT
+# ═══════════════════════════════════════════════════════════════
 
 @router.get("/api/report/{item_id}", response_class=HTMLResponse)
 def get_report(item_id: int):
