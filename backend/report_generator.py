@@ -182,21 +182,18 @@ SECTION_CHARTS = {
   {label:'Receita',data:rec,backgroundColor:'rgba(30,64,175,.18)',borderColor:'#1E40AF',borderWidth:2,borderRadius:5,maxBarThickness:32},
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
-        {
+ {
             "id": "cS1B", "title": "Composição da Receita", "sub": "Share de Categorias (Último Trimestre)",
             "js": """
             const wrap = document.getElementById('cS1B')?.parentElement;
             if(wrap && typeof CD !== 'undefined' && CD.length > 0) {
-                wrap.innerHTML = ''; 
-                
-                // Busca os dados do último trimestre
                 let compData = {};
                 for(let i=CD.length-1; i>=0; i--){
-                    if(CD[i].composicao_receita && Object.keys(CD[i].composicao_receita).length > 0) { 
+                    // A correção "|| {}" abaixo impede que análises antigas quebrem a tela inteira
+                    if(CD[i].composicao_receita && Object.keys(CD[i].composicao_receita || {}).length > 0) { 
                         compData = CD[i].composicao_receita; 
                         break; 
                     } else if(CD[i].segmentos && CD[i].segmentos.length > 0) {
-                        // Fallback para análises antigas no banco de dados
                         CD[i].segmentos.forEach(s => compData[s.nome] = parseFloat(s.valor));
                         break;
                     }
@@ -212,20 +209,20 @@ SECTION_CHARTS = {
                 if(keys.length === 0) {
                     wrap.innerHTML = '<div style="padding:30px;text-align:center;color:#9CA3AF;font-size:12px;">Dados não disponíveis.</div>';
                 } else {
+                    wrap.innerHTML = ''; 
                     wrap.style.display = 'flex';
-                    wrap.style.gap = '15px';
-                    wrap.style.overflowX = 'auto';
+                    wrap.style.flexDirection = 'column'; // Empilha verticalmente
+                    wrap.style.gap = '35px'; // Espaçamento entre os gráficos
                     wrap.style.alignItems = 'center';
-                    wrap.style.minHeight = '260px';
-                    wrap.style.paddingBottom = '10px';
+                    wrap.style.padding = '10px 0';
                     
-                    keys.forEach((catName, idx) => {
+                    keys.forEach((catName) => {
                         const dataObj = cats[catName];
                         const labels = Object.keys(dataObj);
                         const data = Object.values(dataObj).map(v => parseFloat(v));
                         
                         const col = document.createElement('div');
-                        col.style.flex = keys.length > 1 ? '0 0 220px' : '1';
+                        col.style.width = '100%';
                         col.style.display = 'flex';
                         col.style.flexDirection = 'column';
                         
@@ -233,16 +230,17 @@ SECTION_CHARTS = {
                             const title = document.createElement('div');
                             title.innerText = catName.toUpperCase();
                             title.style.textAlign = 'center';
-                            title.style.fontSize = '10px';
+                            title.style.fontSize = '11px';
                             title.style.fontWeight = 'bold';
-                            title.style.color = '#64748B';
+                            title.style.color = '#475569';
                             title.style.marginBottom = '5px';
+                            title.style.letterSpacing = '0.05em';
                             col.appendChild(title);
                         }
                         
                         const canWrap = document.createElement('div');
                         canWrap.style.position = 'relative';
-                        canWrap.style.height = keys.length > 1 ? '180px' : '260px';
+                        canWrap.style.height = '180px'; 
                         canWrap.style.width = '100%';
                         
                         const can = document.createElement('canvas');
@@ -262,17 +260,19 @@ SECTION_CHARTS = {
                             },
                             options: {
                                 ...BASE, cutout: '55%',
-                                layout: { padding: keys.length > 1 ? 5 : 20 },
+                                layout: { padding: 15 },
                                 plugins: {
                                     ...BASE.plugins,
-                                    legend: { display: true, position: 'bottom', labels: { boxWidth: 8, font: { size: 9 } } },
+                                    // Move a legenda para a direita para poupar espaço vertical
+                                    legend: { display: true, position: 'right', labels: { boxWidth: 10, font: { size: 10 } } },
                                     datalabels: { 
                                         ...BASE.plugins.datalabels, 
-                                        display: keys.length === 1,
+                                        display: true, // Força a exibição das porcentagens sempre
                                         color: '#111827',
                                         anchor: 'end',
                                         align: 'end',
-                                        offset: 5,
+                                        offset: 0,
+                                        font: { weight: 'bold', size: 10 },
                                         formatter: (v, ctx) => {
                                             const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
                                             return total ? (v/total*100).toFixed(1)+'%' : '';
