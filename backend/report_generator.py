@@ -55,8 +55,7 @@ def _quarter_sort_key(name: str):
 
 def _extract_charts(text: str) -> list:
     try:
-        m = re.search(r"```json\s*([\s\S]*?)\s*```", text or "")
-        if m:
+        for m in re.finditer(r"```json\s*([\s\S]*?)\s*```", text or ""):
             raw = json.loads(m.group(1))
             if isinstance(raw, list):
                 cleaned = []
@@ -78,6 +77,20 @@ def _extract_charts(text: str) -> list:
     except Exception:
         pass
     return []
+
+def _extract_composicao(text: str) -> dict:
+    """Extrai o JSON específico de Composição de Receita (seja lista ou categorias múltiplas)"""
+    try:
+        for m in re.finditer(r"```json\s*([\s\S]*?)\s*```", text or ""):
+            raw = json.loads(m.group(1))
+            if isinstance(raw, dict):
+                if "Composição da Receita" in raw:
+                    return raw["Composição da Receita"]
+                elif any(isinstance(v, (int, float, dict)) for v in raw.values()):
+                    return raw
+    except Exception:
+        pass
+    return {}
 
 def _clean_md(text: str) -> str:
     if not text: return ""
@@ -172,46 +185,103 @@ SECTION_CHARTS = {
         {
             "id": "cS1B", "title": "Composição da Receita", "sub": "Share por Segmento (Último Trimestre)",
             "js": """
-            let segs = [];
-            for(let i=CD.length-1; i>=0; i--){
-                if(CD[i].segmentos && CD[i].segmentos.length > 0) { segs = CD[i].segmentos; break; }
-            }
-            const segLabels = segs.length ? segs.map(s => s.nome) : ['Principal', 'Outros'];
-            const segData   = segs.length ? segs.map(s => parseFloat(s.valor)) : [70, 30];
-            
-            new Chart(document.getElementById('cS1B'),{
-                type:'doughnut',
-                data:{
-                    labels: segLabels,
-                    datasets:[{
-                        data: segData,
-                        backgroundColor: ['#1E3A8A','#059669','#D97706','#7C3AED', '#9CA3AF', '#3B82F6'],
-                        borderWidth: 2, hoverOffset: 4
-                    }]
-                },
-                options:{
-                    ...BASE, cutout:'55%', 
-                    layout: { padding: { top: 30, bottom: 30, left: 30, right: 30 } },
-                    scales:{x:{display:false},y:{display:false}},
-                    plugins: { 
-                        ...BASE.plugins, 
-                        legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } },
-                        datalabels: { 
-                            ...BASE.plugins.datalabels, 
-                            color: '#111827',
-                            anchor: 'end',
-                            align: 'end',
-                            offset: 5,
-                            formatter: (v, ctx) => {
-                                const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
-                                if (total === 0) return '0%';
-                                const pct = (v/total*100).toFixed(1)+'%';
-                                return pct;
-                            } 
-                        } 
+            const wrap = document.getElementById('cS1B')?.parentElement;
+            if(wrap && typeof COMP_DATA !== 'undefined') {
+                wrap.innerHTML = ''; 
+                const compData = COMP_DATA;
+                
+                let cats = {};
+                if(Object.keys(compData).length > 0) {
+                    const isNested = Object.values(compData).some(v => typeof v === 'object' && !Array.isArray(v) && v !== null);
+                    cats = isNested ? compData : { "Composição Geral": compData };
+                } else {
+                    let segs = [];
+                    for(let i=CD.length-1; i>=0; i--){
+                        if(CD[i].segmentos && CD[i].segmentos.length > 0) { segs = CD[i].segmentos; break; }
+                    }
+                    if(segs.length) {
+                        cats["Segmentos"] = {};
+                        segs.forEach(s => cats["Segmentos"][s.nome] = parseFloat(s.valor));
                     }
                 }
-            });"""
+                
+                const keys = Object.keys(cats);
+                if(keys.length === 0) {
+                    wrap.innerHTML = '<div style="padding:30px;text-align:center;color:#9CA3AF;font-size:12px;">Dados não disponíveis.</div>';
+                } else {
+                    wrap.style.display = 'flex';
+                    wrap.style.gap = '15px';
+                    wrap.style.overflowX = 'auto';
+                    wrap.style.alignItems = 'center';
+                    wrap.style.minHeight = '260px';
+                    wrap.style.paddingBottom = '10px';
+                    
+                    keys.forEach((catName, idx) => {
+                        const dataObj = cats[catName];
+                        const labels = Object.keys(dataObj);
+                        const data = Object.values(dataObj).map(v => parseFloat(v));
+                        
+                        const col = document.createElement('div');
+                        col.style.flex = keys.length > 1 ? '0 0 220px' : '1';
+                        col.style.display = 'flex';
+                        col.style.flexDirection = 'column';
+                        
+                        if(keys.length > 1) {
+                            const title = document.createElement('div');
+                            title.innerText = catName.toUpperCase();
+                            title.style.textAlign = 'center';
+                            title.style.fontSize = '10px';
+                            title.style.fontWeight = 'bold';
+                            title.style.color = '#64748B';
+                            title.style.marginBottom = '5px';
+                            col.appendChild(title);
+                        }
+                        
+                        const canWrap = document.createElement('div');
+                        canWrap.style.position = 'relative';
+                        canWrap.style.height = keys.length > 1 ? '180px' : '260px';
+                        canWrap.style.width = '100%';
+                        
+                        const can = document.createElement('canvas');
+                        canWrap.appendChild(can);
+                        col.appendChild(canWrap);
+                        wrap.appendChild(col);
+                        
+                        new Chart(can, {
+                            type: 'doughnut',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    data: data,
+                                    backgroundColor: ['#1E3A8A','#059669','#D97706','#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'],
+                                    borderWidth: 2, hoverOffset: 4
+                                }]
+                            },
+                            options: {
+                                ...BASE, cutout: '55%',
+                                layout: { padding: keys.length > 1 ? 5 : 20 },
+                                plugins: {
+                                    ...BASE.plugins,
+                                    legend: { display: true, position: 'bottom', labels: { boxWidth: 8, font: { size: 9 } } },
+                                    datalabels: { 
+                                        ...BASE.plugins.datalabels, 
+                                        display: keys.length === 1,
+                                        color: '#111827',
+                                        anchor: 'end',
+                                        align: 'end',
+                                        offset: 5,
+                                        formatter: (v, ctx) => {
+                                            const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                            return total ? (v/total*100).toFixed(1)+'%' : '';
+                                        } 
+                                    }
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+            """
         },
     ],
     2: [
@@ -325,15 +395,15 @@ def generate_report_html(resultado: dict) -> str:
     tg   = _score_theme(g)
     secs = _parse_sections(analise)
     raw_cd = data.get("chart_data") or _extract_charts(analise)
+    comp_data = _extract_composicao(analise)
+    
     cd = [d for d in raw_cd if str(d.get("name","")) in analise]
     if not cd: cd = raw_cd
     
-    # NOVO: Filtro para limpar os dados e evitar o "vale para o zero" no meio do gráfico
-    # Removemos qualquer trimestre onde a IA não encontrou/extraiu a receita.
     cd = [d for d in cd if _f(d.get("receita", 0)) > 0]
-    
     cd = sorted(cd, key=lambda d: _quarter_sort_key(d.get("name")))
     cj   = json.dumps(cd)
+    cj_comp = json.dumps(comp_data)
 
     tese_c    = re.sub(r"\*\*|\*", "", tese).strip()
     tese_html = "".join(f"<p>{_h.escape(p.strip())}</p>" for p in tese_c.split("\n\n") if p.strip()) or f"<p>{_h.escape(tese_c)}</p>"
@@ -416,7 +486,7 @@ def generate_report_html(resultado: dict) -> str:
       </div>
       {evo_html}
   </div>
-  <div class="cp-wrap" title="Clique para expandir" style="cursor: zoom-in;">
+  <div class="cp-wrap" title="Clique para expandir">
     <canvas id="{cfg['id']}" onclick="openModal('{cfg['id']}')"></canvas>
   </div>
 </div>"""
@@ -776,7 +846,8 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 <script>
 try {{ Chart.register(ChartDataLabels); }} catch(e) {{ console.error("DataLabels error", e); }}
 
-const CD    = __CHART_JSON__;
+const CD = __CHART_JSON__;
+const COMP_DATA = __COMPOSICAO_JSON__;
 const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral:__G__ }};
 
 const formatBRL = (v) => {{
@@ -797,7 +868,6 @@ const formatPct = (v) => {{
 
 const renderEvo = (chartId, dataArr, invertColor = false) => {{
   if (!dataArr) return;
-  // Filtra dados ignorando undefined/null/0 para comparação YoY real
   const validData = dataArr.filter(v => v !== 0 && v !== null && v !== undefined);
   if (validData.length < 2) return;
   const first = validData[0], last = validData[validData.length - 1];
@@ -965,6 +1035,7 @@ try {{
 </body>
 </html>
 """.replace("__CHART_JSON__", cj)\
+   .replace("__COMPOSICAO_JSON__", cj_comp)\
    .replace("__RN__",  str(rn))\
    .replace("__LN__",  str(ln))\
    .replace("__DN__",  str(dn))\
