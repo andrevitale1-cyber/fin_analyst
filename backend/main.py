@@ -231,15 +231,17 @@ Extraia o histórico financeiro dos trimestres disponíveis EXATAMENTE no format
 Chaves obrigatórias em todos os trimestres: 
 "name" (nome do trimestre, ex: "3T25"), 
 "receita" (valor financeiro ABSOLUTO. Ex: 664500000), 
-"lucro" (valor financeiro ABSOLUTO), 
-"divida" (valor financeiro absoluto da Dívida Líquida ou Bruta. Se não houver, 0),
-"ebitda" (valor financeiro absoluto do EBITDA ou Lucro Operacional. Se não houver, 0),
+"lucro" (Obrigatório. Valor do Lucro Líquido ABSOLUTO. Se prejuízo, negativo), 
+"divida" (Obrigatório. Dívida Líquida ou Bruta. Se não houver = 0),
+"ebitda" (Obrigatório. EBITDA ou Resultado Operacional. Se não houver = 0),
 "margemBruta" (número percentual), 
 "margemLiquida" (número percentual).
 
-IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as seguintes chaves adicionais:
-1. "composicao_receita": OBRIGATÓRIO. Um objeto JSON (dicionário) detalhando a composição da receita. Se a empresa dividir a receita em múltiplas naturezas (ex: Canais, Geografias, Produtos), crie sub-dicionários. Ex: {{"Canais de Venda": {{"Físico": 100, "Online": 50}}, "Geografia": {{"Brasil": 120, "EUA": 30}}}}. Se houver apenas uma quebra simples, coloque direto: {{"Locação": 100, "Vendas": 50}}. ATENÇÃO: Use APENAS valores numéricos absolutos.
-2. "despesas_var": Uma lista de dicionários com a variação percentual A/A das linhas de despesa... Ex: [{{"linha": "Despesas com Vendas", "variacao": 13.1}}, {{"linha": "Despesas Gerais e Administrativas", "variacao": -5.2}}]. Se não houver variação ou informação, deixe a lista vazia.
+IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as seguintes chaves:
+1. "composicao_receita": OBRIGATÓRIO. JSON detalhando a composição da receita. Subdivida se houver várias naturezas (ex: {"Canais": {"Físico": 100, "Web": 50}, "Geografia": {"Brasil": 150}}). Use valores absolutos.
+2. "despesas_var": OBRIGATÓRIO. Lista de dicionários com a variação percentual A/A das linhas de despesa (SG&A, Administrativas, Vendas). Aumento = positivo, Queda = negativo. Se não achar no texto, extraia do DRE. Ex: [{"nome": "Vendas", "var_pct": 5.2}, {"nome": "Administrativas", "var_pct": -1.5}]. Se for impossível achar, retorne [{"nome": "Despesas Gerais", "var_pct": 0.0}].
+    
+    
     DADOS DO RELEASE (Use apenas o relevante):
     {pdf_text[:40000]}
         """

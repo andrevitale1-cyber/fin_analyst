@@ -182,107 +182,117 @@ SECTION_CHARTS = {
   {label:'Receita',data:rec,backgroundColor:'rgba(30,64,175,.18)',borderColor:'#1E40AF',borderWidth:2,borderRadius:5,maxBarThickness:32},
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
- {
+{
             "id": "cS1B", "title": "Composição da Receita", "sub": "Share de Categorias (Último Trimestre)",
             "js": """
-            const wrap = document.getElementById('cS1B')?.parentElement;
-            if(wrap && typeof CD !== 'undefined' && CD.length > 0) {
-                let compData = {};
-                for(let i=CD.length-1; i>=0; i--){
-                    // A correção "|| {}" abaixo impede que análises antigas quebrem a tela inteira
-                    if(CD[i].composicao_receita && Object.keys(CD[i].composicao_receita || {}).length > 0) { 
-                        compData = CD[i].composicao_receita; 
-                        break; 
-                    } else if(CD[i].segmentos && CD[i].segmentos.length > 0) {
-                        CD[i].segmentos.forEach(s => compData[s.nome] = parseFloat(s.valor));
-                        break;
-                    }
-                }
-                
-                let cats = {};
-                if(Object.keys(compData).length > 0) {
-                    const isNested = Object.values(compData).some(v => typeof v === 'object' && !Array.isArray(v) && v !== null);
-                    cats = isNested ? compData : { "Composição Geral": compData };
-                }
-                
-                const keys = Object.keys(cats);
-                if(keys.length === 0) {
-                    wrap.innerHTML = '<div style="padding:30px;text-align:center;color:#9CA3AF;font-size:12px;">Dados não disponíveis.</div>';
-                } else {
-                    wrap.innerHTML = ''; 
-                    wrap.style.display = 'flex';
-                    wrap.style.flexDirection = 'column'; // Empilha verticalmente
-                    wrap.style.gap = '35px'; // Espaçamento entre os gráficos
-                    wrap.style.alignItems = 'center';
-                    wrap.style.padding = '10px 0';
-                    
-                    keys.forEach((catName) => {
-                        const dataObj = cats[catName];
-                        const labels = Object.keys(dataObj);
-                        const data = Object.values(dataObj).map(v => parseFloat(v));
-                        
-                        const col = document.createElement('div');
-                        col.style.width = '100%';
-                        col.style.display = 'flex';
-                        col.style.flexDirection = 'column';
-                        
-                        if(keys.length > 1) {
-                            const title = document.createElement('div');
-                            title.innerText = catName.toUpperCase();
-                            title.style.textAlign = 'center';
-                            title.style.fontSize = '11px';
-                            title.style.fontWeight = 'bold';
-                            title.style.color = '#475569';
-                            title.style.marginBottom = '5px';
-                            title.style.letterSpacing = '0.05em';
-                            col.appendChild(title);
+            try {
+                const wrap = document.getElementById('cS1B')?.parentElement;
+                if(wrap && typeof CD !== 'undefined' && CD.length > 0) {
+                    let compData = {};
+                    for(let i=CD.length-1; i>=0; i--){
+                        if(CD[i].composicao_receita && Object.keys(CD[i].composicao_receita || {}).length > 0) { 
+                            compData = CD[i].composicao_receita; 
+                            break; 
+                        } else if(CD[i].segmentos && CD[i].segmentos.length > 0) {
+                            CD[i].segmentos.forEach(s => compData[s.nome] = parseFloat(s.valor));
+                            break;
                         }
+                    }
+                    
+                    let cats = {};
+                    if(Object.keys(compData).length > 0) {
+                        const isNested = Object.values(compData).some(v => typeof v === 'object' && !Array.isArray(v) && v !== null);
+                        cats = isNested ? compData : { "Composição Geral": compData };
+                    }
+                    
+                    const keys = Object.keys(cats);
+                    if(keys.length === 0) {
+                        wrap.innerHTML = '<div style="padding:30px;text-align:center;color:#9CA3AF;font-size:12px;">Dados não disponíveis.</div>';
+                    } else {
+                        wrap.innerHTML = ''; 
+                        wrap.style.display = 'flex';
+                        wrap.style.flexDirection = 'column'; 
+                        wrap.style.gap = '40px'; // Espaço maior para não encostar
+                        wrap.style.alignItems = 'center';
+                        wrap.style.padding = '20px 0';
+                        wrap.style.height = 'auto'; // CORREÇÃO: Remove a limitação que cortava o gráfico
                         
-                        const canWrap = document.createElement('div');
-                        canWrap.style.position = 'relative';
-                        canWrap.style.height = '180px'; 
-                        canWrap.style.width = '100%';
-                        
-                        const can = document.createElement('canvas');
-                        canWrap.appendChild(can);
-                        col.appendChild(canWrap);
-                        wrap.appendChild(col);
-                        
-                        new Chart(can, {
-                            type: 'doughnut',
-                            data: {
-                                labels: labels,
-                                datasets: [{
-                                    data: data,
-                                    backgroundColor: ['#1E3A8A','#059669','#D97706','#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'],
-                                    borderWidth: 2, hoverOffset: 4
-                                }]
-                            },
-                            options: {
-                                ...BASE, cutout: '55%',
-                                layout: { padding: 15 },
-                                plugins: {
-                                    ...BASE.plugins,
-                                    // Move a legenda para a direita para poupar espaço vertical
-                                    legend: { display: true, position: 'right', labels: { boxWidth: 10, font: { size: 10 } } },
-                                    datalabels: { 
-                                        ...BASE.plugins.datalabels, 
-                                        display: true, // Força a exibição das porcentagens sempre
-                                        color: '#111827',
-                                        anchor: 'end',
-                                        align: 'end',
-                                        offset: 0,
-                                        font: { weight: 'bold', size: 10 },
-                                        formatter: (v, ctx) => {
-                                            const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
-                                            return total ? (v/total*100).toFixed(1)+'%' : '';
-                                        } 
+                        keys.forEach((catName, idx) => {
+                            const dataObj = cats[catName];
+                            const labels = Object.keys(dataObj);
+                            const data = Object.values(dataObj).map(v => parseFloat(v));
+                            
+                            const col = document.createElement('div');
+                            col.style.width = '100%';
+                            col.style.display = 'flex';
+                            col.style.flexDirection = 'column';
+                            
+                            if(keys.length > 1) {
+                                const title = document.createElement('div');
+                                title.innerText = catName.toUpperCase();
+                                title.style.textAlign = 'center';
+                                title.style.fontSize = '12px';
+                                title.style.fontWeight = 'bold';
+                                title.style.color = '#475569';
+                                title.style.marginBottom = '15px';
+                                title.style.letterSpacing = '0.05em';
+                                col.appendChild(title);
+                            }
+                            
+                            const canWrap = document.createElement('div');
+                            canWrap.style.position = 'relative';
+                            // CORREÇÃO: Altura maior para a rosca respirar
+                            canWrap.style.height = '240px'; 
+                            canWrap.style.width = '100%';
+                            
+                            const can = document.createElement('canvas');
+                            // CORREÇÃO: Adiciona ID e evento de clique para o modal
+                            can.id = 'donut_dinamico_' + idx;
+                            can.style.cursor = 'zoom-in';
+                            can.onclick = () => openModal(can.id);
+                            
+                            canWrap.appendChild(can);
+                            col.appendChild(canWrap);
+                            wrap.appendChild(col);
+                            
+                            new Chart(can, {
+                                type: 'doughnut',
+                                data: {
+                                    labels: labels,
+                                    datasets: [{
+                                        data: data,
+                                        backgroundColor: ['#1E3A8A','#059669','#D97706','#7C3AED', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6'],
+                                        borderWidth: 2, hoverOffset: 4
+                                    }]
+                                },
+                                options: {
+                                    ...BASE, cutout: '50%',
+                                    maintainAspectRatio: false, // Força a respeitar a altura do container
+                                    layout: { padding: 10 },
+                                    plugins: {
+                                        ...BASE.plugins,
+                                        legend: { display: true, position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+                                        datalabels: { 
+                                            ...BASE.plugins.datalabels, 
+                                            display: true,
+                                            color: '#111827',
+                                            anchor: 'end',
+                                            align: 'end',
+                                            offset: 2,
+                                            font: { weight: 'bold', size: 11 },
+                                            formatter: (v, ctx) => {
+                                                const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                                return total ? (v/total*100).toFixed(1)+'%' : '';
+                                            } 
+                                        }
                                     }
                                 }
-                            }
+                            });
                         });
-                    });
+                    }
                 }
+            } catch(e) { 
+                console.error("Erro ao desenhar os gráficos de rosca. Ignorando para não quebrar o resto:", e); 
             }
             """
         },
