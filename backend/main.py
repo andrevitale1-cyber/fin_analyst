@@ -238,9 +238,8 @@ Chaves obrigatórias em todos os trimestres:
 "margemLiquida" (número percentual).
 
 IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as seguintes chaves:
-1. "composicao_receita": OBRIGATÓRIO. JSON detalhando a composição da receita. Subdivida se houver várias naturezas (ex: {"Canais": {"Físico": 100, "Web": 50}, "Geografia": {"Brasil": 150}}). Use valores absolutos.
-2. "despesas_var": OBRIGATÓRIO. Lista de dicionários com a variação percentual A/A das linhas de despesa (SG&A, Administrativas, Vendas). Aumento = positivo, Queda = negativo. Se não achar no texto, extraia do DRE. Ex: [{"nome": "Vendas", "var_pct": 5.2}, {"nome": "Administrativas", "var_pct": -1.5}]. Se for impossível achar, retorne [{"nome": "Despesas Gerais", "var_pct": 0.0}].
-    
+1. "composicao_receita": OBRIGATÓRIO. JSON detalhando a composição da receita. Subdivida se houver várias naturezas (ex: {{"Canais": {{"Físico": 100, "Web": 50}}, "Geografia": {{"Brasil": 150}}}}). Use valores absolutos.
+2. "despesas_var": OBRIGATÓRIO. Lista de dicionários com a variação percentual A/A das linhas de despesa (SG&A, Administrativas, Vendas). Aumento = positivo, Queda = negativo. Se não achar no texto, extraia do DRE. Ex: [{{"nome": "Vendas", "var_pct": 5.2}}, {{"nome": "Administrativas", "var_pct": -1.5}}]. Se for impossível achar, retorne [{{"nome": "Despesas Gerais", "var_pct": 0.0}}].
     
     DADOS DO RELEASE (Use apenas o relevante):
     {pdf_text[:40000]}
