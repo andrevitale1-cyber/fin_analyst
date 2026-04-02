@@ -115,31 +115,23 @@ def parse_results(text):
     def get_chart_data(txt):
         try:
             m = re.search(r"```json\s*([\s\S]*?)\s*```", txt or "", re.IGNORECASE)
-            if not m:
-                return []
+            if not m: return []
             raw = json.loads(m.group(1))
-            if not isinstance(raw, list):
-                return []
+            if not isinstance(raw, list): return []
             cleaned = []
             for item in raw:
-                if not isinstance(item, dict):
-                    continue
+                if not isinstance(item, dict): continue
                 def to_float(v, default=0.0):
                     try:
                         s = str(v).strip()
-                        if not s or s.lower() == 'null' or s.lower() == 'none':
-                            return default
+                        if not s or s.lower() == 'null' or s.lower() == 'none': return default
                         return float(s.replace(',', '.'))
-                    except:
-                        return default
+                    except: return default
                 
                 receita = to_float(item.get("receita"))
+                if receita == 0: continue
                 
-                # Ignora o trimestre se a IA não extraiu a receita (evita o "vale" pro zero no gráfico)
-                if receita == 0:
-                    continue
-                
-                cleaned_item = {
+                cleaned.append({
                     "name": item.get("name") or item.get("periodo") or item.get("label") or "",
                     "receita": receita,
                     "lucro": to_float(item.get("lucro")),
@@ -148,12 +140,11 @@ def parse_results(text):
                     "margemBruta": to_float(item.get("margemBruta")),
                     "margemLiquida": to_float(item.get("margemLiquida")),
                     "segmentos": item.get("segmentos", []),
+                    "composicao_receita": item.get("composicao_receita", {}), # NOVA CHAVE AQUI
                     "despesas_var": item.get("despesas_var", [])
-                }
-                cleaned.append(cleaned_item)
+                })
             return cleaned
-        except:
-            return []
+        except: return []
 
     conclusao_match = re.search(r'(?:Seção 5|Conclusão).*?[\:\–\-]\s*(.*?)(?=(?:Seção 6|Nota Final|Nota Geral|\*\*Nota Geral|$))', text, re.DOTALL | re.IGNORECASE)
     conclusao = conclusao_match.group(1).strip() if conclusao_match else "Ver análise completa no texto."
@@ -247,9 +238,8 @@ Chaves obrigatórias em todos os trimestres:
 "margemLiquida" (número percentual).
 
 IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as seguintes chaves adicionais:
-1. "segmentos": Uma lista de dicionários com a quebra exata de RECEITA POR SEGMENTO descrita na Seção 1. OBRIGATÓRIO extrair todos os segmentos citados. Ex: [{{"nome": "Productivity and Business", "valor": 29944000000}}, {{"nome": "Intelligent Cloud", "valor": 26751000000}}]. Os valores devem ser numéricos e absolutos.
-2. "despesas_var": Uma lista de dicionários com a variação percentual A/A das linhas de despesa citadas na Seção 2. Aumento de custo = positivo (ex: 7.1). Queda de custo = negativo (ex: -9.1). Ex: [{{"nome": "P&D", "var_pct": 7.1}}, {{"nome": "G&A", "var_pct": -9.1}}].
-
+1. "composicao_receita": OBRIGATÓRIO. Um objeto JSON (dicionário) detalhando a composição da receita. Se a empresa dividir a receita em múltiplas naturezas (ex: Canais, Geografias, Produtos), crie sub-dicionários. Ex: {{"Canais de Venda": {{"Físico": 100, "Online": 50}}, "Geografia": {{"Brasil": 120, "EUA": 30}}}}. Se houver apenas uma quebra simples, coloque direto: {{"Locação": 100, "Vendas": 50}}. ATENÇÃO: Use APENAS valores numéricos absolutos.
+2. "despesas_var": Uma lista de dicionários com a variação percentual A/A das linhas de despesa... Ex: [{{"linha": "Despesas com Vendas", "variacao": 13.1}}, {{"linha": "Despesas Gerais e Administrativas", "variacao": -5.2}}]. Se não houver variação ou informação, deixe a lista vazia.
     DADOS DO RELEASE (Use apenas o relevante):
     {pdf_text[:40000]}
         """

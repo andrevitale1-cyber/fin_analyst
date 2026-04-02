@@ -183,26 +183,29 @@ SECTION_CHARTS = {
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
         {
-            "id": "cS1B", "title": "Composição da Receita", "sub": "Share por Segmento (Último Trimestre)",
+            "id": "cS1B", "title": "Composição da Receita", "sub": "Share de Categorias (Último Trimestre)",
             "js": """
             const wrap = document.getElementById('cS1B')?.parentElement;
-            if(wrap && typeof COMP_DATA !== 'undefined') {
+            if(wrap && typeof CD !== 'undefined' && CD.length > 0) {
                 wrap.innerHTML = ''; 
-                const compData = COMP_DATA;
+                
+                // Busca os dados do último trimestre
+                let compData = {};
+                for(let i=CD.length-1; i>=0; i--){
+                    if(CD[i].composicao_receita && Object.keys(CD[i].composicao_receita).length > 0) { 
+                        compData = CD[i].composicao_receita; 
+                        break; 
+                    } else if(CD[i].segmentos && CD[i].segmentos.length > 0) {
+                        // Fallback para análises antigas no banco de dados
+                        CD[i].segmentos.forEach(s => compData[s.nome] = parseFloat(s.valor));
+                        break;
+                    }
+                }
                 
                 let cats = {};
                 if(Object.keys(compData).length > 0) {
                     const isNested = Object.values(compData).some(v => typeof v === 'object' && !Array.isArray(v) && v !== null);
                     cats = isNested ? compData : { "Composição Geral": compData };
-                } else {
-                    let segs = [];
-                    for(let i=CD.length-1; i>=0; i--){
-                        if(CD[i].segmentos && CD[i].segmentos.length > 0) { segs = CD[i].segmentos; break; }
-                    }
-                    if(segs.length) {
-                        cats["Segmentos"] = {};
-                        segs.forEach(s => cats["Segmentos"][s.nome] = parseFloat(s.valor));
-                    }
                 }
                 
                 const keys = Object.keys(cats);
