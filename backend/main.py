@@ -2,6 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator
 from passlib.context import CryptContext
+import requests
 import google.generativeai as genai
 import psycopg2
 import os
@@ -15,7 +16,7 @@ from dotenv import load_dotenv
 from report_generator import router as report_router
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
-
+FMP_API_KEY = os.getenv("FMP_API_KEY")
 # Carrega variáveis de ambiente
 load_dotenv()
 
@@ -167,6 +168,24 @@ if GEMINI_API_KEY:
 else:
     model = None
 
+def buscar_transcricao_fmp(symbol: str, year: str, quarter: str):
+    """Busca a transcrição do call de resultados diretamente na API da FMP."""
+    if not FMP_API_KEY:
+        raise ValueError("Chave FMP_API_KEY não configurada.")
+    
+    # Remove o 'T' do trimestre se o frontend enviar '1T', '2T', etc. A API espera '1', '2'...
+    q = quarter.replace('T', '').strip()
+    
+    url = f"https://financialmodelingprep.com/api/v3/earning_call_transcript/{symbol}?year={year}&quarter={q}&apikey={FMP_API_KEY}"
+    
+    resposta = requests.get(url)
+    if resposta.status_code == 200:
+        dados = resposta.json()
+        if len(dados) > 0 and "content" in dados[0]:
+            return dados[0]["content"]
+    
+    raise HTTPException(status_code=404, detail=f"Transcrição não encontrada para {symbol} no {quarter}/{year}.")
+
 # --- ROTAS ---
 @app.get("/")
 def read_root():
@@ -273,7 +292,52 @@ IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as se
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if conn: conn.close()
+        
+@app.post("/api/analyze-call")
+async def analyze_earnings_call(
+    symbol: str = Form(...),
+    ano: str = Form(...),
+    trimestre: str = Form(...),
+    user_id: str = Form(...)
+):
+    print(f"🎙️ A analisar Earnings Call para {symbol} ({trimestre}/{ano})")
+    
+    if not model:
+        raise HTTPException(status_code=500, detail="Erro: Chave Gemini não encontrada.")
 
+    conn = None
+    try:
+        # 1. Vai buscar a transcrição à FMP automaticamente
+        texto_transcricao = buscar_transcricao_fmp(symbol, ano, trimestre)
+        
+        # 2. Prompt focado no "Tom" da diretoria e no Q&A
+        prompt = f"""
+Atue como um analista financeiro sénior. Analise a seguinte transcrição da teleconferência de resultados (Earnings Call) da empresa {symbol}.
+
+Foque a sua análise nos seguintes pontos:
+1. Tom da Administração (Otimista, Cauteloso, Pessimista) e principais mensagens.
+2. Guidance e Projeções Futuras mencionadas pelos executivos.
+3. Principais preocupações levantadas pelos analistas na sessão de Q&A (Perguntas e Respostas).
+
+Texto da Transcrição:
+{texto_transcricao[:50000]} # Limitado para garantir que cabe no contexto da IA
+        """
+
+        # 3. Envia para o Gemini
+        response = await asyncio.to_thread(model.generate_content, prompt)
+        
+        # (Opcional: Aqui pode usar a sua função parse_results se adaptar o prompt para retornar JSON e Notas)
+        # Para já, devolvemos a análise pura.
+        
+        return {
+            "metadata": { "empresa": symbol, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call" },
+            "analise_completa": response.text
+        }
+
+    except Exception as e:
+        print(f"❌ Erro na análise do call: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    
 @app.get("/api/table-data")
 def get_table_data(user_id: str): 
     conn = get_db_connection()

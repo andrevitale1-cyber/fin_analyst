@@ -121,6 +121,9 @@ export default function FinancialDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   
+  // Estado para escolher qual tipo de análise
+  const [tipoAnalise, setTipoAnalise] = useState<'pdf' | 'call'>('pdf'); 
+
   const [usageCount, setUsageCount] = useState(0);
   const WEEKLY_LIMIT = 5;
   const [downloadCount, setDownloadCount] = useState(0);
@@ -216,20 +219,32 @@ export default function FinancialDashboard() {
   };
 
   const handleAnalyze = async () => {
-    if (!file || !empresa || !ano) { alert("Preencha todos os campos e anexe o PDF."); return; }
+    if (!empresa || !ano) { alert("Preencha o campo de empresa/ticker e ano."); return; }
+    if (tipoAnalise === 'pdf' && !file) { alert("Anexe o PDF do relatório."); return; }
     if (!user) return;
+    
     if (!isPremium && usageCount >= WEEKLY_LIMIT) { setShowUpgradeModal(true); return; }
 
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append("file", file);
-      formData.append("empresa", empresa.toUpperCase());
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
       formData.append("user_id", user.id);
 
-      const response = await fetch(`${API_BASE}/api/analyze`, { method: "POST", body: formData });
+      let urlBackend = "";
+
+      // Decide qual endpoint e dados enviar baseado no tipo de análise
+      if (tipoAnalise === 'pdf') {
+        formData.append("file", file!);
+        formData.append("empresa", empresa.toUpperCase());
+        urlBackend = `${API_BASE}/api/analyze`;
+      } else {
+        formData.append("symbol", empresa.toUpperCase());
+        urlBackend = `${API_BASE}/api/analyze-call`;
+      }
+
+      const response = await fetch(urlBackend, { method: "POST", body: formData });
       if (response.status === 403) { setLoading(false); setShowUpgradeModal(true); return; }
       if (!response.ok) throw new Error("Erro API");
       
@@ -240,14 +255,13 @@ export default function FinancialDashboard() {
       }
       
       const data = await response.json();
-      // Garantimos que o ID da nova análise seja injetado no resultado para download imediato
       setResult({ ...data, id: data.id });
       setCurrentView('result');
       fetchHistory();
       fetchTableData();
     } catch (error) {
       console.error(error);
-      alert("Erro na análise. Verifique se o backend está online.");
+      alert("Erro na análise. Verifique se o backend está online e se os dados estão corretos.");
     } finally {
       setLoading(false);
     }
@@ -313,7 +327,6 @@ export default function FinancialDashboard() {
     });
   }, [tableData, sortConfig]);
 
-  // FUNÇÃO ATUALIZADA: Chama o endpoint de relatório do Backend
   const handleDownload = () => {
     const id = result?.id; 
     
@@ -328,7 +341,7 @@ export default function FinancialDashboard() {
         setDownloadCount(newDlCount);
         localStorage.setItem(`downloads_${user.id}`, newDlCount.toString());
       }
-      // Abre o relatório gerado pelo backend em uma nova aba
+      // Abre o relatório gerado pelo backend numa nova aba
       window.open(`${API_BASE}/api/report/${id}`, '_blank');
     } else {
       alert("ID do relatório não encontrado. Tente abrir pelo histórico.");
@@ -493,7 +506,6 @@ export default function FinancialDashboard() {
                 <tbody className="divide-y divide-gray-800">
                   {filteredHistory.map((item: any) => (
                     <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { 
-                      // Injetamos o id no resultado para permitir download pelo histórico
                       setResult({ ...item.conteudo, id: item.id }); 
                       setEmpresa(item.empresa); 
                       setCurrentView('result'); 
@@ -501,7 +513,13 @@ export default function FinancialDashboard() {
                       <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-gray-200">{item.empresa?.toUpperCase()}</span></div></td>
                       <td className="py-4 px-6 text-gray-400">{item.periodo}</td>
                       <td className="py-4 px-6 text-gray-500 text-sm">{formatarData(item.data)}</td>
-                      <td className="py-4 px-6 text-center"><span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold ${item.nota >= 4 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : item.nota >= 3 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>{item.nota}</span></td>
+                      <td className="py-4 px-6 text-center">
+                        {item.nota > 0 ? (
+                          <span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold ${item.nota >= 4 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : item.nota >= 3 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>{item.nota}</span>
+                        ) : (
+                          <span className="text-purple-400 text-xs bg-purple-500/10 border border-purple-500/20 px-2 py-1 rounded-md font-semibold">CALL</span>
+                        )}
+                      </td>
                       <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">Detalhes <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
                     </tr>
                   ))}
@@ -516,20 +534,66 @@ export default function FinancialDashboard() {
         {currentView === 'dashboard' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-3xl mx-auto mt-6 md:mt-10 px-0 md:px-0">
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-96 animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-6" /><h2 className="text-2xl md:text-3xl font-bold animate-pulse text-white mb-2 text-center">Analisando Dados...</h2><p className="text-gray-400 text-center px-4">Nossa IA está processando o relatório e calculando os indicadores.</p></div>
+              <div className="flex flex-col items-center justify-center h-96 animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-6" /><h2 className="text-2xl md:text-3xl font-bold animate-pulse text-white mb-2 text-center">A Analisar Dados...</h2><p className="text-gray-400 text-center px-4">A nossa IA está a processar o relatório e a gerar os insights.</p></div>
             ) : (
               <>
-                <div className="text-center mb-8 md:mb-12"><h1 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">Nova Análise Financeira</h1><p className="text-gray-400 text-base md:text-lg">Carregue o relatório trimestral (PDF) para processamento via IA.</p></div>
+                <div className="text-center mb-6 md:mb-8">
+                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">Nova Análise Financeira</h1>
+                   <p className="text-gray-400 text-base md:text-lg">Gere análises através de relatórios em PDF ou Transcrições de Calls.</p>
+                </div>
+
+                {/* BOTÕES DE ALTERNÂNCIA (TOGGLE) */}
+                <div className="flex justify-center gap-4 mb-8">
+                    <button 
+                      type="button" 
+                      onClick={() => setTipoAnalise('pdf')} 
+                      className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${tipoAnalise === 'pdf' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'bg-[#161b22] border border-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-800'}`}
+                    >
+                      📄 Relatório (PDF)
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setTipoAnalise('call')} 
+                      className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${tipoAnalise === 'call' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20' : 'bg-[#161b22] border border-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-800'}`}
+                    >
+                      🎙️ Earnings Call (FMP)
+                    </button>
+                </div>
+
                 <div className="bg-[#161b22] border border-gray-800 rounded-2xl p-4 md:p-8 shadow-2xl relative overflow-hidden group hover:border-gray-700 transition-colors duration-500">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
-                    <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Empresa</label><input type="text" placeholder="Ex: Apple" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all uppercase" value={empresa} onChange={(e) => setEmpresa(e.target.value)} /></div>
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        {tipoAnalise === 'pdf' ? 'Empresa' : 'Ticker Oficial (Ex: AAPL)'}
+                      </label>
+                      <input 
+                        type="text" 
+                        placeholder={tipoAnalise === 'pdf' ? 'Ex: Apple' : 'Ex: AAPL'} 
+                        className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all uppercase" 
+                        value={empresa} 
+                        onChange={(e) => setEmpresa(e.target.value)} 
+                      />
+                    </div>
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ano</label><input type="text" placeholder="2025" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={ano} onChange={(e) => setAno(e.target.value)} /></div>
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trimestre</label><select className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">1º Trimestre</option><option value="2T">2º Trimestre</option><option value="3T">3º Trimestre</option><option value="4T">4º Trimestre</option></select></div>
                   </div>
-                  <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 md:p-10 flex flex-col items-center justify-center bg-[#0d1117]/50 hover:bg-[#0d1117] hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
-                    <input type="file" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" /><div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div><p className="text-gray-300 font-medium text-lg text-center">{file ? file.name : "Clique ou arraste o PDF"}</p><p className="text-gray-500 text-sm mt-2 text-center">Suporta PDF de até 10MB</p>
-                  </div>
-                  <button onClick={handleAnalyze} className="w-full mt-8 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition-all duration-300 flex items-center justify-center gap-2"><Activity size={20} /> Gerar Análise Completa</button>
+                  
+                  {/* ESCONDE O UPLOAD DE ARQUIVO SE FOR UM EARNINGS CALL */}
+                  {tipoAnalise === 'pdf' && (
+                    <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 md:p-10 flex flex-col items-center justify-center bg-[#0d1117]/50 hover:bg-[#0d1117] hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
+                      <input type="file" onChange={handleFileChange} accept=".pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                      <div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div>
+                      <p className="text-gray-300 font-medium text-lg text-center">{file ? file.name : "Clique ou arraste o PDF"}</p>
+                      <p className="text-gray-500 text-sm mt-2 text-center">Suporta PDF de até 10MB</p>
+                    </div>
+                  )}
+
+                  <button 
+                    onClick={handleAnalyze} 
+                    className={`w-full mt-8 text-white font-bold py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${tipoAnalise === 'pdf' ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/20' : 'bg-purple-600 hover:bg-purple-500 shadow-purple-900/20'}`}
+                  >
+                    <Activity size={20} /> {tipoAnalise === 'pdf' ? 'Gerar Análise do Relatório' : 'Analisar Call via FMP'}
+                  </button>
                 </div>
               </>
             )}
@@ -546,20 +610,49 @@ export default function FinancialDashboard() {
                 {isPremium ? 'Ver Relatório Completo' : `Ver Relatório Completo (${downloadCount}/${WEEKLY_DOWNLOAD_LIMIT})`}
               </button>
             </div>
+            
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
-              <div><h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2><h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1><p className="text-xl text-blue-400 font-medium">{result.metadata?.periodo}</p></div>
-              <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800 w-full md:w-auto justify-between md:justify-start"><div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div><div className={`text-4xl font-bold ${Number(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : Number(result.data?.nota_geral || 0) >= 3 ? 'text-amber-400' : 'text-red-400'}`}>{result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span></div></div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-              {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "ROE", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
-                <div key={idx} className="bg-[#161b22] border border-gray-800 p-6 rounded-2xl hover:border-gray-700 transition-all duration-300">
-                  <div className="flex items-center justify-between mb-4"><span className="text-gray-400 text-sm font-medium">{item.label}</span><div className="bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
-                  <div className="flex items-end gap-2"><span className="text-3xl font-bold text-white">{item.val}</span><span className="text-gray-600 text-sm mb-1">/5</span></div>
-                  <div className="w-full bg-gray-800 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${Number(item.val || 0) >= 4 ? 'bg-green-500' : Number(item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${(Number(item.val || 0) / 5) * 100}%` }} /></div>
+              <div>
+                <h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2>
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1>
+                <p className={`text-xl font-medium ${result.metadata?.tipo === "Earnings Call" ? 'text-purple-400' : 'text-blue-400'}`}>
+                  {result.metadata?.tipo === "Earnings Call" ? `Earnings Call · ${result.metadata?.periodo}` : result.metadata?.periodo}
+                </p>
+              </div>
+              
+              {/* Só mostra a nota geral se não for um Earnings Call */}
+              {result.metadata?.tipo !== "Earnings Call" && (
+                <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800 w-full md:w-auto justify-between md:justify-start">
+                  <div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div>
+                  <div className={`text-4xl font-bold ${Number(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : Number(result.data?.nota_geral || 0) >= 3 ? 'text-amber-400' : 'text-red-400'}`}>
+                    {result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span>
+                  </div>
                 </div>
-              ))}
+              )}
             </div>
-            <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl"><h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3"><FileText className="text-blue-500" /> Tese de Investimento</h3><div className="prose prose-invert prose-lg max-w-none text-gray-300 leading-relaxed whitespace-pre-line">{result.data?.tese_investimento ? result.data.tese_investimento : "Sem análise textual disponível."}</div></div>
+            
+            {/* Oculta as caixinhas de pilares numéricos se for Earnings Call, já que é uma análise textual */}
+            {result.metadata?.tipo !== "Earnings Call" && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+                {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "ROE", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
+                  <div key={idx} className="bg-[#161b22] border border-gray-800 p-6 rounded-2xl hover:border-gray-700 transition-all duration-300">
+                    <div className="flex items-center justify-between mb-4"><span className="text-gray-400 text-sm font-medium">{item.label}</span><div className="bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
+                    <div className="flex items-end gap-2"><span className="text-3xl font-bold text-white">{item.val}</span><span className="text-gray-600 text-sm mb-1">/5</span></div>
+                    <div className="w-full bg-gray-800 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${Number(item.val || 0) >= 4 ? 'bg-green-500' : Number(item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${(Number(item.val || 0) / 5) * 100}%` }} /></div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl">
+              <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+                <FileText className={result.metadata?.tipo === "Earnings Call" ? "text-purple-500" : "text-blue-500"} /> 
+                {result.metadata?.tipo === "Earnings Call" ? "Transcrição e Análise" : "Tese de Investimento"}
+              </h3>
+              <div className="prose prose-invert prose-lg max-w-none text-gray-300 leading-relaxed whitespace-pre-line">
+                {result.data?.tese_investimento ? result.data.tese_investimento : (result.analise_completa || "Sem análise textual disponível.")}
+              </div>
+            </div>
           </div>
         )}
       </main>
