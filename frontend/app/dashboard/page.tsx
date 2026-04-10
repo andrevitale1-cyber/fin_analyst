@@ -219,8 +219,7 @@ export default function FinancialDashboard() {
   };
 
   const handleAnalyze = async () => {
-    if (!empresa || !ano) { alert("Preencha o campo de empresa/ticker e ano."); return; }
-    if (tipoAnalise === 'pdf' && !file) { alert("Anexe o PDF do relatório."); return; }
+    if (!empresa || !ano || !file) { alert("Preencha todos os campos e anexe o PDF."); return; }
     if (!user) return;
     
     if (!isPremium && usageCount >= WEEKLY_LIMIT) { setShowUpgradeModal(true); return; }
@@ -231,22 +230,21 @@ export default function FinancialDashboard() {
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
       formData.append("user_id", user.id);
+      formData.append("empresa", empresa.toUpperCase());
+      formData.append("file", file);
 
-      let urlBackend = "";
-
-      // Decide qual endpoint e dados enviar baseado no tipo de análise
-      if (tipoAnalise === 'pdf') {
-        formData.append("file", file!);
-        formData.append("empresa", empresa.toUpperCase());
-        urlBackend = `${API_BASE}/api/analyze`;
-      } else {
-        formData.append("symbol", empresa.toUpperCase());
-        urlBackend = `${API_BASE}/api/analyze-call`;
-      }
+      // O frontend agora só precisa decidir para qual rota enviar:
+      const urlBackend = tipoAnalise === 'pdf' 
+        ? `${API_BASE}/api/analyze` 
+        : `${API_BASE}/api/analyze-call`;
 
       const response = await fetch(urlBackend, { method: "POST", body: formData });
+      
       if (response.status === 403) { setLoading(false); setShowUpgradeModal(true); return; }
-      if (!response.ok) throw new Error("Erro API");
+      if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.detail || "Erro na API");
+      }
       
       if (!isPremium) {
         const newCount = usageCount + 1;
@@ -259,9 +257,9 @@ export default function FinancialDashboard() {
       setCurrentView('result');
       fetchHistory();
       fetchTableData();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert("Erro na análise. Verifique se o backend está online e se os dados estão corretos.");
+      alert("Erro na análise: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -578,21 +576,21 @@ export default function FinancialDashboard() {
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trimestre</label><select className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">1º Trimestre</option><option value="2T">2º Trimestre</option><option value="3T">3º Trimestre</option><option value="4T">4º Trimestre</option></select></div>
                   </div>
                   
-                  {/* ESCONDE O UPLOAD DE ARQUIVO SE FOR UM EARNINGS CALL */}
-                  {tipoAnalise === 'pdf' && (
-                    <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 md:p-10 flex flex-col items-center justify-center bg-[#0d1117]/50 hover:bg-[#0d1117] hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
-                      <input type="file" onChange={handleFileChange} accept=".pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                      <div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div>
-                      <p className="text-gray-300 font-medium text-lg text-center">{file ? file.name : "Clique ou arraste o PDF"}</p>
-                      <p className="text-gray-500 text-sm mt-2 text-center">Suporta PDF de até 10MB</p>
-                    </div>
-                  )}
+                  {/* A CAIXA DE UPLOAD AGORA APARECE SEMPRE */}
+                  <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 md:p-10 flex flex-col items-center justify-center bg-[#0d1117]/50 hover:bg-[#0d1117] hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
+                    <input type="file" onChange={handleFileChange} accept=".pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    <div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div>
+                    <p className="text-gray-300 font-medium text-lg text-center">
+                      {file ? file.name : (tipoAnalise === 'pdf' ? "Clique ou arraste o Release (PDF)" : "Clique ou arraste a Transcrição (PDF)")}
+                    </p>
+                    <p className="text-gray-500 text-sm mt-2 text-center">Suporta PDF de até 10MB</p>
+                  </div>
 
                   <button 
                     onClick={handleAnalyze} 
                     className={`w-full mt-8 text-white font-bold py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${tipoAnalise === 'pdf' ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/20' : 'bg-purple-600 hover:bg-purple-500 shadow-purple-900/20'}`}
                   >
-                    <Activity size={20} /> {tipoAnalise === 'pdf' ? 'Gerar Análise do Relatório' : 'Analisar Call via FMP'}
+                    <Activity size={20} /> {tipoAnalise === 'pdf' ? 'Gerar Análise do Relatório' : 'Analisar Call via IA'}
                   </button>
                 </div>
               </>

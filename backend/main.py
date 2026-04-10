@@ -2,7 +2,6 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator
 from passlib.context import CryptContext
-import requests
 import google.generativeai as genai
 import psycopg2
 import os
@@ -16,7 +15,6 @@ from dotenv import load_dotenv
 from report_generator import router as report_router
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
-FMP_API_KEY = os.getenv("FMP_API_KEY")
 # Carrega variáveis de ambiente
 load_dotenv()
 
@@ -141,7 +139,7 @@ def parse_results(text):
                     "margemBruta": to_float(item.get("margemBruta")),
                     "margemLiquida": to_float(item.get("margemLiquida")),
                     "segmentos": item.get("segmentos", []),
-                    "composicao_receita": item.get("composicao_receita", {}), # NOVA CHAVE AQUI
+                    "composicao_receita": item.get("composicao_receita", {}), 
                     "despesas_var": item.get("despesas_var", [])
                 })
             return cleaned
@@ -167,45 +165,6 @@ if GEMINI_API_KEY:
     model = genai.GenerativeModel('gemini-2.5-flash')
 else:
     model = None
-
-def buscar_transcricao_fmp(symbol: str, year: str, quarter: str):
-    """Busca a transcrição do call de resultados diretamente na API da FMP."""
-    if not FMP_API_KEY:
-        raise HTTPException(status_code=500, detail="Chave FMP_API_KEY não foi encontrada nas variáveis de ambiente do Render.")
-    
-    import re
-    q_match = re.search(r'\d', quarter)
-    q_num = q_match.group(0) if q_match else "1"
-    
-    symbol_upper = symbol.upper().strip()
-    
-    # URL oficial (sem o 'period=Q4' extra, apenas quarter e year)
-    url = f"https://financialmodelingprep.com/api/v3/earning_call_transcript/{symbol_upper}?year={year}&quarter={q_num}&apikey={FMP_API_KEY}"
-    
-    resposta = requests.get(url)
-    
-    if resposta.status_code == 200:
-        dados = resposta.json()
-        if isinstance(dados, list) and len(dados) > 0 and "content" in dados[0]:
-            return dados[0]["content"]
-        else:
-            raise HTTPException(
-                status_code=404, 
-                detail=f"A FMP respondeu com sucesso, mas o texto da transcrição está vazio para {symbol_upper} no {q_num}T{year}."
-            )
-            
-    elif resposta.status_code == 403:
-        # AQUI ESTÁ O PROVÁVEL CULPADO!
-        raise HTTPException(
-            status_code=403, 
-            detail="Acesso bloqueado pela FMP (Erro 403). Verifique se a sua chave está correta e se o seu plano da FMP permite acessar Transcrições de Calls (Premium)."
-        )
-    else:
-        # Qualquer outro erro bizarro
-        raise HTTPException(
-            status_code=resposta.status_code, 
-            detail=f"Erro desconhecido na FMP: {resposta.text}"
-        )
 
 # --- ROTAS ---
 @app.get("/")
@@ -316,24 +275,26 @@ IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as se
 
 @app.post("/api/analyze-call")
 async def analyze_earnings_call(
-    symbol: str = Form(...),
+    file: UploadFile = File(...),
+    empresa: str = Form(...),
     ano: str = Form(...),
     trimestre: str = Form(...),
     user_id: str = Form(...)
 ):
-    print(f"🎙️ A analisar Earnings Call para {symbol} ({trimestre}/{ano})")
+    print(f"🎙️ A analisar Earnings Call (PDF) para {empresa} ({trimestre}/{ano})")
     
     if not model:
         raise HTTPException(status_code=500, detail="Erro: Chave Gemini não encontrada.")
 
     conn = None
     try:
-        # 1. Vai buscar a transcrição à FMP automaticamente
-        texto_transcricao = buscar_transcricao_fmp(symbol, ano, trimestre)
+        # 1. Lê o ficheiro PDF da transcrição que o utilizador enviou
+        contents = await file.read()
+        texto_transcricao = extract_text_from_pdf_bytes(contents)
         
         # 2. Prompt focado no "Tom" da diretoria e no Q&A
         prompt = f"""
-Atue como um analista financeiro sénior. Analise a seguinte transcrição da teleconferência de resultados (Earnings Call) da empresa {symbol}.
+Atue como um analista financeiro sénior. Analise a seguinte transcrição da teleconferência de resultados (Earnings Call) da empresa {empresa}.
 
 Foque a sua análise nos seguintes pontos:
 1. Tom da Administração (Otimista, Cauteloso, Pessimista) e principais mensagens.
@@ -341,23 +302,39 @@ Foque a sua análise nos seguintes pontos:
 3. Principais preocupações levantadas pelos analistas na sessão de Q&A (Perguntas e Respostas).
 
 Texto da Transcrição:
-{texto_transcricao[:50000]} # Limitado para garantir que cabe no contexto da IA
+{texto_transcricao[:50000]}
         """
 
         # 3. Envia para o Gemini
         response = await asyncio.to_thread(model.generate_content, prompt)
         
-        # (Opcional: Aqui pode usar a sua função parse_results se adaptar o prompt para retornar JSON e Notas)
-        # Para já, devolvemos a análise pura.
-        
-        return {
-            "metadata": { "empresa": symbol, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call" },
-            "analise_completa": response.text
+        objeto_final = {
+            "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call" },
+            "analise_completa": response.text,
+            "data": {} 
         }
 
+        # 4. Salva no Banco de Dados
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s) RETURNING id",
+            (empresa, ano, trimestre, json.dumps(objeto_final), str(user_id))
+        )
+        inserted_id = cur.fetchone()[0]
+        objeto_final["id"] = inserted_id
+        
+        conn.commit()
+        cur.close()
+        
+        return objeto_final
+
     except Exception as e:
-        print(f"❌ Erro na análise do call: {e}")
+        print(f"❌ Erro Crítico na análise do call: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+        
+    finally:
+        if conn: conn.close()
     
 @app.get("/api/table-data")
 def get_table_data(user_id: str): 
