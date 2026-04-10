@@ -173,19 +173,27 @@ def buscar_transcricao_fmp(symbol: str, year: str, quarter: str):
     if not FMP_API_KEY:
         raise ValueError("Chave FMP_API_KEY não configurada.")
     
-    # Remove o 'T' do trimestre se o frontend enviar '1T', '2T', etc. A API espera '1', '2'...
-    q = quarter.replace('T', '').strip()
+    # Extrai APENAS o número usando Regex (Ex: "4T", "Q4", "4" viram "4")
+    import re
+    q_match = re.search(r'\d', quarter)
+    q = q_match.group(0) if q_match else "1"
     
-    url = f"https://financialmodelingprep.com/api/v3/earning_call_transcript/{symbol}?year={year}&quarter={q}&apikey={FMP_API_KEY}"
+    symbol_upper = symbol.upper().strip()
+    
+    url = f"https://financialmodelingprep.com/api/v3/earning_call_transcript/{symbol_upper}?year={year}&quarter={q}&apikey={FMP_API_KEY}"
     
     resposta = requests.get(url)
     if resposta.status_code == 200:
         dados = resposta.json()
-        if len(dados) > 0 and "content" in dados[0]:
+        # A FMP retorna uma lista. Verificamos se há dados e se a chave 'content' existe.
+        if isinstance(dados, list) and len(dados) > 0 and "content" in dados[0]:
             return dados[0]["content"]
     
-    raise HTTPException(status_code=404, detail=f"Transcrição não encontrada para {symbol} no {quarter}/{year}.")
-
+    # Mensagem de erro amigável que será enviada para o Frontend caso não ache
+    raise HTTPException(
+        status_code=404, 
+        detail=f"Transcrição não encontrada para {symbol_upper} no {q}T{year}. DICA: Para ações brasileiras, use o sufixo '.SA' (Ex: VIVA3.SA). A API cobre principalmente ações dos EUA."
+    )
 # --- ROTAS ---
 @app.get("/")
 def read_root():
@@ -292,7 +300,7 @@ IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as se
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         if conn: conn.close()
-        
+
 @app.post("/api/analyze-call")
 async def analyze_earnings_call(
     symbol: str = Form(...),
