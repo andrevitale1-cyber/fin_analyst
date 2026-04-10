@@ -91,16 +91,30 @@ def init_db():
 init_db()
 
 # --- AUXILIARES ---
-def extract_text_from_pdf_bytes(file_bytes):
+def extract_text_from_pdf_bytes(file_bytes, max_pages=12):
+    """
+    Lê o PDF, mas limita-se às primeiras 'max_pages' para não explodir 
+    a memória RAM (OOM Kill) nos servidores gratuitos do Render.
+    """
     try:
         reader = PdfReader(io.BytesIO(file_bytes))
         text = ""
-        for page in reader.pages:
-            text += page.extract_text() + "\n"
+        
+        # Otimização: Lê apenas até ao limite de páginas estipulado
+        for i, page in enumerate(reader.pages):
+            if i >= max_pages:
+                print(f"⚠️ Limite de {max_pages} páginas atingido. Ignorando o resto para poupar RAM.")
+                break
+            
+            # Extrai o texto da página atual e adiciona
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+                
         return text
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Erro ao ler PDF: {str(e)}")
-
+        raise HTTPException(status_code=400, detail=f"Erro ao extrair texto do PDF: {str(e)}")
+    
 def parse_results(text):
     def get_note(pattern, txt):
         match = re.search(pattern, txt, re.DOTALL | re.IGNORECASE)
