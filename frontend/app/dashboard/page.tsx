@@ -233,6 +233,66 @@ export default function FinancialDashboard() {
       formData.append("empresa", empresa.toUpperCase());
       formData.append("file", file);
 
+  // Extraia a lógica de chamada da API para uma função separada
+  const analyzeReport = async (
+    tipoAnalise: 'pdf' | 'call',
+    formData: FormData,
+    isPremium: boolean,
+    usageCount: number,
+    userId: string
+  ) => {
+    const urlBackend = tipoAnalise === 'pdf'
+      ? `${API_BASE}/api/analyze`
+      : `${API_BASE}/api/analyze-call`;
+
+    const response = await fetch(urlBackend, { method: "POST", body: formData });
+
+    if (response.status === 403) {
+      setLoading(false);
+      setShowUpgradeModal(true);
+      return null;
+    }
+
+    // === PROTEÇÃO CONTRA TELA INFINITA ===
+    if (!response.ok) {
+      let errorMsg = "Erro na API do Servidor.";
+      try {
+        const err = await response.json();
+        errorMsg = err.detail || errorMsg;
+      } catch (e) {
+        // Se o Render cortar a ligação, cai aqui em vez de congelar a tela
+        errorMsg = `Falha de Conexão (Status ${response.status}). O servidor demorou muito a responder ou reiniciou. Tente novamente com um PDF mais pequeno.`;
+      }
+      throw new Error(errorMsg);
+    }
+    // =====================================
+
+    if (!isPremium) {
+      const newCount = usageCount + 1;
+      setUsageCount(newCount);
+      localStorage.setItem(`usage_${userId}`, newCount.toString());
+    }
+
+    const data = await response.json();
+    return data;
+  };
+
+  try {
+    const data = await analyzeReport(tipoAnalise, formData, isPremium, usageCount, user.id);
+    if (!data) return;
+    setResult({ ...data, id: data.id });
+    setCurrentView('result');
+    fetchHistory();
+    fetchTableData();
+  } catch (error: any) {
+    console.error(error);
+    // Aqui ele destrava a tela e mostra o erro
+    alert(error.message);
+  } finally {
+    // ISTO GARANTE QUE A RODA PARA DE GIRAR SEMPRE
+    setLoading(false);
+  }
+
       // O frontend agora só precisa decidir para qual rota enviar:
       const urlBackend = tipoAnalise === 'pdf' 
         ? `${API_BASE}/api/analyze` 
