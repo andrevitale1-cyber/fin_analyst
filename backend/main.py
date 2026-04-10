@@ -173,27 +173,32 @@ def buscar_transcricao_fmp(symbol: str, year: str, quarter: str):
     if not FMP_API_KEY:
         raise ValueError("Chave FMP_API_KEY não configurada.")
     
-    # Extrai APENAS o número usando Regex (Ex: "4T", "Q4", "4" viram "4")
     import re
+    # 1. Extrai apenas o número que o utilizador digitou (ex: "4T" vira "4")
     q_match = re.search(r'\d', quarter)
-    q = q_match.group(0) if q_match else "1"
+    q_num = q_match.group(0) if q_match else "1"
+    
+    # 2. Formata exatamente como a FMP exige: "Q1", "Q2", "Q3", "Q4"
+    period_formatado = f"Q{q_num}"
     
     symbol_upper = symbol.upper().strip()
     
-    url = f"https://financialmodelingprep.com/api/v3/earning_call_transcript/{symbol_upper}?year={year}&quarter={q}&apikey={FMP_API_KEY}"
+    # 3. Enviamos o parâmetro 'period=QX' (e mantemos o quarter por segurança para endpoints legacy)
+    url = f"https://financialmodelingprep.com/api/v3/earning_call_transcript/{symbol_upper}?year={year}&quarter={q_num}&period={period_formatado}&apikey={FMP_API_KEY}"
     
     resposta = requests.get(url)
     if resposta.status_code == 200:
         dados = resposta.json()
-        # A FMP retorna uma lista. Verificamos se há dados e se a chave 'content' existe.
+        # Valida se a FMP devolveu o texto ("content")
         if isinstance(dados, list) and len(dados) > 0 and "content" in dados[0]:
             return dados[0]["content"]
     
-    # Mensagem de erro amigável que será enviada para o Frontend caso não ache
+    # Erro amigável se a FMP não tiver a transcrição
     raise HTTPException(
         status_code=404, 
-        detail=f"Transcrição não encontrada para {symbol_upper} no {q}T{year}. DICA: Para ações brasileiras, use o sufixo '.SA' (Ex: VIVA3.SA). A API cobre principalmente ações dos EUA."
+        detail=f"Transcrição não encontrada para {symbol_upper} no {period_formatado} {year}. DICA: A FMP cobre maioritariamente as bolsas americanas. Para empresas brasileiras, experimente adicionar '.SA' (Ex: PETR4.SA)."
     )
+
 # --- ROTAS ---
 @app.get("/")
 def read_root():
