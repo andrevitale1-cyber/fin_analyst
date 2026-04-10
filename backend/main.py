@@ -171,33 +171,41 @@ else:
 def buscar_transcricao_fmp(symbol: str, year: str, quarter: str):
     """Busca a transcrição do call de resultados diretamente na API da FMP."""
     if not FMP_API_KEY:
-        raise ValueError("Chave FMP_API_KEY não configurada.")
+        raise HTTPException(status_code=500, detail="Chave FMP_API_KEY não foi encontrada nas variáveis de ambiente do Render.")
     
     import re
-    # 1. Extrai apenas o número que o utilizador digitou (ex: "4T" vira "4")
     q_match = re.search(r'\d', quarter)
     q_num = q_match.group(0) if q_match else "1"
     
-    # 2. Formata exatamente como a FMP exige: "Q1", "Q2", "Q3", "Q4"
-    period_formatado = f"Q{q_num}"
-    
     symbol_upper = symbol.upper().strip()
     
-    # 3. Enviamos o parâmetro 'period=QX' (e mantemos o quarter por segurança para endpoints legacy)
-    url = f"https://financialmodelingprep.com/api/v3/earning_call_transcript/{symbol_upper}?year={year}&quarter={q_num}&period={period_formatado}&apikey={FMP_API_KEY}"
+    # URL oficial (sem o 'period=Q4' extra, apenas quarter e year)
+    url = f"https://financialmodelingprep.com/api/v3/earning_call_transcript/{symbol_upper}?year={year}&quarter={q_num}&apikey={FMP_API_KEY}"
     
     resposta = requests.get(url)
+    
     if resposta.status_code == 200:
         dados = resposta.json()
-        # Valida se a FMP devolveu o texto ("content")
         if isinstance(dados, list) and len(dados) > 0 and "content" in dados[0]:
             return dados[0]["content"]
-    
-    # Erro amigável se a FMP não tiver a transcrição
-    raise HTTPException(
-        status_code=404, 
-        detail=f"Transcrição não encontrada para {symbol_upper} no {period_formatado} {year}. DICA: A FMP cobre maioritariamente as bolsas americanas. Para empresas brasileiras, experimente adicionar '.SA' (Ex: PETR4.SA)."
-    )
+        else:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"A FMP respondeu com sucesso, mas o texto da transcrição está vazio para {symbol_upper} no {q_num}T{year}."
+            )
+            
+    elif resposta.status_code == 403:
+        # AQUI ESTÁ O PROVÁVEL CULPADO!
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso bloqueado pela FMP (Erro 403). Verifique se a sua chave está correta e se o seu plano da FMP permite acessar Transcrições de Calls (Premium)."
+        )
+    else:
+        # Qualquer outro erro bizarro
+        raise HTTPException(
+            status_code=resposta.status_code, 
+            detail=f"Erro desconhecido na FMP: {resposta.text}"
+        )
 
 # --- ROTAS ---
 @app.get("/")
