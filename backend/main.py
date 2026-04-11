@@ -176,7 +176,7 @@ def parse_results(text):
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     model = None
 
@@ -193,15 +193,17 @@ async def analyze_report(
     trimestre: str = Form(...),
     user_id: str = Form(...) 
 ):
-    print(f"🔄 Análise para User {user_id}: {empresa}")
+    print(f"🔄 [PASSO 1] Iniciando Análise de Relatório (PDF) para User {user_id}: {empresa}")
     
     if not model:
         raise HTTPException(status_code=500, detail="Erro: Chave Gemini não encontrada.")
 
     conn = None
     try:
+        print("📄 [PASSO 2] Extraindo texto do Relatório (Limitado a 12 páginas)...")
         contents = await file.read()
-        pdf_text = extract_text_from_pdf_bytes(contents)
+        pdf_text = extract_text_from_pdf_bytes(contents, max_pages=12)
+        print(f"✅ [PASSO 3] Texto lido! Foram extraídos {len(pdf_text)} caracteres.")
         
         prompt = f"""
  REGRAS DE FORMATAÇÃO E ESTILO (Padrão Editorial / Equity Research Sênior):
@@ -258,7 +260,12 @@ IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as se
     {pdf_text[:40000]}
         """
 
-        response = await asyncio.to_thread(model.generate_content, prompt)
+        print("🧠 [PASSO 4] Enviando para o Google Gemini com limite rígido de 60s...")
+        tarefa_gemini = asyncio.to_thread(model.generate_content, prompt)
+        response = await asyncio.wait_for(tarefa_gemini, timeout=60.0)
+        print("✅ [PASSO 5] O Google Gemini respondeu com sucesso!")
+        
+        print("⚙️ [PASSO 6] Parseando os resultados para JSON...")
         dados_estruturados = parse_results(response.text)
         
         objeto_final = {
@@ -267,6 +274,7 @@ IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as se
             "analise_completa": response.text
         }
 
+        print("💾 [PASSO 7] Salvando no Banco de Dados...")
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
@@ -279,11 +287,18 @@ IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as se
         conn.commit()
         cur.close()
         
+        print(f"🎉 [PASSO 8] Análise concluída! ID: {inserted_id}. Retornando ao Frontend.")
         return objeto_final
 
+    except asyncio.TimeoutError:
+        print("❌ [ERRO] Tempo limite de 60 segundos excedido!")
+        raise HTTPException(status_code=504, detail="O servidor da IA demorou muito a responder. Tente novamente.")
     except Exception as e:
-        print(f"❌ Erro na análise: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        erro_str = str(e)
+        print(f"❌ [ERRO CRÍTICO] Falha na análise: {erro_str}")
+        if "503" in erro_str or "high demand" in erro_str.lower() or "overloaded" in erro_str.lower():
+            raise HTTPException(status_code=503, detail="Os servidores do Google estão temporariamente sobrecarregados. Aguarde 1 minuto e tente novamente.")
+        raise HTTPException(status_code=500, detail=erro_str)
     finally:
         if conn: conn.close()
 
@@ -295,18 +310,18 @@ async def analyze_earnings_call(
     trimestre: str = Form(...),
     user_id: str = Form(...)
 ):
-    print(f"🎙️ A analisar Earnings Call (PDF) para {empresa} ({trimestre}/{ano})")
+    print(f"🎙️ [PASSO 1] Iniciando análise de Call para {empresa} ({trimestre}/{ano})")
     
     if not model:
         raise HTTPException(status_code=500, detail="Erro: Chave Gemini não encontrada.")
 
     conn = None
     try:
-        # 1. Lê o ficheiro PDF da transcrição que o utilizador enviou
+        print("📄 [PASSO 2] Extraindo texto do PDF (Limitado a 12 páginas)...")
         contents = await file.read()
-        texto_transcricao = extract_text_from_pdf_bytes(contents)
+        texto_transcricao = extract_text_from_pdf_bytes(contents, max_pages=12)
+        print(f"✅ [PASSO 3] PDF lido com sucesso! Foram extraídos {len(texto_transcricao)} caracteres.")
         
-        # 2. Prompt focado no "Tom" da diretoria e no Q&A
         prompt = f"""
 Atue como um analista financeiro sénior. Analise a seguinte transcrição da teleconferência de resultados (Earnings Call) da empresa {empresa}.
 
@@ -319,8 +334,10 @@ Texto da Transcrição:
 {texto_transcricao[:50000]}
         """
 
-        # 3. Envia para o Gemini
-        response = await asyncio.to_thread(model.generate_content, prompt)
+        print("🧠 [PASSO 4] Enviando para o Google Gemini com limite rígido de 60s...")
+        tarefa_gemini = asyncio.to_thread(model.generate_content, prompt)
+        response = await asyncio.wait_for(tarefa_gemini, timeout=60.0)
+        print("✅ [PASSO 5] O Google Gemini respondeu com sucesso!")
         
         objeto_final = {
             "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call" },
@@ -328,7 +345,7 @@ Texto da Transcrição:
             "data": {} 
         }
 
-        # 4. Salva no Banco de Dados
+        print("💾 [PASSO 6] Salvando no Banco de Dados...")
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
@@ -341,12 +358,18 @@ Texto da Transcrição:
         conn.commit()
         cur.close()
         
+        print(f"🎉 [PASSO 7] Análise concluída! ID: {inserted_id}. Retornando ao Frontend.")
         return objeto_final
 
+    except asyncio.TimeoutError:
+        print("❌ [ERRO] Tempo limite de 60 segundos excedido!")
+        raise HTTPException(status_code=504, detail="O servidor da IA demorou muito a responder. Tente novamente.")
     except Exception as e:
-        print(f"❌ Erro Crítico na análise do call: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-        
+        erro_str = str(e)
+        print(f"❌ [ERRO CRÍTICO] Falha na análise: {erro_str}")
+        if "503" in erro_str or "high demand" in erro_str.lower() or "overloaded" in erro_str.lower():
+            raise HTTPException(status_code=503, detail="Os servidores do Google estão temporariamente sobrecarregados. Aguarde 1 minuto e tente novamente.")
+        raise HTTPException(status_code=500, detail=erro_str)
     finally:
         if conn: conn.close()
     
