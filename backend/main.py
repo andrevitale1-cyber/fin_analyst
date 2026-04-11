@@ -323,12 +323,13 @@ async def analyze_earnings_call(
         print(f"✅ [PASSO 3] PDF lido com sucesso! Foram extraídos {len(texto_transcricao)} caracteres.")
         
         prompt = f"""
-Atue como um analista financeiro sénior. Analise a seguinte transcrição da teleconferência de resultados (Earnings Call) da empresa {empresa}.
+Atue como um Analista Financeiro Sênior. Resuma o Earnings Call da {empresa} de forma ultra-objetiva.
+Para cada insight, indique obrigatoriamente o minuto/timestamp aproximado extraído do texto (ex: [12:45]).
 
-Foque a sua análise nos seguintes pontos:
-1. Tom da Administração (Otimista, Cauteloso, Pessimista) e principais mensagens.
-2. Guidance e Projeções Futuras mencionadas pelos executivos.
-3. Principais preocupações levantadas pelos analistas na sessão de Q&A (Perguntas e Respostas).
+Foque exclusivamente em:
+1. Expansões e Crescimento: Planos de novas lojas/unidades, entrada em novos mercados e CAPEX destinado a expansão.
+2. Projeções e Guidance: Números específicos para os próximos meses/trimestres (Receita, Margens, EBITDA).
+3. Tom da Gestão e Q&A: Sentimento dos executivos e as 3 perguntas mais críticas feitas pelos analistas.
 
 Texto da Transcrição:
 {texto_transcricao[:50000]}

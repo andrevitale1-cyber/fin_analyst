@@ -79,7 +79,7 @@ def _extract_charts(text: str) -> list:
     return []
 
 def _extract_composicao(text: str) -> dict:
-    """Extrai o JSON específico de Composição de Receita (seja lista ou categorias múltiplas)"""
+    """Extrai o JSON específico de Composição de Receita"""
     try:
         for m in re.finditer(r"```json\s*([\s\S]*?)\s*```", text or ""):
             raw = json.loads(m.group(1))
@@ -115,12 +115,16 @@ def _clean_md(text: str) -> str:
         if re.match(r"^[-•*]\s", s):
             if not in_ul: out.append('<ul class="md-ul">'); in_ul = True
             body = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s[2:])
+            # Transforma os timestamps (ex: [12:34]) numa badge bonita
+            body = re.sub(r"(\[\d{1,2}:\d{2}\])", r"<span style='color:#7C3AED; font-weight:700; background:#F5F3FF; padding:2px 6px; border-radius:4px; font-family:monospace; font-size:12px;'>\1</span>", body)
             out.append(f"<li>{body}</li>")
             continue
         if in_ul:
             out.append("</ul>"); in_ul = False
         if s:
             s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
+            # Transforma os timestamps (ex: [12:34]) numa badge bonita
+            s = re.sub(r"(\[\d{1,2}:\d{2}\])", r"<span style='color:#7C3AED; font-weight:700; background:#F5F3FF; padding:2px 6px; border-radius:4px; font-family:monospace; font-size:12px;'>\1</span>", s)
             out.append(s)
     if in_table: out.append("</tbody></table></div>")
     if in_ul: out.append("</ul>")
@@ -212,10 +216,10 @@ SECTION_CHARTS = {
                         wrap.innerHTML = ''; 
                         wrap.style.display = 'flex';
                         wrap.style.flexDirection = 'column'; 
-                        wrap.style.gap = '40px'; // Espaço maior para não encostar
+                        wrap.style.gap = '40px'; 
                         wrap.style.alignItems = 'center';
                         wrap.style.padding = '20px 0';
-                        wrap.style.height = 'auto'; // CORREÇÃO: Remove a limitação que cortava o gráfico
+                        wrap.style.height = 'auto'; 
                         
                         keys.forEach((catName, idx) => {
                             const dataObj = cats[catName];
@@ -241,12 +245,10 @@ SECTION_CHARTS = {
                             
                             const canWrap = document.createElement('div');
                             canWrap.style.position = 'relative';
-                            // CORREÇÃO: Altura maior para a rosca respirar
                             canWrap.style.height = '240px'; 
                             canWrap.style.width = '100%';
                             
                             const can = document.createElement('canvas');
-                            // CORREÇÃO: Adiciona ID e evento de clique para o modal
                             can.id = 'donut_dinamico_' + idx;
                             can.style.cursor = 'zoom-in';
                             can.onclick = () => openModal(can.id);
@@ -267,7 +269,7 @@ SECTION_CHARTS = {
                                 },
                                 options: {
                                     ...BASE, cutout: '50%',
-                                    maintainAspectRatio: false, // Força a respeitar a altura do container
+                                    maintainAspectRatio: false, 
                                     layout: { padding: 10 },
                                     plugins: {
                                         ...BASE.plugins,
@@ -292,7 +294,7 @@ SECTION_CHARTS = {
                     }
                 }
             } catch(e) { 
-                console.error("Erro ao desenhar os gráficos de rosca. Ignorando para não quebrar o resto:", e); 
+                console.error("Erro ao desenhar os gráficos.", e); 
             }
             """
         },
@@ -397,6 +399,7 @@ def generate_report_html(resultado: dict) -> str:
 
     empresa = (meta.get("empresa") or "Empresa").upper()
     periodo = meta.get("periodo") or ""
+    is_call = meta.get("tipo") == "Earnings Call"
 
     rn  = _f(data.get("receita_nota", 0))
     ln  = _f(data.get("lucro_nota", 0))
@@ -406,7 +409,7 @@ def generate_report_html(resultado: dict) -> str:
     tese = data.get("tese_investimento", "")
 
     tg   = _score_theme(g)
-    secs = _parse_sections(analise)
+    secs = _parse_sections(analise) if not is_call else []
     raw_cd = data.get("chart_data") or _extract_charts(analise)
     comp_data = _extract_composicao(analise)
     
@@ -415,8 +418,10 @@ def generate_report_html(resultado: dict) -> str:
     
     cd = [d for d in cd if _f(d.get("receita", 0)) > 0]
     cd = sorted(cd, key=lambda d: _quarter_sort_key(d.get("name")))
-    cj   = json.dumps(cd)
-    cj_comp = json.dumps(comp_data)
+    
+    # Se for call, não passamos gráficos
+    cj   = json.dumps(cd) if not is_call else "[]"
+    cj_comp = json.dumps(comp_data) if not is_call else "{}"
 
     tese_c    = re.sub(r"\*\*|\*", "", tese).strip()
     tese_html = "".join(f"<p>{_h.escape(p.strip())}</p>" for p in tese_c.split("\n\n") if p.strip()) or f"<p>{_h.escape(tese_c)}</p>"
@@ -441,6 +446,26 @@ def generate_report_html(resultado: dict) -> str:
             f'</svg>'
         )
 
+    # Lógica Condicional: O que mostrar no canto direito do Hero
+    if is_call:
+        hero_right_html = f"""
+        <div class="hero-right" style="background:#F5F3FF; border-color:#DDD6FE;">
+          <span class="hero-score-lbl" style="color:#7C3AED;">Tipo de Documento</span>
+          <div style="font-size:38px; margin: 10px 0;">🎙️</div>
+          <div class="hero-score-verdict" style="color:#6D28D9;">Earnings Call</div>
+        </div>
+        """
+        hero_desc = "Resumo analítico gerado por IA com base na transcrição da teleconferência de resultados. Focado em insights da diretoria, guidance, expansão e perguntas do mercado."
+    else:
+        hero_right_html = f"""
+        <div class="hero-right">
+          <span class="hero-score-lbl">Score IA — Média Ponderada</span>
+          {_hero_ring(g, 110)}
+          <div class="hero-score-verdict">{tg['label']}</div>
+        </div>
+        """
+        hero_desc = "Relatório completo gerado por IA com base no release de resultados oficial. Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica."
+
     pillars = [
         {"label": "Receita",           "nota": rn,  "icon": "REV"},
         {"label": "Margem & Lucro",    "nota": ln,  "icon": "M&L"},
@@ -461,7 +486,9 @@ def generate_report_html(resultado: dict) -> str:
   <div class="pillar-track"><div class="pillar-fill" style="width:{pct}%;background:{t['bar']}"></div></div>
 </div>"""
 
-    pillars_html = "".join(_pillar(p) for p in pillars)
+    # Oculta pilares se for Call
+    pillars_html = "".join(_pillar(p) for p in pillars) if not is_call else ""
+    sumbar_display = "none" if is_call else "block"
 
     all_chart_js = []
 
@@ -528,8 +555,26 @@ def generate_report_html(resultado: dict) -> str:
   </div>
 </section>"""
 
-    secs_html    = "".join(_section_block(s) for s in secs)
-    charts_js    = "\n".join(all_chart_js)
+    # Condicional: Renderização das Seções e Gráficos
+    if is_call:
+        secs_html = f"""
+<section class="sec-block fade-in" style="--acc:#8B5CF6; border-color:#DDD6FE;">
+  <div class="sec-accent-bar"></div>
+  <div class="sec-inner">
+    <div class="sec-head">
+      <div>
+        <h2 class="sec-title">Principais Insights e Timestamps</h2>
+      </div>
+    </div>
+    <div class="sec-layout--full">
+      <div class="sec-text abody">{_clean_md(analise)}</div>
+    </div>
+  </div>
+</section>"""
+        charts_js = ""
+    else:
+        secs_html = "".join(_section_block(s) for s in secs)
+        charts_js = "\n".join(all_chart_js)
 
     verdict_labels = {
         "Muito Ruim": ("vtag-sell",  "Resultado Muito Fraco"),
@@ -539,6 +584,47 @@ def generate_report_html(resultado: dict) -> str:
         "Excelente":  ("vtag-buy",   "Resultado Excelente"),
     }
     vcls, vtitle = verdict_labels.get(tg["label"], ("vtag-watch", "—"))
+
+    # Lógica Condicional: Grid de Conclusão Final
+    if is_call:
+        conclusion_grid_html = f"""
+      <div class="c-grid" style="grid-template-columns:1fr 1fr;">
+        <div>
+          <div class="c-cell-lbl">Empresa · Período</div>
+          <div class="c-cell-val">{_h.escape(empresa.title())}</div>
+          <div style="font-size:12px;color:#64748B;margin-top:3px">{_h.escape(periodo)}</div>
+        </div>
+        <div>
+          <div class="c-cell-lbl">Aviso Legal</div>
+          <div class="c-cell-val" style="font-size:12px;line-height:1.5;color:#94A3B8">
+            Resumo gerado por Inteligência Artificial a partir da transcrição. Não constitui recomendação de investimento.
+          </div>
+        </div>
+      </div>"""
+        conclusion_title = "Fim da Transcrição"
+        conclusion_body  = ""
+    else:
+        conclusion_grid_html = f"""
+      <div class="c-grid">
+        <div>
+          <div class="c-cell-lbl">Score Final</div>
+          <div class="c-cell-val">{g:.1f} / 5</div>
+          <span class="vtag {vcls}">{vtitle}</span>
+        </div>
+        <div>
+          <div class="c-cell-lbl">Empresa · Período</div>
+          <div class="c-cell-val">{_h.escape(empresa.title())}</div>
+          <div style="font-size:12px;color:#64748B;margin-top:3px">{_h.escape(periodo)}</div>
+        </div>
+        <div>
+          <div class="c-cell-lbl">Aviso Legal</div>
+          <div class="c-cell-val" style="font-size:12px;line-height:1.5;color:#94A3B8">
+            Gerado por IA. Não constitui recomendação de investimento.
+          </div>
+        </div>
+      </div>"""
+        conclusion_title = "Conclusão Estratégica e Outlook"
+        conclusion_body  = f'<div class="c-body">{tese_html}</div>'
 
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
@@ -585,7 +671,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 .tb-link{{font-size:11px;font-weight:500;color:#6B7280;padding:5px 11px;border-radius:6px;text-decoration:none;transition:all .15s;border:1px solid transparent}}
 .tb-link:hover{{background:#F8FAFC;color:#111827;border-color:#E5E7EB}}
 .tb-right{{display:flex;align-items:center;gap:12px}}
-.tb-score{{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:{tg['bar']}}}
+.tb-score{{font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:{tg['bar'] if not is_call else '#7C3AED'}}}
 .tb-score-lbl{{font-size:11px;color:#9CA3AF;margin-right:4px}}
 .print-btn{{background:#1E3A8A;color:#fff;border:none;border-radius:6px;padding:7px 14px;
   font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;
@@ -630,7 +716,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 .pillar-fill{{height:100%;border-radius:99px}}
 
 /* ─── SUMMARY BAR ─── */
-.sumbar{{background:#0F172A;padding:0}}
+.sumbar{{background:#0F172A;padding:0; display:{sumbar_display};}}
 .sumbar-inner{{max-width:1100px;margin:0 auto;display:flex}}
 .sum-cell{{flex:1;padding:16px 24px;border-right:1px solid rgba(255,255,255,.07);transition:background .15s}}
 .sum-cell:last-child{{border-right:none}}
@@ -783,12 +869,11 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
     <span class="tb-name">FinAnalyzer</span>
   </div>
   <nav class="tb-nav">
-    <a href="#indicadores" class="tb-link">Indicadores</a>
-    <a href="#analise"     class="tb-link">Análise</a>
-    <a href="#conclusao"   class="tb-link">Conclusão</a>
+    <a href="#analise" class="tb-link">Análise</a>
+    <a href="#conclusao" class="tb-link">Resumo</a>
   </nav>
   <div class="tb-right">
-    <span><span class="tb-score-lbl">Score IA</span><span class="tb-score">{g:.1f}/5</span></span>
+    <span><span class="tb-score-lbl">{"Status" if is_call else "Score IA"}</span><span class="tb-score">{"Call Analisado" if is_call else f"{g:.1f}/5"}</span></span>
     <button class="print-btn" onclick="window.print()">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Salvar PDF
     </button>
@@ -799,15 +884,11 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
   <div class="hero-inner">
     <div class="hero-row">
       <div class="hero-left">
-        <div class="hero-period"><div class="hero-dot"></div>{_h.escape(periodo)} · Resultados Trimestrais</div>
+        <div class="hero-period"><div class="hero-dot"></div>{_h.escape(periodo)} · {"Earnings Call" if is_call else "Resultados Trimestrais"}</div>
         <h1 class="hero-empresa">{_h.escape(empresa.title())}</h1>
-        <p class="hero-desc">Relatório completo gerado por IA com base no release de resultados oficial. Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica.</p>
+        <p class="hero-desc">{hero_desc}</p>
       </div>
-      <div class="hero-right">
-        <span class="hero-score-lbl">Score IA — Média Ponderada</span>
-        {_hero_ring(g, 110)}
-        <div class="hero-score-verdict">{tg['label']}</div>
-      </div>
+      {hero_right_html}
     </div>
     <div id="indicadores" class="pillars">{pillars_html}</div>
   </div>
@@ -817,42 +898,25 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 
 <div class="main">
   <div id="analise">
-    <div class="sec-label">Análise Completa por IA</div>
-    <div class="sec-heading">Leitura dos Resultados</div>
+    <div class="sec-label">{"Extração Textual" if is_call else "Análise Completa por IA"}</div>
+    <div class="sec-heading">{"Leitura da Transcrição" if is_call else "Leitura dos Resultados"}</div>
     {secs_html}
   </div>
 
   <div class="divider page-break"></div>
 
   <div id="conclusao">
-    <div class="conclusion">
-      <div class="c-eyebrow">Tese de Investimento</div>
-      <h2 class="c-title">Conclusão Estratégica e Outlook</h2>
-      <div class="c-body">{tese_html}</div>
-      <div class="c-grid">
-        <div>
-          <div class="c-cell-lbl">Score Final</div>
-          <div class="c-cell-val">{g:.1f} / 5</div>
-          <span class="vtag {vcls}">{vtitle}</span>
-        </div>
-        <div>
-          <div class="c-cell-lbl">Empresa · Período</div>
-          <div class="c-cell-val">{_h.escape(empresa.title())}</div>
-          <div style="font-size:12px;color:#64748B;margin-top:3px">{_h.escape(periodo)}</div>
-        </div>
-        <div>
-          <div class="c-cell-lbl">Aviso Legal</div>
-          <div class="c-cell-val" style="font-size:12px;line-height:1.5;color:#94A3B8">
-            Gerado por IA. Não constitui recomendação de investimento.
-          </div>
-        </div>
-      </div>
+    <div class="conclusion" style="{'background:linear-gradient(135deg, #1E1B4B 0%, #4C1D95 100%);' if is_call else ''}">
+      <div class="c-eyebrow">{"Síntese" if is_call else "Tese de Investimento"}</div>
+      <h2 class="c-title">{conclusion_title}</h2>
+      {conclusion_body}
+      {conclusion_grid_html}
     </div>
   </div>
 </div>
 
 <div class="footer no-print">
-  <span>Gerado pelo <strong style="color:#6B7280">FinAnalyzer</strong> · Dados do release oficial · Não é recomendação de investimento</span>
+  <span>Gerado pelo <strong style="color:#6B7280">FinAnalyzer</strong> · Documento Oficial · Não é recomendação de investimento</span>
   <span>{_h.escape(empresa.title())} · {_h.escape(periodo)}</span>
 </div>
 
