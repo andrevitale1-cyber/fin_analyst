@@ -565,14 +565,6 @@ function TypewriterEffect({ text, trigger, delay = 0 }: { text: string, trigger:
 function ReportDemo() {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
-  const [barsVisible, setBarsVisible] = React.useState(false);
-  const [typingTrigger, setTypingTrigger] = React.useState(false);
-
-  useEffect(() => {
-    if (isInView) {
-      const t1 = setTimeout(() => setBarsVisible(true), 600);
-      const t2 = setTimeout(() => setTypingTrigger(true), 1200);
-      return () => { clearTimeout(t1); clearTimeout(t2); }
   const [barsVisible, setBarsVisible] = useState(false);
   const [typingTrigger, setTypingTrigger] = useState(false);
 
