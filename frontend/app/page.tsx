@@ -6,7 +6,7 @@ import {
   BarChart3, UploadCloud, ArrowRight, 
   FileText, Layout, Database, Check, X,
   Trash2, ChevronRight, DollarSign, Percent,
-  AlertCircle, TrendingUp, Download, ChevronLeft, Menu, Activity
+  AlertCircle, TrendingUp, Download, ChevronLeft, Menu, Activity, Mic
 } from "lucide-react";
 
 // --- DADOS FAKE (MOCK) ---
@@ -452,6 +452,71 @@ function ComparadorMobile() {
   );
 }
 
+function CallAnalysisDemo() {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  return (
+    <motion.div 
+      ref={ref} 
+      initial={{ opacity: 0, x: -40 }} 
+      animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }} 
+      transition={{ duration: 0.8, ease: "easeOut" }} 
+      className="w-full select-none relative"
+    >
+      <div className="absolute -inset-4 bg-indigo-500/10 blur-[40px] rounded-3xl pointer-events-none" />
+      <div className="relative bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-[#1a1d27]/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
+              <Mic size={18} className="text-indigo-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-white">Earnings Call Q4'25</h3>
+              <p className="text-xs text-gray-400">Transcrição & Análise de Sentimento</p>
+            </div>
+          </div>
+          <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 hidden sm:block">
+             <span className="text-xs font-bold text-emerald-400">Tom: Otimista</span>
+          </div>
+        </div>
+        
+        <div className="p-5 space-y-4">
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">CEO</div>
+            <div className="bg-white/5 rounded-2xl rounded-tl-none p-4 border border-white/5 text-sm text-gray-300 shadow-sm leading-relaxed">
+              "Vemos uma demanda sem precedentes pela nossa nova infraestrutura de IA, e isso se reflete claramente na nossa expansão de margens neste trimestre."
+            </div>
+          </div>
+          <div className="flex gap-3 flex-row-reverse">
+             <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center shadow-lg shadow-blue-500/20"><Activity size={14} className="text-white" /></div>
+             <div className="bg-indigo-500/10 rounded-2xl rounded-tr-none p-4 border border-indigo-500/20 text-sm text-indigo-200 shadow-inner leading-relaxed">
+               <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block mb-1.5">Insight da IA</span>
+               O CEO destaca as margens impulsionadas por IA, confirmando a tese de ganho de eficiência operacional reportada no DFP.
+             </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="w-8 h-8 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">CFO</div>
+            <div className="bg-white/5 rounded-2xl rounded-tl-none p-4 border border-white/5 text-sm text-gray-300 shadow-sm leading-relaxed">
+              "Apesar dos desafios macroeconômicos, conseguimos manter nosso guidance de crescimento."
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-[#0e1117] p-5 border-t border-white/10">
+          <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
+             <span className="font-medium">Processamento Concluído</span>
+             <span className="flex items-center gap-1 font-bold text-emerald-400"><Check size={14} strokeWidth={3} /> 100% Analisado</span>
+          </div>
+          <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+            <div className="h-full bg-indigo-500 rounded-full w-full" />
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // --- EFEITO DE DIGITAÇÃO APRIMORADO ---
 function TypewriterEffect({ text, trigger, delay = 0 }: { text: string, trigger: boolean, delay?: number }) {
   const [displayed, setDisplayed] = useState("");
@@ -881,7 +946,38 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 4: HISTÓRICO COMPLETO */}
+        {/* BLOCO 4: ANÁLISE DE CALLS */}
+        <section
+          className="py-16 lg:py-32 relative bg-[#0a0d14] overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-1/2 h-full bg-blue-600/5 blur-[120px] rounded-full pointer-events-none" />
+          
+          <div className="max-w-7xl mx-auto px-6 relative z-10">
+            <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-16 lg:items-center">
+              <div className="lg:col-span-5 lg:col-start-8 text-center lg:text-left mb-12 lg:mb-0 order-1 lg:order-2">
+                <div className="w-14 h-14 bg-indigo-500/20 rounded-2xl flex items-center justify-center mb-6 border border-indigo-400/30 mx-auto lg:mx-0">
+                  <Mic className="text-indigo-400 w-7 h-7" />
+                </div>
+                <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
+                  Análise de <br/>Earnings Calls
+                </h2>
+                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight max-w-md mx-auto lg:mx-0">
+                  Vá além dos números. A IA escuta, transcreve e analisa as teleconferências de resultados para capturar o tom da diretoria, perguntas difíceis e perspectivas futuras em tempo real.
+                </p>
+              </div>
+
+              <div className="lg:col-span-6 lg:col-start-1 relative flex justify-center lg:justify-start order-2 lg:order-1">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-600/20 blur-[100px] rounded-full pointer-events-none" />
+                <div className="w-full max-w-[440px] lg:max-w-none">
+                  <CallAnalysisDemo />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* BLOCO 5: HISTÓRICO COMPLETO */}
         <section
           className="py-16 lg:py-48 relative bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/secao4.png')" }}
@@ -960,7 +1056,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* BLOCO 5: RELATÓRIO COMPLETO */}
+        {/* BLOCO 6: RELATÓRIO COMPLETO */}
         <section className="py-16 lg:py-48 relative overflow-hidden bg-[#05080f]">
           <div className="absolute inset-0 bg-gradient-to-b from-black to-sky-400/40 lg:hidden z-0" />
           
@@ -1039,6 +1135,7 @@ export default function LandingPage() {
                 <Feature text="Upload de arquivos ilimitado" disabled />
                 <Feature text="Download da Análise Completa da IA" disabled />
                 <Feature text="Tabela Comparativa de Ativos" disabled />
+                <Feature text="Análise de Earnings Calls" disabled />
               </ul>
 
               <a href="/dashboard" className="block w-full text-center py-6 rounded-full border-2 border-white/30 text-white text-xl font-bold hover:bg-white/10 transition-all mt-auto backdrop-blur-md">
@@ -1063,6 +1160,7 @@ export default function LandingPage() {
                 <Feature text="Upload de arquivos ilimitado" active light />
                 <Feature text="Download da Análise Completa da IA" active light />
                 <Feature text="Tabela Comparativa de Ativos" active light />
+                <Feature text="Análise de Earnings Calls" active light />
                 <Feature text="Prioridade máxima na fila" active light />
               </ul>
 
