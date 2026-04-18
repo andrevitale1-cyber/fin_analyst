@@ -852,8 +852,127 @@ function ReportDemo() {
 
             </div>
 
+            {/* SEÇÃO 3: Rentabilidade */}
+            <div className="border-t-4 border-blue-500 pt-6 mt-12 mb-8 relative">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Seção 2</p>
+                  <h3 className="text-xl font-serif font-bold text-gray-900">Rentabilidade e Margens</h3>
+                </div>
+                <div className="bg-blue-50 border border-blue-100 rounded-lg py-2 px-4 flex flex-col items-center">
+                   <p className="text-[8px] text-blue-600 uppercase tracking-widest font-bold mb-1">Nota da Seção</p>
+                   <div className="flex items-center gap-2">
+                     <span className="text-2xl font-black text-blue-600">4.5<span className="text-sm text-blue-400">/5</span></span>
+                     <span className="bg-blue-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">Ótimo</span>
+                   </div>
+                </div>
+              </div>
+              <div className="space-y-4 mb-8">
+                <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                  <TypewriterEffect text="As margens operacionais mostraram forte resiliência, com a Margem Bruta atingindo expressivos 69,5%, impulsionada por economias de escala no segmento de Cloud. O Lucro Líquido saltou para US$ 25,6 bilhões, refletindo uma Margem Líquida robusta de 33,5%." trigger={typingTrigger} delay={2500} />
+                </p>
+              </div>
+
+              {/* Grid de Cards de Margens */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm">
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Margem Bruta</p>
+                  <div className="flex items-end gap-2 mb-2">
+                    <p className="text-3xl font-black text-gray-900">69.5%</p>
+                    <span className="text-[10px] text-emerald-500 font-bold mb-1">▲ 1.2 p.p.</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: barsVisible ? '69.5%' : '0%' }}></div>
+                  </div>
+                </div>
+                <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm">
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Margem Operacional</p>
+                  <div className="flex items-end gap-2 mb-2">
+                    <p className="text-3xl font-black text-gray-900">43.8%</p>
+                    <span className="text-[10px] text-emerald-500 font-bold mb-1">▲ 0.5 p.p.</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 transition-all duration-1000" style={{ width: barsVisible ? '43.8%' : '0%' }}></div>
+                  </div>
+                </div>
+                <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm">
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Margem Líquida</p>
+                  <div className="flex items-end gap-2 mb-2">
+                    <p className="text-3xl font-black text-gray-900">33.5%</p>
+                    <span className="text-[10px] text-emerald-500 font-bold mb-1">▲ 0.8 p.p.</span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-purple-500 transition-all duration-1000" style={{ width: barsVisible ? '33.5%' : '0%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SEÇÃO 4: Saúde Financeira e Caixa */}
+            <div className="border-t-4 border-purple-500 pt-6 mt-12 mb-8 relative">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Seção 3</p>
+                  <h3 className="text-xl font-serif font-bold text-gray-900">Saúde Financeira e Endividamento</h3>
+                </div>
+                <div className="bg-purple-50 border border-purple-100 rounded-lg py-2 px-4 flex flex-col items-center">
+                   <p className="text-[8px] text-purple-600 uppercase tracking-widest font-bold mb-1">Nota da Seção</p>
+                   <div className="flex items-center gap-2">
+                     <span className="text-2xl font-black text-purple-600">5<span className="text-sm text-purple-400">/5</span></span>
+                     <span className="bg-purple-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">Excelente</span>
+                   </div>
+                </div>
+              </div>
+              <div className="space-y-4 mb-6">
+                <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                  <TypewriterEffect text="A Microsoft mantém uma posição de caixa formidável, com US$ 102,5 bilhões em caixa e equivalentes, superando de forma confortável sua dívida total de US$ 88 bilhões. O fluxo de caixa operacional permanece altamente gerador, garantindo capacidade de investimento robusta e distribuição consistente aos acionistas." trigger={typingTrigger} delay={3000} />
+                </p>
+              </div>
+
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center border border-emerald-200">
+                      <span className="text-lg">💵</span>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Caixa Líquido</p>
+                      <p className="text-2xl font-black text-emerald-700">US$ +14.5 Bi</p>
+                    </div>
+                  </div>
+                  <div className="h-10 w-px bg-gray-200"></div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border border-blue-200">
+                      <span className="text-lg">📈</span>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Alavancagem (Dívida/EBITDA)</p>
+                      <p className="text-2xl font-black text-blue-700">0.7x</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SEÇÃO 5: Conclusão e Tese */}
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-8 mt-16 mb-8 relative shadow-[0_10px_40px_-15px_rgba(59,130,246,0.15)]">
+              <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                <Activity size={120} />
+              </div>
+              <h3 className="text-xs font-bold text-indigo-800 uppercase tracking-widest mb-4">Conclusão da Inteligência Artificial</h3>
+              <h4 className="text-2xl font-serif font-extrabold text-gray-900 mb-6">Tese de Investimento & Outlook</h4>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                  <TypewriterEffect text="O trimestre consolida a tese de longo prazo da Microsoft como a principal beneficiária institucional da revolução da Inteligência Artificial. A capacidade da empresa de monetizar a IA de forma tangível em todo seu ecossistema corporativo está se traduzindo em uma aceleração sustentável de receita, descolando-se dos ciclos tradicionais de TI." trigger={typingTrigger} delay={4000} />
+                </p>
+                <p className="text-sm text-gray-700 leading-relaxed font-medium">
+                  <TypewriterEffect text="Com fundamentos impecáveis, balanço extremamente saudável e vantagens competitivas em expansão, as perspectivas para os próximos doze meses permanecem francamente positivas. O desafio de valuation premium é justificado pela visibilidade e estabilidade do fluxo de caixa operacional projetado." trigger={typingTrigger} delay={4500} />
+                </p>
+              </div>
+            </div>
+
             <div className="border-t border-gray-200 pt-6 mt-16 text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-              FIM DO PREVIEW DO RELATÓRIO
+              FIM DO RELATÓRIO
             </div>
 
           </div>
@@ -1032,8 +1151,74 @@ function ReportDemoMobile() {
               </div>
             </div>
 
+            {/* SEÇÃO 3: Rentabilidade */}
+            <div className="border-t-2 border-blue-500 pt-4 mt-6 mb-6 relative">
+              <div className="flex flex-col items-start gap-2 mb-4">
+                <h3 className="text-lg font-serif font-bold text-gray-900">Rentabilidade e Margens</h3>
+                <div className="bg-blue-50 border border-blue-100 rounded flex items-center gap-2 py-1 px-2">
+                   <span className="text-[9px] text-blue-600 font-bold uppercase">Nota:</span>
+                   <span className="text-sm font-black text-blue-600">4.5<span className="text-[10px] text-blue-400">/5</span></span>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="border border-gray-100 rounded-lg p-3 bg-white shadow-sm">
+                  <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest mb-1">Margem Bruta</p>
+                  <p className="text-xl font-black text-gray-900 mb-1">69.5%</p>
+                  <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: barsVisible ? '69.5%' : '0%' }}></div>
+                  </div>
+                </div>
+                <div className="border border-gray-100 rounded-lg p-3 bg-white shadow-sm">
+                  <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest mb-1">Margem Líquida</p>
+                  <p className="text-xl font-black text-gray-900 mb-1">33.5%</p>
+                  <div className="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-purple-500 transition-all duration-1000" style={{ width: barsVisible ? '33.5%' : '0%' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SEÇÃO 4: Saúde Financeira */}
+            <div className="border-t-2 border-purple-500 pt-4 mt-6 mb-6 relative">
+              <div className="flex flex-col items-start gap-2 mb-4">
+                <h3 className="text-lg font-serif font-bold text-gray-900">Saúde Financeira</h3>
+                <div className="bg-purple-50 border border-purple-100 rounded flex items-center gap-2 py-1 px-2">
+                   <span className="text-[9px] text-purple-600 font-bold uppercase">Nota:</span>
+                   <span className="text-sm font-black text-purple-600">5<span className="text-[10px] text-purple-400">/5</span></span>
+                </div>
+              </div>
+              
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Caixa Líquido</span>
+                    <span className="text-sm font-black text-emerald-700">US$ +14.5 Bi</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-widest">Alavancagem</span>
+                    <span className="text-sm font-black text-blue-700">0.7x</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SEÇÃO 5: Conclusão e Tese */}
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-5 mt-8 mb-6 relative">
+              <h3 className="text-[9px] font-bold text-indigo-800 uppercase tracking-widest mb-2">Conclusão da IA</h3>
+              <h4 className="text-lg font-serif font-extrabold text-gray-900 mb-3">Tese & Outlook</h4>
+              <div className="space-y-3">
+                <p className="text-[10px] text-gray-700 leading-relaxed font-medium">
+                  <TypewriterEffect text="A Microsoft consolida sua tese de longo prazo como líder na revolução de IA. A capacidade de monetizar tecnologia em todo o ecossistema corporativo está se traduzindo em crescimento sustentável." trigger={typingTrigger} delay={4000} />
+                </p>
+                <p className="text-[10px] text-gray-700 leading-relaxed font-medium">
+                  <TypewriterEffect text="Com fundamentos impecáveis e fluxo de caixa robusto, as perspectivas são positivas. O valuation premium é totalmente justificado pela visibilidade operacional." trigger={typingTrigger} delay={4500} />
+                </p>
+              </div>
+            </div>
+
             <div className="border-t border-gray-200 pt-4 mt-8 text-center text-[8px] text-gray-400 font-bold uppercase tracking-widest">
-              FIM DO PREVIEW DO RELATÓRIO
+              FIM DO RELATÓRIO
             </div>
 
           </div>
