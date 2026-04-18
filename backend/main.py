@@ -242,22 +242,22 @@ Seção 6: Nota Final
 Nota Geral: X/5
 
 **Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)**
-Extraia o histórico financeiro dos trimestres disponíveis EXATAMENTE no formato de um array JSON dentro de um bloco de código markdown.
+Extraia o histórico financeiro dos trimestres disponíveis EXATAMENTE no formato de um array JSON dentro de um bloco de código markdown `json ... `. Não coloque NENHUM texto antes ou depois do bloco de código json.
 Chaves obrigatórias em todos os trimestres: 
 "name" (nome do trimestre, ex: "3T25"), 
 "receita" (valor financeiro ABSOLUTO. Ex: 664500000), 
 "lucro" (Obrigatório. Valor do Lucro Líquido ABSOLUTO. Se prejuízo, negativo), 
 "divida" (Obrigatório. Dívida Líquida ou Bruta. Se não houver = 0),
 "ebitda" (Obrigatório. EBITDA ou Resultado Operacional. Se não houver = 0),
-"margemBruta" (número percentual), 
-"margemLiquida" (número percentual).
+"margemBruta" (número percentual como float, ex: 15.5), 
+"margemLiquida" (número percentual como float, ex: 10.2).
 
 IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as seguintes chaves:
 1. "composicao_receita": OBRIGATÓRIO. JSON detalhando a composição da receita. Subdivida se houver várias naturezas (ex: {{"Canais": {{"Físico": 100, "Web": 50}}, "Geografia": {{"Brasil": 150}}}}). Use valores absolutos.
 2. "despesas_var": OBRIGATÓRIO. Lista de dicionários com a variação percentual A/A das linhas de despesa (SG&A, Administrativas, Vendas). Aumento = positivo, Queda = negativo. Se não achar no texto, extraia do DRE. Ex: [{{"nome": "Vendas", "var_pct": 5.2}}, {{"nome": "Administrativas", "var_pct": -1.5}}]. Se for impossível achar, retorne [{{"nome": "Despesas Gerais", "var_pct": 0.0}}].
     
     DADOS DO RELEASE (Use apenas o relevante):
-    {pdf_text[:40000]}
+    {pdf_text[:100000]}
         """
 
         print("🧠 [PASSO 4] Enviando para o Google Gemini com limite rígido de 60s...")
@@ -317,9 +317,9 @@ async def analyze_earnings_call(
 
     conn = None
     try:
-        print("📄 [PASSO 2] Extraindo texto do PDF (Limitado a 12 páginas)...")
+        print("📄 [PASSO 2] Extraindo texto do PDF (Sem limite de páginas estrito)...")
         contents = await file.read()
-        texto_transcricao = extract_text_from_pdf_bytes(contents, max_pages=12)
+        texto_transcricao = extract_text_from_pdf_bytes(contents, max_pages=100)
         print(f"✅ [PASSO 3] PDF lido com sucesso! Foram extraídos {len(texto_transcricao)} caracteres.")
         
         prompt = f"""
@@ -332,7 +332,7 @@ Foque exclusivamente em:
 3. Tom da Gestão e Q&A: Sentimento dos executivos e as 3 perguntas mais críticas feitas pelos analistas.
 
 Texto da Transcrição:
-{texto_transcricao[:50000]}
+{texto_transcricao[:250000]}
         """
 
         print("🧠 [PASSO 4] Enviando para o Google Gemini com limite rígido de 60s...")

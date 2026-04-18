@@ -112,9 +112,12 @@ def _clean_md(text: str) -> str:
             continue
         if in_table:
             out.append("</tbody></table></div>"); in_table = False
-        if re.match(r"^[-•*]\s", s):
+        m_ul = re.match(r"^[-•*]\s*", s)
+        if m_ul:
             if not in_ul: out.append('<ul class="md-ul">'); in_ul = True
-            body = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s[2:])
+            body = s[m_ul.end():]
+            body = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", body)
+            body = body.replace("*", "")
             # Transforma os timestamps (ex: [12:34]) numa badge bonita
             body = re.sub(r"(\[\d{1,2}:\d{2}\])", r"<span style='color:#7C3AED; font-weight:700; background:#F5F3FF; padding:2px 6px; border-radius:4px; font-family:monospace; font-size:12px;'>\1</span>", body)
             out.append(f"<li>{body}</li>")
@@ -123,6 +126,7 @@ def _clean_md(text: str) -> str:
             out.append("</ul>"); in_ul = False
         if s:
             s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
+            s = s.replace("*", "")
             # Transforma os timestamps (ex: [12:34]) numa badge bonita
             s = re.sub(r"(\[\d{1,2}:\d{2}\])", r"<span style='color:#7C3AED; font-weight:700; background:#F5F3FF; padding:2px 6px; border-radius:4px; font-family:monospace; font-size:12px;'>\1</span>", s)
             out.append(s)
@@ -499,10 +503,12 @@ def generate_report_html(resultado: dict) -> str:
         nota_box = ""
         if t:
             nota_box = f"""
-<div class="nota-box" style="background:{t['bg']};border:1px solid {t['border']};">
-  <div class="nota-box-label">Nota desta seção</div>
-  <div class="nota-box-val" style="color:{t['bar']}">{s['nota']:.0f}<span class="nota-box-denom">/5</span></div>
-  <div class="nota-box-tag" style="background:{t['badge_bg']};color:{t['badge_text']}">{t['icon']} {t['label']}</div>
+<div class="nota-box-inline" style="background:{t['bg']};border:1px solid {t['border']};">
+  <div class="nota-box-label">Nota da Seção</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+      <div class="nota-box-val" style="color:{t['bar']}">{s['nota']:.0f}<span class="nota-box-denom">/5</span></div>
+      <div class="nota-box-tag" style="background:{t['badge_bg']};color:{t['badge_text']}">{t['icon']} {t['label']}</div>
+  </div>
 </div>"""
 
         chart_panels_html = ""
@@ -532,8 +538,8 @@ def generate_report_html(resultado: dict) -> str:
 </div>"""
 
         aside_html = ""
-        if nota_box or chart_panels_html:
-            aside_html = f'<div class="sec-aside">{nota_box}{chart_panels_html}</div>'
+        if chart_panels_html:
+            aside_html = f'<div class="sec-charts">{chart_panels_html}</div>'
 
         num_label = f'<span class="sec-num">Seção {s["num"]}</span>' if s["num"] > 0 else ""
         acc = t["bar"] if t else "#E5E7EB"
@@ -547,8 +553,9 @@ def generate_report_html(resultado: dict) -> str:
         {num_label}
         <h2 class="sec-title">{_h.escape(s['title'])}</h2>
       </div>
+      {nota_box}
     </div>
-    <div class="sec-layout{'--full' if not aside_html else ''}">
+    <div class="sec-layout">
       <div class="sec-text abody">{_clean_md(s['body'])}</div>
       {aside_html}
     </div>
@@ -742,13 +749,13 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 .sec-block:hover{{box-shadow:0 4px 18px rgba(0,0,0,.06)}}
 .sec-accent-bar{{height:4px;background:var(--acc)}}
 .sec-inner{{padding:28px 32px}}
-.sec-head{{margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #F1F5F9}}
+.sec-head{{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #F1F5F9}}
 .sec-num{{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
   color:#9CA3AF;display:block;margin-bottom:3px}}
-.sec-title{{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;
+.sec-title{{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;
   color:#0F172A;letter-spacing:-.01em}}
 
-.sec-layout{{display:grid;grid-template-columns:1fr 300px;gap:28px;align-items:start}}
+.sec-layout{{display:flex;flex-direction:column;gap:28px;}}
 .sec-layout--full{{display:block}}
 
 .abody{{font-size:14px;line-height:1.85;color:#374151}}
@@ -766,18 +773,18 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 .tbl tbody tr:last-child td{{border-bottom:none}}
 .tbl tbody tr:hover td{{background:#F8FAFC}}
 
-.sec-aside{{display:flex;flex-direction:column;gap:14px}}
+.sec-charts{{display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:20px;width:100%}}
 
-.nota-box{{border-radius:10px;padding:16px;text-align:center}}
+.nota-box-inline{{border-radius:10px;padding:12px 18px;text-align:right;}}
 .nota-box-label{{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
-  color:#6B7280;display:block;margin-bottom:6px}}
-.nota-box-val{{font-family:'DM Mono',monospace;font-size:38px;font-weight:500;
-  line-height:1;display:block;margin-bottom:6px}}
-.nota-box-denom{{font-size:15px;color:#9CA3AF;font-weight:400}}
+  color:#6B7280;display:block;margin-bottom:2px}}
+.nota-box-val{{font-family:'DM Mono',monospace;font-size:32px;font-weight:500;
+  line-height:1;display:block;}}
+.nota-box-denom{{font-size:14px;color:#9CA3AF;font-weight:400}}
 .nota-box-tag{{font-size:11px;font-weight:700;padding:4px 10px;
-  border-radius:4px;display:inline-block}}
+  border-radius:4px;display:inline-block;margin-top:6px;}}
 
-.chart-panel{{border:1px solid #E5E7EB;border-radius:10px;padding:16px;background:#FAFAFA}}
+.chart-panel{{border:1px solid #E5E7EB;border-radius:10px;padding:20px;background:#FAFAFA;box-shadow:0 1px 3px rgba(0,0,0,0.02)}}
 .cp-top {{display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;}}
 .cp-title{{font-size:12px;font-weight:600;color:#111827;margin-bottom:2px}}
 .cp-sub{{font-size:11px;color:#9CA3AF;}}

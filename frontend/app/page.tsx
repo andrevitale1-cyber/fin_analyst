@@ -2,8 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from "framer-motion";
-import { 
-  BarChart3, UploadCloud, ArrowRight, 
+import {
+  BarChart3, UploadCloud, ArrowRight,
   FileText, Layout, Database, Check, X,
   Trash2, ChevronRight, DollarSign, Percent,
   AlertCircle, TrendingUp, Download, ChevronLeft, Menu, Activity, Mic
@@ -23,10 +23,10 @@ const historicoData = [
 ];
 
 const scoreMetrics = [
-  { label: "Receita",  icon: DollarSign,   color: "text-blue-400",    score: 5 },
-  { label: "Margem",   icon: Percent,       color: "text-purple-400",  score: 5 },
-  { label: "Dívida",   icon: AlertCircle,   color: "text-red-400",     score: 5 },
-  { label: "ROE",      icon: TrendingUp,    color: "text-emerald-400", score: 5 },
+  { label: "Receita", icon: DollarSign, color: "text-blue-400", score: 5 },
+  { label: "Margem", icon: Percent, color: "text-purple-400", score: 5 },
+  { label: "Dívida", icon: AlertCircle, color: "text-red-400", score: 5 },
+  { label: "ROE", icon: TrendingUp, color: "text-emerald-400", score: 5 },
 ];
 
 const reportMetrics = [
@@ -51,9 +51,9 @@ const reportSections = [
     score: 5,
     content: [
       "A Alphabet entregou uma receita consolidada de $113.8 bilhões no 4T/2025, um aumento robusto de 18% em relação ao mesmo período do ano anterior (ou 17% em moeda constante). Este crescimento foi amplamente impulsionado pelas divisões Google Services e Google Cloud.",
-      "* Aumentou 14% para $95.9 bilhões. Dentro deste segmento, o Google Search & other apresentou um forte crescimento de 17%, e as receitas de assinaturas, plataformas e dispositivos cresceram 17%, indicando uma bem-sucedida diversificação e retenção de usuários. O YouTube Ads cresceu de forma mais moderada em 9%, embora a receita anual total do YouTube (ads e assinaturas) tenha superado $60 bilhões em 2025. O Google Network, por sua vez, registrou uma leve queda de 1.5% para $7.83 bilhões, sendo um ponto de atenção menor no trimestre.",
-      "* Demonstrou um crescimento excepcional de 48%, atingindo $17.7 bilhões em receita. Este segmento continua a ser um motor de crescimento vital, com forte demanda pela Google Cloud Platform (GCP), especialmente em infraestrutura e soluções de IA empresarial, alcançando uma taxa de execução anual de mais de $70 bilhões.",
-      "* A receita diminuiu 7.5% para $370 milhões, sublinhando que essas iniciativas ainda estão em estágios iniciais e não contribuem materialmente para a linha superior no curto prazo. O operacional foi um ponto forte, com o Search apresentando mais uso do que nunca e a demanda por produtos de IA impulsionando o crescimento da Cloud, refletindo o sucesso da estratégia de inovação da empresa."
+      "Aumentou 14% para $95.9 bilhões. Dentro deste segmento, o Google Search & other apresentou um forte crescimento de 17%, e as receitas de assinaturas, plataformas e dispositivos cresceram 17%, indicando uma bem-sucedida diversificação e retenção de usuários. O YouTube Ads cresceu de forma mais moderada em 9%, embora a receita anual total do YouTube (ads e assinaturas) tenha superado $60 bilhões em 2025. O Google Network, por sua vez, registrou uma leve queda de 1.5% para $7.83 bilhões, sendo um ponto de atenção menor no trimestre.",
+      "Demonstrou um crescimento excepcional de 48%, atingindo $17.7 bilhões em receita. Este segmento continua a ser um motor de crescimento vital, com forte demanda pela Google Cloud Platform (GCP), especialmente em infraestrutura e soluções de IA empresarial, alcançando uma taxa de execução anual de mais de $70 bilhões.",
+      "A receita diminuiu 7.5% para $370 milhões, sublinhando que essas iniciativas ainda estão em estágios iniciais e não contribuem materialmente para a linha superior no curto prazo. O operacional foi um ponto forte, com o Search apresentando mais uso do que nunca e a demanda por produtos de IA impulsionando o crescimento da Cloud, refletindo o sucesso da estratégia de inovação da empresa."
     ]
   },
   {
@@ -61,10 +61,10 @@ const reportSections = [
     score: 4,
     content: [
       "O lucro operacional consolidado da Alphabet cresceu 16%, atingindo $35.93 bilhões. A margem operacional consolidada foi de 31.6%, uma ligeira redução em comparação aos 32% do 4T/2024.",
-      "* Apresentou um aumento significativo no lucro operacional, alcançando $40.13 bilhões, indicando que a maior parte do crescimento da receita foi convertida em lucratividade.",
-      "* Aumentou seu lucro operacional para $5.31 bilhões, mais que dobrando em relação aos $2.09 bilhões do ano anterior. Isso demonstra uma melhora substancial na eficiência operacional e na alavancagem do segmento de nuvem à medida que escala.",
-      "* O prejuízo operacional se ampliou significativamente para $3.62 bilhões, de $1.17 bilhão no ano anterior, refletindo os contínuos e pesados investimentos em P&D para essas ventures.",
-      "* As despesas associadas a estas atividades mais que dobraram, chegando a $5.89 bilhões (de $2.78 bilhões), principalmente devido a P&D compartilhado em IA e um encargo de compensação de funcionários de $2.1 bilhões para a Waymo. Este último foi um fator pontual que pressionou a margem operacional consolidada.",
+      "Apresentou um aumento significativo no lucro operacional, alcançando $40.13 bilhões, indicando que a maior parte do crescimento da receita foi convertida em lucratividade.",
+      "Aumentou seu lucro operacional para $5.31 bilhões, mais que dobrando em relação aos $2.09 bilhões do ano anterior. Isso demonstra uma melhora substancial na eficiência operacional e na alavancagem do segmento de nuvem à medida que escala.",
+      "O prejuízo operacional se ampliou significativamente para $3.62 bilhões, de $1.17 bilhão no ano anterior, refletindo os contínuos e pesados investimentos em P&D para essas ventures.",
+      "As despesas associadas a estas atividades mais que dobraram, chegando a $5.89 bilhões (de $2.78 bilhões), principalmente devido a P&D compartilhado em IA e um encargo de compensação de funcionários de $2.1 bilhões para a Waymo. Este último foi um fator pontual que pressionou a margem operacional consolidada.",
       "Apesar da leve compressão da margem consolidada, os segmentos operacionais core (Google Services e Google Cloud) exibiram forte rentabilidade e ganhos de eficiência, compensando os investimentos em Other Bets e em IA a nível corporativo. A compressão na margem consolidada é vista como um resultado de investimentos estratégicos de longo prazo, ao invés de uma perda de eficiência fundamental."
     ]
   },
@@ -73,11 +73,11 @@ const reportSections = [
     score: 4,
     content: [
       "A Alphabet mantém uma posição de liquidez extremamente robusta, com caixa, equivalentes de caixa e títulos negociáveis totalizando $126.84 bilhões no final de 2025, acima dos $95.66 bilhões em 2024.",
-      "* A dívida de longo prazo aumentou significativamente para $46.55 bilhões, em comparação com $10.88 bilhões no ano anterior. Este aumento foi impulsionado pela emissão de $24.8 bilhões em notas seniores não garantidas em novembro de 2025, destinadas a fins corporativos gerais. Mesmo com este aumento, a Alphabet permanece em uma confortável posição de caixa líquido.",
-      "* As despesas com juros aumentaram para $298 milhões (de $53 milhões), refletindo a maior dívida, mas permanecem totalmente gerenciáveis dada a escala da empresa.",
-      "* Houve uma contribuição positiva substancial, que aumentou para $3.18 bilhões (de $1.27 bilhão), impulsionada principalmente por um ganho de $2.30 bilhões em títulos de capital.",
-      "* A empresa declarou um dividendo trimestral em dinheiro de $0.21 por ação, sinalizando um novo estágio de maturidade e um compromisso com o retorno direto aos acionistas, complementando seu programa de recompra de ações.",
-      "* A expectativa de CapEx para 2026, entre $175 bilhões e $185 bilhões, é um ponto crucial. Representa um salto gigantesco em relação aos $91.45 bilhões de 2025, indicando um ciclo de investimento agressivo e estratégico em infraestrutura de IA, que será financiado por sua robusta geração de caixa e o capital levantado via dívida. A estrutura de capital permanece sólida, e o aumento da dívida é uma alocação estratégica de capital para financiar um futuro de intensos investimentos em IA, sem comprometer a saúde financeira da empresa."
+      "A dívida de longo prazo aumentou significativamente para $46.55 bilhões, em comparação com $10.88 bilhões no ano anterior. Este aumento foi impulsionado pela emissão de $24.8 bilhões em notas seniores não garantidas em novembro de 2025, destinadas a fins corporativos gerais. Mesmo com este aumento, a Alphabet permanece em uma confortável posição de caixa líquido.",
+      "As despesas com juros aumentaram para $298 milhões (de $53 milhões), refletindo a maior dívida, mas permanecem totalmente gerenciáveis dada a escala da empresa.",
+      "Houve uma contribuição positiva substancial, que aumentou para $3.18 bilhões (de $1.27 bilhão), impulsionada principalmente por um ganho de $2.30 bilhões em títulos de capital.",
+      "A empresa declarou um dividendo trimestral em dinheiro de $0.21 por ação, sinalizando um novo estágio de maturidade e um compromisso com o retorno direto aos acionistas, complementando seu programa de recompra de ações.",
+      "A expectativa de CapEx para 2026, entre $175 bilhões e $185 bilhões, é um ponto crucial. Representa um salto gigantesco em relação aos $91.45 bilhões de 2025, indicando um ciclo de investimento agressivo e estratégico em infraestrutura de IA, que será financiado por sua robusta geração de caixa e o capital levantado via dívida. A estrutura de capital permanece sólida, e o aumento da dívida é uma alocação estratégica de capital para financiar um futuro de intensos investimentos em IA, sem comprometer a saúde financeira da empresa."
     ]
   },
   {
@@ -85,10 +85,10 @@ const reportSections = [
     score: 4,
     content: [
       "O Lucro Líquido da Alphabet para o 4T/2025 atingiu $34.46 bilhões, um crescimento notável de 30% em relação ao ano anterior. O Lucro por Ação (EPS) diluído subiu 31% para $2.82.",
-      "* O principal motor do crescimento do lucro foi o forte desempenho operacional, liderado pelo crescimento robusto da receita em Search e Google Cloud, combinado com a melhoria da rentabilidade e eficiência nessas divisões. Além disso, o aumento nas Outras Receitas (Despesas), líquidas, impulsionado por ganhos em títulos de capital, contribuiu positivamente para o lucro final.",
-      "** O ganho de $2.30 bilhões em títulos de capital é um item não operacional e pode ter componentes não-caixa ou voláteis. Este item adicionou aproximadamente $1.8 bilhão ao lucro líquido. Embora impactante, o lucro líquido, mesmo ajustado para este ganho, teria demonstrado um crescimento forte.",
-      "* O lucro operacional foi impactado negativamente por um encargo de $2.1 bilhões relacionado à compensação de funcionários da Waymo. Este item, de caráter mais pontual, mostra que o desempenho operacional subjacente foi ainda mais forte do que o reportado.",
-      "* Apesar desses itens específicos, o crescimento do lucro é de alta qualidade e sustentável, fundamentado na força das operações core da Alphabet. Os investimentos agressivos em IA e infraestrutura para 2026, embora afetem o fluxo de caixa livre no curto prazo, são essenciais para manter a liderança tecnológica e impulsionar o crescimento futuro."
+      "O principal motor do crescimento do lucro foi o forte desempenho operacional, liderado pelo crescimento robusto da receita em Search e Google Cloud, combinado com a melhoria da rentabilidade e eficiência nessas divisões. Além disso, o aumento nas Outras Receitas (Despesas), líquidas, impulsionado por ganhos em títulos de capital, contribuiu positivamente para o lucro final.",
+      "O ganho de $2.30 bilhões em títulos de capital é um item não operacional e pode ter componentes não-caixa ou voláteis. Este item adicionou aproximadamente $1.8 bilhão ao lucro líquido. Embora impactante, o lucro líquido, mesmo ajustado para este ganho, teria demonstrado um crescimento forte.",
+      "O lucro operacional foi impactado negativamente por um encargo de $2.1 bilhões relacionado à compensação de funcionários da Waymo. Este item, de caráter mais pontual, mostra que o desempenho operacional subjacente foi ainda mais forte do que o reportado.",
+      "Apesar desses itens específicos, o crescimento do lucro é de alta qualidade e sustentável, fundamentado na força das operações core da Alphabet. Os investimentos agressivos em IA e infraestrutura para 2026, embora afetem o fluxo de caixa livre no curto prazo, são essenciais para manter a liderança tecnológica e impulsionar o crescimento futuro."
     ]
   }
 ];
@@ -120,8 +120,8 @@ function ScoreBadge({ score }: { score: number }) {
     score >= 4
       ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
       : score >= 3
-      ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/40"
-      : "bg-red-500/20 text-red-400 border-red-500/40";
+        ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/40"
+        : "bg-red-500/20 text-red-400 border-red-500/40";
 
   return (
     <span className={`inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-bold border ${color}`}>
@@ -161,16 +161,16 @@ function PhoneImage() {
   }, [isInView]);
 
   const d = isDark;
-  const screen   = d ? "bg-[#0f1117]" : "bg-[#f2f4f8]";
-  const input    = d ? "bg-[#1a1d27] border-white/8 text-white" : "bg-white border-gray-200 text-gray-900";
-  const label    = d ? "text-gray-500" : "text-gray-400";
-  const titleC   = d ? "text-white" : "text-gray-900";
-  const subC     = d ? "text-gray-400" : "text-gray-500";
-  const zone     = d ? "border-blue-500/40 bg-blue-500/5" : "border-blue-400/60 bg-blue-50";
+  const screen = d ? "bg-[#0f1117]" : "bg-[#f2f4f8]";
+  const input = d ? "bg-[#1a1d27] border-white/8 text-white" : "bg-white border-gray-200 text-gray-900";
+  const label = d ? "text-gray-500" : "text-gray-400";
+  const titleC = d ? "text-white" : "text-gray-900";
+  const subC = d ? "text-gray-400" : "text-gray-500";
+  const zone = d ? "border-blue-500/40 bg-blue-500/5" : "border-blue-400/60 bg-blue-50";
   const zoneFile = d ? "text-white" : "text-gray-800";
-  const zoneSub  = d ? "text-gray-400" : "text-gray-500";
-  const barC     = d ? "bg-white/20" : "bg-black/20";
-  const statusC  = d ? "text-white/50" : "text-black/40";
+  const zoneSub = d ? "text-gray-400" : "text-gray-500";
+  const barC = d ? "bg-white/20" : "bg-black/20";
+  const statusC = d ? "text-white/50" : "text-black/40";
 
   return (
     <motion.div ref={ref} initial={{ opacity: 0, y: 80 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 80 }} transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }} className="w-full max-w-[320px] mx-auto select-none">
@@ -231,12 +231,12 @@ function ScoreDemo() {
           </div>
         </div>
 
-        <div className="bg-[#0A0D14] overflow-y-auto scrollbar-thin" style={{ height: "560px" }}>
+        <div className="bg-white overflow-y-auto scrollbar-thin" style={{ height: "560px" }}>
           <div className="px-6 md:px-8 py-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
-                <Menu size={18} className="text-gray-400" />
-                <span className="flex items-center gap-1 text-sm text-gray-400"><ChevronLeft size={16} /> Voltar para Histórico</span>
+                <Menu size={18} className="text-gray-600" />
+                <span className="flex items-center gap-1 text-sm text-gray-600"><ChevronLeft size={16} /> Voltar para Histórico</span>
               </div>
               <button className="flex items-center gap-2 bg-emerald-500 text-black text-xs font-bold px-3 py-1.5 rounded-lg">
                 <Download size={13} /> Baixar Relatório Completo
@@ -246,11 +246,11 @@ function ScoreDemo() {
             <div className="flex items-start justify-between mb-8">
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Relatório de Análise</p>
-                <h1 className="text-4xl font-black text-white tracking-tight">MICROSOFT</h1>
+                <h1 className="text-4xl font-black text-gray-900 tracking-tight">MICROSOFT</h1>
                 <p className="text-blue-400 font-bold text-lg mt-1">4T/2025</p>
               </div>
-              <div className="bg-[#11141D] border border-white/10 rounded-xl px-5 py-4 text-right">
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Score IA</p>
+              <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 text-right shadow-sm">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Score IA</p>
                 <p className="text-xs text-gray-500 mb-2">Baseado em 4 fundamentos</p>
                 <div className="flex items-end justify-end gap-1">
                   <span className="text-4xl font-black text-emerald-400">5</span>
@@ -258,18 +258,18 @@ function ScoreDemo() {
                 </div>
               </div>
             </div>
-            <div className="border-t border-white/5 mb-8" />
+            <div className="border-t border-gray-200 mb-8" />
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
               {scoreMetrics.map((m) => {
                 const Icon = m.icon;
                 return (
-                  <div key={m.label} className="bg-[#11141D] border border-white/8 rounded-xl p-4">
+                  <div key={m.label} className="bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-gray-400">{m.label}</span>
+                      <span className="text-sm text-gray-600 font-medium">{m.label}</span>
                       <Icon size={16} className={m.color} />
                     </div>
                     <div className="flex items-end gap-1">
-                      <span className="text-3xl font-black text-white">{m.score}</span>
+                      <span className="text-3xl font-black text-gray-900">{m.score}</span>
                       <span className="text-gray-500 text-sm mb-1">/5</span>
                     </div>
                     <ScoreMetricBar score={m.score} animate={barsVisible} />
@@ -277,14 +277,14 @@ function ScoreDemo() {
                 );
               })}
             </div>
-            <div className="bg-[#11141D] border border-white/8 rounded-xl p-6 mb-6">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
-                <FileText size={18} className="text-blue-400" />
-                <h2 className="text-lg font-bold text-white">Tese de Investimento</h2>
+                <FileText size={18} className="text-blue-500" />
+                <h2 className="text-lg font-bold text-gray-900">Tese de Investimento</h2>
               </div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Conclusão — Tese e Outlook</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-4 font-semibold">Conclusão — Tese e Outlook</p>
               <div className="space-y-3">
-                {teseLines.map((line, i) => (<p key={i} className="text-sm text-gray-300 leading-relaxed">{line}</p>))}
+                {teseLines.map((line, i) => (<p key={i} className="text-sm text-gray-700 leading-relaxed">{line}</p>))}
               </div>
             </div>
             <div className="h-16" />
@@ -315,19 +315,19 @@ function ScoreDemoMobile() {
           </div>
           <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold">A</div>
         </div>
-        <div className="overflow-y-auto" style={{ height: "520px", backgroundColor: "#0A0D14" }}>
+        <div className="overflow-y-auto" style={{ height: "520px", backgroundColor: "#ffffff" }}>
           <div className="px-4 py-4">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-7 h-7 rounded-full bg-[#1a1d27] flex items-center justify-center"><ChevronLeft size={14} className="text-gray-300" /></div>
-              <span className="text-sm text-gray-300">Voltar para Histórico</span>
+              <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"><ChevronLeft size={14} className="text-gray-600" /></div>
+              <span className="text-sm text-gray-600 font-medium">Voltar para Histórico</span>
             </div>
             <button className="w-full bg-emerald-500 text-black text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-5">
               <Download size={15} /> Baixar Relatório Completo
             </button>
             <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Relatório de Análise</p>
-            <h1 className="text-3xl font-black text-white tracking-tight">MICROSOFT</h1>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">MICROSOFT</h1>
             <p className="text-blue-400 font-bold text-lg mt-1 mb-4">2T/2026</p>
-            <div className="bg-[#11141D] border border-white/8 rounded-2xl px-5 py-4 flex items-center justify-between mb-5">
+            <div className="bg-gray-50 border border-gray-200 shadow-sm rounded-2xl px-5 py-4 flex items-center justify-between mb-5">
               <div>
                 <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Score IA</p>
                 <p className="text-xs text-gray-500 mt-0.5">Baseado em 4 fundamentos</p>
@@ -337,18 +337,18 @@ function ScoreDemoMobile() {
                 <span className="text-gray-400 text-base mb-1">/5</span>
               </div>
             </div>
-            <div className="border-t border-white/5 mb-5" />
+            <div className="border-t border-gray-200 mb-5" />
             <div className="space-y-3 mb-5">
               {scoreMetrics.map((m) => {
                 const Icon = m.icon;
                 return (
-                  <div key={m.label} className="bg-[#11141D] border border-white/8 rounded-2xl px-5 py-4">
+                  <div key={m.label} className="bg-gray-50 border border-gray-200 shadow-sm rounded-2xl px-5 py-4">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-gray-400">{m.label}</span>
-                      <div className="w-8 h-8 rounded-xl bg-[#1a1d27] flex items-center justify-center"><Icon size={15} className={m.color} /></div>
+                      <span className="text-sm text-gray-600 font-medium">{m.label}</span>
+                      <div className="w-8 h-8 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center"><Icon size={15} className={m.color} /></div>
                     </div>
                     <div className="flex items-end gap-1 mb-2">
-                      <span className="text-3xl font-black text-white">{m.score}</span>
+                      <span className="text-3xl font-black text-gray-900">{m.score}</span>
                       <span className="text-gray-500 text-sm mb-1">/5</span>
                     </div>
                     <ScoreMetricBar score={m.score} animate={barsVisible} />
@@ -356,20 +356,20 @@ function ScoreDemoMobile() {
                 );
               })}
             </div>
-            <div className="bg-[#11141D] border border-white/8 rounded-2xl p-5 mb-4">
+            <div className="bg-gray-50 border border-gray-200 shadow-sm rounded-2xl p-5 mb-4">
               <div className="flex items-center gap-2 mb-3">
-                <FileText size={16} className="text-blue-400" />
-                <h2 className="text-base font-bold text-white">Tese de Investimento</h2>
+                <FileText size={16} className="text-blue-500" />
+                <h2 className="text-base font-bold text-gray-900">Tese de Investimento</h2>
               </div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">Conclusão — Tese e Outlook</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 font-semibold">Conclusão — Tese e Outlook</p>
               <div className="space-y-3">
-                {teseLines.map((line, i) => (<p key={i} className="text-sm text-gray-300 leading-relaxed">{line}</p>))}
+                {teseLines.map((line, i) => (<p key={i} className="text-sm text-gray-700 leading-relaxed">{line}</p>))}
               </div>
             </div>
             <div className="h-8" />
           </div>
         </div>
-        <div className="flex justify-center py-2 bg-[#0A0D14]"><div className="w-20 h-1 rounded-full bg-white/20" /></div>
+        <div className="flex justify-center py-2 bg-white"><div className="w-20 h-1 rounded-full bg-gray-300" /></div>
       </div>
     </motion.div>
   );
@@ -380,46 +380,46 @@ function ComparadorMobile() {
   const isInView = useInView(ref, { once: true, margin: "-60px" });
 
   const comparadorData = [
-    { empresa: "AEROVIRONMENT", notaFinal: 2, receita: 4, lucro: 1, divida: 3, rentabilidade: 1,  resultados: 2, media: 2.5, ultimoTri: "2T/2026" },
-    { empresa: "AMAZON",        notaFinal: 4, receita: 5, lucro: 3, divida: 4, rentabilidade: 4,  resultados: 1, media: 4,   ultimoTri: "4T/2025" },
-    { empresa: "AMD",           notaFinal: 4, receita: 5, lucro: 4, divida: 5, rentabilidade: 4,  resultados: 1, media: 4,   ultimoTri: "4T/2025" },
-    { empresa: "ARISTA",        notaFinal: 5, receita: 5, lucro: 5, divida: 5, rentabilidade: 4,  resultados: 1, media: 5,   ultimoTri: "4T/2025" },
-    { empresa: "AURA",          notaFinal: 2, receita: 3, lucro: 2, divida: 1, rentabilidade: 4,  resultados: 1, media: 2,   ultimoTri: "4T/2025" },
-    { empresa: "AXON",          notaFinal: 3, receita: 5, lucro: 2, divida: 4, rentabilidade: 4,  resultados: 1, media: 3,   ultimoTri: "4T/2025" },
-    { empresa: "BADGER METERS", notaFinal: 5, receita: 5, lucro: 5, divida: 5, rentabilidade: 5,  resultados: 4, media: 4.5, ultimoTri: "4T/2025" },
-    { empresa: "BB SEGURIDADE", notaFinal: 3, receita: 3, lucro: 4, divida: 5, rentabilidade: 2,  resultados: 1, media: 3,   ultimoTri: "4T/2025" },
-    { empresa: "BROADCOM",      notaFinal: 5, receita: 5, lucro: 5, divida: 4, rentabilidade: 5,  resultados: 1, media: 5,   ultimoTri: "1T/2026" },
-    { empresa: "BR PARTNERS",   notaFinal: 3, receita: 3, lucro: 3, divida: 5, rentabilidade: 4,  resultados: 1, media: 3,   ultimoTri: "4T/2025" },
+    { empresa: "AEROVIRONMENT", notaFinal: 2, receita: 4, lucro: 1, divida: 3, rentabilidade: 1, resultados: 2, media: 2.5, ultimoTri: "2T/2026" },
+    { empresa: "AMAZON", notaFinal: 4, receita: 5, lucro: 3, divida: 4, rentabilidade: 4, resultados: 1, media: 4, ultimoTri: "4T/2025" },
+    { empresa: "AMD", notaFinal: 4, receita: 5, lucro: 4, divida: 5, rentabilidade: 4, resultados: 1, media: 4, ultimoTri: "4T/2025" },
+    { empresa: "ARISTA", notaFinal: 5, receita: 5, lucro: 5, divida: 5, rentabilidade: 4, resultados: 1, media: 5, ultimoTri: "4T/2025" },
+    { empresa: "AURA", notaFinal: 2, receita: 3, lucro: 2, divida: 1, rentabilidade: 4, resultados: 1, media: 2, ultimoTri: "4T/2025" },
+    { empresa: "AXON", notaFinal: 3, receita: 5, lucro: 2, divida: 4, rentabilidade: 4, resultados: 1, media: 3, ultimoTri: "4T/2025" },
+    { empresa: "BADGER METERS", notaFinal: 5, receita: 5, lucro: 5, divida: 5, rentabilidade: 5, resultados: 4, media: 4.5, ultimoTri: "4T/2025" },
+    { empresa: "BB SEGURIDADE", notaFinal: 3, receita: 3, lucro: 4, divida: 5, rentabilidade: 2, resultados: 1, media: 3, ultimoTri: "4T/2025" },
+    { empresa: "BROADCOM", notaFinal: 5, receita: 5, lucro: 5, divida: 4, rentabilidade: 5, resultados: 1, media: 5, ultimoTri: "1T/2026" },
+    { empresa: "BR PARTNERS", notaFinal: 3, receita: 3, lucro: 3, divida: 5, rentabilidade: 4, resultados: 1, media: 3, ultimoTri: "4T/2025" },
   ];
 
   const allCols = [
-    { key: "notaFinal",     label: "NOTA\nFINAL",            colored: true,  labelColor: "#a855f7" },
-    { key: "receita",       label: "RECEITA",                 colored: true,  labelColor: "#3b82f6" },
-    { key: "lucro",         label: "LUCRO",                   colored: true,  labelColor: "#22c55e" },
-    { key: "divida",        label: "DÍVIDA",                  colored: true,  labelColor: "#ef4444" },
-    { key: "rentabilidade", label: "RENTAB.",                 colored: true,  labelColor: "#eab308" },
+    { key: "notaFinal", label: "NOTA\nFINAL", colored: true, labelColor: "#a855f7" },
+    { key: "receita", label: "RECEITA", colored: true, labelColor: "#3b82f6" },
+    { key: "lucro", label: "LUCRO", colored: true, labelColor: "#22c55e" },
+    { key: "divida", label: "DÍVIDA", colored: true, labelColor: "#ef4444" },
+    { key: "rentabilidade", label: "RENTAB.", colored: true, labelColor: "#eab308" },
   ];
 
   function scoreColor(s: number) {
     if (s >= 4.5) return "#22c55e";
-    if (s >= 4)   return "#4ade80";
-    if (s >= 3)   return "#eab308";
-    if (s >= 2)   return "#f97316";
+    if (s >= 4) return "#4ade80";
+    if (s >= 3) return "#eab308";
+    if (s >= 2) return "#f97316";
     return "#ef4444";
   }
 
   return (
     <motion.div ref={ref} initial={{ opacity: 0, y: 40 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }} transition={{ duration: 0.7, ease: "easeOut" }} className="w-full select-none">
-      <div className="bg-[#11141D]/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="px-5 py-4 border-b border-white/10">
-          <h3 className="text-lg font-bold text-white">Tabela Agregada</h3>
-          <p className="text-sm text-gray-400 mt-0.5">Visão consolidada do desempenho.</p>
+      <div className="bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="px-5 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-bold text-gray-900">Tabela Agregada</h3>
+          <p className="text-sm text-gray-500 mt-0.5">Visão consolidada do desempenho.</p>
         </div>
         <div className="overflow-x-auto">
           <table style={{ minWidth: "500px" }} className="w-full">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wider sticky left-0 bg-[#11141D] z-10">Empresa</th>
+              <tr className="border-b border-gray-200">
+                <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider sticky left-0 bg-white z-10">Empresa</th>
                 {allCols.map(col => (
                   <th key={col.key} className="text-center px-4 py-3 text-xs font-semibold uppercase tracking-wider whitespace-pre-line leading-tight" style={{ color: col.labelColor }}>{col.label}</th>
                 ))}
@@ -427,8 +427,8 @@ function ComparadorMobile() {
             </thead>
             <tbody>
               {comparadorData.map((row, i) => (
-                <motion.tr key={row.empresa} className="border-b border-white/5 hover:bg-white/5 transition-colors" initial={{ opacity: 0, x: 16 }} animate={isInView ? { opacity: 1, x: 0 } : {}} transition={{ duration: 0.35, delay: 0.05 + i * 0.05 }}>
-                  <td className="px-5 py-3 text-xs font-bold text-white sticky left-0 bg-[#11141D] z-10 leading-tight">{row.empresa}</td>
+                <motion.tr key={row.empresa} className="border-b border-gray-100 hover:bg-gray-50 transition-colors" initial={{ opacity: 0, x: 16 }} animate={isInView ? { opacity: 1, x: 0 } : {}} transition={{ duration: 0.35, delay: 0.05 + i * 0.05 }}>
+                  <td className="px-5 py-3 text-xs font-bold text-gray-900 sticky left-0 bg-white group-hover:bg-gray-50 z-10 leading-tight">{row.empresa}</td>
                   {allCols.map(col => {
                     const val = row[col.key as keyof typeof row];
                     const numVal = typeof val === "number" ? val : null;
@@ -443,7 +443,7 @@ function ComparadorMobile() {
             </tbody>
           </table>
         </div>
-        <div className="px-5 py-3 border-t border-white/5 flex items-center justify-end gap-1.5">
+        <div className="px-5 py-3 border-t border-gray-200 flex items-center justify-end gap-1.5">
           <ChevronRight size={12} className="text-gray-500" />
           <span className="text-xs text-gray-500">Deslize para ver mais</span>
         </div>
@@ -457,58 +457,58 @@ function CallAnalysisDemo() {
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <motion.div 
-      ref={ref} 
-      initial={{ opacity: 0, x: -40 }} 
-      animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }} 
-      transition={{ duration: 0.8, ease: "easeOut" }} 
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, x: -40 }}
+      animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
       className="w-full select-none relative"
     >
       <div className="absolute -inset-4 bg-indigo-500/10 blur-[40px] rounded-3xl pointer-events-none" />
-      <div className="relative bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-        <div className="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-[#1a1d27]/50">
+      <div className="relative bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
-              <Mic size={18} className="text-indigo-400" />
+            <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
+              <Mic size={18} className="text-indigo-600" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-white">Earnings Call Q4'25</h3>
-              <p className="text-xs text-gray-400">Transcrição & Análise de Sentimento</p>
+              <h3 className="text-sm font-bold text-gray-900">Earnings Call Q4'25</h3>
+              <p className="text-xs text-gray-500">Transcrição & Análise de Sentimento</p>
             </div>
           </div>
           <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 hidden sm:block">
-             <span className="text-xs font-bold text-emerald-400">Tom: Otimista</span>
+            <span className="text-xs font-bold text-emerald-400">Tom: Otimista</span>
           </div>
         </div>
-        
+
         <div className="p-5 space-y-4">
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">CEO</div>
-            <div className="bg-white/5 rounded-2xl rounded-tl-none p-4 border border-white/5 text-sm text-gray-300 shadow-sm leading-relaxed">
+            <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">CEO</div>
+            <div className="bg-white rounded-2xl rounded-tl-none p-4 border border-gray-200 text-sm text-gray-700 shadow-sm leading-relaxed">
               "Vemos uma demanda sem precedentes pela nossa nova infraestrutura de IA, e isso se reflete claramente na nossa expansão de margens neste trimestre."
             </div>
           </div>
           <div className="flex gap-3 flex-row-reverse">
-             <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center shadow-lg shadow-blue-500/20"><Activity size={14} className="text-white" /></div>
-             <div className="bg-indigo-500/10 rounded-2xl rounded-tr-none p-4 border border-indigo-500/20 text-sm text-indigo-200 shadow-inner leading-relaxed">
-               <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block mb-1.5">Insight da IA</span>
-               O CEO destaca as margens impulsionadas por IA, confirmando a tese de ganho de eficiência operacional reportada no DFP.
-             </div>
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center shadow-lg shadow-blue-500/20"><Activity size={14} className="text-white" /></div>
+            <div className="bg-indigo-50 rounded-2xl rounded-tr-none p-4 border border-indigo-100 text-sm text-indigo-800 shadow-inner leading-relaxed">
+              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block mb-1.5">Insight da IA</span>
+              O CEO destaca as margens impulsionadas por IA, confirmando a tese de ganho de eficiência operacional reportada no DFP.
+            </div>
           </div>
           <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">CFO</div>
-            <div className="bg-white/5 rounded-2xl rounded-tl-none p-4 border border-white/5 text-sm text-gray-300 shadow-sm leading-relaxed">
+            <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">CFO</div>
+            <div className="bg-white rounded-2xl rounded-tl-none p-4 border border-gray-200 text-sm text-gray-700 shadow-sm leading-relaxed">
               "Apesar dos desafios macroeconômicos, conseguimos manter nosso guidance de crescimento."
             </div>
           </div>
         </div>
-        
-        <div className="bg-[#0e1117] p-5 border-t border-white/10">
-          <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
-             <span className="font-medium">Processamento Concluído</span>
-             <span className="flex items-center gap-1 font-bold text-emerald-400"><Check size={14} strokeWidth={3} /> 100% Analisado</span>
+
+        <div className="bg-gray-50 p-5 border-t border-gray-200">
+          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+            <span className="font-medium">Processamento Concluído</span>
+            <span className="flex items-center gap-1 font-bold text-emerald-600"><Check size={14} strokeWidth={3} /> 100% Analisado</span>
           </div>
-          <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
             <div className="h-full bg-indigo-500 rounded-full w-full" />
           </div>
         </div>
@@ -560,10 +560,10 @@ function ReportDemo() {
   const [barsVisible, setBarsVisible] = React.useState(false);
   const [typingTrigger, setTypingTrigger] = React.useState(false);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (isInView) {
-      const t1 = setTimeout(() => setBarsVisible(true), 600); 
-      const t2 = setTimeout(() => setTypingTrigger(true), 1200); 
+      const t1 = setTimeout(() => setBarsVisible(true), 600);
+      const t2 = setTimeout(() => setTypingTrigger(true), 1200);
       return () => { clearTimeout(t1); clearTimeout(t2); }
     }
   }, [isInView]);
@@ -572,7 +572,7 @@ function ReportDemo() {
     <div ref={ref} className="relative w-full select-none mt-10">
       <div className="absolute -inset-6 bg-purple-600/10 blur-[60px] rounded-3xl pointer-events-none" />
       <div className="relative rounded-2xl overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)] border border-white/10">
-        
+
         <div className="bg-[#0e1117] border-b border-white/10 px-4 py-3 flex items-center justify-between">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-500/80" />
@@ -587,76 +587,76 @@ function ReportDemo() {
 
         <div className="bg-white overflow-y-auto scrollbar-thin" style={{ height: "600px", scrollbarWidth: "thin", scrollbarColor: "rgba(0,0,0,0.1) transparent" }}>
           <div className="px-10 py-10 max-w-3xl mx-auto">
-            
+
             <div className="flex justify-between items-start border-b-2 border-gray-200 pb-6 mb-8">
-               <div className="flex items-center gap-2.5">
-                  <div className="bg-blue-600 p-2 rounded-lg shadow-sm">
-                    <Activity size={18} className="text-white" strokeWidth={2.5}/>
-                  </div>
-                  <span className="font-extrabold text-xl text-gray-900 tracking-tight">FinAnalyzer <span className="text-blue-600">.AI</span></span>
-               </div>
-               <div className="text-right">
-                 <p className="text-xs text-gray-500 mb-0.5">Gerado em <strong className="text-gray-800">09/03/2026</strong></p>
-                 <p className="text-xs text-gray-500">Relatório de análise fundamentalista</p>
-               </div>
+              <div className="flex items-center gap-2.5">
+                <div className="bg-blue-600 p-2 rounded-lg shadow-sm">
+                  <Activity size={18} className="text-white" strokeWidth={2.5} />
+                </div>
+                <span className="font-extrabold text-xl text-gray-900 tracking-tight">FinAnalyzer <span className="text-blue-600">.AI</span></span>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500 mb-0.5">Gerado em <strong className="text-gray-800">09/03/2026</strong></p>
+                <p className="text-xs text-gray-500">Relatório de análise fundamentalista</p>
+              </div>
             </div>
 
             <div className="bg-gradient-to-br from-slate-900 to-[#1e3a5f] rounded-2xl p-8 mb-8 text-white flex justify-between items-center shadow-lg">
-               <div>
-                 <p className="text-[10px] text-blue-200 uppercase tracking-widest mb-2 font-bold">Relatório de Análise</p>
-                 <h1 className="text-4xl font-black mb-1 tracking-tight">GOOGLE</h1>
-                 <p className="text-blue-300 font-bold text-lg">4T/2025</p>
-               </div>
-               <div className="bg-white/10 border border-white/20 rounded-xl p-5 text-center backdrop-blur-sm min-w-[140px]">
-                 <p className="text-[10px] text-slate-300 uppercase tracking-widest mb-1 font-bold">Score IA</p>
-                 <p className="text-5xl font-black text-emerald-400">5<span className="text-xl text-slate-400">/5</span></p>
-               </div>
+              <div>
+                <p className="text-[10px] text-blue-200 uppercase tracking-widest mb-2 font-bold">Relatório de Análise</p>
+                <h1 className="text-4xl font-black mb-1 tracking-tight">GOOGLE</h1>
+                <p className="text-blue-300 font-bold text-lg">4T/2025</p>
+              </div>
+              <div className="bg-white/10 border border-white/20 rounded-xl p-5 text-center backdrop-blur-sm min-w-[140px]">
+                <p className="text-[10px] text-slate-300 uppercase tracking-widest mb-1 font-bold">Score IA</p>
+                <p className="text-5xl font-black text-emerald-400">5<span className="text-xl text-slate-400">/5</span></p>
+              </div>
             </div>
 
             <div className="grid grid-cols-4 gap-4 mb-8">
-               {reportMetrics.map((m, i) => (
-                 <div key={i} className="border border-gray-200 rounded-xl p-4 text-center bg-gray-50/50">
-                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">{m.label}</p>
-                    <p className="text-3xl font-black text-gray-900 mb-2">{m.val}</p>
-                    <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                       <div className="h-full rounded-full transition-all duration-1000 ease-out" 
-                            style={{ width: barsVisible ? `${(m.val / 5) * 100}%` : '0%', backgroundColor: m.color }} />
-                    </div>
-                 </div>
-               ))}
+              {reportMetrics.map((m, i) => (
+                <div key={i} className="border border-gray-200 rounded-xl p-4 text-center bg-gray-50/50">
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">{m.label}</p>
+                  <p className="text-3xl font-black text-gray-900 mb-2">{m.val}</p>
+                  <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: barsVisible ? `${(m.val / 5) * 100}%` : '0%', backgroundColor: m.color }} />
+                  </div>
+                </div>
+              ))}
             </div>
 
             {reportSections.map((section, index) => (
               <div key={index} className="border border-gray-200 rounded-xl p-6 mb-6">
-                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{section.title}</h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold border ${section.score >= 4 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
-                      {section.score}/5
-                    </span>
-                 </div>
-                 <div className="space-y-3">
-                   {section.content.map((paragraph, idx) => (
-                     <p key={idx} className="text-sm text-gray-700 leading-relaxed font-medium">
-                       <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={(index * 600) + (idx * 300)} />
-                     </p>
-                   ))}
-                 </div>
-              </div>
-            ))}
-            
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
-               <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wider mb-3">Conclusão — Tese e Outlook</h3>
-               <div className="space-y-3">
-                  {teseContent.map((paragraph, idx) => (
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{section.title}</h3>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${section.score >= 4 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                    {section.score}/5
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {section.content.map((paragraph, idx) => (
                     <p key={idx} className="text-sm text-gray-700 leading-relaxed font-medium">
-                      <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={2000 + (idx * 400)} />
+                      <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={(index * 600) + (idx * 300)} />
                     </p>
                   ))}
-               </div>
+                </div>
+              </div>
+            ))}
+
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
+              <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wider mb-3">Conclusão — Tese e Outlook</h3>
+              <div className="space-y-3">
+                {teseContent.map((paragraph, idx) => (
+                  <p key={idx} className="text-sm text-gray-700 leading-relaxed font-medium">
+                    <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={2000 + (idx * 400)} />
+                  </p>
+                ))}
+              </div>
             </div>
-            
+
             <div className="border-t border-gray-200 pt-6 mt-8 text-center text-xs text-gray-400 font-medium">
-               Este relatório foi gerado automaticamente pelo FinAnalyzer.AI. Não constitui recomendação de investimento.
+              Este relatório foi gerado automaticamente pelo FinAnalyzer.AI. Não constitui recomendação de investimento.
             </div>
 
           </div>
@@ -683,82 +683,82 @@ function ReportDemoMobile() {
   return (
     <motion.div ref={ref} initial={{ opacity: 0, y: 40 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }} transition={{ duration: 0.7, ease: "easeOut" }} className="relative w-full select-none mt-8">
       <div className="relative mx-auto rounded-[2.8rem] bg-[#0d0f14] border border-white/10 shadow-[0_30px_80px_-10px_rgba(0,0,0,0.95)] overflow-hidden" style={{ maxWidth: "320px" }}>
-        
+
         <div className="flex items-center justify-between px-6 pt-8 pb-2 text-[10px] font-semibold text-white/40 bg-[#0e1117]">
           <span>8:19</span>
           <span>●●● WiFi 🔋</span>
         </div>
 
         <div className="overflow-y-auto bg-white scrollbar-none" style={{ height: "520px", scrollbarWidth: "none" }}>
-           <div className="p-5">
-              
-              <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-5">
-                <div className="flex items-center gap-1.5">
-                    <div className="bg-blue-600 p-1.5 rounded-lg"><Activity size={14} className="text-white" strokeWidth={2.5}/></div>
-                    <span className="font-extrabold text-sm text-gray-900 tracking-tight">FinAnalyzer</span>
+          <div className="p-5">
+
+            <div className="flex justify-between items-center border-b border-gray-200 pb-4 mb-5">
+              <div className="flex items-center gap-1.5">
+                <div className="bg-blue-600 p-1.5 rounded-lg"><Activity size={14} className="text-white" strokeWidth={2.5} /></div>
+                <span className="font-extrabold text-sm text-gray-900 tracking-tight">FinAnalyzer</span>
+              </div>
+              <div className="text-right text-[9px] text-gray-500 font-medium">Gerado em<br /> <strong className="text-gray-800">09/03/2026</strong></div>
+            </div>
+
+            <div className="bg-gradient-to-br from-slate-900 to-[#1e3a5f] rounded-xl p-5 mb-5 text-white shadow-md">
+              <p className="text-[8px] text-blue-200 uppercase tracking-widest mb-1 font-bold">Relatório de Análise</p>
+              <h1 className="text-3xl font-black mb-1 tracking-tight">GOOGLE</h1>
+              <p className="text-blue-300 text-sm font-bold mb-4">4T/2025</p>
+
+              <div className="bg-white/10 border border-white/20 rounded-lg p-3 flex justify-between items-center backdrop-blur-sm">
+                <div>
+                  <p className="text-[9px] text-slate-300 uppercase tracking-widest font-bold">Score IA</p>
+                  <p className="text-[8px] text-slate-400 mt-0.5">Baseado em 4 fundamentos</p>
                 </div>
-                <div className="text-right text-[9px] text-gray-500 font-medium">Gerado em<br/> <strong className="text-gray-800">09/03/2026</strong></div>
+                <p className="text-3xl font-black text-emerald-400">5<span className="text-sm text-slate-400">/5</span></p>
               </div>
+            </div>
 
-              <div className="bg-gradient-to-br from-slate-900 to-[#1e3a5f] rounded-xl p-5 mb-5 text-white shadow-md">
-                 <p className="text-[8px] text-blue-200 uppercase tracking-widest mb-1 font-bold">Relatório de Análise</p>
-                 <h1 className="text-3xl font-black mb-1 tracking-tight">GOOGLE</h1>
-                 <p className="text-blue-300 text-sm font-bold mb-4">4T/2025</p>
-
-                 <div className="bg-white/10 border border-white/20 rounded-lg p-3 flex justify-between items-center backdrop-blur-sm">
-                   <div>
-                     <p className="text-[9px] text-slate-300 uppercase tracking-widest font-bold">Score IA</p>
-                     <p className="text-[8px] text-slate-400 mt-0.5">Baseado em 4 fundamentos</p>
-                   </div>
-                   <p className="text-3xl font-black text-emerald-400">5<span className="text-sm text-slate-400">/5</span></p>
-                 </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                {reportMetrics.map((m, i) => (
-                  <div key={i} className="border border-gray-200 rounded-xl p-3 text-center bg-gray-50/50">
-                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">{m.label}</p>
-                    <p className="text-2xl font-black text-gray-900 mb-2">{m.val}</p>
-                    <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                       <div className="h-full rounded-full transition-all duration-1000 ease-out" 
-                            style={{ width: barsVisible ? `${(m.val / 5) * 100}%` : '0%', backgroundColor: m.color }} />
-                    </div>
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              {reportMetrics.map((m, i) => (
+                <div key={i} className="border border-gray-200 rounded-xl p-3 text-center bg-gray-50/50">
+                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">{m.label}</p>
+                  <p className="text-2xl font-black text-gray-900 mb-2">{m.val}</p>
+                  <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-1000 ease-out"
+                      style={{ width: barsVisible ? `${(m.val / 5) * 100}%` : '0%', backgroundColor: m.color }} />
                   </div>
-                ))}
-              </div>
-
-              {/* RENDERIZAÇÃO COMPLETA DE TODAS AS SEÇÕES NO MOBILE */}
-              {reportSections.map((section, index) => (
-                <div key={index} className="border border-gray-200 rounded-xl p-4 mb-4">
-                   <div className="flex justify-between items-center mb-3">
-                      <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-wider">{section.title}</h3>
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${section.score >= 4 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
-                        {section.score}/5
-                      </span>
-                   </div>
-                   <div className="space-y-3">
-                     {section.content.map((paragraph, idx) => (
-                       <p key={idx} className="text-[11px] text-gray-700 leading-relaxed font-medium">
-                         <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={(index * 600) + (idx * 300)} />
-                       </p>
-                     ))}
-                   </div>
                 </div>
               ))}
+            </div>
 
-              {/* RENDERIZAÇÃO DA TESE DE INVESTIMENTO NO MOBILE */}
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-                 <h3 className="text-[11px] font-bold text-blue-800 uppercase tracking-wider mb-3">Conclusão — Tese e Outlook</h3>
-                 <div className="space-y-3">
-                    {teseContent.map((paragraph, idx) => (
-                      <p key={idx} className="text-[11px] text-gray-700 leading-relaxed font-medium">
-                        <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={2000 + (idx * 400)} />
-                      </p>
-                    ))}
-                 </div>
+            {/* RENDERIZAÇÃO COMPLETA DE TODAS AS SEÇÕES NO MOBILE */}
+            {reportSections.map((section, index) => (
+              <div key={index} className="border border-gray-200 rounded-xl p-4 mb-4">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-wider">{section.title}</h3>
+                  <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${section.score >= 4 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
+                    {section.score}/5
+                  </span>
+                </div>
+                <div className="space-y-3">
+                  {section.content.map((paragraph, idx) => (
+                    <p key={idx} className="text-[11px] text-gray-700 leading-relaxed font-medium">
+                      <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={(index * 600) + (idx * 300)} />
+                    </p>
+                  ))}
+                </div>
               </div>
+            ))}
 
-           </div>
+            {/* RENDERIZAÇÃO DA TESE DE INVESTIMENTO NO MOBILE */}
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
+              <h3 className="text-[11px] font-bold text-blue-800 uppercase tracking-wider mb-3">Conclusão — Tese e Outlook</h3>
+              <div className="space-y-3">
+                {teseContent.map((paragraph, idx) => (
+                  <p key={idx} className="text-[11px] text-gray-700 leading-relaxed font-medium">
+                    <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={2000 + (idx * 400)} />
+                  </p>
+                ))}
+              </div>
+            </div>
+
+          </div>
         </div>
 
         <div className="flex justify-center py-2 bg-[#0e1117] border-t border-white/5">
@@ -816,7 +816,7 @@ export default function LandingPage() {
       </nav>
 
       {/* --- HERO SECTION --- */}
-      <section 
+      <section
         className="relative min-h-[80vh] lg:min-h-[140vh] w-full flex flex-col items-center justify-start pt-16 lg:pt-32 bg-cover bg-bottom bg-no-repeat"
         style={{ backgroundImage: "url('/hero2.png')" }}
       >
@@ -825,7 +825,7 @@ export default function LandingPage() {
             A Nova Era Da <br />
             <span className="text-white tracking-tighter mb-8 leading-none">Análise de Ativos.</span>
           </h1>
-          
+
           <p className="text-base md:text-2xl text-gray-300 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-medium tracking-tight">
             Acelere a leitura de relatórios trimestrais. Deixe a IA estruturar os dados e gerar insights para apoiar sua decisão de investimento.
           </p>
@@ -843,9 +843,9 @@ export default function LandingPage() {
 
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
-        
+
         {/* BLOCO 1: UPLOAD */}
-        <section 
+        <section
           className="py-16 lg:py-56 relative bg-cover bg-center bg-no-repeat overflow-hidden"
           style={{ backgroundImage: "url('/upload.png')" }}
         >
@@ -856,7 +856,7 @@ export default function LandingPage() {
                   <UploadCloud className="text-blue-400 w-7 h-7" />
                 </div>
                 <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                  Upload <br/>Inteligente
+                  Upload <br />Inteligente
                 </h2>
                 <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight max-w-md mx-auto lg:mx-0">
                   Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos.
@@ -903,10 +903,10 @@ export default function LandingPage() {
         {/* BLOCO 3: COMPARADOR DE ATIVOS */}
         <section className="py-16 lg:py-56 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-black to-sky-400/40 lg:hidden z-0" />
-          
-          <div 
+
+          <div
             className="absolute inset-0 hidden lg:block z-0"
-            style={{ 
+            style={{
               backgroundImage: "url('/secao3_.png')",
               backgroundSize: 'cover',
               backgroundPosition: 'center center',
@@ -921,7 +921,7 @@ export default function LandingPage() {
                   <Layout className="text-purple-400 w-7 h-7" />
                 </div>
                 <h2 className="text-3xl font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                  Comparador <br/>de Ativos
+                  Comparador <br />de Ativos
                 </h2>
                 <p className="text-base text-gray-300 leading-relaxed font-medium tracking-tight max-w-sm mx-auto">
                   Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
@@ -936,7 +936,7 @@ export default function LandingPage() {
                   <Layout className="text-purple-400 w-7 h-7" />
                 </div>
                 <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
-                  Comparador <br/>de Ativos
+                  Comparador <br />de Ativos
                 </h2>
                 <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
                   Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
@@ -952,7 +952,7 @@ export default function LandingPage() {
         >
           <div className="absolute top-0 right-0 w-1/2 h-full bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-1/2 h-full bg-blue-600/5 blur-[120px] rounded-full pointer-events-none" />
-          
+
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-16 lg:items-center">
               <div className="lg:col-span-5 lg:col-start-8 text-center lg:text-left mb-12 lg:mb-0 order-1 lg:order-2">
@@ -960,7 +960,7 @@ export default function LandingPage() {
                   <Mic className="text-indigo-400 w-7 h-7" />
                 </div>
                 <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                  Análise de <br/>Earnings Calls
+                  Análise de <br />Earnings Calls
                 </h2>
                 <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight max-w-md mx-auto lg:mx-0">
                   Vá além dos números. A IA escuta, transcreve e analisa as teleconferências de resultados para capturar o tom da diretoria, perguntas difíceis e perspectivas futuras em tempo real.
@@ -1005,35 +1005,35 @@ export default function LandingPage() {
                 animate={historicoInView ? { opacity: 1, y: 0 } : {}}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               >
-                <div className="bg-[#11141D]/80 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-2xl">
-                  <div className="px-6 py-5 border-b border-white/10">
-                    <h3 className="text-xl font-bold text-white">Histórico Detalhado</h3>
-                    <p className="text-sm text-gray-400 mt-1">Gerencie suas análises individuais.</p>
+                <div className="bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl overflow-hidden shadow-2xl">
+                  <div className="px-6 py-5 border-b border-gray-200">
+                    <h3 className="text-xl font-bold text-gray-900">Histórico Detalhado</h3>
+                    <p className="text-sm text-gray-500 mt-1">Gerencie suas análises individuais.</p>
                   </div>
 
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
-                        <tr className="border-b border-white/10">
-                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Empresa</th>
-                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Período</th>
-                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider hidden md:table-cell">Data</th>
-                          <th className="text-center px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Score</th>
-                          <th className="text-right px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Ações</th>
+                        <tr className="border-b border-gray-200">
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Período</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Data</th>
+                          <th className="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Score</th>
+                          <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
                         {historicoData.map((item, i) => (
                           <motion.tr
                             key={item.empresa}
-                            className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                            className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                             initial={{ opacity: 0, x: 20 }}
                             animate={historicoInView ? { opacity: 1, x: 0 } : {}}
                             transition={{ duration: 0.4, delay: 0.1 + i * 0.06 }}
                           >
-                            <td className="px-6 py-4 text-sm font-bold text-white">{item.empresa}</td>
-                            <td className="px-6 py-4 text-sm text-gray-400">{item.periodo}</td>
-                            <td className="px-6 py-4 text-sm text-gray-400 hidden md:table-cell">{item.data}</td>
+                            <td className="px-6 py-4 text-sm font-bold text-gray-900">{item.empresa}</td>
+                            <td className="px-6 py-4 text-sm text-gray-500">{item.periodo}</td>
+                            <td className="px-6 py-4 text-sm text-gray-500 hidden md:table-cell">{item.data}</td>
                             <td className="px-6 py-4 text-center">
                               <ScoreBadge score={item.score} />
                             </td>
@@ -1059,7 +1059,7 @@ export default function LandingPage() {
         {/* BLOCO 6: RELATÓRIO COMPLETO */}
         <section className="py-16 lg:py-48 relative overflow-hidden bg-[#05080f]">
           <div className="absolute inset-0 bg-gradient-to-b from-black to-sky-400/40 lg:hidden z-0" />
-          
+
           <div className="max-w-6xl mx-auto px-6 relative z-10">
             <div className="flex flex-col items-center text-center mb-10">
               <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-4 border border-blue-400/30">
@@ -1072,7 +1072,7 @@ export default function LandingPage() {
                 Exporte suas análises em um formato limpo, profissional e pronto para impressão. O relatório detalha todos os fundamentos e consolida a tese de investimento.
               </p>
             </div>
-            
+
             <div className="hidden md:block">
               <ReportDemo />
             </div>
@@ -1085,34 +1085,34 @@ export default function LandingPage() {
       </div>
 
       {/* --- SECÇÃO DE PLANOS --- */}
-      <section 
-        id="planos" 
+      <section
+        id="planos"
         className="py-20 lg:py-48 relative bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: "url('/fundo-planos.jpg')" }}
       >
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          
+
           <div className="mb-12 md:mb-24 flex flex-col items-center text-center">
             <h2 className="text-3xl md:text-4xl lg:text-[5rem] font-serif font-bold text-white mb-6 tracking-tighter leading-[1.05]">
-              Um único plano. <br className="hidden md:block"/>
+              Um único plano. <br className="hidden md:block" />
               Invista melhor.
             </h2>
-            
+
             <div className="flex items-center justify-center gap-4 bg-black/30 inline-flex p-2 rounded-full border border-white/20 mt-6 backdrop-blur-md">
-              <button 
+              <button
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-6 md:px-10 py-3 md:py-4 rounded-full text-base md:text-lg font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
               >
                 Mensal
               </button>
-              <button 
+              <button
                 onClick={() => setBillingCycle('yearly')}
                 className={`px-6 md:px-10 py-3 md:py-4 rounded-full text-base md:text-lg font-bold transition-all flex items-center gap-3 ${billingCycle === 'yearly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
               >
                 Anual
               </button>
             </div>
-            
+
             <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-8`}>
               <span className="bg-blue-500/90 text-white border border-blue-400 text-sm font-bold px-6 py-2.5 rounded-full uppercase tracking-wider shadow-xl">
                 2 MESES GRÁTIS
@@ -1121,12 +1121,12 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-stretch max-w-5xl mx-auto">
-            
+
             {/* CARD GRATUITO */}
             <div className="bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-14 hover:border-white/30 transition-colors flex flex-col shadow-2xl">
               <h3 className="text-4xl font-bold text-white mb-2 tracking-tight">Gratuito</h3>
               <p className="text-gray-400 text-xl mb-12 font-medium">Para começar a analisar sem custo.</p>
-              
+
               <ul className="space-y-6 mb-16 flex-1">
                 <Feature text="5 Análises por semana" active />
                 <Feature text="Relatório Resumido na Tela" active />
@@ -1151,7 +1151,7 @@ export default function LandingPage() {
                 <span className="text-blue-200 mb-4 font-medium text-2xl">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
               </div>
               <p className="text-blue-100 text-xl mb-12 font-medium">Desbloqueie todo o poder da IA.</p>
-              
+
               <ul className="space-y-6 mb-16 flex-1">
                 <Feature text="Análises de IA Ilimitadas" active light />
                 <Feature text="Relatório Resumido na Tela" active light />
@@ -1176,7 +1176,7 @@ export default function LandingPage() {
       {/* --- FOOTER --- */}
       <footer className="border-t border-white/10 bg-[#0A0D14] pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-6">
-          
+
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
@@ -1184,7 +1184,7 @@ export default function LandingPage() {
               </div>
               <span className="text-2xl font-bold text-white tracking-tight">FinAnalyzer.AI</span>
             </div>
-            
+
             <div className="flex gap-8">
               <a href="/terms" className="text-base text-gray-400 hover:text-white transition-colors font-medium">Termos de Uso</a>
               <a href="/privacy" className="text-base text-gray-400 hover:text-white transition-colors font-medium">Privacidade</a>
