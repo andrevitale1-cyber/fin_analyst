@@ -30,10 +30,18 @@ const scoreMetrics = [
 ];
 
 const reportMetrics = [
-  { label: "RECEITA", val: 5, color: "#10b981" },
-  { label: "RENTABILIDADE", val: 4, color: "#34d399" },
-  { label: "ESTRUTURA DE CAPITAL", val: 5, color: "#10b981" },
-  { label: "LUCRO", val: 4, color: "#34d399" }
+  { id: "REV", title: "Receita", score: "5.0", badge: "Excelente", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
+  { id: "M&L", title: "Margem & Lucro", score: "5.0", badge: "Excelente", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
+  { id: "RISC", title: "Dívida & Risco", score: "5.0", badge: "Excelente", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
+  { id: "ROE", title: "Rentabilidade ROE", score: "4.0", badge: "Bom", tagClass: "bg-emerald-50 text-emerald-600 border-emerald-100", barColor: "bg-emerald-400" }
+];
+
+const reportBannerStats = [
+  { value: "76.44 Bi", label: "RECEITA", var: "18.1%", isPos: true },
+  { value: "27.23 Bi", label: "LUCRO", var: "23.6%", isPos: true },
+  { value: "68.58%", label: "MG. BRUTA", var: "1.5%", isPos: false },
+  { value: "35.63%", label: "MG. LÍQUIDA", var: "4.6%", isPos: true },
+  { value: "5.0/5", label: "SCORE IA", var: null, isPos: true },
 ];
 
 const teseLines = [
@@ -565,14 +573,22 @@ function ReportDemo() {
       const t1 = setTimeout(() => setBarsVisible(true), 600);
       const t2 = setTimeout(() => setTypingTrigger(true), 1200);
       return () => { clearTimeout(t1); clearTimeout(t2); }
+  const [barsVisible, setBarsVisible] = useState(false);
+  const [typingTrigger, setTypingTrigger] = useState(false);
+
+  useEffect(() => {
+    if (isInView) {
+      const t1 = setTimeout(() => setBarsVisible(true), 400);
+      const t2 = setTimeout(() => setTypingTrigger(true), 800);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
     }
   }, [isInView]);
 
   return (
-    <div ref={ref} className="relative w-full select-none mt-10">
-      <div className="absolute -inset-6 bg-purple-600/10 blur-[60px] rounded-3xl pointer-events-none" />
-      <div className="relative rounded-2xl overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.9)] border border-white/10">
-
+    <motion.div ref={ref} initial={{ opacity: 0, y: 40 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }} transition={{ duration: 0.7, ease: "easeOut" }} className="w-full select-none mt-10">
+      <div className="relative mx-auto rounded-[2.8rem] bg-[#0d0f14] border border-white/10 shadow-[0_30px_80px_-10px_rgba(0,0,0,0.95)] overflow-hidden">
+        
+        {/* Fake Window Header */}
         <div className="bg-[#0e1117] border-b border-white/10 px-4 py-3 flex items-center justify-between">
           <div className="flex gap-1.5">
             <div className="w-3 h-3 rounded-full bg-red-500/80" />
@@ -580,89 +596,278 @@ function ReportDemo() {
             <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
           </div>
           <div className="flex-1 max-w-sm bg-white/5 rounded-md px-3 py-1 text-[11px] text-gray-500 font-mono text-center mx-4">
-            app.finanalyzer.ai/export/google
+            app.finanalyzer.ai/export/microsoft
           </div>
           <div className="w-10"></div>
         </div>
 
-        <div className="bg-white overflow-y-auto scrollbar-thin" style={{ height: "600px", scrollbarWidth: "thin", scrollbarColor: "rgba(0,0,0,0.1) transparent" }}>
-          <div className="px-10 py-10 max-w-3xl mx-auto">
-
-            <div className="flex justify-between items-start border-b-2 border-gray-200 pb-6 mb-8">
-              <div className="flex items-center gap-2.5">
-                <div className="bg-blue-600 p-2 rounded-lg shadow-sm">
-                  <Activity size={18} className="text-white" strokeWidth={2.5} />
+        {/* MOCKUP DO RELATÓRIO PDF/HTML REFEITO 1:1 */}
+        <div className="bg-white overflow-y-auto scrollbar-thin font-sans" style={{ height: "650px", scrollbarWidth: "thin", scrollbarColor: "rgba(0,0,0,0.1) transparent" }}>
+          
+          {/* TOPO: Header FinAnalyzer e Botão */}
+          <div className="border-b border-gray-200">
+            <div className="max-w-[1000px] mx-auto px-10 py-5 flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div className="bg-blue-800 p-1.5 rounded"><Activity size={18} className="text-white" strokeWidth={2.5} /></div>
+                <span className="font-bold text-lg text-gray-900 tracking-tight">FinAnalyzer</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-xs text-gray-400">Análise</span>
+                <span className="text-xs text-gray-400">Resumo</span>
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-gray-400">Score IA</span>
+                  <span className="font-bold text-emerald-500">5.0/5</span>
+                  <button className="bg-blue-800 text-white px-4 py-1.5 rounded flex items-center gap-2 font-bold ml-2">
+                    <Download size={14} /> Salvar PDF
+                  </button>
                 </div>
-                <span className="font-extrabold text-xl text-gray-900 tracking-tight">FinAnalyzer <span className="text-blue-600">.AI</span></span>
-              </div>
-              <div className="text-right">
-                <p className="text-xs text-gray-500 mb-0.5">Gerado em <strong className="text-gray-800">09/03/2026</strong></p>
-                <p className="text-xs text-gray-500">Relatório de análise fundamentalista</p>
               </div>
             </div>
+          </div>
 
-            <div className="bg-gradient-to-br from-slate-900 to-[#1e3a5f] rounded-2xl p-8 mb-8 text-white flex justify-between items-center shadow-lg">
+          <div className="max-w-[1000px] mx-auto px-10 pt-12 pb-20">
+            
+            {/* Título Principal e Score Geral */}
+            <div className="flex justify-between items-start mb-8">
               <div>
-                <p className="text-[10px] text-blue-200 uppercase tracking-widest mb-2 font-bold">Relatório de Análise</p>
-                <h1 className="text-4xl font-black mb-1 tracking-tight">GOOGLE</h1>
-                <p className="text-blue-300 font-bold text-lg">4T/2025</p>
+                <div className="inline-block border border-blue-200 text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase mb-4">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block mr-1.5 mb-0.5"></span>
+                  4T/2025 - Resultados Trimestrais
+                </div>
+                <h1 className="text-6xl font-serif font-extrabold text-[#111827] tracking-tight mb-4">Microsoft</h1>
+                <p className="text-gray-500 text-sm max-w-sm leading-relaxed">
+                  Relatório completo gerado por <strong className="text-gray-800">IA</strong> com base no release de resultados oficial. Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica.
+                </p>
               </div>
-              <div className="bg-white/10 border border-white/20 rounded-xl p-5 text-center backdrop-blur-sm min-w-[140px]">
-                <p className="text-[10px] text-slate-300 uppercase tracking-widest mb-1 font-bold">Score IA</p>
-                <p className="text-5xl font-black text-emerald-400">5<span className="text-xl text-slate-400">/5</span></p>
+              
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 text-center w-[220px]">
+                <p className="text-[9px] text-emerald-700 uppercase tracking-widest mb-4 font-bold">Score IA — Média Ponderada</p>
+                <div className="w-24 h-24 mx-auto rounded-full border-[6px] border-emerald-500 flex items-center justify-center mb-3">
+                  <p className="text-3xl font-black text-emerald-600">5.0<span className="text-sm text-emerald-400">/5</span></p>
+                </div>
+                <p className="text-sm font-bold text-emerald-700">Excelente</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-4 mb-8">
+            {/* Grid 4 Pilares */}
+            <div className="grid grid-cols-4 gap-4 mb-10">
               {reportMetrics.map((m, i) => (
-                <div key={i} className="border border-gray-200 rounded-xl p-4 text-center bg-gray-50/50">
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">{m.label}</p>
-                  <p className="text-3xl font-black text-gray-900 mb-2">{m.val}</p>
-                  <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-1000 ease-out"
-                      style={{ width: barsVisible ? `${(m.val / 5) * 100}%` : '0%', backgroundColor: m.color }} />
+                <div key={i} className="border border-gray-200 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                  <div className="flex justify-between items-start mb-6">
+                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{m.id}</p>
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-bold border ${m.tagClass}`}>{m.badge}</span>
+                  </div>
+                  <div>
+                    <p className="text-3xl font-black text-gray-900 mb-1">{m.score}<span className="text-sm text-gray-400">/5</span></p>
+                    <p className="text-[10px] text-gray-500 uppercase">{m.title}</p>
+                  </div>
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-100">
+                    <div className={`h-full transition-all duration-1000 ${m.barColor}`} style={{ width: barsVisible ? `${(parseFloat(m.score)/5)*100}%` : '0%' }}></div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {reportSections.map((section, index) => (
-              <div key={index} className="border border-gray-200 rounded-xl p-6 mb-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">{section.title}</h3>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${section.score >= 4 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
-                    {section.score}/5
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {section.content.map((paragraph, idx) => (
-                    <p key={idx} className="text-sm text-gray-700 leading-relaxed font-medium">
-                      <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={(index * 600) + (idx * 300)} />
-                    </p>
-                  ))}
-                </div>
-              </div>
-            ))}
+          </div>
 
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 mb-6">
-              <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wider mb-3">Conclusão — Tese e Outlook</h3>
-              <div className="space-y-3">
-                {teseContent.map((paragraph, idx) => (
-                  <p key={idx} className="text-sm text-gray-700 leading-relaxed font-medium">
-                    <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={2000 + (idx * 400)} />
-                  </p>
-                ))}
+          {/* Banner Escuro */}
+          <div className="bg-[#0f172a] text-white w-full py-6">
+            <div className="max-w-[1000px] mx-auto px-10 flex justify-between items-center">
+              {reportBannerStats.map((stat, i) => (
+                <div key={i} className="text-left flex-1 border-r border-white/10 last:border-0 pl-6 first:pl-0">
+                  <p className="text-xl font-black mb-1">{stat.value}</p>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1">{stat.label}</p>
+                  {stat.var && (
+                    <p className={`text-[10px] font-bold flex items-center gap-1 ${stat.isPos ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {stat.isPos ? '▲' : '▼'} {stat.var}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="max-w-[1000px] mx-auto px-10 pt-16 pb-20">
+            {/* Título Seções */}
+            <div className="mb-10">
+              <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 font-bold">Análise Completa por IA</p>
+              <h2 className="text-3xl font-serif font-extrabold text-[#111827]">Leitura dos Resultados</h2>
+            </div>
+
+            {/* SEÇÃO 1: Visão Geral */}
+            <div className="border border-gray-200 rounded-2xl p-8 mb-8 shadow-sm">
+              <h3 className="text-xl font-serif font-bold text-gray-900 mb-6">Visão Geral do Trimestre</h3>
+              <p className="text-sm text-gray-600 leading-relaxed font-medium mb-8">
+                <TypewriterEffect text="A Microsoft encerrou o ano fiscal de 2025 com um desempenho notável no quarto trimestre, impulsionado por um crescimento robusto em suas ofertas de nuvem e inteligência artificial. A empresa superou as expectativas, registrando aumentos expressivos em receita, lucro operacional e lucro líquido, evidenciando a eficácia de sua estratégia focada em inovação e na transformação digital para clientes em diversos setores. Os resultados refletem a forte demanda por suas soluções de nuvem híbrida, serviços de IA e produtos comerciais, consolidando sua posição como líder tecnológico global." trigger={typingTrigger} delay={200} />
+              </p>
+              
+              {/* Mock Gráfico de Barras Duplo */}
+              <div className="border border-gray-100 rounded-xl p-5 relative">
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h4 className="text-xs font-bold text-gray-900">Receita & Lucro — Visão Geral</h4>
+                    <p className="text-[10px] text-gray-400">Evolução nos últimos trimestres</p>
+                  </div>
+                  <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-1 rounded">↗ 18.1%</span>
+                </div>
+                <div className="h-48 flex items-end gap-16 justify-center pb-6 border-b border-gray-100 px-10 relative">
+                  {/* Grid lines */}
+                  <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-between z-0">
+                    <div className="border-b border-gray-100 w-full h-0"></div>
+                    <div className="border-b border-gray-100 w-full h-0"></div>
+                    <div className="border-b border-gray-100 w-full h-0"></div>
+                    <div className="border-b border-gray-100 w-full h-0"></div>
+                  </div>
+                  
+                  {/* 4T24 */}
+                  <div className="flex items-end gap-2 relative z-10">
+                    <div className="flex flex-col items-center">
+                      <span className="text-[8px] text-gray-400 mb-1 font-bold">64.73 Bi</span>
+                      <div className="w-8 bg-blue-100 border-2 border-blue-600 rounded-t-sm transition-all duration-1000" style={{ height: barsVisible ? '120px' : '0' }}></div>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-[8px] text-gray-400 mb-1 font-bold">22.04 Bi</span>
+                      <div className="w-8 bg-emerald-500 rounded-t-sm transition-all duration-1000" style={{ height: barsVisible ? '40px' : '0' }}></div>
+                    </div>
+                    <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] text-gray-400 font-bold">4T24</span>
+                  </div>
+
+                  {/* 4T25 */}
+                  <div className="flex items-end gap-2 relative z-10">
+                    <div className="flex flex-col items-center">
+                      <span className="text-[8px] text-gray-800 mb-1 font-bold">76.44 Bi</span>
+                      <div className="w-8 bg-blue-100 border-2 border-blue-600 rounded-t-sm transition-all duration-1000" style={{ height: barsVisible ? '150px' : '0' }}></div>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      <span className="text-[8px] text-gray-800 mb-1 font-bold">27.23 Bi</span>
+                      <div className="w-8 bg-emerald-500 rounded-t-sm transition-all duration-1000" style={{ height: barsVisible ? '50px' : '0' }}></div>
+                    </div>
+                    <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] text-gray-800 font-bold">4T25</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-6 mt-8 text-center text-xs text-gray-400 font-medium">
-              Este relatório foi gerado automaticamente pelo FinAnalyzer.AI. Não constitui recomendação de investimento.
+            {/* SEÇÃO 2: Evolução Operacional */}
+            <div className="border-t-4 border-emerald-500 pt-6 mt-12 mb-8 relative">
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Seção 1</p>
+                  <h3 className="text-xl font-serif font-bold text-gray-900">Evolução Operacional e Top Line</h3>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-4 flex flex-col items-center">
+                   <p className="text-[8px] text-emerald-600 uppercase tracking-widest font-bold mb-1">Nota da Seção</p>
+                   <div className="flex items-center gap-2">
+                     <span className="text-2xl font-black text-emerald-600">5<span className="text-sm text-emerald-400">/5</span></span>
+                     <span className="bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">Excelente</span>
+                   </div>
+                </div>
+              </div>
+              <div className="space-y-4 mb-8">
+                <p className="text-sm text-gray-600 leading-relaxed font-medium">
+                  <TypewriterEffect text="A Microsoft demonstrou um crescimento impressionante na receita líquida, que atingiu US$ 76,44 bilhões no quarto trimestre fiscal de 2025, um aumento de 18% em relação ao mesmo período do ano anterior. Em moeda constante, o crescimento foi de 17%, indicando uma performance orgânica sólida. A narrativa de crescimento foi fortemente liderada pelas unidades de nuvem e inteligência artificial, que continuam a ser os pilares da estratégia da companhia. A desconstrução da receita por segmento revela os seguintes destaques:" trigger={typingTrigger} delay={2000} />
+                </p>
+              </div>
+
+              {/* Tabela Mock */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden mb-6">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Segmento</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">4T24 (Milhões $)</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">4T25 (Milhões $)</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">Variação (Y/Y)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-100">
+                      <td className="px-4 py-3 text-xs font-bold text-gray-700">Productivity and Business Processes</td>
+                      <td className="px-4 py-3 text-xs text-gray-500 text-right">28.627</td>
+                      <td className="px-4 py-3 text-xs text-gray-900 font-bold text-right">33.112</td>
+                      <td className="px-4 py-3 text-xs text-emerald-600 font-bold text-right">+16%</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="px-4 py-3 text-xs font-bold text-gray-700">Intelligent Cloud</td>
+                      <td className="px-4 py-3 text-xs text-gray-500 text-right">23.785</td>
+                      <td className="px-4 py-3 text-xs text-gray-900 font-bold text-right">29.878</td>
+                      <td className="px-4 py-3 text-xs text-emerald-600 font-bold text-right">+26%</td>
+                    </tr>
+                    <tr className="border-b border-gray-100">
+                      <td className="px-4 py-3 text-xs font-bold text-gray-700">More Personal Computing</td>
+                      <td className="px-4 py-3 text-xs text-gray-500 text-right">12.315</td>
+                      <td className="px-4 py-3 text-xs text-gray-900 font-bold text-right">13.451</td>
+                      <td className="px-4 py-3 text-xs text-emerald-600 font-bold text-right">+8%</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="px-4 py-3 text-xs font-black text-gray-900">Total Receita</td>
+                      <td className="px-4 py-3 text-xs text-gray-500 font-bold text-right">64.727</td>
+                      <td className="px-4 py-3 text-xs text-gray-900 font-black text-right">76.441</td>
+                      <td className="px-4 py-3 text-xs text-emerald-600 font-black text-right">+18%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Grid 2 Charts */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Evolução Receita */}
+                <div className="border border-gray-100 rounded-xl p-5 relative">
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <h4 className="text-xs font-bold text-gray-900">Evolução da Receita</h4>
+                      <p className="text-[10px] text-gray-400">Crescimento trimestral absoluto</p>
+                    </div>
+                    <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-1 rounded">↗ 18.1%</span>
+                  </div>
+                  <div className="h-40 flex items-end gap-16 justify-center pb-6 border-b border-gray-100 px-10 relative">
+                    <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-between z-0">
+                      <div className="border-b border-gray-100 w-full h-0"></div>
+                      <div className="border-b border-gray-100 w-full h-0"></div>
+                      <div className="border-b border-gray-100 w-full h-0"></div>
+                    </div>
+                    <div className="flex flex-col items-center relative z-10">
+                      <span className="text-[8px] text-gray-400 mb-1 font-bold">64.73 Bi</span>
+                      <div className="w-8 bg-blue-100 border-2 border-blue-600 rounded-t-sm transition-all duration-1000" style={{ height: barsVisible ? '120px' : '0' }}></div>
+                      <span className="absolute -bottom-5 text-[9px] text-gray-400 font-bold">4T24</span>
+                    </div>
+                    <div className="flex flex-col items-center relative z-10">
+                      <span className="text-[8px] text-gray-800 mb-1 font-bold">76.44 Bi</span>
+                      <div className="w-8 bg-blue-100 border-2 border-blue-600 rounded-t-sm transition-all duration-1000" style={{ height: barsVisible ? '150px' : '0' }}></div>
+                      <span className="absolute -bottom-5 text-[9px] text-gray-800 font-bold">4T25</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Donut Mock */}
+                <div className="border border-gray-100 rounded-xl p-5 relative">
+                  <div className="mb-6">
+                    <h4 className="text-xs font-bold text-gray-900">Composição da Receita</h4>
+                    <p className="text-[10px] text-gray-400">Share de Categorias (Último Trimestre)</p>
+                  </div>
+                  <div className="flex items-center justify-center h-40 gap-6">
+                    <div className="w-28 h-28 rounded-full border-[20px] border-[#1e40af] border-t-[#059669] border-r-[#d97706] relative transform rotate-45 transition-all duration-1000" style={{ opacity: barsVisible ? 1 : 0, scale: barsVisible ? 1 : 0.8 }}>
+                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 bg-white rounded-full"></div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-2"><span className="w-2 h-2 bg-[#059669] rounded-sm"></span><span className="text-[8px] text-gray-600 font-bold">Intelligent Cloud (39%)</span></div>
+                      <div className="flex items-center gap-2"><span className="w-2 h-2 bg-[#1e40af] rounded-sm"></span><span className="text-[8px] text-gray-600 font-bold">Productivity (43%)</span></div>
+                      <div className="flex items-center gap-2"><span className="w-2 h-2 bg-[#d97706] rounded-sm"></span><span className="text-[8px] text-gray-600 font-bold">More Personal (18%)</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="border-t border-gray-200 pt-6 mt-16 text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+              FIM DO PREVIEW DO RELATÓRIO
             </div>
 
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -700,62 +905,143 @@ function ReportDemoMobile() {
               <div className="text-right text-[9px] text-gray-500 font-medium">Gerado em<br /> <strong className="text-gray-800">09/03/2026</strong></div>
             </div>
 
-            <div className="bg-gradient-to-br from-slate-900 to-[#1e3a5f] rounded-xl p-5 mb-5 text-white shadow-md">
-              <p className="text-[8px] text-blue-200 uppercase tracking-widest mb-1 font-bold">Relatório de Análise</p>
-              <h1 className="text-3xl font-black mb-1 tracking-tight">GOOGLE</h1>
-              <p className="text-blue-300 text-sm font-bold mb-4">4T/2025</p>
-
-              <div className="bg-white/10 border border-white/20 rounded-lg p-3 flex justify-between items-center backdrop-blur-sm">
-                <div>
-                  <p className="text-[9px] text-slate-300 uppercase tracking-widest font-bold">Score IA</p>
-                  <p className="text-[8px] text-slate-400 mt-0.5">Baseado em 4 fundamentos</p>
+            {/* Título Principal e Score Geral */}
+            <div className="mb-6">
+              <div className="inline-block border border-blue-200 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full text-[8px] font-bold tracking-widest uppercase mb-3">
+                <span className="w-1 h-1 rounded-full bg-blue-500 inline-block mr-1 mb-0.5"></span>
+                4T/2025 - Resultados Trimestrais
+              </div>
+              <h1 className="text-4xl font-serif font-extrabold text-[#111827] tracking-tight mb-2">Microsoft</h1>
+              <p className="text-gray-500 text-[10px] leading-relaxed mb-6">
+                Relatório gerado por <strong className="text-gray-800">IA</strong> com base no release de resultados.
+              </p>
+              
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center">
+                <p className="text-[8px] text-emerald-700 uppercase tracking-widest mb-3 font-bold">Score IA — Média</p>
+                <div className="w-16 h-16 mx-auto rounded-full border-[4px] border-emerald-500 flex items-center justify-center mb-2">
+                  <p className="text-xl font-black text-emerald-600">5.0<span className="text-[10px] text-emerald-400">/5</span></p>
                 </div>
-                <p className="text-3xl font-black text-emerald-400">5<span className="text-sm text-slate-400">/5</span></p>
+                <p className="text-[10px] font-bold text-emerald-700">Excelente</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 mb-5">
+            {/* Grid 4 Pilares */}
+            <div className="grid grid-cols-2 gap-2 mb-6">
               {reportMetrics.map((m, i) => (
-                <div key={i} className="border border-gray-200 rounded-xl p-3 text-center bg-gray-50/50">
-                  <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-2">{m.label}</p>
-                  <p className="text-2xl font-black text-gray-900 mb-2">{m.val}</p>
-                  <div className="h-1 w-full bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-1000 ease-out"
-                      style={{ width: barsVisible ? `${(m.val / 5) * 100}%` : '0%', backgroundColor: m.color }} />
+                <div key={i} className="border border-gray-200 rounded-lg p-3 flex flex-col justify-between relative overflow-hidden bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                  <div className="flex justify-between items-start mb-4">
+                    <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest">{m.id}</p>
+                    <span className={`px-1.5 py-0.5 rounded text-[7px] font-bold border ${m.tagClass}`}>{m.badge}</span>
+                  </div>
+                  <div>
+                    <p className="text-xl font-black text-gray-900 mb-0.5">{m.score}<span className="text-[10px] text-gray-400">/5</span></p>
+                    <p className="text-[8px] text-gray-500 uppercase">{m.title}</p>
+                  </div>
+                  <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-100">
+                    <div className={`h-full transition-all duration-1000 ${m.barColor}`} style={{ width: barsVisible ? `${(parseFloat(m.score)/5)*100}%` : '0%' }}></div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* RENDERIZAÇÃO COMPLETA DE TODAS AS SEÇÕES NO MOBILE */}
-            {reportSections.map((section, index) => (
-              <div key={index} className="border border-gray-200 rounded-xl p-4 mb-4">
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-[11px] font-bold text-gray-900 uppercase tracking-wider">{section.title}</h3>
-                  <span className={`px-2 py-0.5 rounded text-[9px] font-bold border ${section.score >= 4 ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-amber-100 text-amber-700 border-amber-200'}`}>
-                    {section.score}/5
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {section.content.map((paragraph, idx) => (
-                    <p key={idx} className="text-[11px] text-gray-700 leading-relaxed font-medium">
-                      <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={(index * 600) + (idx * 300)} />
-                    </p>
-                  ))}
-                </div>
-              </div>
-            ))}
-
-            {/* RENDERIZAÇÃO DA TESE DE INVESTIMENTO NO MOBILE */}
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-              <h3 className="text-[11px] font-bold text-blue-800 uppercase tracking-wider mb-3">Conclusão — Tese e Outlook</h3>
-              <div className="space-y-3">
-                {teseContent.map((paragraph, idx) => (
-                  <p key={idx} className="text-[11px] text-gray-700 leading-relaxed font-medium">
-                    <TypewriterEffect text={paragraph} trigger={typingTrigger} delay={2000 + (idx * 400)} />
-                  </p>
+            {/* Banner Escuro */}
+            <div className="bg-[#0f172a] text-white rounded-xl p-4 mb-8">
+              <div className="grid grid-cols-2 gap-4">
+                {reportBannerStats.slice(0,4).map((stat, i) => (
+                  <div key={i} className="text-left">
+                    <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">{stat.label}</p>
+                    <p className="text-lg font-black mb-0.5">{stat.value}</p>
+                    {stat.var && (
+                      <p className={`text-[8px] font-bold flex items-center gap-1 ${stat.isPos ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {stat.isPos ? '▲' : '▼'} {stat.var}
+                      </p>
+                    )}
+                  </div>
                 ))}
               </div>
+            </div>
+
+            {/* Título Seções */}
+            <div className="mb-6">
+              <p className="text-[8px] text-gray-400 uppercase tracking-widest mb-1 font-bold">Análise Completa</p>
+              <h2 className="text-2xl font-serif font-extrabold text-[#111827]">Leitura dos Resultados</h2>
+            </div>
+
+            {/* SEÇÃO 1: Visão Geral */}
+            <div className="border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
+              <h3 className="text-lg font-serif font-bold text-gray-900 mb-4">Visão Geral</h3>
+              <p className="text-[10px] text-gray-600 leading-relaxed font-medium mb-6">
+                <TypewriterEffect text="A Microsoft encerrou o ano fiscal de 2025 com um desempenho notável no quarto trimestre, impulsionado por um crescimento robusto em suas ofertas de nuvem e inteligência artificial." trigger={typingTrigger} delay={200} />
+              </p>
+              
+              {/* Mock Gráfico de Barras Duplo */}
+              <div className="border border-gray-100 rounded-lg p-3 relative">
+                <div className="mb-4">
+                  <h4 className="text-[10px] font-bold text-gray-900">Receita & Lucro</h4>
+                </div>
+                <div className="h-32 flex items-end gap-6 justify-center pb-4 border-b border-gray-100 relative">
+                  <div className="absolute top-0 left-0 w-full h-full flex flex-col justify-between z-0">
+                    <div className="border-b border-gray-100 w-full h-0"></div>
+                    <div className="border-b border-gray-100 w-full h-0"></div>
+                    <div className="border-b border-gray-100 w-full h-0"></div>
+                  </div>
+                  {/* 4T24 */}
+                  <div className="flex items-end gap-1 relative z-10">
+                    <div className="w-4 bg-blue-100 border border-blue-600 rounded-t-sm transition-all duration-1000" style={{ height: barsVisible ? '80px' : '0' }}></div>
+                    <div className="w-4 bg-emerald-500 rounded-t-sm transition-all duration-1000" style={{ height: barsVisible ? '25px' : '0' }}></div>
+                  </div>
+                  {/* 4T25 */}
+                  <div className="flex items-end gap-1 relative z-10">
+                    <div className="w-4 bg-blue-100 border border-blue-600 rounded-t-sm transition-all duration-1000" style={{ height: barsVisible ? '100px' : '0' }}></div>
+                    <div className="w-4 bg-emerald-500 rounded-t-sm transition-all duration-1000" style={{ height: barsVisible ? '30px' : '0' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SEÇÃO 2: Evolução Operacional */}
+            <div className="border-t-2 border-emerald-500 pt-4 mt-8 mb-6 relative">
+              <div className="flex flex-col items-start gap-2 mb-4">
+                <h3 className="text-lg font-serif font-bold text-gray-900">Evolução Operacional</h3>
+                <div className="bg-emerald-50 border border-emerald-100 rounded flex items-center gap-2 py-1 px-2">
+                   <span className="text-[9px] text-emerald-600 font-bold uppercase">Nota:</span>
+                   <span className="text-sm font-black text-emerald-600">5<span className="text-[10px] text-emerald-400">/5</span></span>
+                </div>
+              </div>
+              <div className="space-y-3 mb-6">
+                <p className="text-[10px] text-gray-600 leading-relaxed font-medium">
+                  <TypewriterEffect text="Crescimento impressionante na receita líquida, atingindo US$ 76,44 bilhões no 4T25, um aumento de 18% YoY. A narrativa foi fortemente liderada pelas unidades de nuvem." trigger={typingTrigger} delay={2000} />
+                </p>
+              </div>
+
+              {/* Tabela Mock Mobile */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-2 py-2 text-[8px] font-bold text-gray-500 uppercase">Seg.</th>
+                      <th className="px-2 py-2 text-[8px] font-bold text-gray-500 uppercase text-right">4T25</th>
+                      <th className="px-2 py-2 text-[8px] font-bold text-gray-500 uppercase text-right">Y/Y</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-gray-100">
+                      <td className="px-2 py-2 text-[9px] font-bold text-gray-700 truncate max-w-[80px]">Cloud</td>
+                      <td className="px-2 py-2 text-[9px] text-gray-900 font-bold text-right">29.878</td>
+                      <td className="px-2 py-2 text-[9px] text-emerald-600 font-bold text-right">+26%</td>
+                    </tr>
+                    <tr className="bg-gray-50">
+                      <td className="px-2 py-2 text-[9px] font-black text-gray-900 truncate max-w-[80px]">Total</td>
+                      <td className="px-2 py-2 text-[9px] text-gray-900 font-black text-right">76.441</td>
+                      <td className="px-2 py-2 text-[9px] text-emerald-600 font-black text-right">+18%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-200 pt-4 mt-8 text-center text-[8px] text-gray-400 font-bold uppercase tracking-widest">
+              FIM DO PREVIEW DO RELATÓRIO
             </div>
 
           </div>
