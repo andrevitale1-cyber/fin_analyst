@@ -278,7 +278,11 @@ function ScoreDemo() {
                 return (
                   <div key={m.label} className="bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-gray-600 font-medium">{m.label}</span>
+                      <span className="text-sm text-gray-600 font-medium">
+                        {locale === "en"
+                          ? m.label === "Receita" ? "Revenue" : m.label === "Margem" ? "Margin" : m.label === "Dívida" ? "Debt" : m.label
+                          : m.label}
+                      </span>
                       <Icon size={16} className={m.color} />
                     </div>
                     <div className="flex items-end gap-1">
@@ -297,7 +301,14 @@ function ScoreDemo() {
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wider mb-4 font-semibold">{locale === "en" ? "Conclusion — Thesis and Outlook" : "Conclusão — Tese e Outlook"}</p>
               <div className="space-y-3">
-                {teseLines.map((line, i) => (<p key={i} className="text-sm text-gray-700 leading-relaxed">{line}</p>))}
+                {(locale === "en" ? [
+                  "Microsoft delivered an exceptional result in the fourth fiscal quarter of 2025, validating and reinforcing the investment thesis for the company as an undisputed leader in the era of cloud and artificial intelligence.",
+                  "The numbers exceeded expectations across all major lines, demonstrating Microsoft's ability to translate market demand into profitable and efficient growth.",
+                  "The main drivers were the robust, high-quality revenue growth, led by the stellar performance of the Intelligent Cloud segment (especially Azure) and the resilience of Productivity and Business Processes.",
+                  "The company demonstrated remarkable operating leverage, with operating income growing above revenue and significant margin expansion.",
+                  "Additionally, Microsoft reinforced its already enviable capital structure, with strong free cash flow generation and reduction in gross debt.",
+                  "The company's outlook is extremely positive, with its leadership in AI and cloud securing a path of sustainable, high-value growth."
+                ] : teseLines).map((line, i) => <p key={i} className="text-sm text-gray-700 leading-relaxed">{line}</p>)}
               </div>
             </div>
             <div className="h-16" />
@@ -358,7 +369,11 @@ function ScoreDemoMobile() {
                 return (
                   <div key={m.label} className="bg-gray-50 border border-gray-200 shadow-sm rounded-2xl px-5 py-4">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm text-gray-600 font-medium">{m.label}</span>
+                      <span className="text-sm text-gray-600 font-medium">
+                        {locale === "en"
+                          ? m.label === "Receita" ? "Revenue" : m.label === "Margem" ? "Margin" : m.label === "Dívida" ? "Debt" : m.label
+                          : m.label}
+                      </span>
                       <div className="w-8 h-8 rounded-xl bg-white border border-gray-200 shadow-sm flex items-center justify-center"><Icon size={15} className={m.color} /></div>
                     </div>
                     <div className="flex items-end gap-1 mb-2">
@@ -377,7 +392,14 @@ function ScoreDemoMobile() {
               </div>
               <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 font-semibold">{locale === "en" ? "Conclusion — Thesis and Outlook" : "Conclusão — Tese e Outlook"}</p>
               <div className="space-y-3">
-                {teseLines.map((line, i) => (<p key={i} className="text-sm text-gray-700 leading-relaxed">{line}</p>))}
+                {(locale === "en" ? [
+                  "Microsoft delivered an exceptional result in the fourth fiscal quarter of 2025, validating and reinforcing the investment thesis for the company as an undisputed leader in the era of cloud and artificial intelligence.",
+                  "The numbers exceeded expectations across all major lines, demonstrating Microsoft's ability to translate market demand into profitable and efficient growth.",
+                  "The main drivers were the robust, high-quality revenue growth, led by the stellar performance of the Intelligent Cloud segment (especially Azure) and the resilience of Productivity and Business Processes.",
+                  "The company demonstrated remarkable operating leverage, with operating income growing above revenue and significant margin expansion.",
+                  "Additionally, Microsoft reinforced its already enviable capital structure, with strong free cash flow generation and reduction in gross debt.",
+                  "The company's outlook is extremely positive, with its leadership in AI and cloud securing a path of sustainable, high-value growth."
+                ] : teseLines).map((line, i) => <p key={i} className="text-sm text-gray-700 leading-relaxed">{line}</p>)}
               </div>
             </div>
             <div className="h-8" />
@@ -501,20 +523,20 @@ function CallAnalysisDemo() {
           <div className="flex gap-3">
             <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">CEO</div>
             <div className="bg-white rounded-2xl rounded-tl-none p-4 border border-gray-200 text-sm text-gray-700 shadow-sm leading-relaxed">
-              "Vemos uma demanda sem precedentes pela nossa nova infraestrutura de IA, e isso se reflete claramente na nossa expansão de margens neste trimestre."
+              {locale === "en" ? '"We are seeing unprecedented demand for our new AI infrastructure, and this is clearly reflected in our margin expansion this quarter."' : '"Vemos uma demanda sem precedentes pela nossa nova infraestrutura de IA, e isso se reflete claramente na nossa expansão de margens neste trimestre."'}
             </div>
           </div>
           <div className="flex gap-3 flex-row-reverse">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center shadow-lg shadow-blue-500/20"><Activity size={14} className="text-white" /></div>
             <div className="bg-indigo-50 rounded-2xl rounded-tr-none p-4 border border-indigo-100 text-sm text-indigo-800 shadow-inner leading-relaxed">
               <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block mb-1.5">{locale === "en" ? "AI Insight" : "Insight da IA"}</span>
-              O CEO destaca as margens impulsionadas por IA, confirmando a tese de ganho de eficiência operacional reportada no DFP.
+              {locale === "en" ? "The CEO highlights AI-driven margins, confirming the thesis of operational efficiency gains reported in the financial statements." : "O CEO destaca as margens impulsionadas por IA, confirmando a tese de ganho de eficiência operacional reportada no DFP."}
             </div>
           </div>
           <div className="flex gap-3">
             <div className="w-8 h-8 rounded-full bg-gray-600 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white">CFO</div>
             <div className="bg-white rounded-2xl rounded-tl-none p-4 border border-gray-200 text-sm text-gray-700 shadow-sm leading-relaxed">
-              "Apesar dos desafios macroeconômicos, conseguimos manter nosso guidance de crescimento."
+              {locale === "en" ? '"Despite the macroeconomic challenges, we managed to maintain our growth guidance."' : '"Apesar dos desafios macroeconômicos, conseguimos manter nosso guidance de crescimento."'}
             </div>
           </div>
         </div>
@@ -613,14 +635,14 @@ function ReportDemo() {
                 <span className="font-bold text-lg text-gray-900 tracking-tight">FinAnalyzer</span>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-xs text-gray-400">Análise</span>
-                <span className="text-xs text-gray-400">Resumo</span>
+                <span className="text-xs text-gray-400">{locale === "en" ? "Analysis" : "Análise"}</span>
+                <span className="text-xs text-gray-400">{locale === "en" ? "Summary" : "Resumo"}</span>
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-gray-400">{locale === "en" ? "AI Score" : "Score IA"}</span>
                   <span className="font-bold text-emerald-500">5.0/5</span>
                   <div className="ml-4"><LanguageSwitcher /></div>
                   <button className="bg-blue-800 text-white px-4 py-1.5 rounded flex items-center gap-2 font-bold ml-2">
-                    <Download size={14} /> Salvar PDF
+                    <Download size={14} /> {locale === "en" ? "Save PDF" : "Salvar PDF"}
                   </button>
                 </div>
               </div>
@@ -643,7 +665,7 @@ function ReportDemo() {
               </div>
               
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 text-center w-[220px]">
-                <p className="text-[9px] text-emerald-700 uppercase tracking-widest mb-4 font-bold">{locale === "en" ? "AI Score" : "Score IA"} — Média Ponderada</p>
+                <p className="text-[9px] text-emerald-700 uppercase tracking-widest mb-4 font-bold">{locale === "en" ? "AI Score — Weighted Average" : "Score IA — Média Ponderada"}</p>
                 <div className="w-24 h-24 mx-auto rounded-full border-[6px] border-emerald-500 flex items-center justify-center mb-3">
                   <p className="text-3xl font-black text-emerald-600">5.0<span className="text-sm text-emerald-400">/5</span></p>
                 </div>
@@ -661,7 +683,11 @@ function ReportDemo() {
                   </div>
                   <div>
                     <p className="text-3xl font-black text-gray-900 mb-1">{m.score}<span className="text-sm text-gray-400">/5</span></p>
-                    <p className="text-[10px] text-gray-500 uppercase">{m.title}</p>
+                    <p className="text-[10px] text-gray-500 uppercase">
+                      {locale === "en"
+                        ? m.title === "Receita" ? "Revenue" : m.title === "Margem & Lucro" ? "Margin & Profit" : m.title === "Dívida & Risco" ? "Debt & Risk" : m.title === "Rentabilidade ROE" ? "Profitability ROE" : m.title
+                        : m.title}
+                    </p>
                   </div>
                   <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-100">
                     <div className={`h-full transition-all duration-1000 ${m.barColor}`} style={{ width: barsVisible ? `${(parseFloat(m.score)/5)*100}%` : '0%' }}></div>
