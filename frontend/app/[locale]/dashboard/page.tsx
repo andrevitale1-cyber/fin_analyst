@@ -65,11 +65,11 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
             <p className="text-sm text-gray-400 mt-1">{t("upgrade.basicDesc")}</p>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
-            <Feature text="{t("features.analysisPerWeek")}" />
-            <Feature text="{t("features.summaryReport")}" />
-            <Feature text="{t("features.communitySupport")}" />
-            <Feature text="{t("features.downloadFullReport")}" disabled />
-            <Feature text="{t("features.comparativeTable")}" disabled />
+            <Feature text={t("features.analysisPerWeek")} />
+            <Feature text={t("features.summaryReport")} />
+            <Feature text={t("features.communitySupport")} />
+            <Feature text={t("features.downloadFullReport")} disabled />
+            <Feature text={t("features.comparativeTable")} disabled />
           </ul>
           <button onClick={onClose} className="w-full py-2.5 rounded-lg border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
             {t("upgrade.continueBasic")}
@@ -90,10 +90,10 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
             <span className="text-gray-500 text-sm mb-1">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
-            <Feature text="{t("features.unlimitedAnalysis")}" />
-            <Feature text="{t("features.premiumReports")}" />
-            <Feature text="{t("features.tableUnlocked")}" />
-            <Feature text="{t("features.serverPriority")}" />
+            <Feature text={t("features.unlimitedAnalysis")} />
+            <Feature text={t("features.premiumReports")} />
+            <Feature text={t("features.tableUnlocked")} />
+            <Feature text={t("features.serverPriority")} />
           </ul>
           <button onClick={handleCheckout} className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors shadow-sm">
             {t("upgrade.subscribePro")}
@@ -563,7 +563,7 @@ export default function FinancialDashboard() {
             <header className="flex items-center justify-between mb-8 pt-0">
               <div><h1 className="text-3xl font-bold text-white tracking-tight">{t("historyView.title")}</h1><p className="text-gray-400 mt-1">{t("historyView.desc")}</p></div>
               <div className="relative">
-                <input type="text" placeholder="{t("historyView.searchPlaceholder")}" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-[#161b22] border border-gray-700 rounded-xl px-4 py-2.5 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-64" />
+                <input type="text" placeholder={t("historyView.searchPlaceholder")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-[#161b22] border border-gray-700 rounded-xl px-4 py-2.5 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-64" />
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"><X size={14} /></button>}
               </div>
@@ -595,7 +595,7 @@ export default function FinancialDashboard() {
                 </tbody>
               </table>
              </div> 
-              {filteredHistory.length === 0 && <div className="p-12 text-center text-gray-500">{searchQuery ? `Nenhum resultado para "${searchQuery}".` : "{t("historyView.empty")}"}</div>}
+              {filteredHistory.length === 0 && <div className="p-12 text-center text-gray-500">{searchQuery ? `Nenhum resultado para "${searchQuery}".` : t("historyView.empty")}</div>}
             </div>
           </div>
         )}
@@ -633,7 +633,7 @@ export default function FinancialDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        {tipoAnalise === 'pdf' ? t('newAnalysis.companyInput') : t('newAnalysis.tickerInput') Oficial (Ex: AAPL)'}
+                        {tipoAnalise === 'pdf' ? t('newAnalysis.companyInput') : t('newAnalysis.tickerInput')}
                       </label>
                       <input 
                         type="text" 

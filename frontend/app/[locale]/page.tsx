@@ -33,9 +33,9 @@ const scoreMetrics = [
 ];
 
 const reportMetrics = [
-  { id: "REV", title: "Receita", score: "5.0", badge: "{locale === "en" ? "Excellent" : "Excelente"}", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
-  { id: "M&L", title: "Margem & Lucro", score: "5.0", badge: "{locale === "en" ? "Excellent" : "Excelente"}", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
-  { id: "RISC", title: "Dívida & Risco", score: "5.0", badge: "{locale === "en" ? "Excellent" : "Excelente"}", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
+  { id: "REV", title: "Receita", score: "5.0", badge: "Excelente", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
+  { id: "M&L", title: "Margem & Lucro", score: "5.0", badge: "Excelente", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
+  { id: "RISC", title: "Dívida & Risco", score: "5.0", badge: "Excelente", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
   { id: "ROE", title: "Rentabilidade ROE", score: "4.0", badge: "Bom", tagClass: "bg-emerald-50 text-emerald-600 border-emerald-100", barColor: "bg-emerald-400" }
 ];
 
@@ -252,7 +252,7 @@ function ScoreDemo() {
                 <span className="flex items-center gap-1 text-sm text-gray-600"><ChevronLeft size={16} /> {locale === "en" ? "Back to History" : "Voltar para Histórico"}</span>
               </div>
               <button className="flex items-center gap-2 bg-emerald-500 text-black text-xs font-bold px-3 py-1.5 rounded-lg">
-                <Download size={13} /> {locale === "en" ? "Download Full Report" : "Baixar {locale === "en" ? "Full Report" : "Relatório Completo"}"}
+                <Download size={13} /> {locale === "en" ? "Download Full Report" : "Baixar Relatório Completo"}
               </button>
             </div>
 
@@ -336,7 +336,7 @@ function ScoreDemoMobile() {
               <span className="text-sm text-gray-600 font-medium">{locale === "en" ? "Back to History" : "Voltar para Histórico"}</span>
             </div>
             <button className="w-full bg-emerald-500 text-black text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-5">
-              <Download size={15} /> {locale === "en" ? "Download Full Report" : "Baixar {locale === "en" ? "Full Report" : "Relatório Completo"}"}
+              <Download size={15} /> {locale === "en" ? "Download Full Report" : "Baixar Relatório Completo"}
             </button>
             <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">{locale === "en" ? "Analysis Report" : "Relatório de Análise"}</p>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">MICROSOFT</h1>
@@ -657,7 +657,7 @@ function ReportDemo() {
                 <div key={i} className="border border-gray-200 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden bg-white shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
                   <div className="flex justify-between items-start mb-6">
                     <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{m.id}</p>
-                    <span className={`px-2 py-0.5 rounded text-[8px] font-bold border ${m.tagClass}`}>{m.badge}</span>
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-bold border ${m.tagClass}`}>{locale === "en" && m.badge === "Excelente" ? "Excellent" : locale === "en" && m.badge === "Bom" ? "Good" : m.badge}</span>
                   </div>
                   <div>
                     <p className="text-3xl font-black text-gray-900 mb-1">{m.score}<span className="text-sm text-gray-400">/5</span></p>
