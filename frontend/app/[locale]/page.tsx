@@ -1272,20 +1272,20 @@ function LandingPageContent({ locale }: { locale: string }) {
           </div>
 
           <div className="hidden md:flex items-center gap-6">
-            <a href="#funcionalidades" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">Funcionalidades</a>
-            <a href="#planos" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">Preços</a>
-            <a href="/dashboard" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">Entrar</a>
+            <a href="#funcionalidades" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{locale === "en" ? "Features" : "Funcionalidades"}</a>
+            <a href="#planos" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{locale === "en" ? "Pricing" : "Preços"}</a>
+            <a href="/dashboard" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{locale === "en" ? "Sign In" : "Entrar"}</a>
             <a href="/dashboard" className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-full font-bold transition-all text-sm hover:scale-105">
-              Começar Grátis
+              {locale === "en" ? "Get Started Free" : "Começar Grátis"}
             </a>
           </div>
 
           <div className="flex md:hidden items-center gap-2">
             <a href="/dashboard" className="border border-white/30 text-white px-3 py-2 rounded-full font-semibold text-sm hover:bg-white/10 transition-colors">
-              Entrar
+              {locale === "en" ? "Sign In" : "Entrar"}
             </a>
             <a href="/dashboard" className="bg-white text-black px-3 py-2 rounded-full font-bold text-sm">
-              Cadastrar
+              {locale === "en" ? "Sign Up" : "Cadastrar"}
             </a>
             <button className="w-8 h-8 flex flex-col items-center justify-center gap-1.5 ml-1">
               <span className="w-5 h-0.5 bg-white rounded-full" />
@@ -1302,20 +1302,19 @@ function LandingPageContent({ locale }: { locale: string }) {
       >
         <div className="max-w-5xl mx-auto px-6 text-center relative z-10 flex flex-col items-center">
           <h1 className="text-[2.6rem] md:text-5xl lg:text-[6rem] font-serif font-bold text-white tracking-tighter mb-6 leading-none">
-            A Nova Era Da <br />
-            <span className="text-white tracking-tighter mb-8 leading-none">Análise de Ativos.</span>
+            {locale === "en" ? <>The New Era of <br /><span className="text-white tracking-tighter mb-8 leading-none">Asset Analysis.</span></> : <>A Nova Era Da <br /><span className="text-white tracking-tighter mb-8 leading-none">Análise de Ativos.</span></>}
           </h1>
 
           <p className="text-base md:text-2xl text-gray-300 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-medium tracking-tight">
-            Acelere a leitura de relatórios trimestrais. Deixe a IA estruturar os dados e gerar insights para apoiar sua decisão de investimento.
+            {locale === "en" ? "Speed up your quarterly earnings analysis. Let AI structure the data and generate insights to support your investment decisions." : "Acelere a leitura de relatórios trimestrais. Deixe a IA estruturar os dados e gerar insights para apoiar sua decisão de investimento."}
           </p>
 
           <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full md:w-auto">
             <a href="/dashboard" className="w-full md:w-auto bg-blue-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-400 transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(59,130,246,0.7)]">
-              Criar Conta Grátis <ArrowRight size={20} />
+              {locale === "en" ? "Create Free Account" : "Criar Conta Grátis"} <ArrowRight size={20} />
             </a>
             <a href="#funcionalidades" className="w-full md:w-auto px-10 py-4 rounded-full font-bold text-lg text-white border border-white/30 hover:bg-white/10 transition-all backdrop-blur-md bg-black/20">
-              Ver Funcionalidades
+              {locale === "en" ? "See Features" : "Ver Funcionalidades"}
             </a>
           </div>
         </div>
@@ -1336,10 +1335,10 @@ function LandingPageContent({ locale }: { locale: string }) {
                   <UploadCloud className="text-blue-400 w-7 h-7" />
                 </div>
                 <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                  Upload <br />Inteligente
+                  {locale === "en" ? <>Smart <br />Upload</> : <>Upload <br />Inteligente</>}
                 </h2>
                 <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight max-w-md mx-auto lg:mx-0">
-                  Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos.
+                  {locale === "en" ? "Simplify your analysis routine. Just drag the Earnings Release PDF. Our AI will generate a complete report in seconds." : "Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos."}
                 </p>
               </div>
 
@@ -1364,11 +1363,10 @@ function LandingPageContent({ locale }: { locale: string }) {
                 <FileText className="text-green-400 w-7 h-7" />
               </div>
               <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                Score de IA
+                {locale === "en" ? "AI Score" : "Score de IA"}
               </h2>
               <p className="text-base text-gray-300 leading-relaxed font-medium tracking-tight max-w-xl">
-                O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista,
-                facilitando a identificação imediata de pontos fortes e de atenção na empresa.
+                {locale === "en" ? "FinAnalyzer generates a Score from 0 to 5 for each fundamental metric, making it easy to immediately identify a company's strengths and areas of concern." : "O FinAnalyzer gera um Score de 0 a 5 para cada métrica fundamentalista, facilitando a identificação imediata de pontos fortes e de atenção na empresa."}
               </p>
             </div>
             <div className="hidden md:block">
@@ -1401,10 +1399,10 @@ function LandingPageContent({ locale }: { locale: string }) {
                   <Layout className="text-purple-400 w-7 h-7" />
                 </div>
                 <h2 className="text-3xl font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                  Comparador <br />de Ativos
+                  {locale === "en" ? <>Asset <br />Comparator</> : <>Comparador <br />de Ativos</>}
                 </h2>
                 <p className="text-base text-gray-300 leading-relaxed font-medium tracking-tight max-w-sm mx-auto">
-                  Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
+                  {locale === "en" ? "Visualize and compare all the results you have analyzed. Sort by Revenue, Profitability, Debt, Net Income, and much more." : "Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais."}
                 </p>
               </div>
               <ComparadorMobile />
@@ -1416,10 +1414,10 @@ function LandingPageContent({ locale }: { locale: string }) {
                   <Layout className="text-purple-400 w-7 h-7" />
                 </div>
                 <h2 className="text-3xl md:text-4xl lg:text-[3rem] font-serif font-bold text-white mb-5 tracking-tighter leading-[1.05]">
-                  Comparador <br />de Ativos
+                  {locale === "en" ? <>Asset <br />Comparator</> : <>Comparador <br />de Ativos</>}
                 </h2>
                 <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight">
-                  Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais.
+                  {locale === "en" ? "Visualize and compare all the results you have analyzed. Sort by Revenue, Profitability, Debt, Net Income, and much more." : "Visualize e compare todos os Resultados que você analisou. Ordene por Nota de Receita, Rentabilidade, Dívida, Lucro e muito mais."}
                 </p>
               </div>
             </div>
@@ -1440,10 +1438,10 @@ function LandingPageContent({ locale }: { locale: string }) {
                   <Mic className="text-indigo-400 w-7 h-7" />
                 </div>
                 <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                  Análise de <br />Earnings Calls
+                  {locale === "en" ? <>Earnings <br />Call Analysis</> : <>Análise de <br />Earnings Calls</>}
                 </h2>
                 <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight max-w-md mx-auto lg:mx-0">
-                  Vá além dos números. A IA escuta, transcreve e analisa as teleconferências de resultados para capturar o tom da diretoria, perguntas difíceis e perspectivas futuras em tempo real.
+                  {locale === "en" ? "Go beyond the numbers. AI listens, transcribes, and analyzes earnings calls to capture management tone, tough questions, and future outlook in real time." : "Vá além dos números. A IA escuta, transcreve e analisa as teleconferências de resultados para capturar o tom da diretoria, perguntas difíceis e perspectivas futuras em tempo real."}
                 </p>
               </div>
 
@@ -1471,10 +1469,10 @@ function LandingPageContent({ locale }: { locale: string }) {
                   <Database className="text-yellow-400 w-7 h-7" />
                 </div>
                 <h2 className="text-3xl lg:text-[2.6rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                  Histórico <br />Completo
+                  {locale === "en" ? <>Full <br />History</> : <>Histórico <br />Completo</>}
                 </h2>
                 <p className="text-sm text-gray-300 leading-relaxed font-medium tracking-tight">
-                  Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre.
+                  {locale === "en" ? "All your analyses are saved forever. Compare a company's evolution quarter by quarter." : "Todas as suas análises ficam salvas para sempre. Compare a evolução da empresa trimestre a trimestre."}
                 </p>
               </div>
 
@@ -1487,19 +1485,19 @@ function LandingPageContent({ locale }: { locale: string }) {
               >
                 <div className="bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl overflow-hidden shadow-2xl">
                   <div className="px-6 py-5 border-b border-gray-200">
-                    <h3 className="text-xl font-bold text-gray-900">Histórico Detalhado</h3>
-                    <p className="text-sm text-gray-500 mt-1">Gerencie suas análises individuais.</p>
+                    <h3 className="text-xl font-bold text-gray-900">{locale === "en" ? "Detailed History" : "Histórico Detalhado"}</h3>
+                    <p className="text-sm text-gray-500 mt-1">{locale === "en" ? "Manage your individual analyses." : "Gerencie suas análises individuais."}</p>
                   </div>
 
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-200">
-                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Empresa</th>
-                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Período</th>
-                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">Data</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{locale === "en" ? "Company" : "Empresa"}</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{locale === "en" ? "Period" : "Período"}</th>
+                          <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">{locale === "en" ? "Date" : "Data"}</th>
                           <th className="text-center px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Score</th>
-                          <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Ações</th>
+                          <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">{locale === "en" ? "Actions" : "Ações"}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1521,7 +1519,7 @@ function LandingPageContent({ locale }: { locale: string }) {
                               <div className="flex items-center justify-end gap-3">
                                 <Trash2 size={16} className="text-gray-500 cursor-pointer hover:text-red-400 transition-colors" />
                                 <span className="text-blue-400 font-medium text-sm flex items-center gap-1 cursor-pointer hover:text-blue-300 transition-colors">
-                                  Detalhes <ChevronRight size={14} />
+                                  {locale === "en" ? "Details" : "Detalhes"} <ChevronRight size={14} />
                                 </span>
                               </div>
                             </td>
@@ -1607,14 +1605,14 @@ function LandingPageContent({ locale }: { locale: string }) {
               <p className="text-gray-400 text-xl mb-12 font-medium">{locale === "en" ? "To start analyzing at no cost." : "Para começar a analisar sem custo."}</p>
 
               <ul className="space-y-6 mb-16 flex-1">
-                <Feature text="5 Análises por semana" active />
-                <Feature text="Relatório Resumido na Tela" active />
-                <Feature text="Acesso ao histórico simples" active />
-                <Feature text="Suporte por email" active />
-                <Feature text="Upload de arquivos ilimitado" disabled />
-                <Feature text="Download da Análise Completa da IA" disabled />
-                <Feature text="Tabela Comparativa de Ativos" disabled />
-                <Feature text="Análise de Earnings Calls" disabled />
+                <Feature text={locale === "en" ? "5 Analyses per week" : "5 Análises por semana"} active />
+                <Feature text={locale === "en" ? "Summary Report on Screen" : "Relatório Resumido na Tela"} active />
+                <Feature text={locale === "en" ? "Simple history access" : "Acesso ao histórico simples"} active />
+                <Feature text={locale === "en" ? "Email support" : "Suporte por email"} active />
+                <Feature text={locale === "en" ? "Unlimited file upload" : "Upload de arquivos ilimitado"} disabled />
+                <Feature text={locale === "en" ? "Download Full AI Report" : "Download da Análise Completa da IA"} disabled />
+                <Feature text={locale === "en" ? "Comparative Asset Table" : "Tabela Comparativa de Ativos"} disabled />
+                <Feature text={locale === "en" ? "Earnings Call Analysis" : "Análise de Earnings Calls"} disabled />
               </ul>
 
               <a href="/dashboard" className="block w-full text-center py-6 rounded-full border-2 border-white/30 text-white text-xl font-bold hover:bg-white/10 transition-all mt-auto backdrop-blur-md">
@@ -1632,15 +1630,15 @@ function LandingPageContent({ locale }: { locale: string }) {
               <p className="text-blue-100 text-xl mb-12 font-medium">{locale === "en" ? "Unlock the full power of AI." : "Desbloqueie todo o poder da IA."}</p>
 
               <ul className="space-y-6 mb-16 flex-1">
-                <Feature text="Análises de IA Ilimitadas" active light />
-                <Feature text="Relatório Resumido na Tela" active light />
-                <Feature text="Acesso ao Histórico Ilimitado" active light />
-                <Feature text="Suporte por Email" active light />
-                <Feature text="Upload de arquivos ilimitado" active light />
-                <Feature text="Download da Análise Completa da IA" active light />
-                <Feature text="Tabela Comparativa de Ativos" active light />
-                <Feature text="Análise de Earnings Calls" active light />
-                <Feature text="Prioridade máxima na fila" active light />
+                <Feature text={locale === "en" ? "Unlimited AI Analyses" : "Análises de IA Ilimitadas"} active light />
+                <Feature text={locale === "en" ? "Summary Report on Screen" : "Relatório Resumido na Tela"} active light />
+                <Feature text={locale === "en" ? "Unlimited History Access" : "Acesso ao Histórico Ilimitado"} active light />
+                <Feature text={locale === "en" ? "Email Support" : "Suporte por Email"} active light />
+                <Feature text={locale === "en" ? "Unlimited file upload" : "Upload de arquivos ilimitado"} active light />
+                <Feature text={locale === "en" ? "Download Full AI Report" : "Download da Análise Completa da IA"} active light />
+                <Feature text={locale === "en" ? "Comparative Asset Table" : "Tabela Comparativa de Ativos"} active light />
+                <Feature text={locale === "en" ? "Earnings Call Analysis" : "Análise de Earnings Calls"} active light />
+                <Feature text={locale === "en" ? "Maximum queue priority" : "Prioridade máxima na fila"} active light />
               </ul>
 
               <a href="/dashboard" className="block w-full text-center py-6 rounded-full bg-white text-blue-700 text-xl font-extrabold shadow-2xl hover:bg-gray-100 hover:scale-[1.02] transition-all mt-auto">
@@ -1673,10 +1671,14 @@ function LandingPageContent({ locale }: { locale: string }) {
 
           <div className="border-t border-white/10 pt-12 text-sm text-gray-400 space-y-4 text-justify leading-relaxed font-light">
             <p>
-              <strong className="text-gray-300 font-semibold">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300 font-semibold">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300 font-semibold">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.
+              {locale === "en" ? (
+                <><strong className="text-gray-300 font-semibold">IMPORTANT DISCLAIMER:</strong> The analysis presented on this platform is generated by Artificial Intelligence algorithms and serves only as an <strong className="text-gray-300 font-semibold">auxiliary support tool</strong>. It <strong className="text-gray-300 font-semibold">does not replace human analysis</strong>, nor does it constitute a recommendation to buy or sell assets. FinAnalyzer.AI is not responsible for the accuracy, completeness, or timeliness of the data, nor for any investment decisions or financial losses resulting from the use of this information. Past performance does not guarantee future results.</>
+              ) : (
+                <><strong className="text-gray-300 font-semibold">AVISO IMPORTANTE SOBRE IA:</strong> A análise apresentada nesta plataforma é gerada por algoritmos de Inteligência Artificial e serve apenas como uma <strong className="text-gray-300 font-semibold">ferramenta auxiliar de suporte</strong>. Ela <strong className="text-gray-300 font-semibold">não substitui a análise humana</strong>, nem constitui recomendação de compra ou venda de ativos. O FinAnalyzer.AI não se responsabiliza pela precisão, integridade ou atualização dos dados, nem por quaisquer decisões de investimento ou prejuízos financeiros decorrentes do uso destas informações. Rentabilidade passada não representa garantia de rentabilidade futura.</>
+              )}
             </p>
             <p className="text-center pt-10 text-gray-500 font-medium">
-              © 2026 FinAnalyzer Inc. Todos os direitos reservados.
+              {locale === "en" ? "© 2026 FinAnalyzer Inc. All rights reserved." : "© 2026 FinAnalyzer Inc. Todos os direitos reservados."}
             </p>
           </div>
         </div>
