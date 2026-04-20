@@ -1,0 +1,97 @@
+{
+  "Dashboard": {
+    "company": "Company",
+    "finalScore": "Final Score",
+    "netRevenue": "Net Revenue",
+    "netIncome": "Net Income",
+    "netDebt": "Net Debt",
+    "profitability": "Profitability",
+    "sum": "Sum",
+    "analyzedResults": "Analyzed Results",
+    "average": "Average",
+    "lastQuarter": "Last Quarter",
+    "features": {
+      "analysisPerWeek": "5 Analyses per week",
+      "summaryReport": "Summary Report on Screen",
+      "communitySupport": "Community Support",
+      "downloadFullReport": "Download Full AI Report",
+      "comparativeTable": "Comparative Asset Table",
+      "unlimitedAnalysis": "Unlimited AI Analyses",
+      "premiumReports": "Premium Reports (HTML/PDF)",
+      "tableUnlocked": "Unlocked Comparative Table",
+      "serverPriority": "Server Priority"
+    },
+    "upgrade": {
+      "basicPlan": "Basic Plan",
+      "basicDesc": "Your current plan. Ideal for testing.",
+      "continueBasic": "Continue on Basic",
+      "recommended": "Recommended",
+      "proDesc": "Unlock the full power of AI.",
+      "monthly": "Monthly",
+      "yearly": "Yearly (-20%)",
+      "subscribePro": "Subscribe FinAnalyzer Pro"
+    },
+    "nav": {
+      "newAnalysis": "New Analysis",
+      "aggregatedTable": "Aggregated Table",
+      "history": "History"
+    },
+    "sidebar": {
+      "analyses": "Analyses",
+      "downloads": "Downloads",
+      "goPremium": "Go Premium",
+      "menu": "Menu"
+    },
+    "table": {
+      "title": "Aggregated Table",
+      "desc": "Consolidated view of company performance.",
+      "configColumns": "Configure Columns",
+      "columnView": "Column View",
+      "dragToReorder": "Drag to reorder",
+      "empty": "No analysis available."
+    },
+    "historyView": {
+      "title": "Detailed History",
+      "desc": "Manage your individual analyses.",
+      "searchPlaceholder": "Search company or period...",
+      "period": "Period",
+      "date": "Date",
+      "score": "Score",
+      "actions": "Actions",
+      "details": "Details",
+      "empty": "Empty history."
+    },
+    "newAnalysis": {
+      "analyzing": "Analyzing Data...",
+      "processing": "Our AI is processing the report and generating insights.",
+      "title": "New Financial Analysis",
+      "desc": "Generate analyses through PDF reports or Call Transcripts.",
+      "pdfReport": "📄 Report (PDF)",
+      "callTranscript": "🎙️ Earnings Call (FMP)",
+      "companyInput": "Company",
+      "companyPlaceholder": "Ex: Apple",
+      "tickerInput": "Official Ticker (Ex: AAPL)",
+      "tickerPlaceholder": "Ex: AAPL",
+      "year": "Year",
+      "quarter": "Quarter",
+      "q1": "1st Quarter",
+      "q2": "2nd Quarter",
+      "q3": "3rd Quarter",
+      "q4": "4th Quarter",
+      "uploadPdf": "Click or drag the Release (PDF)",
+      "uploadCall": "Click or drag the Transcript (PDF)",
+      "supportPdf": "Supports PDF up to 10MB",
+      "generateReport": "Generate Analysis",
+      "generateCall": "Analyze Call via AI"
+    },
+    "result": {
+      "backHistory": "Back to History",
+      "viewReport": "View Full Report",
+      "analysisReport": "Analysis Report",
+      "aiScore": "AI Score",
+      "basedOn": "Based on 4 fundamentals",
+      "transcriptAnalysis": "Transcript and Analysis",
+      "investmentThesis": "Investment Thesis"
+    }
+  }
+}

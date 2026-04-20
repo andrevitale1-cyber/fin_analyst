@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, UserButton } from "@clerk/nextjs";
+import { useTranslations } from "next-intl";
+import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Activity, Loader2,
@@ -14,17 +16,17 @@ const API_BASE = "https://api-finanalyzer.onrender.com";
 const STRIPE_CHECKOUT_URL_MONTHLY = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00";
 const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/3cI6oIgdleEBgmNdI967S01"; 
 
-const COLUMN_DEFINITIONS = [
-  { key: 'empresa', label: 'Empresa', align: 'center', minWidth: 'min-w-[140px]', color: 'text-gray-100 font-medium' },
-  { key: 'nota_geral', label: 'Nota Final', align: 'center', color: 'text-blue-400 font-bold' },
-  { key: 'receita_nota', label: 'Receita', align: 'center', color: 'text-gray-300' },
-  { key: 'lucro_nota', label: 'Lucro', align: 'center', color: 'text-gray-300' },
-  { key: 'divida_nota', label: 'Dívida', align: 'center', color: 'text-gray-300' },
-  { key: 'rentabilidade_nota', label: 'Rentabilidade', align: 'center', color: 'text-gray-300' },
-  { key: 'soma_total', label: 'Soma', align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
-  { key: 'qtde_tri', label: 'Resultados Analisados', align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
-  { key: 'media', label: 'Média', align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
-  { key: 'last_analysed_quarter', label: 'Último Tri', align: 'center', color: 'text-gray-400 font-medium' },
+const getColumnDefinitions = (t: any) => [
+  { key: 'empresa', label: t('company'), align: 'center', minWidth: 'min-w-[140px]', color: 'text-gray-100 font-medium' },
+  { key: 'nota_geral', label: t('finalScore'), align: 'center', color: 'text-blue-400 font-bold' },
+  { key: 'receita_nota', label: t('netRevenue'), align: 'center', color: 'text-gray-300' },
+  { key: 'lucro_nota', label: t('netIncome'), align: 'center', color: 'text-gray-300' },
+  { key: 'divida_nota', label: t('netDebt'), align: 'center', color: 'text-gray-300' },
+  { key: 'rentabilidade_nota', label: t('profitability'), align: 'center', color: 'text-gray-300' },
+  { key: 'soma_total', label: t('sum'), align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
+  { key: 'qtde_tri', label: t('analyzedResults'), align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
+  { key: 'media', label: t('average'), align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
+  { key: 'last_analysed_quarter', label: t('lastQuarter'), align: 'center', color: 'text-gray-400 font-medium' },
 ];
 
 function Feature({ text, disabled = false }: any) {
@@ -41,6 +43,7 @@ function Feature({ text, disabled = false }: any) {
 }
 
 function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'monthly' }: { onClose: () => void; userId?: string; billingCycle?: 'monthly' | 'yearly' }) {
+  const t = useTranslations("Dashboard");
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
 
   const handleCheckout = () => {
@@ -58,42 +61,42 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
         </button>
         <div className="w-full md:w-1/2 p-8 border-b md:border-b-0 md:border-r border-gray-800 bg-[#0d1117]/50 flex flex-col">
           <div className="mb-8">
-            <h3 className="text-xl font-semibold text-white">Plano Básico</h3>
-            <p className="text-sm text-gray-400 mt-1">Seu plano atual. Ideal para testes.</p>
+            <h3 className="text-xl font-semibold text-white">{t("upgrade.basicPlan")}</h3>
+            <p className="text-sm text-gray-400 mt-1">{t("upgrade.basicDesc")}</p>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
-            <Feature text="5 Análises por semana" />
-            <Feature text="Relatório Resumido na Tela" />
-            <Feature text="Suporte Comunitário" />
-            <Feature text="Download do Relatório Completo" disabled />
-            <Feature text="Tabela Comparativa de Ativos" disabled />
+            <Feature text="{t("features.analysisPerWeek")}" />
+            <Feature text="{t("features.summaryReport")}" />
+            <Feature text="{t("features.communitySupport")}" />
+            <Feature text="{t("features.downloadFullReport")}" disabled />
+            <Feature text="{t("features.comparativeTable")}" disabled />
           </ul>
           <button onClick={onClose} className="w-full py-2.5 rounded-lg border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
-            Continuar no Básico
+            {t("upgrade.continueBasic")}
           </button>
         </div>
         <div className="w-full md:w-1/2 p-8 bg-[#161b22] relative flex flex-col">
-          <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">Recomendado</div>
+          <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">{t("upgrade.recommended")}</div>
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-white flex items-center gap-2">FinAnalyzer Pro <Zap size={16} className="text-blue-500 fill-blue-500" /></h3>
-            <p className="text-sm text-gray-400 mt-1">Desbloqueie todo o poder da IA.</p>
+            <p className="text-sm text-gray-400 mt-1">{t("upgrade.proDesc")}</p>
           </div>
           <div className="flex items-center gap-2 mb-6 bg-[#0d1117] p-1 rounded-lg w-fit border border-gray-800">
-            <button onClick={() => setBillingCycle('monthly')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${billingCycle === 'monthly' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}>Mensal</button>
-            <button onClick={() => setBillingCycle('yearly')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${billingCycle === 'yearly' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}>Anual (-20%)</button>
+            <button onClick={() => setBillingCycle('monthly')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${billingCycle === 'monthly' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}>{t("upgrade.monthly")}</button>
+            <button onClick={() => setBillingCycle('yearly')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${billingCycle === 'yearly' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}>{t("upgrade.yearly")}</button>
           </div>
           <div className="flex items-end gap-1 mb-8">
             <span className="text-4xl font-bold text-white tracking-tight">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
             <span className="text-gray-500 text-sm mb-1">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
-            <Feature text="Análises de IA Ilimitadas" />
-            <Feature text="Download de Relatórios Premium (HTML/PDF)" />
-            <Feature text="Tabela Comparativa Desbloqueada" />
-            <Feature text="Prioridade no Servidor" />
+            <Feature text="{t("features.unlimitedAnalysis")}" />
+            <Feature text="{t("features.premiumReports")}" />
+            <Feature text="{t("features.tableUnlocked")}" />
+            <Feature text="{t("features.serverPriority")}" />
           </ul>
           <button onClick={handleCheckout} className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors shadow-sm">
-            Assinar FinAnalyzer Pro
+            {t("upgrade.subscribePro")}
           </button>
         </div>
       </div>
@@ -113,6 +116,8 @@ function NavItem({ icon, label, active = false, onClick, isLocked = false, colla
 
 export default function FinancialDashboard() {
   const router = useRouter();
+  const t = useTranslations("Dashboard");
+  const COLUMN_DEFINITIONS = getColumnDefinitions(t);
   const { user, isLoaded } = useUser();
 
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
@@ -444,32 +449,35 @@ export default function FinancialDashboard() {
         </div>
 
         <nav className="space-y-2">
-          <NavItem icon={<LayoutDashboard />} label="Nova Análise" active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} collapsed={isSidebarCollapsed} />
-          <NavItem icon={<TableIcon />} label="Tabela Agregada" active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} collapsed={isSidebarCollapsed} />
-          <NavItem icon={<History />} label="Histórico" active={currentView === 'history'} onClick={() => handleNavClick('history')} collapsed={isSidebarCollapsed} />
+          <NavItem icon={<LayoutDashboard />} label={t("nav.newAnalysis")} active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} collapsed={isSidebarCollapsed} />
+          <NavItem icon={<TableIcon />} label={t("nav.aggregatedTable")} active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} collapsed={isSidebarCollapsed} />
+          <NavItem icon={<History />} label={t("nav.history")} active={currentView === 'history'} onClick={() => handleNavClick('history')} collapsed={isSidebarCollapsed} />
         </nav>
 
         {!isPremium && (
           <div className="mt-auto mb-6 px-2">
             <div className="bg-[#161b22] border border-gray-800 p-4 rounded-xl mb-4 space-y-3">
               <div>
-                <div className="flex justify-between text-xs mb-1.5"><span className="text-gray-400">Análises</span><span className={`font-bold ${usageCount >= WEEKLY_LIMIT ? 'text-red-400' : 'text-white'}`}>{usageCount}/{WEEKLY_LIMIT}</span></div>
+                <div className="flex justify-between text-xs mb-1.5"><span className="text-gray-400">{t("sidebar.analyses")}</span><span className={`font-bold ${usageCount >= WEEKLY_LIMIT ? 'text-red-400' : 'text-white'}`}>{usageCount}/{WEEKLY_LIMIT}</span></div>
                 <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden"><div className={`h-full transition-all duration-500 ${usageCount >= WEEKLY_LIMIT ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${Math.min((usageCount / WEEKLY_LIMIT) * 100, 100)}%` }} /></div>
               </div>
               <div>
-                <div className="flex justify-between text-xs mb-1.5"><span className="text-gray-400">Downloads</span><span className={`font-bold ${downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'text-red-400' : 'text-white'}`}>{downloadCount}/{WEEKLY_DOWNLOAD_LIMIT}</span></div>
+                <div className="flex justify-between text-xs mb-1.5"><span className="text-gray-400">{t("sidebar.downloads")}</span><span className={`font-bold ${downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'text-red-400' : 'text-white'}`}>{downloadCount}/{WEEKLY_DOWNLOAD_LIMIT}</span></div>
                 <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden"><div className={`h-full transition-all duration-500 ${downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${Math.min((downloadCount / WEEKLY_DOWNLOAD_LIMIT) * 100, 100)}%` }} /></div>
               </div>
             </div>
             <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-              <Zap size={14} className="text-yellow-300 fill-yellow-300" /> Seja Premium
+              <Zap size={14} className="text-yellow-300 fill-yellow-300" /> {t("sidebar.goPremium")}
             </button>
           </div>
         )}
         
         {isPremium && <div className="mt-auto" />}
 
-        <div className="mt-4 px-2 py-3 border-t border-gray-800">
+        <div className="mt-4 px-2 py-3 border-t border-gray-800 flex flex-col gap-3">
+           <div className="px-2 w-full">
+              <LanguageSwitcher />
+           </div>
            <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all w-full">
               <UserButton showName={true} appearance={{ elements: { userButtonBox: "flex flex-row-reverse w-full justify-start gap-3", userButtonOuterIdentifier: "!text-white !font-bold text-sm tracking-wide", avatarBox: "w-9 h-9 ring-2 ring-gray-700" } }} />
            </div>
@@ -478,25 +486,28 @@ export default function FinancialDashboard() {
       
       <main className="flex-1 overflow-y-auto p-4 md:p-8 relative">
         {isSidebarCollapsed && (
-          <button onClick={() => setIsSidebarCollapsed(false)} className="hidden md:flex absolute top-6 left-4 z-10 items-center gap-2 text-gray-400 hover:text-white bg-[#161b22] border border-gray-800 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:border-blue-500"><Menu size={18} /> Menu</button>
+          <button onClick={() => setIsSidebarCollapsed(false)} className="hidden md:flex absolute top-6 left-4 z-10 items-center gap-2 text-gray-400 hover:text-white bg-[#161b22] border border-gray-800 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:border-blue-500"><Menu size={18} /> {t("sidebar.menu")}</button>
         )}
         
         <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-gray-800">
           <div className="flex items-center gap-3"><button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-[#161b22] border border-gray-800 rounded-lg text-white hover:bg-gray-800 active:scale-95 transition-all"><Menu size={24} /></button><span className="font-bold text-lg text-white tracking-tight">FinAnalyzer <span className="text-blue-500">.AI</span></span></div>
-          <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
+          </div>
         </div>
 
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-0">
-              <div><h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">Tabela Agregada</h1><p className="text-gray-400 mt-1 text-sm md:text-base">Visão consolidada do desempenho das empresas.</p></div>
+              <div><h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{t("table.title")}</h1><p className="text-gray-400 mt-1 text-sm md:text-base">{t("table.desc")}</p></div>
               <div className="relative" ref={columnMenuRef}>
-                <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#161b22] border-gray-700 hover:border-blue-500 text-gray-300'}`}><Settings2 size={18} /><span>Configurar Colunas</span></button>
+                <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#161b22] border-gray-700 hover:border-blue-500 text-gray-300'}`}><Settings2 size={18} /><span>{t("table.configColumns")}</span></button>
                 {showColumnMenu && (
                   <div className="absolute right-0 mt-3 w-80 bg-[#161b22]/95 backdrop-blur-md border border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
-                    <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-[#0d1117]/50"><span className="text-sm font-bold text-white">Visualização de Colunas</span><button onClick={() => setShowColumnMenu(false)} className="text-gray-400 hover:text-white"><X size={16} /></button></div>
+                    <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-[#0d1117]/50"><span className="text-sm font-bold text-white">{t("table.columnView")}</span><button onClick={() => setShowColumnMenu(false)} className="text-gray-400 hover:text-white"><X size={16} /></button></div>
                     <div className="p-2 max-h-[400px] overflow-y-auto space-y-1">
-                      <p className="px-2 py-1 text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">Arraste para reordenar</p>
+                      <p className="px-2 py-1 text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">{t("table.dragToReorder")}</p>
                       {columnOrder.map((colKey, index) => {
                         const col = columnDefsMap[colKey];
                         const isVisible = visibleColumns[colKey];
@@ -542,7 +553,7 @@ export default function FinancialDashboard() {
                   </tbody>
                 </table>
               </div>
-              {sortedTableData.length === 0 && <div className="p-12 text-center text-gray-500">Nenhuma análise disponível.</div>}
+              {sortedTableData.length === 0 && <div className="p-12 text-center text-gray-500">{t("table.empty")}</div>}
             </div>
           </div>
         )}
@@ -550,9 +561,9 @@ export default function FinancialDashboard() {
         {currentView === 'history' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
             <header className="flex items-center justify-between mb-8 pt-0">
-              <div><h1 className="text-3xl font-bold text-white tracking-tight">Histórico Detalhado</h1><p className="text-gray-400 mt-1">Gerencie suas análises individuais.</p></div>
+              <div><h1 className="text-3xl font-bold text-white tracking-tight">{t("historyView.title")}</h1><p className="text-gray-400 mt-1">{t("historyView.desc")}</p></div>
               <div className="relative">
-                <input type="text" placeholder="Buscar empresa ou período..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-[#161b22] border border-gray-700 rounded-xl px-4 py-2.5 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-64" />
+                <input type="text" placeholder="{t("historyView.searchPlaceholder")}" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-[#161b22] border border-gray-700 rounded-xl px-4 py-2.5 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-64" />
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
                 {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"><X size={14} /></button>}
               </div>
@@ -560,7 +571,7 @@ export default function FinancialDashboard() {
             <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
              <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-left border-collapse">
-                <thead><tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500"><th className="py-5 px-6 font-semibold">Empresa</th><th className="py-5 px-6 font-semibold">Período</th><th className="py-5 px-6 font-semibold">Data</th><th className="py-5 px-6 text-center font-semibold">Score</th><th className="py-5 px-6 text-right font-semibold">Ações</th></tr></thead>
+                <thead><tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500"><th className="py-5 px-6 font-semibold">{t("company")}</th><th className="py-5 px-6 font-semibold">{t("historyView.period")}</th><th className="py-5 px-6 font-semibold">{t("historyView.date")}</th><th className="py-5 px-6 text-center font-semibold">{t("historyView.score")}</th><th className="py-5 px-6 text-right font-semibold">{t("historyView.actions")}</th></tr></thead>
                 <tbody className="divide-y divide-gray-800">
                   {filteredHistory.map((item: any) => (
                     <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { 
@@ -578,13 +589,13 @@ export default function FinancialDashboard() {
                           <span className="text-purple-400 text-xs bg-purple-500/10 border border-purple-500/20 px-2 py-1 rounded-md font-semibold">CALL</span>
                         )}
                       </td>
-                      <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">Detalhes <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
+                      <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">{t("historyView.details")} <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
              </div> 
-              {filteredHistory.length === 0 && <div className="p-12 text-center text-gray-500">{searchQuery ? `Nenhum resultado para "${searchQuery}".` : "Histórico vazio."}</div>}
+              {filteredHistory.length === 0 && <div className="p-12 text-center text-gray-500">{searchQuery ? `Nenhum resultado para "${searchQuery}".` : "{t("historyView.empty")}"}</div>}
             </div>
           </div>
         )}
@@ -592,12 +603,12 @@ export default function FinancialDashboard() {
         {currentView === 'dashboard' && (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-3xl mx-auto mt-6 md:mt-10 px-0 md:px-0">
             {loading ? (
-              <div className="flex flex-col items-center justify-center h-96 animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-6" /><h2 className="text-2xl md:text-3xl font-bold animate-pulse text-white mb-2 text-center">A Analisar Dados...</h2><p className="text-gray-400 text-center px-4">A nossa IA está a processar o relatório e a gerar os insights.</p></div>
+              <div className="flex flex-col items-center justify-center h-96 animate-in fade-in"><Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-6" /><h2 className="text-2xl md:text-3xl font-bold animate-pulse text-white mb-2 text-center">{t("newAnalysis.analyzing")}</h2><p className="text-gray-400 text-center px-4">{t("newAnalysis.processing")}</p></div>
             ) : (
               <>
                 <div className="text-center mb-6 md:mb-8">
-                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">Nova Análise Financeira</h1>
-                   <p className="text-gray-400 text-base md:text-lg">Gere análises através de relatórios em PDF ou Transcrições de Calls.</p>
+                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">{t("newAnalysis.title")}</h1>
+                   <p className="text-gray-400 text-base md:text-lg">{t("newAnalysis.desc")}</p>
                 </div>
 
                 {/* BOTÕES DE ALTERNÂNCIA (TOGGLE) */}
@@ -607,14 +618,14 @@ export default function FinancialDashboard() {
                       onClick={() => setTipoAnalise('pdf')} 
                       className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${tipoAnalise === 'pdf' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'bg-[#161b22] border border-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-800'}`}
                     >
-                      📄 Relatório (PDF)
+                      {t("newAnalysis.pdfReport")}
                     </button>
                     <button 
                       type="button"
                       onClick={() => setTipoAnalise('call')} 
                       className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${tipoAnalise === 'call' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20' : 'bg-[#161b22] border border-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-800'}`}
                     >
-                      🎙️ Earnings Call (FMP)
+                      {t("newAnalysis.callTranscript")}
                     </button>
                 </div>
 
@@ -622,18 +633,18 @@ export default function FinancialDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-                        {tipoAnalise === 'pdf' ? 'Empresa' : 'Ticker Oficial (Ex: AAPL)'}
+                        {tipoAnalise === 'pdf' ? t('newAnalysis.companyInput') : t('newAnalysis.tickerInput') Oficial (Ex: AAPL)'}
                       </label>
                       <input 
                         type="text" 
-                        placeholder={tipoAnalise === 'pdf' ? 'Ex: Apple' : 'Ex: AAPL'} 
+                        placeholder={tipoAnalise === 'pdf' ? t('newAnalysis.companyPlaceholder') : t('newAnalysis.tickerPlaceholder')} 
                         className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all uppercase" 
                         value={empresa} 
                         onChange={(e) => setEmpresa(e.target.value)} 
                       />
                     </div>
-                    <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Ano</label><input type="text" placeholder="2025" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={ano} onChange={(e) => setAno(e.target.value)} /></div>
-                    <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Trimestre</label><select className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">1º Trimestre</option><option value="2T">2º Trimestre</option><option value="3T">3º Trimestre</option><option value="4T">4º Trimestre</option></select></div>
+                    <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("newAnalysis.year")}</label><input type="text" placeholder="2025" className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all" value={ano} onChange={(e) => setAno(e.target.value)} /></div>
+                    <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("newAnalysis.quarter")}</label><select className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">{t("newAnalysis.q1")}</option><option value="2T">{t("newAnalysis.q2")}</option><option value="3T">{t("newAnalysis.q3")}</option><option value="4T">{t("newAnalysis.q4")}</option></select></div>
                   </div>
                   
                   {/* A CAIXA DE UPLOAD AGORA APARECE SEMPRE */}
@@ -641,16 +652,16 @@ export default function FinancialDashboard() {
                     <input type="file" onChange={handleFileChange} accept=".pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     <div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div>
                     <p className="text-gray-300 font-medium text-lg text-center">
-                      {file ? file.name : (tipoAnalise === 'pdf' ? "Clique ou arraste o Release (PDF)" : "Clique ou arraste a Transcrição (PDF)")}
+                      {file ? file.name : (tipoAnalise === 'pdf' ? t("newAnalysis.uploadPdf") : t("newAnalysis.uploadCall"))}
                     </p>
-                    <p className="text-gray-500 text-sm mt-2 text-center">Suporta PDF de até 10MB</p>
+                    <p className="text-gray-500 text-sm mt-2 text-center">{t("newAnalysis.supportPdf")}</p>
                   </div>
 
                   <button 
                     onClick={handleAnalyze} 
                     className={`w-full mt-8 text-white font-bold py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${tipoAnalise === 'pdf' ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/20' : 'bg-purple-600 hover:bg-purple-500 shadow-purple-900/20'}`}
                   >
-                    <Activity size={20} /> {tipoAnalise === 'pdf' ? 'Gerar Análise do Relatório' : 'Analisar Call via IA'}
+                    <Activity size={20} /> {tipoAnalise === 'pdf' ? t('newAnalysis.generateReport') : t('newAnalysis.generateCall')}
                   </button>
                 </div>
               </>
@@ -661,17 +672,17 @@ export default function FinancialDashboard() {
         {currentView === 'result' && result && (
           <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-              <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">Voltar para Histórico</span></button>
+              <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">{t("result.backHistory")}</span></button>
               
               <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'}`}>
                 {!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? <Lock size={18} /> : <Download size={18} />}
-                {isPremium ? 'Ver Relatório Completo' : `Ver Relatório Completo (${downloadCount}/${WEEKLY_DOWNLOAD_LIMIT})`}
+                {isPremium ? t('result.viewReport') : `\${t('result.viewReport')} (${downloadCount}/${WEEKLY_DOWNLOAD_LIMIT})`}
               </button>
             </div>
             
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
               <div>
-                <h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">Relatório de Análise</h2>
+                <h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">{t("result.analysisReport")}</h2>
                 <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1>
                 <p className={`text-xl font-medium ${result.metadata?.tipo === "Earnings Call" ? 'text-purple-400' : 'text-blue-400'}`}>
                   {result.metadata?.tipo === "Earnings Call" ? `Earnings Call · ${result.metadata?.periodo}` : result.metadata?.periodo}
@@ -681,7 +692,7 @@ export default function FinancialDashboard() {
               {/* Só mostra a nota geral se não for um Earnings Call */}
               {result.metadata?.tipo !== "Earnings Call" && (
                 <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800 w-full md:w-auto justify-between md:justify-start">
-                  <div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">Score IA</p><p className="text-xs text-gray-500">Baseado em 4 fundamentos</p></div>
+                  <div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">{t("result.aiScore")}</p><p className="text-xs text-gray-500">{t("result.basedOn")}</p></div>
                   <div className={`text-4xl font-bold ${Number(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : Number(result.data?.nota_geral || 0) >= 3 ? 'text-amber-400' : 'text-red-400'}`}>
                     {result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span>
                   </div>
@@ -692,9 +703,9 @@ export default function FinancialDashboard() {
             {/* Oculta as caixinhas de pilares numéricos se for Earnings Call, já que é uma análise textual */}
             {result.metadata?.tipo !== "Earnings Call" && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                {[{ label: "Receita", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "Margem", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "Dívida", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "ROE", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
+                {[{ label: "netRevenue", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "netIncome", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "netDebt", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "profitability", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
                   <div key={idx} className="bg-[#161b22] border border-gray-800 p-6 rounded-2xl hover:border-gray-700 transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4"><span className="text-gray-400 text-sm font-medium">{item.label}</span><div className="bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
+                    <div className="flex items-center justify-between mb-4"><span className="text-gray-400 text-sm font-medium">{t(item.label as any)}</span><div className="bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
                     <div className="flex items-end gap-2"><span className="text-3xl font-bold text-white">{item.val}</span><span className="text-gray-600 text-sm mb-1">/5</span></div>
                     <div className="w-full bg-gray-800 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${Number(item.val || 0) >= 4 ? 'bg-green-500' : Number(item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${(Number(item.val || 0) / 5) * 100}%` }} /></div>
                   </div>
@@ -705,7 +716,7 @@ export default function FinancialDashboard() {
             <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl">
               <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
                 <FileText className={result.metadata?.tipo === "Earnings Call" ? "text-purple-500" : "text-blue-500"} /> 
-                {result.metadata?.tipo === "Earnings Call" ? "Transcrição e Análise" : "Tese de Investimento"}
+                {result.metadata?.tipo === "Earnings Call" ? t('result.transcriptAnalysis') : t('result.investmentThesis')}
               </h3>
               <div className="prose prose-invert prose-lg max-w-none text-gray-300 leading-relaxed whitespace-pre-line">
                 {result.data?.tese_investimento ? result.data.tese_investimento : (result.analise_completa || "Sem análise textual disponível.")}

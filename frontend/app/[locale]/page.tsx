@@ -2,6 +2,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from "framer-motion";
+import { useTranslations, useLocale } from "next-intl";
+import LanguageSwitcher from "../../../components/LanguageSwitcher";
+import { Link } from "@/i18n/routing";
 import {
   BarChart3, UploadCloud, ArrowRight,
   FileText, Layout, Database, Check, X,
@@ -30,9 +33,9 @@ const scoreMetrics = [
 ];
 
 const reportMetrics = [
-  { id: "REV", title: "Receita", score: "5.0", badge: "Excelente", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
-  { id: "M&L", title: "Margem & Lucro", score: "5.0", badge: "Excelente", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
-  { id: "RISC", title: "Dívida & Risco", score: "5.0", badge: "Excelente", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
+  { id: "REV", title: "Receita", score: "5.0", badge: "{locale === "en" ? "Excellent" : "Excelente"}", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
+  { id: "M&L", title: "Margem & Lucro", score: "5.0", badge: "{locale === "en" ? "Excellent" : "Excelente"}", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
+  { id: "RISC", title: "Dívida & Risco", score: "5.0", badge: "{locale === "en" ? "Excellent" : "Excelente"}", tagClass: "bg-emerald-100 text-emerald-700 border-emerald-200", barColor: "bg-emerald-500" },
   { id: "ROE", title: "Rentabilidade ROE", score: "4.0", badge: "Bom", tagClass: "bg-emerald-50 text-emerald-600 border-emerald-100", barColor: "bg-emerald-400" }
 ];
 
@@ -150,6 +153,7 @@ function ScoreMetricBar({ score, animate }: { score: number; animate: boolean })
 }
 
 function PhoneImage() {
+  const locale = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: false, margin: "-100px" });
   const [isDark, setIsDark] = useState(true);
@@ -191,11 +195,11 @@ function PhoneImage() {
           </div>
           <div className="px-5 pb-6">
             <div className="text-center mb-5 mt-2">
-              <p className={`text-base font-bold leading-tight transition-colors duration-700 ${titleC}`}>Nova Análise Financeira</p>
-              <p className={`text-xs mt-1 leading-snug transition-colors duration-700 ${subC}`}>Carregue o relatório trimestral (PDF) para processamento via IA.</p>
+              <p className={`text-base font-bold leading-tight transition-colors duration-700 ${titleC}`}>{locale === "en" ? "New Financial Analysis" : "Nova Análise Financeira"}</p>
+              <p className={`text-xs mt-1 leading-snug transition-colors duration-700 ${subC}`}>{locale === "en" ? "Upload the quarterly report (PDF) for AI processing." : "Carregue o relatório trimestral (PDF) para processamento via IA."}</p>
             </div>
             <div className="space-y-3">
-              {[{ label: "EMPRESA", value: "AMAZON" }, { label: "ANO", value: "2025" }, { label: "TRIMESTRE", value: "1º Trimestre" }].map(f => (
+              {[{ label: locale === "en" ? "COMPANY" : "EMPRESA", value: "AMAZON" }, { label: locale === "en" ? "YEAR" : "ANO", value: "2025" }, { label: locale === "en" ? "QUARTER" : "TRIMESTRE", value: locale === "en" ? "1st Quarter" : "1º Trimestre" }].map(f => (
                 <div key={f.label}>
                   <p className={`text-[9px] font-semibold uppercase tracking-widest mb-1 transition-colors duration-700 ${label}`}>{f.label}</p>
                   <div className={`rounded-xl border px-3 py-2.5 text-xs font-medium transition-colors duration-700 ${input}`}>{f.value}</div>
@@ -204,10 +208,10 @@ function PhoneImage() {
               <div className={`rounded-xl border-2 border-dashed px-4 py-4 text-center mt-1 transition-colors duration-700 ${zone}`}>
                 <UploadCloud size={22} className="mx-auto mb-2 text-blue-500" />
                 <p className={`text-[10px] font-bold transition-colors duration-700 ${zoneFile}`}>AMZN-Q1-2025-Earnings-Release.pdf</p>
-                <p className={`text-[9px] mt-0.5 transition-colors duration-700 ${zoneSub}`}>Suporta PDF de até 10MB</p>
+                <p className={`text-[9px] mt-0.5 transition-colors duration-700 ${zoneSub}`}>{locale === "en" ? "Supports PDF up to 10MB" : "Suporta PDF de até 10MB"}</p>
               </div>
               <button className="w-full rounded-xl py-3 text-xs font-bold flex items-center justify-center gap-2 mt-1 bg-blue-600 text-white">
-                <span>✦</span> Gerar Análise Completa
+                <span>✦</span> {locale === "en" ? "Generate Analysis" : "Gerar Análise Completa"}
               </button>
             </div>
           </div>
@@ -221,6 +225,7 @@ function PhoneImage() {
 }
 
 function ScoreDemo() {
+  const locale = useLocale();
   const [barsVisible, setBarsVisible] = React.useState(false);
   useEffect(() => { const t = setTimeout(() => setBarsVisible(true), 500); return () => clearTimeout(t); }, []);
 
@@ -244,22 +249,22 @@ function ScoreDemo() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
                 <Menu size={18} className="text-gray-600" />
-                <span className="flex items-center gap-1 text-sm text-gray-600"><ChevronLeft size={16} /> Voltar para Histórico</span>
+                <span className="flex items-center gap-1 text-sm text-gray-600"><ChevronLeft size={16} /> {locale === "en" ? "Back to History" : "Voltar para Histórico"}</span>
               </div>
               <button className="flex items-center gap-2 bg-emerald-500 text-black text-xs font-bold px-3 py-1.5 rounded-lg">
-                <Download size={13} /> Baixar Relatório Completo
+                <Download size={13} /> {locale === "en" ? "Download Full Report" : "Baixar {locale === "en" ? "Full Report" : "Relatório Completo"}"}
               </button>
             </div>
 
             <div className="flex items-start justify-between mb-8">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">Relatório de Análise</p>
+                <p className="text-xs text-gray-500 uppercase tracking-widest mb-1">{locale === "en" ? "Analysis Report" : "Relatório de Análise"}</p>
                 <h1 className="text-4xl font-black text-gray-900 tracking-tight">MICROSOFT</h1>
                 <p className="text-blue-400 font-bold text-lg mt-1">4T/2025</p>
               </div>
               <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 text-right shadow-sm">
-                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">Score IA</p>
-                <p className="text-xs text-gray-500 mb-2">Baseado em 4 fundamentos</p>
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1 font-semibold">{locale === "en" ? "AI Score" : "Score IA"}</p>
+                <p className="text-xs text-gray-500 mb-2">{locale === "en" ? "Based on 4 fundamentals" : "Baseado em 4 fundamentos"}</p>
                 <div className="flex items-end justify-end gap-1">
                   <span className="text-4xl font-black text-emerald-400">5</span>
                   <span className="text-gray-400 text-lg mb-1">/5</span>
@@ -288,9 +293,9 @@ function ScoreDemo() {
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-6 shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <FileText size={18} className="text-blue-500" />
-                <h2 className="text-lg font-bold text-gray-900">Tese de Investimento</h2>
+                <h2 className="text-lg font-bold text-gray-900">{locale === "en" ? "Investment Thesis" : "Tese de Investimento"}</h2>
               </div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-4 font-semibold">Conclusão — Tese e Outlook</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-4 font-semibold">{locale === "en" ? "Conclusion — Thesis and Outlook" : "Conclusão — Tese e Outlook"}</p>
               <div className="space-y-3">
                 {teseLines.map((line, i) => (<p key={i} className="text-sm text-gray-700 leading-relaxed">{line}</p>))}
               </div>
@@ -304,6 +309,7 @@ function ScoreDemo() {
 }
 
 function ScoreDemoMobile() {
+  const locale = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: false, margin: "-80px" });
   const [barsVisible, setBarsVisible] = useState(false);
@@ -327,18 +333,18 @@ function ScoreDemoMobile() {
           <div className="px-4 py-4">
             <div className="flex items-center gap-2 mb-4">
               <div className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center"><ChevronLeft size={14} className="text-gray-600" /></div>
-              <span className="text-sm text-gray-600 font-medium">Voltar para Histórico</span>
+              <span className="text-sm text-gray-600 font-medium">{locale === "en" ? "Back to History" : "Voltar para Histórico"}</span>
             </div>
             <button className="w-full bg-emerald-500 text-black text-sm font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-5">
-              <Download size={15} /> Baixar Relatório Completo
+              <Download size={15} /> {locale === "en" ? "Download Full Report" : "Baixar {locale === "en" ? "Full Report" : "Relatório Completo"}"}
             </button>
-            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">Relatório de Análise</p>
+            <p className="text-[10px] text-gray-500 uppercase tracking-widest mb-1">{locale === "en" ? "Analysis Report" : "Relatório de Análise"}</p>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">MICROSOFT</h1>
             <p className="text-blue-400 font-bold text-lg mt-1 mb-4">2T/2026</p>
             <div className="bg-gray-50 border border-gray-200 shadow-sm rounded-2xl px-5 py-4 flex items-center justify-between mb-5">
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">Score IA</p>
-                <p className="text-xs text-gray-500 mt-0.5">Baseado em 4 fundamentos</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-semibold">{locale === "en" ? "AI Score" : "Score IA"}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{locale === "en" ? "Based on 4 fundamentals" : "Baseado em 4 fundamentos"}</p>
               </div>
               <div className="flex items-end gap-0.5">
                 <span className="text-4xl font-black text-emerald-400">5</span>
@@ -367,9 +373,9 @@ function ScoreDemoMobile() {
             <div className="bg-gray-50 border border-gray-200 shadow-sm rounded-2xl p-5 mb-4">
               <div className="flex items-center gap-2 mb-3">
                 <FileText size={16} className="text-blue-500" />
-                <h2 className="text-base font-bold text-gray-900">Tese de Investimento</h2>
+                <h2 className="text-base font-bold text-gray-900">{locale === "en" ? "Investment Thesis" : "Tese de Investimento"}</h2>
               </div>
-              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 font-semibold">Conclusão — Tese e Outlook</p>
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 font-semibold">{locale === "en" ? "Conclusion — Thesis and Outlook" : "Conclusão — Tese e Outlook"}</p>
               <div className="space-y-3">
                 {teseLines.map((line, i) => (<p key={i} className="text-sm text-gray-700 leading-relaxed">{line}</p>))}
               </div>
@@ -384,6 +390,7 @@ function ScoreDemoMobile() {
 }
 
 function ComparadorMobile() {
+  const locale = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-60px" });
 
@@ -420,8 +427,8 @@ function ComparadorMobile() {
     <motion.div ref={ref} initial={{ opacity: 0, y: 40 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }} transition={{ duration: 0.7, ease: "easeOut" }} className="w-full select-none">
       <div className="bg-white/95 backdrop-blur-xl border border-gray-200 rounded-2xl overflow-hidden shadow-2xl">
         <div className="px-5 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-bold text-gray-900">Tabela Agregada</h3>
-          <p className="text-sm text-gray-500 mt-0.5">Visão consolidada do desempenho.</p>
+          <h3 className="text-lg font-bold text-gray-900">{locale === "en" ? "Aggregated Table" : "Tabela Agregada"}</h3>
+          <p className="text-sm text-gray-500 mt-0.5">{locale === "en" ? "Consolidated view of performance." : "Visão consolidada do desempenho."}</p>
         </div>
         <div className="overflow-x-auto">
           <table style={{ minWidth: "500px" }} className="w-full">
@@ -453,7 +460,7 @@ function ComparadorMobile() {
         </div>
         <div className="px-5 py-3 border-t border-gray-200 flex items-center justify-end gap-1.5">
           <ChevronRight size={12} className="text-gray-500" />
-          <span className="text-xs text-gray-500">Deslize para ver mais</span>
+          <span className="text-xs text-gray-500">{locale === "en" ? "Swipe to see more" : "Deslize para ver mais"}</span>
         </div>
       </div>
     </motion.div>
@@ -461,6 +468,7 @@ function ComparadorMobile() {
 }
 
 function CallAnalysisDemo() {
+  const locale = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -481,11 +489,11 @@ function CallAnalysisDemo() {
             </div>
             <div>
               <h3 className="text-sm font-bold text-gray-900">Earnings Call Q4'25</h3>
-              <p className="text-xs text-gray-500">Transcrição & Análise de Sentimento</p>
+              <p className="text-xs text-gray-500">{locale === "en" ? "Transcript & Sentiment Analysis" : "Transcrição & Análise de Sentimento"}</p>
             </div>
           </div>
           <div className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 hidden sm:block">
-            <span className="text-xs font-bold text-emerald-400">Tom: Otimista</span>
+            <span className="text-xs font-bold text-emerald-400">{locale === "en" ? "Tone: Optimistic" : "Tom: Otimista"}</span>
           </div>
         </div>
 
@@ -499,7 +507,7 @@ function CallAnalysisDemo() {
           <div className="flex gap-3 flex-row-reverse">
             <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center shadow-lg shadow-blue-500/20"><Activity size={14} className="text-white" /></div>
             <div className="bg-indigo-50 rounded-2xl rounded-tr-none p-4 border border-indigo-100 text-sm text-indigo-800 shadow-inner leading-relaxed">
-              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block mb-1.5">Insight da IA</span>
+              <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block mb-1.5">{locale === "en" ? "AI Insight" : "Insight da IA"}</span>
               O CEO destaca as margens impulsionadas por IA, confirmando a tese de ganho de eficiência operacional reportada no DFP.
             </div>
           </div>
@@ -513,8 +521,8 @@ function CallAnalysisDemo() {
 
         <div className="bg-gray-50 p-5 border-t border-gray-200">
           <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-            <span className="font-medium">Processamento Concluído</span>
-            <span className="flex items-center gap-1 font-bold text-emerald-600"><Check size={14} strokeWidth={3} /> 100% Analisado</span>
+            <span className="font-medium">{locale === "en" ? "Processing Completed" : "Processamento Concluído"}</span>
+            <span className="flex items-center gap-1 font-bold text-emerald-600"><Check size={14} strokeWidth={3} /> {locale === "en" ? "100% Analyzed" : "100% Analisado"}</span>
           </div>
           <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
             <div className="h-full bg-indigo-500 rounded-full w-full" />
@@ -563,6 +571,7 @@ function TypewriterEffect({ text, trigger, delay = 0 }: { text: string, trigger:
 }
 
 function ReportDemo() {
+  const locale = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [barsVisible, setBarsVisible] = useState(false);
@@ -607,8 +616,9 @@ function ReportDemo() {
                 <span className="text-xs text-gray-400">Análise</span>
                 <span className="text-xs text-gray-400">Resumo</span>
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-gray-400">Score IA</span>
+                  <span className="text-gray-400">{locale === "en" ? "AI Score" : "Score IA"}</span>
                   <span className="font-bold text-emerald-500">5.0/5</span>
+                  <div className="ml-4"><LanguageSwitcher /></div>
                   <button className="bg-blue-800 text-white px-4 py-1.5 rounded flex items-center gap-2 font-bold ml-2">
                     <Download size={14} /> Salvar PDF
                   </button>
@@ -624,20 +634,20 @@ function ReportDemo() {
               <div>
                 <div className="inline-block border border-blue-200 text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-[9px] font-bold tracking-widest uppercase mb-4">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block mr-1.5 mb-0.5"></span>
-                  4T/2025 - Resultados Trimestrais
+                  4T/2025 - {locale === "en" ? "Quarterly Results" : "Resultados Trimestrais"}
                 </div>
                 <h1 className="text-6xl font-serif font-extrabold text-[#111827] tracking-tight mb-4">Microsoft</h1>
                 <p className="text-gray-500 text-sm max-w-sm leading-relaxed">
-                  Relatório completo gerado por <strong className="text-gray-800">IA</strong> com base no release de resultados oficial. Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica.
+                  {locale === "en" ? <>Full report generated by <strong className="text-gray-800">AI</strong> based on the official earnings release. Evaluation of revenue, margins, debt, and profitability with a strategic view.</> : <>Relatório completo gerado por <strong className="text-gray-800">IA</strong> com base no release de resultados oficial. Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica.</>}
                 </p>
               </div>
               
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-6 text-center w-[220px]">
-                <p className="text-[9px] text-emerald-700 uppercase tracking-widest mb-4 font-bold">Score IA — Média Ponderada</p>
+                <p className="text-[9px] text-emerald-700 uppercase tracking-widest mb-4 font-bold">{locale === "en" ? "AI Score" : "Score IA"} — Média Ponderada</p>
                 <div className="w-24 h-24 mx-auto rounded-full border-[6px] border-emerald-500 flex items-center justify-center mb-3">
                   <p className="text-3xl font-black text-emerald-600">5.0<span className="text-sm text-emerald-400">/5</span></p>
                 </div>
-                <p className="text-sm font-bold text-emerald-700">Excelente</p>
+                <p className="text-sm font-bold text-emerald-700">{locale === "en" ? "Excellent" : "Excelente"}</p>
               </div>
             </div>
 
@@ -682,13 +692,13 @@ function ReportDemo() {
           <div className="max-w-[1000px] mx-auto px-10 pt-16 pb-20">
             {/* Título Seções */}
             <div className="mb-10">
-              <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 font-bold">Análise Completa por IA</p>
-              <h2 className="text-3xl font-serif font-extrabold text-[#111827]">Leitura dos Resultados</h2>
+              <p className="text-[10px] text-gray-400 uppercase tracking-widest mb-2 font-bold">{locale === "en" ? "Full AI Analysis" : "Análise Completa por IA"}</p>
+              <h2 className="text-3xl font-serif font-extrabold text-[#111827]">{locale === "en" ? "Earnings Read" : "Leitura dos Resultados"}</h2>
             </div>
 
             {/* SEÇÃO 1: Visão Geral */}
             <div className="border border-gray-200 rounded-2xl p-8 mb-8 shadow-sm">
-              <h3 className="text-xl font-serif font-bold text-gray-900 mb-6">Visão Geral do Trimestre</h3>
+              <h3 className="text-xl font-serif font-bold text-gray-900 mb-6">{locale === "en" ? "Quarter Overview" : "Visão Geral do Trimestre"}</h3>
               <p className="text-sm text-gray-600 leading-relaxed font-medium mb-8">
                 <TypewriterEffect text="A Microsoft encerrou o ano fiscal de 2025 com um desempenho notável no quarto trimestre, impulsionado por um crescimento robusto em suas ofertas de nuvem e inteligência artificial. A empresa superou as expectativas, registrando aumentos expressivos em receita, lucro operacional e lucro líquido, evidenciando a eficácia de sua estratégia focada em inovação e na transformação digital para clientes em diversos setores. Os resultados refletem a forte demanda por suas soluções de nuvem híbrida, serviços de IA e produtos comerciais, consolidando sua posição como líder tecnológico global." trigger={typingTrigger} delay={200} />
               </p>
@@ -697,8 +707,8 @@ function ReportDemo() {
               <div className="border border-gray-100 rounded-xl p-5 relative">
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h4 className="text-xs font-bold text-gray-900">Receita & Lucro — Visão Geral</h4>
-                    <p className="text-[10px] text-gray-400">Evolução nos últimos trimestres</p>
+                    <h4 className="text-xs font-bold text-gray-900">{locale === "en" ? "Revenue & Income — Overview" : "Receita & Lucro — Visão Geral"}</h4>
+                    <p className="text-[10px] text-gray-400">{locale === "en" ? "Evolution in recent quarters" : "Evolução nos últimos trimestres"}</p>
                   </div>
                   <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-1 rounded">↗ 18.1%</span>
                 </div>
@@ -745,13 +755,13 @@ function ReportDemo() {
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Seção 1</p>
-                  <h3 className="text-xl font-serif font-bold text-gray-900">Evolução Operacional e Top Line</h3>
+                  <h3 className="text-xl font-serif font-bold text-gray-900">{locale === "en" ? "Operational Evolution and Top Line" : "Evolução Operacional e Top Line"}</h3>
                 </div>
                 <div className="bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-4 flex flex-col items-center">
-                   <p className="text-[8px] text-emerald-600 uppercase tracking-widest font-bold mb-1">Nota da Seção</p>
+                   <p className="text-[8px] text-emerald-600 uppercase tracking-widest font-bold mb-1">{locale === "en" ? "Section Score" : "Nota da Seção"}</p>
                    <div className="flex items-center gap-2">
                      <span className="text-2xl font-black text-emerald-600">5<span className="text-sm text-emerald-400">/5</span></span>
-                     <span className="bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">Excelente</span>
+                     <span className="bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">{locale === "en" ? "Excellent" : "Excelente"}</span>
                    </div>
                 </div>
               </div>
@@ -792,7 +802,7 @@ function ReportDemo() {
                       <td className="px-4 py-3 text-xs text-emerald-600 font-bold text-right">+8%</td>
                     </tr>
                     <tr className="bg-gray-50">
-                      <td className="px-4 py-3 text-xs font-black text-gray-900">Total Receita</td>
+                      <td className="px-4 py-3 text-xs font-black text-gray-900">{locale === "en" ? "Total Revenue" : "Total Receita"}</td>
                       <td className="px-4 py-3 text-xs text-gray-500 font-bold text-right">64.727</td>
                       <td className="px-4 py-3 text-xs text-gray-900 font-black text-right">76.441</td>
                       <td className="px-4 py-3 text-xs text-emerald-600 font-black text-right">+18%</td>
@@ -860,7 +870,7 @@ function ReportDemo() {
                   <h3 className="text-xl font-serif font-bold text-gray-900">Rentabilidade e Margens</h3>
                 </div>
                 <div className="bg-blue-50 border border-blue-100 rounded-lg py-2 px-4 flex flex-col items-center">
-                   <p className="text-[8px] text-blue-600 uppercase tracking-widest font-bold mb-1">Nota da Seção</p>
+                   <p className="text-[8px] text-blue-600 uppercase tracking-widest font-bold mb-1">{locale === "en" ? "Section Score" : "Nota da Seção"}</p>
                    <div className="flex items-center gap-2">
                      <span className="text-2xl font-black text-blue-600">4.5<span className="text-sm text-blue-400">/5</span></span>
                      <span className="bg-blue-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">Ótimo</span>
@@ -916,10 +926,10 @@ function ReportDemo() {
                   <h3 className="text-xl font-serif font-bold text-gray-900">Saúde Financeira e Endividamento</h3>
                 </div>
                 <div className="bg-purple-50 border border-purple-100 rounded-lg py-2 px-4 flex flex-col items-center">
-                   <p className="text-[8px] text-purple-600 uppercase tracking-widest font-bold mb-1">Nota da Seção</p>
+                   <p className="text-[8px] text-purple-600 uppercase tracking-widest font-bold mb-1">{locale === "en" ? "Section Score" : "Nota da Seção"}</p>
                    <div className="flex items-center gap-2">
                      <span className="text-2xl font-black text-purple-600">5<span className="text-sm text-purple-400">/5</span></span>
-                     <span className="bg-purple-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">Excelente</span>
+                     <span className="bg-purple-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">{locale === "en" ? "Excellent" : "Excelente"}</span>
                    </div>
                 </div>
               </div>
@@ -960,7 +970,7 @@ function ReportDemo() {
                 <Activity size={120} />
               </div>
               <h3 className="text-xs font-bold text-indigo-800 uppercase tracking-widest mb-4">Conclusão da Inteligência Artificial</h3>
-              <h4 className="text-2xl font-serif font-extrabold text-gray-900 mb-6">Tese de Investimento & Outlook</h4>
+              <h4 className="text-2xl font-serif font-extrabold text-gray-900 mb-6">{locale === "en" ? "Investment Thesis" : "Tese de Investimento"} & Outlook</h4>
               <div className="space-y-4">
                 <p className="text-sm text-gray-700 leading-relaxed font-medium">
                   <TypewriterEffect text="O trimestre consolida a tese de longo prazo da Microsoft como a principal beneficiária institucional da revolução da Inteligência Artificial. A capacidade da empresa de monetizar a IA de forma tangível em todo seu ecossistema corporativo está se traduzindo em uma aceleração sustentável de receita, descolando-se dos ciclos tradicionais de TI." trigger={typingTrigger} delay={4000} />
@@ -1020,7 +1030,7 @@ function ReportDemoMobile() {
             <div className="mb-6">
               <div className="inline-block border border-blue-200 text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full text-[8px] font-bold tracking-widest uppercase mb-3">
                 <span className="w-1 h-1 rounded-full bg-blue-500 inline-block mr-1 mb-0.5"></span>
-                4T/2025 - Resultados Trimestrais
+                4T/2025 - {locale === "en" ? "Quarterly Results" : "Resultados Trimestrais"}
               </div>
               <h1 className="text-4xl font-serif font-extrabold text-[#111827] tracking-tight mb-2">Microsoft</h1>
               <p className="text-gray-500 text-[10px] leading-relaxed mb-6">
@@ -1028,11 +1038,11 @@ function ReportDemoMobile() {
               </p>
               
               <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 text-center">
-                <p className="text-[8px] text-emerald-700 uppercase tracking-widest mb-3 font-bold">Score IA — Média</p>
+                <p className="text-[8px] text-emerald-700 uppercase tracking-widest mb-3 font-bold">{locale === "en" ? "AI Score" : "Score IA"} — Média</p>
                 <div className="w-16 h-16 mx-auto rounded-full border-[4px] border-emerald-500 flex items-center justify-center mb-2">
                   <p className="text-xl font-black text-emerald-600">5.0<span className="text-[10px] text-emerald-400">/5</span></p>
                 </div>
-                <p className="text-[10px] font-bold text-emerald-700">Excelente</p>
+                <p className="text-[10px] font-bold text-emerald-700">{locale === "en" ? "Excellent" : "Excelente"}</p>
               </div>
             </div>
 
@@ -1075,7 +1085,7 @@ function ReportDemoMobile() {
             {/* Título Seções */}
             <div className="mb-6">
               <p className="text-[8px] text-gray-400 uppercase tracking-widest mb-1 font-bold">Análise Completa</p>
-              <h2 className="text-2xl font-serif font-extrabold text-[#111827]">Leitura dos Resultados</h2>
+              <h2 className="text-2xl font-serif font-extrabold text-[#111827]">{locale === "en" ? "Earnings Read" : "Leitura dos Resultados"}</h2>
             </div>
 
             {/* SEÇÃO 1: Visão Geral */}
@@ -1235,6 +1245,12 @@ function ReportDemoMobile() {
 // --- MAIN COMPONENT: LANDING PAGE ---
 
 export default function LandingPage() {
+  const locale = useLocale();
+  return (
+    <LandingPageContent locale={locale} />
+  );
+}
+function LandingPageContent({ locale }: { locale: string })() {
   const [billingCycle, setBillingCycle] = useState('monthly');
   const historicoRef = useRef(null);
   const historicoInView = useInView(historicoRef, { once: true, margin: "-100px" });
@@ -1529,10 +1545,10 @@ export default function LandingPage() {
                 <Download className="text-blue-400 w-7 h-7" />
               </div>
               <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                Relatório Completo
+                {locale === "en" ? "Full Report" : "Relatório Completo"}
               </h2>
               <p className="text-base text-gray-300 leading-relaxed font-medium tracking-tight max-w-xl">
-                Exporte suas análises em um formato limpo, profissional e pronto para impressão. O relatório detalha todos os fundamentos e consolida a tese de investimento.
+                {locale === "en" ? "Export your analyses in a clean, professional, and print-ready format. The report details all fundamentals and consolidates the investment thesis." : "Exporte suas análises em um formato limpo, profissional e pronto para impressão. O relatório detalha todos os fundamentos e consolida a tese de investimento."}
               </p>
             </div>
 
@@ -1557,8 +1573,7 @@ export default function LandingPage() {
 
           <div className="mb-12 md:mb-24 flex flex-col items-center text-center">
             <h2 className="text-3xl md:text-4xl lg:text-[5rem] font-serif font-bold text-white mb-6 tracking-tighter leading-[1.05]">
-              Um único plano. <br className="hidden md:block" />
-              Invista melhor.
+              {locale === "en" ? <>One single plan. <br className="hidden md:block" /> Invest better.</> : <>Um único plano. <br className="hidden md:block" /> Invista melhor.</>}
             </h2>
 
             <div className="flex items-center justify-center gap-4 bg-black/30 inline-flex p-2 rounded-full border border-white/20 mt-6 backdrop-blur-md">
@@ -1566,19 +1581,19 @@ export default function LandingPage() {
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-6 md:px-10 py-3 md:py-4 rounded-full text-base md:text-lg font-bold transition-all ${billingCycle === 'monthly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
               >
-                Mensal
+                {locale === "en" ? "Monthly" : "Mensal"}
               </button>
               <button
                 onClick={() => setBillingCycle('yearly')}
                 className={`px-6 md:px-10 py-3 md:py-4 rounded-full text-base md:text-lg font-bold transition-all flex items-center gap-3 ${billingCycle === 'yearly' ? 'bg-white text-black shadow-lg' : 'text-gray-300 hover:text-white'}`}
               >
-                Anual
+                {locale === "en" ? "Yearly" : "Anual"}
               </button>
             </div>
 
             <div className={`transition-opacity duration-300 ${billingCycle === 'yearly' ? 'opacity-100' : 'opacity-0'} mt-8`}>
               <span className="bg-blue-500/90 text-white border border-blue-400 text-sm font-bold px-6 py-2.5 rounded-full uppercase tracking-wider shadow-xl">
-                2 MESES GRÁTIS
+                {locale === "en" ? "2 MONTHS FREE" : "2 MESES GRÁTIS"}
               </span>
             </div>
           </div>
@@ -1587,8 +1602,8 @@ export default function LandingPage() {
 
             {/* CARD GRATUITO */}
             <div className="bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-14 hover:border-white/30 transition-colors flex flex-col shadow-2xl">
-              <h3 className="text-4xl font-bold text-white mb-2 tracking-tight">Gratuito</h3>
-              <p className="text-gray-400 text-xl mb-12 font-medium">Para começar a analisar sem custo.</p>
+              <h3 className="text-4xl font-bold text-white mb-2 tracking-tight">{locale === "en" ? "Free" : "Gratuito"}</h3>
+              <p className="text-gray-400 text-xl mb-12 font-medium">{locale === "en" ? "To start analyzing at no cost." : "Para começar a analisar sem custo."}</p>
 
               <ul className="space-y-6 mb-16 flex-1">
                 <Feature text="5 Análises por semana" active />
@@ -1602,7 +1617,7 @@ export default function LandingPage() {
               </ul>
 
               <a href="/dashboard" className="block w-full text-center py-6 rounded-full border-2 border-white/30 text-white text-xl font-bold hover:bg-white/10 transition-all mt-auto backdrop-blur-md">
-                Criar conta grátis
+                {locale === "en" ? "Create Free Account" : "Criar conta grátis"}
               </a>
             </div>
 
@@ -1613,7 +1628,7 @@ export default function LandingPage() {
                 <span className="text-[3.5rem] md:text-[5.5rem] leading-none font-extrabold text-white tracking-tighter">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
                 <span className="text-blue-200 mb-4 font-medium text-2xl">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
               </div>
-              <p className="text-blue-100 text-xl mb-12 font-medium">Desbloqueie todo o poder da IA.</p>
+              <p className="text-blue-100 text-xl mb-12 font-medium">{locale === "en" ? "Unlock the full power of AI." : "Desbloqueie todo o poder da IA."}</p>
 
               <ul className="space-y-6 mb-16 flex-1">
                 <Feature text="Análises de IA Ilimitadas" active light />
@@ -1628,9 +1643,9 @@ export default function LandingPage() {
               </ul>
 
               <a href="/dashboard" className="block w-full text-center py-6 rounded-full bg-white text-blue-700 text-xl font-extrabold shadow-2xl hover:bg-gray-100 hover:scale-[1.02] transition-all mt-auto">
-                Assinar Agora
+                {locale === "en" ? "Subscribe Now" : "Assinar Agora"}
               </a>
-              <p className="text-center text-sm text-blue-200 mt-8 font-medium">Cancele quando quiser.</p>
+              <p className="text-center text-sm text-blue-200 mt-8 font-medium">{locale === "en" ? "Cancel anytime." : "Cancele quando quiser."}</p>
             </div>
           </div>
         </div>
@@ -1649,9 +1664,9 @@ export default function LandingPage() {
             </div>
 
             <div className="flex gap-8">
-              <a href="/terms" className="text-base text-gray-400 hover:text-white transition-colors font-medium">Termos de Uso</a>
-              <a href="/privacy" className="text-base text-gray-400 hover:text-white transition-colors font-medium">Privacidade</a>
-              <a href="/refund" className="text-base text-gray-400 hover:text-white transition-colors font-medium">Reembolso</a>
+              <a href="/terms" className="text-base text-gray-400 hover:text-white transition-colors font-medium">{locale === "en" ? "Terms of Use" : "Termos de Uso"}</a>
+              <a href="/privacy" className="text-base text-gray-400 hover:text-white transition-colors font-medium">{locale === "en" ? "Privacy" : "Privacidade"}</a>
+              <a href="/refund" className="text-base text-gray-400 hover:text-white transition-colors font-medium">{locale === "en" ? "Refund" : "Reembolso"}</a>
             </div>
           </div>
 

@@ -1,0 +1,97 @@
+{
+  "Dashboard": {
+    "company": "Empresa",
+    "finalScore": "Nota Final",
+    "netRevenue": "Receita",
+    "netIncome": "Lucro",
+    "netDebt": "Dívida",
+    "profitability": "Rentabilidade",
+    "sum": "Soma",
+    "analyzedResults": "Resultados Analisados",
+    "average": "Média",
+    "lastQuarter": "Último Tri",
+    "features": {
+      "analysisPerWeek": "5 Análises por semana",
+      "summaryReport": "Relatório Resumido na Tela",
+      "communitySupport": "Suporte Comunitário",
+      "downloadFullReport": "Download da Análise Completa da IA",
+      "comparativeTable": "Tabela Comparativa de Ativos",
+      "unlimitedAnalysis": "Análises de IA Ilimitadas",
+      "premiumReports": "Download de Relatórios Premium (HTML/PDF)",
+      "tableUnlocked": "Tabela Comparativa Desbloqueada",
+      "serverPriority": "Prioridade no Servidor"
+    },
+    "upgrade": {
+      "basicPlan": "Plano Básico",
+      "basicDesc": "Seu plano atual. Ideal para testes.",
+      "continueBasic": "Continuar no Básico",
+      "recommended": "Recomendado",
+      "proDesc": "Desbloqueie todo o poder da IA.",
+      "monthly": "Mensal",
+      "yearly": "Anual (-20%)",
+      "subscribePro": "Assinar FinAnalyzer Pro"
+    },
+    "nav": {
+      "newAnalysis": "Nova Análise",
+      "aggregatedTable": "Tabela Agregada",
+      "history": "Histórico"
+    },
+    "sidebar": {
+      "analyses": "Análises",
+      "downloads": "Downloads",
+      "goPremium": "Seja Premium",
+      "menu": "Menu"
+    },
+    "table": {
+      "title": "Tabela Agregada",
+      "desc": "Visão consolidada do desempenho das empresas.",
+      "configColumns": "Configurar Colunas",
+      "columnView": "Visualização de Colunas",
+      "dragToReorder": "Arraste para reordenar",
+      "empty": "Nenhuma análise disponível."
+    },
+    "historyView": {
+      "title": "Histórico Detalhado",
+      "desc": "Gerencie suas análises individuais.",
+      "searchPlaceholder": "Buscar empresa ou período...",
+      "period": "Período",
+      "date": "Data",
+      "score": "Score",
+      "actions": "Ações",
+      "details": "Detalhes",
+      "empty": "Histórico vazio."
+    },
+    "newAnalysis": {
+      "analyzing": "A Analisar Dados...",
+      "processing": "A nossa IA está a processar o relatório e a gerar os insights.",
+      "title": "Nova Análise Financeira",
+      "desc": "Gere análises através de relatórios em PDF ou Transcrições de Calls.",
+      "pdfReport": "📄 Relatório (PDF)",
+      "callTranscript": "🎙️ Earnings Call (FMP)",
+      "companyInput": "Empresa",
+      "companyPlaceholder": "Ex: Apple",
+      "tickerInput": "Ticker Oficial (Ex: AAPL)",
+      "tickerPlaceholder": "Ex: AAPL",
+      "year": "Ano",
+      "quarter": "Trimestre",
+      "q1": "1º Trimestre",
+      "q2": "2º Trimestre",
+      "q3": "3º Trimestre",
+      "q4": "4º Trimestre",
+      "uploadPdf": "Clique ou arraste o Release (PDF)",
+      "uploadCall": "Clique ou arraste a Transcrição (PDF)",
+      "supportPdf": "Suporta PDF de até 10MB",
+      "generateReport": "Gerar Análise do Relatório",
+      "generateCall": "Analisar Call via IA"
+    },
+    "result": {
+      "backHistory": "Voltar para Histórico",
+      "viewReport": "Ver Relatório Completo",
+      "analysisReport": "Relatório de Análise",
+      "aiScore": "Score IA",
+      "basedOn": "Baseado em 4 fundamentos",
+      "transcriptAnalysis": "Transcrição e Análise",
+      "investmentThesis": "Tese de Investimento"
+    }
+  }
+}
