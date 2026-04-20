@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
-import LanguageSwitcher from "../../../components/LanguageSwitcher";
+import LanguageSwitcher from "../../components/LanguageSwitcher";
 import { Link } from "@/i18n/routing";
 import {
   BarChart3, UploadCloud, ArrowRight,
@@ -993,6 +993,7 @@ function ReportDemo() {
 }
 
 function ReportDemoMobile() {
+  const locale = useLocale();
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-80px" });
   const [barsVisible, setBarsVisible] = useState(false);
@@ -1250,7 +1251,7 @@ export default function LandingPage() {
     <LandingPageContent locale={locale} />
   );
 }
-function LandingPageContent({ locale }: { locale: string })() {
+function LandingPageContent({ locale }: { locale: string }) {
   const [billingCycle, setBillingCycle] = useState('monthly');
   const historicoRef = useRef(null);
   const historicoInView = useInView(historicoRef, { once: true, margin: "-100px" });
