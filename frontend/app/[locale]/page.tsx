@@ -726,7 +726,7 @@ function ReportDemo() {
             <div className="border border-gray-200 rounded-2xl p-8 mb-8 shadow-sm">
               <h3 className="text-xl font-serif font-bold text-gray-900 mb-6">{locale === "en" ? "Quarter Overview" : "Visão Geral do Trimestre"}</h3>
               <p className="text-sm text-gray-600 leading-relaxed font-medium mb-8">
-                <TypewriterEffect text="A Microsoft encerrou o ano fiscal de 2025 com um desempenho notável no quarto trimestre, impulsionado por um crescimento robusto em suas ofertas de nuvem e inteligência artificial. A empresa superou as expectativas, registrando aumentos expressivos em receita, lucro operacional e lucro líquido, evidenciando a eficácia de sua estratégia focada em inovação e na transformação digital para clientes em diversos setores. Os resultados refletem a forte demanda por suas soluções de nuvem híbrida, serviços de IA e produtos comerciais, consolidando sua posição como líder tecnológico global." trigger={typingTrigger} delay={200} />
+                <TypewriterEffect text={locale === "en" ? "Microsoft closed fiscal year 2025 with a remarkable performance in the fourth quarter, driven by robust growth in its cloud and artificial intelligence offerings. The company surpassed expectations, recording strong increases in revenue, operating income, and net income, demonstrating the effectiveness of its strategy focused on innovation and digital transformation for clients across various industries." : "A Microsoft encerrou o ano fiscal de 2025 com um desempenho notável no quarto trimestre, impulsionado por um crescimento robusto em suas ofertas de nuvem e inteligência artificial. A empresa superou as expectativas, registrando aumentos expressivos em receita, lucro operacional e lucro líquido, evidenciando a eficácia de sua estratégia focada em inovação e na transformação digital para clientes em diversos setores. Os resultados refletem a forte demanda por suas soluções de nuvem híbrida, serviços de IA e produtos comerciais, consolidando sua posição como líder tecnológico global."} trigger={typingTrigger} delay={200} />
               </p>
               
               {/* Mock Gráfico de Barras Duplo */}
@@ -780,7 +780,7 @@ function ReportDemo() {
             <div className="border-t-4 border-emerald-500 pt-6 mt-12 mb-8 relative">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Seção 1</p>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{locale === "en" ? "Section 1" : "Seção 1"}</p>
                   <h3 className="text-xl font-serif font-bold text-gray-900">{locale === "en" ? "Operational Evolution and Top Line" : "Evolução Operacional e Top Line"}</h3>
                 </div>
                 <div className="bg-emerald-50 border border-emerald-100 rounded-lg py-2 px-4 flex flex-col items-center">
@@ -793,7 +793,7 @@ function ReportDemo() {
               </div>
               <div className="space-y-4 mb-8">
                 <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                  <TypewriterEffect text="A Microsoft demonstrou um crescimento impressionante na receita líquida, que atingiu US$ 76,44 bilhões no quarto trimestre fiscal de 2025, um aumento de 18% em relação ao mesmo período do ano anterior. Em moeda constante, o crescimento foi de 17%, indicando uma performance orgânica sólida. A narrativa de crescimento foi fortemente liderada pelas unidades de nuvem e inteligência artificial, que continuam a ser os pilares da estratégia da companhia. A desconstrução da receita por segmento revela os seguintes destaques:" trigger={typingTrigger} delay={2000} />
+                  <TypewriterEffect text={locale === "en" ? "Microsoft demonstrated impressive growth in net revenue, which reached $76.44 billion in the fourth fiscal quarter of 2025, an increase of 18% compared to the same period last year. In constant currency, growth was 17%, indicating solid organic performance. The growth narrative was strongly led by the cloud and artificial intelligence units, which continue to be the pillars of the company's strategy. The breakdown of revenue by segment reveals the following highlights:" : "A Microsoft demonstrou um crescimento impressionante na receita líquida, que atingiu US$ 76,44 bilhões no quarto trimestre fiscal de 2025, um aumento de 18% em relação ao mesmo período do ano anterior. Em moeda constante, o crescimento foi de 17%, indicando uma performance orgânica sólida. A narrativa de crescimento foi fortemente liderada pelas unidades de nuvem e inteligência artificial, que continuam a ser os pilares da estratégia da companhia. A desconstrução da receita por segmento revela os seguintes destaques:"} trigger={typingTrigger} delay={2000} />
                 </p>
               </div>
 
@@ -802,10 +802,10 @@ function ReportDemo() {
                 <table className="w-full text-left">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Segmento</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">4T24 (Milhões $)</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">4T25 (Milhões $)</th>
-                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">Variação (Y/Y)</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider">{locale === "en" ? "Segment" : "Segmento"}</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">{locale === "en" ? "Q4'24 ($ millions)" : "4T24 (Milhões $)"}</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">{locale === "en" ? "Q4'25 ($ millions)" : "4T25 (Milhões $)"}</th>
+                      <th className="px-4 py-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-right">{locale === "en" ? "Change (Y/Y)" : "Variação (Y/Y)"}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -843,8 +843,8 @@ function ReportDemo() {
                 <div className="border border-gray-100 rounded-xl p-5 relative">
                   <div className="flex justify-between items-start mb-6">
                     <div>
-                      <h4 className="text-xs font-bold text-gray-900">Evolução da Receita</h4>
-                      <p className="text-[10px] text-gray-400">Crescimento trimestral absoluto</p>
+                      <h4 className="text-xs font-bold text-gray-900">{locale === "en" ? "Revenue Evolution" : "Evolução da Receita"}</h4>
+                      <p className="text-[10px] text-gray-400">{locale === "en" ? "Absolute quarterly growth" : "Crescimento trimestral absoluto"}</p>
                     </div>
                     <span className="bg-emerald-100 text-emerald-700 text-[9px] font-bold px-2 py-1 rounded">↗ 18.1%</span>
                   </div>
@@ -870,8 +870,8 @@ function ReportDemo() {
                 {/* Donut Mock */}
                 <div className="border border-gray-100 rounded-xl p-5 relative">
                   <div className="mb-6">
-                    <h4 className="text-xs font-bold text-gray-900">Composição da Receita</h4>
-                    <p className="text-[10px] text-gray-400">Share de Categorias (Último Trimestre)</p>
+                    <h4 className="text-xs font-bold text-gray-900">{locale === "en" ? "Revenue Breakdown" : "Composição da Receita"}</h4>
+                    <p className="text-[10px] text-gray-400">{locale === "en" ? "Category Share (Last Quarter)" : "Share de Categorias (Último Trimestre)"}</p>
                   </div>
                   <div className="flex items-center justify-center h-40 gap-6">
                     <div className="w-28 h-28 rounded-full border-[20px] border-[#1e40af] border-t-[#059669] border-r-[#d97706] relative transform rotate-45 transition-all duration-1000" style={{ opacity: barsVisible ? 1 : 0, scale: barsVisible ? 1 : 0.8 }}>
@@ -892,27 +892,27 @@ function ReportDemo() {
             <div className="border-t-4 border-blue-500 pt-6 mt-12 mb-8 relative">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Seção 2</p>
-                  <h3 className="text-xl font-serif font-bold text-gray-900">Rentabilidade e Margens</h3>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{locale === "en" ? "Section 2" : "Seção 2"}</p>
+                  <h3 className="text-xl font-serif font-bold text-gray-900">{locale === "en" ? "Profitability and Margins" : "Rentabilidade e Margens"}</h3>
                 </div>
                 <div className="bg-blue-50 border border-blue-100 rounded-lg py-2 px-4 flex flex-col items-center">
                    <p className="text-[8px] text-blue-600 uppercase tracking-widest font-bold mb-1">{locale === "en" ? "Section Score" : "Nota da Seção"}</p>
                    <div className="flex items-center gap-2">
                      <span className="text-2xl font-black text-blue-600">4.5<span className="text-sm text-blue-400">/5</span></span>
-                     <span className="bg-blue-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">Ótimo</span>
+                     <span className="bg-blue-500 text-white text-[9px] font-bold px-2 py-0.5 rounded">{locale === "en" ? "Great" : "Ótimo"}</span>
                    </div>
                 </div>
               </div>
               <div className="space-y-4 mb-8">
                 <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                  <TypewriterEffect text="As margens operacionais mostraram forte resiliência, com a Margem Bruta atingindo expressivos 69,5%, impulsionada por economias de escala no segmento de Cloud. O Lucro Líquido saltou para US$ 25,6 bilhões, refletindo uma Margem Líquida robusta de 33,5%." trigger={typingTrigger} delay={2500} />
+                  <TypewriterEffect text={locale === "en" ? "Operating margins showed strong resilience, with Gross Margin reaching an impressive 69.5%, driven by economies of scale in the Cloud segment. Net Income jumped to $25.6 billion, reflecting a robust Net Margin of 33.5%." : "As margens operacionais mostraram forte resiliência, com a Margem Bruta atingindo expressivos 69,5%, impulsionada por economias de escala no segmento de Cloud. O Lucro Líquido saltou para US$ 25,6 bilhões, refletindo uma Margem Líquida robusta de 33,5%."} trigger={typingTrigger} delay={2500} />
                 </p>
               </div>
 
               {/* Grid de Cards de Margens */}
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm">
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Margem Bruta</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{locale === "en" ? "Gross Margin" : "Margem Bruta"}</p>
                   <div className="flex items-end gap-2 mb-2">
                     <p className="text-3xl font-black text-gray-900">69.5%</p>
                     <span className="text-[10px] text-emerald-500 font-bold mb-1">▲ 1.2 p.p.</span>
@@ -922,7 +922,7 @@ function ReportDemo() {
                   </div>
                 </div>
                 <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm">
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Margem Operacional</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{locale === "en" ? "Operating Margin" : "Margem Operacional"}</p>
                   <div className="flex items-end gap-2 mb-2">
                     <p className="text-3xl font-black text-gray-900">43.8%</p>
                     <span className="text-[10px] text-emerald-500 font-bold mb-1">▲ 0.5 p.p.</span>
@@ -932,7 +932,7 @@ function ReportDemo() {
                   </div>
                 </div>
                 <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm">
-                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Margem Líquida</p>
+                  <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">{locale === "en" ? "Net Margin" : "Margem Líquida"}</p>
                   <div className="flex items-end gap-2 mb-2">
                     <p className="text-3xl font-black text-gray-900">33.5%</p>
                     <span className="text-[10px] text-emerald-500 font-bold mb-1">▲ 0.8 p.p.</span>
@@ -948,8 +948,8 @@ function ReportDemo() {
             <div className="border-t-4 border-purple-500 pt-6 mt-12 mb-8 relative">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">Seção 3</p>
-                  <h3 className="text-xl font-serif font-bold text-gray-900">Saúde Financeira e Endividamento</h3>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold mb-1">{locale === "en" ? "Section 3" : "Seção 3"}</p>
+                  <h3 className="text-xl font-serif font-bold text-gray-900">{locale === "en" ? "Financial Health and Leverage" : "Saúde Financeira e Endividamento"}</h3>
                 </div>
                 <div className="bg-purple-50 border border-purple-100 rounded-lg py-2 px-4 flex flex-col items-center">
                    <p className="text-[8px] text-purple-600 uppercase tracking-widest font-bold mb-1">{locale === "en" ? "Section Score" : "Nota da Seção"}</p>
@@ -961,7 +961,7 @@ function ReportDemo() {
               </div>
               <div className="space-y-4 mb-6">
                 <p className="text-sm text-gray-600 leading-relaxed font-medium">
-                  <TypewriterEffect text="A Microsoft mantém uma posição de caixa formidável, com US$ 102,5 bilhões em caixa e equivalentes, superando de forma confortável sua dívida total de US$ 88 bilhões. O fluxo de caixa operacional permanece altamente gerador, garantindo capacidade de investimento robusta e distribuição consistente aos acionistas." trigger={typingTrigger} delay={3000} />
+                  <TypewriterEffect text={locale === "en" ? "Microsoft maintains a formidable cash position, with $102.5 billion in cash and equivalents, comfortably exceeding its total debt of $88 billion. Operating cash flow remains highly generative, ensuring robust investment capacity and consistent shareholder distribution." : "A Microsoft mantém uma posição de caixa formidável, com US$ 102,5 bilhões em caixa e equivalentes, superando de forma confortável sua dívida total de US$ 88 bilhões. O fluxo de caixa operacional permanece altamente gerador, garantindo capacidade de investimento robusta e distribuição consistente aos acionistas."} trigger={typingTrigger} delay={3000} />
                 </p>
               </div>
 
@@ -972,7 +972,7 @@ function ReportDemo() {
                       <span className="text-lg">💵</span>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Caixa Líquido</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{locale === "en" ? "Net Cash" : "Caixa Líquido"}</p>
                       <p className="text-2xl font-black text-emerald-700">US$ +14.5 Bi</p>
                     </div>
                   </div>
@@ -982,7 +982,7 @@ function ReportDemo() {
                       <span className="text-lg">📈</span>
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Alavancagem (Dívida/EBITDA)</p>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{locale === "en" ? "Leverage (Debt/EBITDA)" : "Alavancagem (Dívida/EBITDA)"}</p>
                       <p className="text-2xl font-black text-blue-700">0.7x</p>
                     </div>
                   </div>
@@ -995,14 +995,14 @@ function ReportDemo() {
               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                 <Activity size={120} />
               </div>
-              <h3 className="text-xs font-bold text-indigo-800 uppercase tracking-widest mb-4">Conclusão da Inteligência Artificial</h3>
+              <h3 className="text-xs font-bold text-indigo-800 uppercase tracking-widest mb-4">{locale === "en" ? "Artificial Intelligence Conclusion" : "Conclusão da Inteligência Artificial"}</h3>
               <h4 className="text-2xl font-serif font-extrabold text-gray-900 mb-6">{locale === "en" ? "Investment Thesis" : "Tese de Investimento"} & Outlook</h4>
               <div className="space-y-4">
                 <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                  <TypewriterEffect text="O trimestre consolida a tese de longo prazo da Microsoft como a principal beneficiária institucional da revolução da Inteligência Artificial. A capacidade da empresa de monetizar a IA de forma tangível em todo seu ecossistema corporativo está se traduzindo em uma aceleração sustentável de receita, descolando-se dos ciclos tradicionais de TI." trigger={typingTrigger} delay={4000} />
+                  <TypewriterEffect text={locale === "en" ? "This quarter consolidates Microsoft's long-term thesis as the primary institutional beneficiary of the Artificial Intelligence revolution. The company's ability to monetize AI tangibly across its entire corporate ecosystem is translating into a sustainable revenue acceleration, decoupling from traditional IT cycles." : "O trimestre consolida a tese de longo prazo da Microsoft como a principal beneficiária institucional da revolução da Inteligência Artificial. A capacidade da empresa de monetizar a IA de forma tangível em todo seu ecossistema corporativo está se traduzindo em uma aceleração sustentável de receita, descolando-se dos ciclos tradicionais de TI."} trigger={typingTrigger} delay={4000} />
                 </p>
                 <p className="text-sm text-gray-700 leading-relaxed font-medium">
-                  <TypewriterEffect text="Com fundamentos impecáveis, balanço extremamente saudável e vantagens competitivas em expansão, as perspectivas para os próximos doze meses permanecem francamente positivas. O desafio de valuation premium é justificado pela visibilidade e estabilidade do fluxo de caixa operacional projetado." trigger={typingTrigger} delay={4500} />
+                  <TypewriterEffect text={locale === "en" ? "With impeccable fundamentals, an extremely healthy balance sheet, and expanding competitive advantages, the outlook for the next twelve months remains decidedly positive. The premium valuation challenge is justified by the visibility and stability of the projected operating cash flow." : "Com fundamentos impecáveis, balanço extremamente saudável e vantagens competitivas em expansão, as perspectivas para os próximos doze meses permanecem francamente positivas. O desafio de valuation premium é justificado pela visibilidade e estabilidade do fluxo de caixa operacional projetado."} trigger={typingTrigger} delay={4500} />
                 </p>
               </div>
             </div>

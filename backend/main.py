@@ -191,7 +191,8 @@ async def analyze_report(
     empresa: str = Form(...),
     ano: str = Form(...),
     trimestre: str = Form(...),
-    user_id: str = Form(...) 
+    user_id: str = Form(...),
+    locale: str = Form(default="pt")
 ):
     print(f"🔄 [PASSO 1] Iniciando Análise de Relatório (PDF) para User {user_id}: {empresa}")
     
@@ -205,8 +206,10 @@ async def analyze_report(
         pdf_text = extract_text_from_pdf_bytes(contents, max_pages=12)
         print(f"✅ [PASSO 3] Texto lido! Foram extraídos {len(pdf_text)} caracteres.")
         
+        language_instruction = "IMPORTANT: Write the ENTIRE analysis in English. All section titles, labels, scores, text and conclusions must be in English.\n\n" if locale == "en" else ""
+
         prompt = f"""
- REGRAS DE FORMATAÇÃO E ESTILO (Padrão Editorial / Equity Research Sênior):
+ {language_instruction}REGRAS DE FORMATAÇÃO E ESTILO (Padrão Editorial / Equity Research Sênior):
 Tom de Voz: Seja profissional, elegante, analítico e jornalístico. Crie uma narrativa fluida em vez de apenas jogar dados. Foque na geração de valor.
 
 Formatação Visual: Utilize Tabelas em Markdown (ex: Segmento | 3T24 | 3T25 | Variação) sempre que houver quebra de receitas por segmento, linhas de crédito ou revisão de Guidance. Use bullet points para listar destaques operacionais.
@@ -308,7 +311,8 @@ async def analyze_earnings_call(
     empresa: str = Form(...),
     ano: str = Form(...),
     trimestre: str = Form(...),
-    user_id: str = Form(...)
+    user_id: str = Form(...),
+    locale: str = Form(default="pt")
 ):
     print(f"🎙️ [PASSO 1] Iniciando análise de Call para {empresa} ({trimestre}/{ano})")
     
@@ -322,8 +326,10 @@ async def analyze_earnings_call(
         texto_transcricao = extract_text_from_pdf_bytes(contents, max_pages=100)
         print(f"✅ [PASSO 3] PDF lido com sucesso! Foram extraídos {len(texto_transcricao)} caracteres.")
         
+        language_instruction_call = "IMPORTANT: Write the ENTIRE summary in English. All text, labels, timestamps, insights and conclusions must be in English.\n\n" if locale == "en" else ""
+
         prompt = f"""
-Atue como um Analista Financeiro Sênior. Resuma o Earnings Call da {empresa} de forma ultra-objetiva.
+{language_instruction_call}Atue como um Analista Financeiro Sênior. Resuma o Earnings Call da {empresa} de forma ultra-objetiva.
 Para cada insight, indique obrigatoriamente o minuto/timestamp aproximado extraído do texto (ex: [12:45]).
 
 Foque exclusivamente em:

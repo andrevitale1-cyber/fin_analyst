@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, UserButton } from "@clerk/nextjs";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
@@ -117,6 +117,7 @@ function NavItem({ icon, label, active = false, onClick, isLocked = false, colla
 export default function FinancialDashboard() {
   const router = useRouter();
   const t = useTranslations("Dashboard");
+  const locale = useLocale();
   const COLUMN_DEFINITIONS = getColumnDefinitions(t);
   const { user, isLoaded } = useUser();
 
@@ -237,6 +238,7 @@ export default function FinancialDashboard() {
       formData.append("user_id", user.id);
       formData.append("empresa", empresa.toUpperCase());
       formData.append("file", file);
+      formData.append("locale", locale);
 
   // Extraia a lógica de chamada da API para uma função separada
   const analyzeReport = async (
