@@ -1598,7 +1598,7 @@ function LandingPageContent({ locale }: { locale: string }) {
 
           <div className="mb-12 md:mb-24 flex flex-col items-center text-center">
             <h2 className="text-3xl md:text-4xl lg:text-[5rem] font-serif font-bold text-white mb-6 tracking-tighter leading-[1.05]">
-              {locale === "en" ? <>One single plan. <br className="hidden md:block" /> Invest better.</> : <>Um único plano. <br className="hidden md:block" /> Invista melhor.</>}
+              {locale === "en" ? <><span className="text-blue-400">7 days free.</span><br className="hidden md:block" /> Then invest better.</> : <><span className="text-blue-400">7 dias grátis.</span><br className="hidden md:block" /> Depois, invista melhor.</>}
             </h2>
 
             <div className="flex items-center justify-center gap-4 bg-black/30 inline-flex p-2 rounded-full border border-white/20 mt-6 backdrop-blur-md">
@@ -1625,24 +1625,41 @@ function LandingPageContent({ locale }: { locale: string }) {
 
           <div className="grid md:grid-cols-2 gap-12 items-stretch max-w-5xl mx-auto">
 
-            {/* CARD GRATUITO */}
+            {/* CARD TRIAL */}
             <div className="bg-[#11141D]/90 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 md:p-14 hover:border-white/30 transition-colors flex flex-col shadow-2xl">
-              <h3 className="text-4xl font-bold text-white mb-2 tracking-tight">{locale === "en" ? "Free" : "Gratuito"}</h3>
-              <p className="text-gray-400 text-xl mb-12 font-medium">{locale === "en" ? "To start analyzing at no cost." : "Para começar a analisar sem custo."}</p>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 w-fit mb-6">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">{locale === "en" ? "Free Trial" : "Trial Gratuito"}</span>
+              </div>
+              <h3 className="text-4xl font-bold text-white mb-2 tracking-tight">{locale === "en" ? "7 Days Free" : "7 Dias Grátis"}</h3>
+              <p className="text-gray-400 text-xl mb-12 font-medium">{locale === "en" ? "Full access, no credit card required." : "Acesso completo, sem cartão de crédito."}</p>
+
+              {/* Barra de countdown visual */}
+              <div className="mb-10">
+                <div className="flex justify-between text-sm mb-3">
+                  <span className="text-gray-400 font-medium">{locale === "en" ? "Trial period" : "Período de trial"}</span>
+                  <span className="text-white font-bold">7 {locale === "en" ? "days" : "dias"}</span>
+                </div>
+                <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-400 to-emerald-400 rounded-full w-full" />
+                </div>
+                <div className="flex justify-between text-xs mt-2 text-gray-500">
+                  <span>{locale === "en" ? "Start" : "Início"}</span>
+                  <span>{locale === "en" ? "Day 7 — Subscribe" : "Dia 7 — Assinar"}</span>
+                </div>
+              </div>
 
               <ul className="space-y-6 mb-16 flex-1">
-                <Feature text={locale === "en" ? "5 Analyses per week" : "5 Análises por semana"} active />
-                <Feature text={locale === "en" ? "Summary Report on Screen" : "Relatório Resumido na Tela"} active />
-                <Feature text={locale === "en" ? "Simple history access" : "Acesso ao histórico simples"} active />
-                <Feature text={locale === "en" ? "Email support" : "Suporte por email"} active />
-                <Feature text={locale === "en" ? "Unlimited file upload" : "Upload de arquivos ilimitado"} disabled />
-                <Feature text={locale === "en" ? "Download Full AI Report" : "Download da Análise Completa da IA"} disabled />
-                <Feature text={locale === "en" ? "Comparative Asset Table" : "Tabela Comparativa de Ativos"} disabled />
-                <Feature text={locale === "en" ? "Earnings Call Analysis" : "Análise de Earnings Calls"} disabled />
+                <Feature text={locale === "en" ? "Full access for 7 days" : "Acesso completo por 7 dias"} active />
+                <Feature text={locale === "en" ? "Unlimited AI Analyses" : "Análises de IA Ilimitadas"} active />
+                <Feature text={locale === "en" ? "Download Full AI Report" : "Download da Análise Completa da IA"} active />
+                <Feature text={locale === "en" ? "Comparative Asset Table" : "Tabela Comparativa de Ativos"} active />
+                <Feature text={locale === "en" ? "Earnings Call Analysis" : "Análise de Earnings Calls"} active />
+                <Feature text={locale === "en" ? "No credit card required" : "Sem cartão de crédito"} active />
               </ul>
 
               <a href="/dashboard" className="block w-full text-center py-6 rounded-full border-2 border-white/30 text-white text-xl font-bold hover:bg-white/10 transition-all mt-auto backdrop-blur-md">
-                {locale === "en" ? "Create Free Account" : "Criar conta grátis"}
+                {locale === "en" ? "Start Free Trial" : "Iniciar Trial Gratuito"}
               </a>
             </div>
 
@@ -1653,7 +1670,7 @@ function LandingPageContent({ locale }: { locale: string }) {
                 <span className="text-[3.5rem] md:text-[5.5rem] leading-none font-extrabold text-white tracking-tighter">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
                 <span className="text-blue-200 mb-4 font-medium text-2xl">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
               </div>
-              <p className="text-blue-100 text-xl mb-12 font-medium">{locale === "en" ? "Unlock the full power of AI." : "Desbloqueie todo o poder da IA."}</p>
+              <p className="text-blue-100 text-xl mb-12 font-medium">{locale === "en" ? "After the 7-day trial." : "Após o trial de 7 dias."}</p>
 
               <ul className="space-y-6 mb-16 flex-1">
                 <Feature text={locale === "en" ? "Unlimited AI Analyses" : "Análises de IA Ilimitadas"} active light />
@@ -1668,9 +1685,9 @@ function LandingPageContent({ locale }: { locale: string }) {
               </ul>
 
               <a href="/dashboard" className="block w-full text-center py-6 rounded-full bg-white text-blue-700 text-xl font-extrabold shadow-2xl hover:bg-gray-100 hover:scale-[1.02] transition-all mt-auto">
-                {locale === "en" ? "Subscribe Now" : "Assinar Agora"}
+                {locale === "en" ? "Start 7-Day Free Trial" : "Iniciar Trial de 7 Dias"}
               </a>
-              <p className="text-center text-sm text-blue-200 mt-8 font-medium">{locale === "en" ? "Cancel anytime." : "Cancele quando quiser."}</p>
+              <p className="text-center text-sm text-blue-200 mt-8 font-medium">{locale === "en" ? "Then R$ 29/month. Cancel anytime." : "Depois R$ 29/mês. Cancele quando quiser."}</p>
             </div>
           </div>
         </div>

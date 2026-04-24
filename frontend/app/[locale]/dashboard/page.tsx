@@ -42,7 +42,7 @@ function Feature({ text, disabled = false }: any) {
   );
 }
 
-function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'monthly' }: { onClose: () => void; userId?: string; billingCycle?: 'monthly' | 'yearly' }) {
+function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'monthly', isExpired = false }: { onClose?: () => void; userId?: string; billingCycle?: 'monthly' | 'yearly'; isExpired?: boolean }) {
   const t = useTranslations("Dashboard");
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
 
@@ -54,27 +54,40 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-[#0E1117] border border-gray-800 shadow-2xl rounded-2xl w-full max-w-4xl overflow-hidden relative flex flex-col md:flex-row">
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50 bg-[#161b22] p-1.5 rounded-md border border-gray-800">
-          <X size={18} />
-        </button>
+        {/* Só mostra o botão fechar se o trial ainda está ativo */}
+        {!isExpired && onClose && (
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50 bg-[#161b22] p-1.5 rounded-md border border-gray-800">
+            <X size={18} />
+          </button>
+        )}
+        {/* Painel esquerdo: info do trial */}
         <div className="w-full md:w-1/2 p-8 border-b md:border-b-0 md:border-r border-gray-800 bg-[#0d1117]/50 flex flex-col">
-          <div className="mb-8">
+          <div className="mb-6">
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4 ${isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+              <span className={`w-2 h-2 rounded-full ${isExpired ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
+              {isExpired ? t("trial.trialExpired") : t("trial.trialActive")}
+            </div>
             <h3 className="text-xl font-semibold text-white">{t("upgrade.basicPlan")}</h3>
-            <p className="text-sm text-gray-400 mt-1">{t("upgrade.basicDesc")}</p>
+            <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+              {isExpired ? t("trial.trialExpiredDesc") : t("upgrade.basicDesc")}
+            </p>
           </div>
           <ul className="space-y-4 mb-8 flex-1">
-            <Feature text={t("features.analysisPerWeek")} />
+            <Feature text={t("features.unlimitedAnalysis")} />
             <Feature text={t("features.summaryReport")} />
-            <Feature text={t("features.communitySupport")} />
-            <Feature text={t("features.downloadFullReport")} disabled />
-            <Feature text={t("features.comparativeTable")} disabled />
+            <Feature text={t("features.downloadFullReport")} />
+            <Feature text={t("features.comparativeTable")} />
+            <Feature text={t("features.serverPriority")} />
           </ul>
-          <button onClick={onClose} className="w-full py-2.5 rounded-lg border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
-            {t("upgrade.continueBasic")}
-          </button>
+          {!isExpired && onClose && (
+            <button onClick={onClose} className="w-full py-2.5 rounded-lg border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+              {t("upgrade.continueBasic")}
+            </button>
+          )}
         </div>
+        {/* Painel direito: plano pro */}
         <div className="w-full md:w-1/2 p-8 bg-[#161b22] relative flex flex-col">
           <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">{t("upgrade.recommended")}</div>
           <div className="mb-6">
@@ -95,9 +108,10 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
             <Feature text={t("features.tableUnlocked")} />
             <Feature text={t("features.serverPriority")} />
           </ul>
-          <button onClick={handleCheckout} className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors shadow-sm">
+          <button onClick={handleCheckout} className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors shadow-sm">
             {t("upgrade.subscribePro")}
           </button>
+          <p className="text-center text-xs text-gray-500 mt-3">{billingCycle === 'monthly' ? 'Cancele quando quiser.' : 'Cobrança anual. Cancele quando quiser.'}</p>
         </div>
       </div>
     </div>
@@ -126,12 +140,15 @@ export default function FinancialDashboard() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  
-  // Estado para escolher qual tipo de análise
-  const [tipoAnalise, setTipoAnalise] = useState<'pdf' | 'call'>('pdf'); 
 
-  const [usageCount, setUsageCount] = useState(0);
-  const WEEKLY_LIMIT = 5;
+  // Estado para escolher qual tipo de análise
+  const [tipoAnalise, setTipoAnalise] = useState<'pdf' | 'call'>('pdf');
+
+  // --- TRIAL STATE ---
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
+  const [isTrialExpired, setIsTrialExpired] = useState(false);
+  const [trialChecked, setTrialChecked] = useState(false);
+
   const [downloadCount, setDownloadCount] = useState(0);
   const WEEKLY_DOWNLOAD_LIMIT = 3;
 
@@ -158,29 +175,25 @@ export default function FinancialDashboard() {
 
   const isPremium = user?.publicMetadata?.plan === 'premium';
 
+  // --- Verificar acesso ao trial no backend ---
   useEffect(() => {
-    if (isLoaded && !user) return; 
-    if (user && !isPremium) {
-      const usageKey = `usage_${user.id}`;
-      const dateKey = `usage_date_${user.id}`;
-      const downloadKey = `downloads_${user.id}`;
-      const savedCount = parseInt(localStorage.getItem(usageKey) || '0');
-      const savedDownloads = parseInt(localStorage.getItem(downloadKey) || '0');
-      const savedDate = localStorage.getItem(dateKey);
-      const now = Date.now();
-      const oneWeek = 7 * 24 * 60 * 60 * 1000;
+    if (!isLoaded || !user) return;
+    if (isPremium) { setTrialChecked(true); return; }
 
-      if (!savedDate || (now - parseInt(savedDate)) > oneWeek) {
-        localStorage.setItem(usageKey, '0');
-        localStorage.setItem(downloadKey, '0');
-        localStorage.setItem(dateKey, now.toString());
-        setUsageCount(0);
-        setDownloadCount(0);
-      } else {
-        setUsageCount(savedCount);
-        setDownloadCount(savedDownloads);
-      }
-    }
+    // Carrega contagem de downloads
+    const downloadKey = `downloads_${user.id}`;
+    setDownloadCount(parseInt(localStorage.getItem(downloadKey) || '0'));
+
+    // Verifica o trial no backend
+    fetch(`${API_BASE}/api/check-access?user_id=${user.id}&is_premium=false`)
+      .then(r => r.json())
+      .then(data => {
+        setTrialDaysLeft(data.days_left ?? 0);
+        setIsTrialExpired(!data.has_access);
+        if (!data.has_access) setShowUpgradeModal(true);
+        setTrialChecked(true);
+      })
+      .catch(() => setTrialChecked(true));
   }, [isLoaded, user, isPremium]);
 
   const formatarData = (dataString: string) => {
@@ -219,16 +232,17 @@ export default function FinancialDashboard() {
   };
 
   const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
-    setIsSidebarOpen(false); 
-    if (view === 'table' && !isPremium) setShowUpgradeModal(true);
-    else setCurrentView(view);
+    setIsSidebarOpen(false);
+    if (view === 'table' && !isPremium) { setShowUpgradeModal(true); return; }
+    setCurrentView(view);
   };
 
   const handleAnalyze = async () => {
     if (!empresa || !ano || !file) { alert("Preencha todos os campos e anexe o PDF."); return; }
     if (!user) return;
-    
-    if (!isPremium && usageCount >= WEEKLY_LIMIT) { setShowUpgradeModal(true); return; }
+
+    // Bloqueia se trial expirado e não é premium
+    if (!isPremium && isTrialExpired) { setShowUpgradeModal(true); return; }
 
     setLoading(true);
     try {
@@ -240,85 +254,24 @@ export default function FinancialDashboard() {
       formData.append("file", file);
       formData.append("locale", locale);
 
-  // Extraia a lógica de chamada da API para uma função separada
-  const analyzeReport = async (
-    tipoAnalise: 'pdf' | 'call',
-    formData: FormData,
-    isPremium: boolean,
-    usageCount: number,
-    userId: string
-  ) => {
-    const urlBackend = tipoAnalise === 'pdf'
-      ? `${API_BASE}/api/analyze`
-      : `${API_BASE}/api/analyze-call`;
-
-    const response = await fetch(urlBackend, { method: "POST", body: formData });
-
-    if (response.status === 403) {
-      setLoading(false);
-      setShowUpgradeModal(true);
-      return null;
-    }
-
-    // === PROTEÇÃO CONTRA TELA INFINITA ===
-    if (!response.ok) {
-      let errorMsg = "Erro na API do Servidor.";
-      try {
-        const err = await response.json();
-        errorMsg = err.detail || errorMsg;
-      } catch (e) {
-        // Se o Render cortar a ligação, cai aqui em vez de congelar a tela
-        errorMsg = `Falha de Conexão (Status ${response.status}). O servidor demorou muito a responder ou reiniciou. Tente novamente com um PDF mais pequeno.`;
-      }
-      throw new Error(errorMsg);
-    }
-    // =====================================
-
-    if (!isPremium) {
-      const newCount = usageCount + 1;
-      setUsageCount(newCount);
-      localStorage.setItem(`usage_${userId}`, newCount.toString());
-    }
-
-    const data = await response.json();
-    return data;
-  };
-
-  try {
-    const data = await analyzeReport(tipoAnalise, formData, isPremium, usageCount, user.id);
-    if (!data) return;
-    setResult({ ...data, id: data.id });
-    setCurrentView('result');
-    fetchHistory();
-    fetchTableData();
-  } catch (error: any) {
-    console.error(error);
-    // Aqui ele destrava a tela e mostra o erro
-    alert(error.message);
-  } finally {
-    // ISTO GARANTE QUE A RODA PARA DE GIRAR SEMPRE
-    setLoading(false);
-  }
-
-      // O frontend agora só precisa decidir para qual rota enviar:
-      const urlBackend = tipoAnalise === 'pdf' 
-        ? `${API_BASE}/api/analyze` 
+      const urlBackend = tipoAnalise === 'pdf'
+        ? `${API_BASE}/api/analyze`
         : `${API_BASE}/api/analyze-call`;
 
       const response = await fetch(urlBackend, { method: "POST", body: formData });
-      
+
       if (response.status === 403) { setLoading(false); setShowUpgradeModal(true); return; }
       if (!response.ok) {
+        let errorMsg = "Erro na API do Servidor.";
+        try {
           const err = await response.json();
-          throw new Error(err.detail || "Erro na API");
+          errorMsg = err.detail || errorMsg;
+        } catch (e) {
+          errorMsg = `Falha de Conexão (Status ${response.status}). O servidor demorou muito a responder ou reiniciou. Tente novamente com um PDF mais pequeno.`;
+        }
+        throw new Error(errorMsg);
       }
-      
-      if (!isPremium) {
-        const newCount = usageCount + 1;
-        setUsageCount(newCount);
-        localStorage.setItem(`usage_${user.id}`, newCount.toString());
-      }
-      
+
       const data = await response.json();
       setResult({ ...data, id: data.id });
       setCurrentView('result');
@@ -424,11 +377,17 @@ export default function FinancialDashboard() {
     return <span className={`${colDef.color || 'text-gray-300'}`}>{item[key]}</span>;
   };
 
-  if (!isLoaded) return <div className="flex h-screen items-center justify-center bg-[#0E1117]"><Loader2 className="animate-spin text-blue-500" /></div>;
+  if (!isLoaded || !trialChecked) return <div className="flex h-screen items-center justify-center bg-[#0E1117]"><Loader2 className="animate-spin text-blue-500" /></div>;
 
   return (
     <div className="flex h-screen bg-[#0E1117] text-gray-100 font-sans overflow-hidden">
-      {showUpgradeModal && <UpgradeModal onClose={() => setShowUpgradeModal(false)} userId={user?.id} />}
+      {showUpgradeModal && (
+        <UpgradeModal
+          onClose={isTrialExpired ? undefined : () => setShowUpgradeModal(false)}
+          userId={user?.id}
+          isExpired={isTrialExpired}
+        />
+      )}
       
       {isSidebarOpen && (
         <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden animate-in fade-in" onClick={() => setIsSidebarOpen(false)} />
@@ -458,15 +417,41 @@ export default function FinancialDashboard() {
 
         {!isPremium && (
           <div className="mt-auto mb-6 px-2">
-            <div className="bg-[#161b22] border border-gray-800 p-4 rounded-xl mb-4 space-y-3">
-              <div>
-                <div className="flex justify-between text-xs mb-1.5"><span className="text-gray-400">{t("sidebar.analyses")}</span><span className={`font-bold ${usageCount >= WEEKLY_LIMIT ? 'text-red-400' : 'text-white'}`}>{usageCount}/{WEEKLY_LIMIT}</span></div>
-                <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden"><div className={`h-full transition-all duration-500 ${usageCount >= WEEKLY_LIMIT ? 'bg-red-500' : 'bg-blue-500'}`} style={{ width: `${Math.min((usageCount / WEEKLY_LIMIT) * 100, 100)}%` }} /></div>
+            {/* Banner de trial */}
+            <div className={`border p-4 rounded-xl mb-4 space-y-3 ${
+              isTrialExpired
+                ? 'bg-red-500/10 border-red-500/30'
+                : trialDaysLeft !== null && trialDaysLeft <= 2
+                  ? 'bg-amber-500/10 border-amber-500/30'
+                  : 'bg-[#161b22] border-gray-800'
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  {isTrialExpired ? t("trial.trialExpired") : t("trial.trialActive")}
+                </span>
+                {!isTrialExpired && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                )}
               </div>
-              <div>
-                <div className="flex justify-between text-xs mb-1.5"><span className="text-gray-400">{t("sidebar.downloads")}</span><span className={`font-bold ${downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'text-red-400' : 'text-white'}`}>{downloadCount}/{WEEKLY_DOWNLOAD_LIMIT}</span></div>
-                <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden"><div className={`h-full transition-all duration-500 ${downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${Math.min((downloadCount / WEEKLY_DOWNLOAD_LIMIT) * 100, 100)}%` }} /></div>
-              </div>
+              {!isTrialExpired && trialDaysLeft !== null && (
+                <div>
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-gray-400">{t("trial.endsIn")}</span>
+                    <span className={`font-bold ${trialDaysLeft <= 2 ? 'text-amber-400' : 'text-white'}`}>
+                      {trialDaysLeft} {trialDaysLeft === 1 ? t("trial.dayLeft") : t("trial.daysLeft")}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${trialDaysLeft <= 2 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                      style={{ width: `${Math.min((trialDaysLeft / 7) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              {isTrialExpired && (
+                <p className="text-xs text-red-300">{t("trial.trialExpiredDesc")}</p>
+              )}
             </div>
             <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
               <Zap size={14} className="text-yellow-300 fill-yellow-300" /> {t("sidebar.goPremium")}

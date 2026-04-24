@@ -22,14 +22,24 @@
       "serverPriority": "Server Priority"
     },
     "upgrade": {
-      "basicPlan": "Basic Plan",
-      "basicDesc": "Your current plan. Ideal for testing.",
-      "continueBasic": "Continue on Basic",
+      "basicPlan": "Free Trial",
+      "basicDesc": "Your free evaluation period.",
+      "continueBasic": "Continue Trial",
       "recommended": "Recommended",
       "proDesc": "Unlock the full power of AI.",
       "monthly": "Monthly",
       "yearly": "Yearly (-20%)",
       "subscribePro": "Subscribe FinAnalyzer Pro"
+    },
+    "trial": {
+      "daysLeft": "days left in trial",
+      "dayLeft": "day left in trial",
+      "trialActive": "Free Trial Active",
+      "trialExpired": "Trial Expired",
+      "trialExpiredDesc": "Your 7-day free trial has ended. Subscribe to FinAnalyzer Pro to continue analyzing.",
+      "upgradeNow": "Subscribe Now",
+      "trialBannerText": "You are in the free trial period.",
+      "endsIn": "Ends in"
     },
     "nav": {
       "newAnalysis": "New Analysis",

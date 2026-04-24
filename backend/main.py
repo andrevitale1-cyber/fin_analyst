@@ -81,6 +81,15 @@ def init_db():
             );
         ''')
 
+        # Tabela de trial: registra o início do período gratuito por user_id (Clerk)
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS trial_users (
+                id SERIAL PRIMARY KEY,
+                user_id TEXT UNIQUE NOT NULL,
+                trial_start TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+        ''')
+
         conn.commit()
         cur.close()
         conn.close()
@@ -180,10 +189,98 @@ if GEMINI_API_KEY:
 else:
     model = None
 
+TRIAL_DAYS = 7  # Duração do trial gratuito em dias
+
 # --- ROTAS ---
 @app.get("/")
 def read_root():
     return {"message": "FinAnalyst Backend está Online (Clerk Compatible) 🚀"}
+
+@app.post("/api/register-trial")
+def register_trial(user_id: str = Form(...)):
+    """
+    Registra o início do trial para um novo usuário.
+    Se o usuário já tem trial registrado, apenas retorna os dados existentes.
+    """
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # Tenta inserir; se já existir, ignora (ON CONFLICT DO NOTHING)
+        cur.execute(
+            "INSERT INTO trial_users (user_id, trial_start) VALUES (%s, NOW()) ON CONFLICT (user_id) DO NOTHING",
+            (str(user_id),)
+        )
+        conn.commit()
+        
+        # Busca a data de início do trial
+        cur.execute("SELECT trial_start FROM trial_users WHERE user_id = %s", (str(user_id),))
+        row = cur.fetchone()
+        if row:
+            trial_start = row[0]
+            from datetime import datetime, timezone, timedelta
+            now = datetime.now(timezone.utc)
+            trial_end = trial_start.replace(tzinfo=timezone.utc) + timedelta(days=TRIAL_DAYS)
+            days_left = max(0, (trial_end - now).days)
+            is_active = now < trial_end
+            return {
+                "trial_start": trial_start.isoformat(),
+                "trial_end": trial_end.isoformat(),
+                "days_left": days_left,
+                "is_trial_active": is_active
+            }
+        return {"error": "Erro ao registrar trial"}
+    except Exception as e:
+        print(f"Erro ao registrar trial: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
+
+@app.get("/api/check-access")
+def check_access(user_id: str, is_premium: bool = False):
+    """
+    Verifica se o usuário tem acesso à plataforma.
+    Retorna: status (trial_active | trial_expired | premium), days_left, trial_start, trial_end
+    """
+    if is_premium:
+        return {"status": "premium", "days_left": None, "has_access": True}
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT trial_start FROM trial_users WHERE user_id = %s", (str(user_id),))
+        row = cur.fetchone()
+        
+        if not row:
+            # Usuário nunca registrou trial — registra agora
+            cur.execute(
+                "INSERT INTO trial_users (user_id, trial_start) VALUES (%s, NOW()) ON CONFLICT (user_id) DO NOTHING",
+                (str(user_id),)
+            )
+            conn.commit()
+            cur.execute("SELECT trial_start FROM trial_users WHERE user_id = %s", (str(user_id),))
+            row = cur.fetchone()
+        
+        from datetime import datetime, timezone, timedelta
+        trial_start = row[0]
+        now = datetime.now(timezone.utc)
+        trial_end = trial_start.replace(tzinfo=timezone.utc) + timedelta(days=TRIAL_DAYS)
+        days_left = max(0, (trial_end - now).days)
+        is_active = now < trial_end
+        
+        return {
+            "status": "trial_active" if is_active else "trial_expired",
+            "has_access": is_active,
+            "days_left": days_left,
+            "trial_start": trial_start.isoformat(),
+            "trial_end": trial_end.isoformat()
+        }
+    except Exception as e:
+        print(f"Erro ao verificar acesso: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        cur.close()
+        conn.close()
 
 @app.post("/api/analyze")
 async def analyze_report(
@@ -263,18 +360,41 @@ IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as se
     {pdf_text[:100000]}
         """
 
-        print("🧠 [PASSO 4] Enviando para o Google Gemini com limite rígido de 60s...")
-        tarefa_gemini = asyncio.to_thread(model.generate_content, prompt)
-        response = await asyncio.wait_for(tarefa_gemini, timeout=60.0)
-        print("✅ [PASSO 5] O Google Gemini respondeu com sucesso!")
+        print("🧠 [PASSO 4] Enviando para o Google Gemini via Streaming (sem timeout fixo)...")
+        
+        def _gerar_via_streaming(p: str) -> str:
+            """
+            Usa generate_content_stream para receber tokens incrementalmente.
+            Isso evita o timeout de 60s porque a resposta chega em pedaços.
+            O timeout real do SDK do Gemini é de ~240s, muito mais genéroso.
+            """
+            full_text = ""
+            for chunk in model.generate_content(
+                p,
+                stream=True,
+                generation_config={"temperature": 0.7}
+            ):
+                try:
+                    full_text += chunk.text
+                except Exception:
+                    pass  # chunks vazios ou de controle
+            return full_text
+        
+        tarefa_gemini = asyncio.to_thread(_gerar_via_streaming, prompt)
+        # Timeout generousíssimo de 180s como última linha de defesa
+        response_text = await asyncio.wait_for(tarefa_gemini, timeout=180.0)
+        print("✅ [PASSO 5] O Google Gemini respondeu com sucesso! Chars recebidos:", len(response_text))
+        
+        if not response_text.strip():
+            raise HTTPException(status_code=500, detail="A IA retornou uma resposta vazia. Tente novamente.")
         
         print("⚙️ [PASSO 6] Parseando os resultados para JSON...")
-        dados_estruturados = parse_results(response.text)
+        dados_estruturados = parse_results(response_text)
         
         objeto_final = {
             "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}" },
             "data": dados_estruturados,
-            "analise_completa": response.text
+            "analise_completa": response_text
         }
 
         print("💾 [PASSO 7] Salvando no Banco de Dados...")
@@ -294,8 +414,8 @@ IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as se
         return objeto_final
 
     except asyncio.TimeoutError:
-        print("❌ [ERRO] Tempo limite de 60 segundos excedido!")
-        raise HTTPException(status_code=504, detail="O servidor da IA demorou muito a responder. Tente novamente.")
+        print("❌ [ERRO] Tempo limite de 180 segundos excedido!")
+        raise HTTPException(status_code=504, detail="O servidor da IA demorou muito a responder. Tente com um PDF menor ou aguarde e tente novamente.")
     except Exception as e:
         erro_str = str(e)
         print(f"❌ [ERRO CRÍTICO] Falha na análise: {erro_str}")
@@ -341,14 +461,31 @@ Texto da Transcrição:
 {texto_transcricao[:250000]}
         """
 
-        print("🧠 [PASSO 4] Enviando para o Google Gemini com limite rígido de 60s...")
-        tarefa_gemini = asyncio.to_thread(model.generate_content, prompt)
-        response = await asyncio.wait_for(tarefa_gemini, timeout=60.0)
-        print("✅ [PASSO 5] O Google Gemini respondeu com sucesso!")
+        print("🧠 [PASSO 4] Enviando para o Google Gemini via Streaming (sem timeout fixo)...")
+        
+        def _gerar_call_via_streaming(p: str) -> str:
+            full_text = ""
+            for chunk in model.generate_content(
+                p,
+                stream=True,
+                generation_config={"temperature": 0.5}
+            ):
+                try:
+                    full_text += chunk.text
+                except Exception:
+                    pass
+            return full_text
+        
+        tarefa_gemini = asyncio.to_thread(_gerar_call_via_streaming, prompt)
+        response_text = await asyncio.wait_for(tarefa_gemini, timeout=180.0)
+        print("✅ [PASSO 5] O Google Gemini respondeu com sucesso! Chars:", len(response_text))
+        
+        if not response_text.strip():
+            raise HTTPException(status_code=500, detail="A IA retornou uma resposta vazia. Tente novamente.")
         
         objeto_final = {
             "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call" },
-            "analise_completa": response.text,
+            "analise_completa": response_text,
             "data": {} 
         }
 
