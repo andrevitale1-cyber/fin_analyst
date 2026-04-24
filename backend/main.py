@@ -298,9 +298,9 @@ async def analyze_report(
 
     conn = None
     try:
-        print("📄 [PASSO 2] Extraindo texto do Relatório (Limitado a 12 páginas)...")
+        print("📄 [PASSO 2] Extraindo texto do Relatório (Sem limite de páginas)...")
         contents = await file.read()
-        pdf_text = extract_text_from_pdf_bytes(contents, max_pages=12)
+        pdf_text = extract_text_from_pdf_bytes(contents, max_pages=999)
         print(f"✅ [PASSO 3] Texto lido! Foram extraídos {len(pdf_text)} caracteres.")
         
         language_instruction = "IMPORTANT: Write the ENTIRE analysis in English. All section titles, labels, scores, text and conclusions must be in English.\n\n" if locale == "en" else ""
