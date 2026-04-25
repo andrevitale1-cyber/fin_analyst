@@ -360,7 +360,7 @@ export default function FinancialDashboard() {
         localStorage.setItem(`downloads_${user.id}`, newDlCount.toString());
       }
       // Abre o relatório gerado pelo backend numa nova aba
-      window.open(`${API_BASE}/api/report/${id}`, '_blank');
+      window.open(`${API_BASE}/api/report/${id}?locale=${locale}`, '_blank');
     } else {
       alert("ID do relatório não encontrado. Tente abrir pelo histórico.");
     }

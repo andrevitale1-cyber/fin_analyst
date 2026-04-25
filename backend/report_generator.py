@@ -27,20 +27,21 @@ def _f(v) -> float:
     except Exception:
         return 0.0
 
-def _score_theme(n: float) -> dict:
+def _score_theme(n: float, locale: str = "pt") -> dict:
+    en = locale == "en"
     if n <= 1.5:
-        return dict(label="Muito Ruim", text="#7F1D1D", bg="#FEF2F2",
+        return dict(label="Very Poor" if en else "Muito Ruim", text="#7F1D1D", bg="#FEF2F2",
                     border="#FECACA", bar="#DC2626", badge_bg="#FEE2E2", badge_text="#991B1B", icon="")
     if n <= 2.5:
-        return dict(label="Ruim",      text="#9A3412", bg="#FFF7ED",
+        return dict(label="Poor" if en else "Ruim",      text="#9A3412", bg="#FFF7ED",
                     border="#FED7AA", bar="#EA580C", badge_bg="#FFEDD5", badge_text="#9A3412", icon="")
     if n <= 3.5:
-        return dict(label="Regular",   text="#78350F", bg="#FFFBEB",
+        return dict(label="Fair" if en else "Regular",   text="#78350F", bg="#FFFBEB",
                     border="#FDE68A", bar="#D97706", badge_bg="#FEF3C7", badge_text="#92400E", icon="")
     if n <= 4.5:
-        return dict(label="Bom",       text="#14532D", bg="#F0FDF4",
+        return dict(label="Good" if en else "Bom",       text="#14532D", bg="#F0FDF4",
                     border="#BBF7D0", bar="#16A34A", badge_bg="#DCFCE7", badge_text="#15803D", icon="")
-    return         dict(label="Excelente",text="#052E16", bg="#ECFDF5",
+    return         dict(label="Excellent" if en else "Excelente",text="#052E16", bg="#ECFDF5",
                     border="#6EE7B7", bar="#059669", badge_bg="#D1FAE5", badge_text="#065F46", icon="")
 
 def _quarter_sort_key(name: str):
@@ -152,7 +153,7 @@ def _parse_sections(text: str) -> list:
     intro = re.search(r"^([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*1)", text or "", re.IGNORECASE)
     if intro:
         b = intro.group(1).strip().replace("**", "")
-        if b: secs.append({"num": 0, "title": "Visão Geral do Trimestre", "body": b, "nota": None})
+        if b: secs.append({"num": 0, "title": "__OVERVIEW_TITLE__", "body": b, "nota": None})
     
     for n in range(1, 5):
         pat = rf"\*?\*?Se[cç][aã]o\s*{n}[:\s\–\-].*?\n([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*{n+1}|\Z)"
@@ -163,7 +164,7 @@ def _parse_sections(text: str) -> list:
         nota = _f(nm.group(1)) if nm else None
         body = re.sub(rf"\*?\*?Nota\s+Se[cç][aã]o\s+{n}[:\s]+\d[.,]?\d?\s*/\s*5\*?\*?", "", body).strip()
         body = re.sub(r"```json[\s\S]*?```", "", body).strip()
-        secs.append({"num": n, "title": titles.get(n, f"Seção {n}"), "body": body, "nota": nota})
+        secs.append({"num": n, "title": titles.get(n, f"Section {n}"), "body": body, "nota": nota})
     return secs
 
 
@@ -396,12 +397,13 @@ SECTION_CHARTS = {
 # MAIN GENERATOR
 # ═══════════════════════════════════════════════════════════════
 
-def generate_report_html(resultado: dict) -> str:
+def generate_report_html(resultado: dict, locale: str = "pt") -> str:
+    en = locale == "en"
     meta    = resultado.get("metadata", {})
     data    = resultado.get("data", {})
     analise = resultado.get("analise_completa", "")
 
-    empresa = (meta.get("empresa") or "Empresa").upper()
+    empresa = (meta.get("empresa") or ("Company" if en else "Empresa")).upper()
     periodo = meta.get("periodo") or ""
     is_call = meta.get("tipo") == "Earnings Call"
 
@@ -412,8 +414,20 @@ def generate_report_html(resultado: dict) -> str:
     g   = _f(data.get("nota_geral", 0))
     tese = data.get("tese_investimento", "")
 
-    tg   = _score_theme(g)
+    tg   = _score_theme(g, locale)
     secs = _parse_sections(analise) if not is_call else []
+    # Replace section title placeholders based on locale
+    section_titles_i18n = {
+        1: "Revenue & Top Line" if en else "Evolução Operacional e Top Line",
+        2: "Profitability & Margins" if en else "Rentabilidade e Margens",
+        3: "Capital Structure & Risk" if en else "Estrutura de Capital e Gestão de Risco",
+        4: "Net Income Summary" if en else "Sumário Executivo do Lucro Líquido",
+    }
+    for s in secs:
+        if s["title"] == "__OVERVIEW_TITLE__":
+            s["title"] = "Quarter Overview" if en else "Visão Geral do Trimestre"
+        elif s["num"] in section_titles_i18n:
+            s["title"] = section_titles_i18n[s["num"]]
     raw_cd = data.get("chart_data") or _extract_charts(analise)
     comp_data = _extract_composicao(analise)
     
@@ -431,7 +445,7 @@ def generate_report_html(resultado: dict) -> str:
     tese_html = "".join(f"<p>{_h.escape(p.strip())}</p>" for p in tese_c.split("\n\n") if p.strip()) or f"<p>{_h.escape(tese_c)}</p>"
 
     def _hero_ring(nota, size=110):
-        t  = _score_theme(nota)
+        t  = _score_theme(nota, locale)
         R  = size // 2 - 10
         cx = cy = size // 2
         C  = 2 * 3.14159 * R
@@ -454,31 +468,31 @@ def generate_report_html(resultado: dict) -> str:
     if is_call:
         hero_right_html = f"""
         <div class="hero-right" style="background:#F5F3FF; border-color:#DDD6FE;">
-          <span class="hero-score-lbl" style="color:#7C3AED;">Tipo de Documento</span>
+          <span class="hero-score-lbl" style="color:#7C3AED;">{'Document Type' if en else 'Tipo de Documento'}</span>
           <div style="font-size:38px; margin: 10px 0;">🎙️</div>
           <div class="hero-score-verdict" style="color:#6D28D9;">Earnings Call</div>
         </div>
         """
-        hero_desc = "Resumo analítico gerado por IA com base na transcrição da teleconferência de resultados. Focado em insights da diretoria, guidance, expansão e perguntas do mercado."
+        hero_desc = "AI-generated analytical summary based on the earnings call transcript. Focused on management insights, guidance, expansion and market questions." if en else "Resumo analítico gerado por IA com base na transcrição da teleconferência de resultados. Focado em insights da diretoria, guidance, expansão e perguntas do mercado."
     else:
         hero_right_html = f"""
         <div class="hero-right">
-          <span class="hero-score-lbl">Score IA — Média Ponderada</span>
+          <span class="hero-score-lbl">{'AI Score — Weighted Average' if en else 'Score IA — Média Ponderada'}</span>
           {_hero_ring(g, 110)}
           <div class="hero-score-verdict">{tg['label']}</div>
         </div>
         """
-        hero_desc = "Relatório completo gerado por IA com base no release de resultados oficial. Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica."
+        hero_desc = "Full report generated by AI based on the official earnings release. Assessment of revenue, margins, debt, and profitability with a strategic view." if en else "Relatório completo gerado por IA com base no release de resultados oficial. Avaliação de receita, margens, endividamento e rentabilidade com visão estratégica."
 
     pillars = [
-        {"label": "Receita",           "nota": rn,  "icon": "REV"},
-        {"label": "Margem & Lucro",    "nota": ln,  "icon": "M&L"},
-        {"label": "Dívida & Risco",    "nota": dn,  "icon": "RISC"},
-        {"label": "Rentabilidade ROE", "nota": ren, "icon": "ROE"},
+        {"label": "Revenue" if en else "Receita",                     "nota": rn,  "icon": "REV"},
+        {"label": "Margin & Income" if en else "Margem & Lucro",      "nota": ln,  "icon": "M&L"},
+        {"label": "Debt & Risk" if en else "Dívida & Risco",          "nota": dn,  "icon": "RISC"},
+        {"label": "Profitability ROE" if en else "Rentabilidade ROE", "nota": ren, "icon": "ROE"},
     ]
 
     def _pillar(p):
-        t   = _score_theme(p["nota"])
+        t   = _score_theme(p["nota"], locale)
         pct = int(p["nota"] / 5 * 100)
         return f"""<div class="pillar" style="border-top:3px solid {t['bar']}">
   <div class="pillar-top">
@@ -497,14 +511,14 @@ def generate_report_html(resultado: dict) -> str:
     all_chart_js = []
 
     def _section_block(s):
-        t  = _score_theme(s["nota"]) if s["nota"] is not None else None
+        t  = _score_theme(s["nota"], locale) if s["nota"] is not None else None
         charts_cfg = SECTION_CHARTS.get(s["num"], [])
 
         nota_box = ""
         if t:
             nota_box = f"""
 <div class="nota-box-inline" style="background:{t['bg']};border:1px solid {t['border']};">
-  <div class="nota-box-label">Nota da Seção</div>
+  <div class="nota-box-label">{'Section Score' if en else 'Nota da Seção'}</div>
   <div style="display:flex;align-items:center;gap:10px;">
       <div class="nota-box-val" style="color:{t['bar']}">{s['nota']:.0f}<span class="nota-box-denom">/5</span></div>
       <div class="nota-box-tag" style="background:{t['badge_bg']};color:{t['badge_text']}">{t['icon']} {t['label']}</div>
@@ -541,7 +555,7 @@ def generate_report_html(resultado: dict) -> str:
         if chart_panels_html:
             aside_html = f'<div class="sec-charts">{chart_panels_html}</div>'
 
-        num_label = f'<span class="sec-num">Seção {s["num"]}</span>' if s["num"] > 0 else ""
+        num_label = f'<span class="sec-num">{"Section" if en else "Seção"} {s["num"]}</span>' if s["num"] > 0 else ""
         acc = t["bar"] if t else "#E5E7EB"
 
         return f"""
@@ -570,7 +584,7 @@ def generate_report_html(resultado: dict) -> str:
   <div class="sec-inner">
     <div class="sec-head">
       <div>
-        <h2 class="sec-title">Principais Insights e Timestamps</h2>
+        <h2 class="sec-title">{'Key Insights and Timestamps' if en else 'Principais Insights e Timestamps'}</h2>
       </div>
     </div>
     <div class="sec-layout--full">
@@ -584,11 +598,11 @@ def generate_report_html(resultado: dict) -> str:
         charts_js = "\n".join(all_chart_js)
 
     verdict_labels = {
-        "Muito Ruim": ("vtag-sell",  "Resultado Muito Fraco"),
-        "Ruim":       ("vtag-sell",  "Resultado Fraco"),
-        "Regular":    ("vtag-watch", "Resultado Regular"),
-        "Bom":        ("vtag-buy",   "Resultado Bom"),
-        "Excelente":  ("vtag-buy",   "Resultado Excelente"),
+        ("Very Poor" if en else "Muito Ruim"): ("vtag-sell",  "Very Weak Result" if en else "Resultado Muito Fraco"),
+        ("Poor" if en else "Ruim"):             ("vtag-sell",  "Weak Result" if en else "Resultado Fraco"),
+        ("Fair" if en else "Regular"):           ("vtag-watch", "Fair Result" if en else "Resultado Regular"),
+        ("Good" if en else "Bom"):              ("vtag-buy",   "Good Result" if en else "Resultado Bom"),
+        ("Excellent" if en else "Excelente"):    ("vtag-buy",   "Excellent Result" if en else "Resultado Excelente"),
     }
     vcls, vtitle = verdict_labels.get(tg["label"], ("vtag-watch", "—"))
 
@@ -597,44 +611,45 @@ def generate_report_html(resultado: dict) -> str:
         conclusion_grid_html = f"""
       <div class="c-grid" style="grid-template-columns:1fr 1fr;">
         <div>
-          <div class="c-cell-lbl">Empresa · Período</div>
+          <div class="c-cell-lbl">{'Company · Period' if en else 'Empresa · Período'}</div>
           <div class="c-cell-val">{_h.escape(empresa.title())}</div>
           <div style="font-size:12px;color:#64748B;margin-top:3px">{_h.escape(periodo)}</div>
         </div>
         <div>
-          <div class="c-cell-lbl">Aviso Legal</div>
+          <div class="c-cell-lbl">{'Disclaimer' if en else 'Aviso Legal'}</div>
           <div class="c-cell-val" style="font-size:12px;line-height:1.5;color:#94A3B8">
-            Resumo gerado por Inteligência Artificial a partir da transcrição. Não constitui recomendação de investimento.
+            {'AI-generated summary from the transcript. Does not constitute investment advice.' if en else 'Resumo gerado por Inteligência Artificial a partir da transcrição. Não constitui recomendação de investimento.'}
           </div>
         </div>
       </div>"""
-        conclusion_title = "Fim da Transcrição"
+        conclusion_title = "End of Transcript" if en else "Fim da Transcrição"
         conclusion_body  = ""
     else:
         conclusion_grid_html = f"""
       <div class="c-grid">
         <div>
-          <div class="c-cell-lbl">Score Final</div>
+          <div class="c-cell-lbl">{'Final Score' if en else 'Score Final'}</div>
           <div class="c-cell-val">{g:.1f} / 5</div>
           <span class="vtag {vcls}">{vtitle}</span>
         </div>
         <div>
-          <div class="c-cell-lbl">Empresa · Período</div>
+          <div class="c-cell-lbl">{'Company · Period' if en else 'Empresa · Período'}</div>
           <div class="c-cell-val">{_h.escape(empresa.title())}</div>
           <div style="font-size:12px;color:#64748B;margin-top:3px">{_h.escape(periodo)}</div>
         </div>
         <div>
-          <div class="c-cell-lbl">Aviso Legal</div>
+          <div class="c-cell-lbl">{'Disclaimer' if en else 'Aviso Legal'}</div>
           <div class="c-cell-val" style="font-size:12px;line-height:1.5;color:#94A3B8">
-            Gerado por IA. Não constitui recomendação de investimento.
+            {'Generated by AI. Does not constitute investment advice.' if en else 'Gerado por IA. Não constitui recomendação de investimento.'}
           </div>
         </div>
       </div>"""
-        conclusion_title = "Conclusão Estratégica e Outlook"
+        conclusion_title = "Strategic Conclusion & Outlook" if en else "Conclusão Estratégica e Outlook"
         conclusion_body  = f'<div class="c-body">{tese_html}</div>'
 
+    html_lang = "en" if en else "pt-BR"
     return f"""<!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="{html_lang}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -876,13 +891,13 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
     <span class="tb-name">FinAnalyzer</span>
   </div>
   <nav class="tb-nav">
-    <a href="#analise" class="tb-link">Análise</a>
-    <a href="#conclusao" class="tb-link">Resumo</a>
+    <a href="#analise" class="tb-link">{'Analysis' if en else 'Análise'}</a>
+    <a href="#conclusao" class="tb-link">{'Summary' if en else 'Resumo'}</a>
   </nav>
   <div class="tb-right">
-    <span><span class="tb-score-lbl">{"Status" if is_call else "Score IA"}</span><span class="tb-score">{"Call Analisado" if is_call else f"{g:.1f}/5"}</span></span>
+    <span><span class="tb-score-lbl">{"Status" if is_call else ("AI Score" if en else "Score IA")}</span><span class="tb-score">{('Call Analyzed' if en else 'Call Analisado') if is_call else f"{g:.1f}/5"}</span></span>
     <button class="print-btn" onclick="window.print()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Salvar PDF
+     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> {'Save PDF' if en else 'Salvar PDF'}
     </button>
   </div>
 </nav>
@@ -891,7 +906,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
   <div class="hero-inner">
     <div class="hero-row">
       <div class="hero-left">
-        <div class="hero-period"><div class="hero-dot"></div>{_h.escape(periodo)} · {"Earnings Call" if is_call else "Resultados Trimestrais"}</div>
+        <div class="hero-period"><div class="hero-dot"></div>{_h.escape(periodo)} · {"Earnings Call" if is_call else ("Quarterly Results" if en else "Resultados Trimestrais")}</div>
         <h1 class="hero-empresa">{_h.escape(empresa.title())}</h1>
         <p class="hero-desc">{hero_desc}</p>
       </div>
@@ -905,8 +920,8 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 
 <div class="main">
   <div id="analise">
-    <div class="sec-label">{"Extração Textual" if is_call else "Análise Completa por IA"}</div>
-    <div class="sec-heading">{"Leitura da Transcrição" if is_call else "Leitura dos Resultados"}</div>
+    <div class="sec-label">{('Textual Extraction' if en else 'Extração Textual') if is_call else ('Full AI Analysis' if en else 'Análise Completa por IA')}</div>
+    <div class="sec-heading">{('Transcript Reading' if en else 'Leitura da Transcrição') if is_call else ('Earnings Read' if en else 'Leitura dos Resultados')}</div>
     {secs_html}
   </div>
 
@@ -914,7 +929,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 
   <div id="conclusao">
     <div class="conclusion" style="{'background:linear-gradient(135deg, #1E1B4B 0%, #4C1D95 100%);' if is_call else ''}">
-      <div class="c-eyebrow">{"Síntese" if is_call else "Tese de Investimento"}</div>
+      <div class="c-eyebrow">{('Summary' if en else 'Síntese') if is_call else ('Investment Thesis' if en else 'Tese de Investimento')}</div>
       <h2 class="c-title">{conclusion_title}</h2>
       {conclusion_body}
       {conclusion_grid_html}
@@ -1128,7 +1143,7 @@ try {{
    .replace("{charts_js}", charts_js)
 
 @router.get("/api/report/{item_id}", response_class=HTMLResponse)
-def get_report(item_id: int):
+def get_report(item_id: int, locale: str = "pt"):
     from main import get_db_connection
     conn = get_db_connection()
     cur  = conn.cursor()
@@ -1136,9 +1151,9 @@ def get_report(item_id: int):
         cur.execute("SELECT resultado_json FROM historico WHERE id = %s", (item_id,))
         row = cur.fetchone()
         if not row:
-            raise HTTPException(status_code=404, detail="Análise não encontrada.")
+            raise HTTPException(status_code=404, detail="Analysis not found." if locale == "en" else "Análise não encontrada.")
         resultado = json.loads(row[0])
-        return HTMLResponse(content=generate_report_html(resultado), status_code=200)
+        return HTMLResponse(content=generate_report_html(resultado, locale=locale), status_code=200)
     finally:
         cur.close()
         conn.close()
