@@ -1,0 +1,40 @@
+{
+    "setores_foco": [
+        "Software as a Service (SaaS)",
+        "Fintechs e Processamento de Pagamentos",
+        "Segurança Pública e Defesa",
+        "Consumo de alta qualidade (Lifestyle)",
+        "Infraestrutura e Construção (Homebuilding)",
+        "Saúde e Pesquisa Clínica (CROs)",
+        "Semicondutores"
+    ],
+    "metricas_chave": [
+        "Rule of 40 (Soma do crescimento de receita com a margem operacional)",
+        "Backlog (Contratos futuros a serem reconhecidos)",
+        "Margem Operacional Ajustada e Margem Bruta",
+        "Lucro Líquido GAAP (Preferência por resultados sem ajustes excessivos)",
+        "Geração de Caixa Livre (Free Cash Flow)",
+        "SBC (Stock-Based Compensation) e Diluição de acionistas",
+        "Alavancagem Operacional",
+        "Índice de Liquidez"
+    ],
+    "red_flags": [
+        "Diluição excessiva de acionistas para remunerar diretoria",
+        "Remuneração agressiva de executivos fora da realidade do resultado",
+        "Falta de crescimento (Estagnação é considerada um risco alto)",
+        "Taxa de cancelamento (Churn) elevada ou crescente",
+        "Aquisições que não contribuem positivamente para o resultado (Destruição de valor)",
+        "Endividamento elevado em modelos de negócio que exigem muito capital",
+        "Inconsistência entre o discurso da gestão (Call) e os números apresentados (DRE)"
+    ],
+    "green_flags": [
+        "Estrutura de capital limpa (Zero dívida ou caixa líquido)",
+        "Crescimento orgânico sem necessidade de aquisições constantes",
+        "Alta previsibilidade de receita (Contratos recorrentes)",
+        "Gestão enxuta (Custos administrativos baixos em relação à receita)",
+        "Capacidade de 'extrair leite de pedra' na eficiência operacional",
+        "Conversão eficiente de lucro em caixa",
+        "Validação por grandes tomadores de decisão do mercado (Volume de mercado)"
+    ],
+    "filosofia": "Foco em ser sócio de longo prazo de empresas com fundamentos impecáveis e alta qualidade operacional. A filosofia rejeita o conservadorismo paralisado (empresas que não crescem), definindo conservadorismo como crescimento consistente com alavancagem operacional. Prioriza empresas 'Asset Light', com baixa necessidade de Capex, que conseguem escalar de forma sustentável e transparente, preferindo negócios simples de acompanhar onde a tese de investimento é construída sobre dados concretos e entrega de guidance."
+}

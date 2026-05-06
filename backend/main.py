@@ -13,6 +13,8 @@ import stripe
 from pypdf import PdfReader
 from dotenv import load_dotenv
 from report_generator import router as report_router
+from agents.auto_fetcher import AutoFetcher
+from agents.prompt_builder import PromptBuilder
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 # Carrega variáveis de ambiente
@@ -424,6 +426,71 @@ IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as se
         raise HTTPException(status_code=500, detail=erro_str)
     finally:
         if conn: conn.close()
+
+@app.post("/api/analyze-auto")
+async def analyze_report_auto(
+    ticker: str = Form(...),
+    ano: str = Form(...),
+    trimestre: str = Form(...),
+    user_id: str = Form(...),
+    locale: str = Form(default="pt")
+):
+    print(f"🚀 [AUTO] Iniciando Análise Automática para {ticker}")
+    
+    fetcher = AutoFetcher()
+    builder = PromptBuilder()
+    
+    # 1. Buscar PDF
+    pdf_url = fetcher.fetch_result_pdf(ticker)
+    if not pdf_url:
+        raise HTTPException(status_code=404, detail=f"Não foi possível localizar o relatório de {ticker} automaticamente.")
+    
+    # 2. Download
+    pdf_content = fetcher.download_pdf(pdf_url)
+    if not pdf_content:
+        raise HTTPException(status_code=500, detail="Erro ao baixar o relatório.")
+    
+    # 3. Extrair Texto
+    pdf_text = extract_text_from_pdf_bytes(pdf_content, max_pages=999)
+    
+    # 4. Construir Prompt Profissional
+    prompt = builder.build_prompt(ticker, pdf_text, locale=locale)
+    
+    # 5. Chamar Gemini (reutilizando a lógica de streaming)
+    def _gerar_auto(p: str) -> str:
+        full_text = ""
+        for chunk in model.generate_content(p, stream=True, generation_config={"temperature": 0.7}):
+            try: full_text += chunk.text
+            except: pass
+        return full_text
+
+    try:
+        tarefa_gemini = asyncio.to_thread(_gerar_auto, prompt)
+        response_text = await asyncio.wait_for(tarefa_gemini, timeout=180.0)
+        
+        # 6. Parse e Salvar
+        dados_estruturados = parse_results(response_text)
+        objeto_final = {
+            "metadata": { "empresa": ticker, "periodo": f"{trimestre}/{ano}" },
+            "data": dados_estruturados,
+            "analise_completa": response_text
+        }
+
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s) RETURNING id",
+            (ticker, ano, trimestre, json.dumps(objeto_final), str(user_id))
+        )
+        inserted_id = cur.fetchone()[0]
+        objeto_final["id"] = inserted_id
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return objeto_final
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/analyze-call")
 async def analyze_earnings_call(

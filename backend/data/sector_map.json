@@ -1,0 +1,11 @@
+{
+    "financeiro": ["B3SA3", "BBAS3", "BBDC3", "BBDC4", "BBSE3", "BPAC11", "CXSE3", "ITUB4", "ITSA4", "PSSA3", "SANB11"],
+    "utilidades": ["AURE3", "CPFE3", "CPLE3", "CMIG4", "EGIE3", "ELET3", "ELET6", "ENGI11", "ENEV3", "EQTL3", "SBSP3", "TAEE11", "VBBR3"],
+    "materiais_basicos": ["BRAP4", "BRKM5", "CSNA3", "CMIN3", "GGBR4", "GOAU4", "KLBN11", "SUZB3", "USIM5", "VALE3"],
+    "petroleo_gas": ["CSAN3", "PETR3", "PETR4", "PRIO3", "RECV3", "UGPA3"],
+    "consumo_varejo": ["ALOS3", "ASAI3", "AZZA3", "CEAB3", "COGN3", "CURY3", "CYRE3", "DIRR3", "EZTC3", "IGTI11", "LREN3", "MGLU3", "MRVE3", "MULT3", "NTCO3", "RADL3", "SMFT3", "VAMO3", "VIVA3", "YDUQ3"],
+    "alimentos": ["ABEV3", "BEEF3", "JBSS3"],
+    "industrial_logistica": ["EMBR3", "POMO4", "RAIL3", "WEGE3"],
+    "saude": ["FLRY3", "HAPV3", "HYPE3", "RDOR3"],
+    "tecnologia_telecom": ["TIMS3", "TOTS3", "VIVT3"]
+}
