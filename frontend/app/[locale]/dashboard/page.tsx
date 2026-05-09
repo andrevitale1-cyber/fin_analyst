@@ -142,7 +142,7 @@ export default function FinancialDashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Estado para escolher qual tipo de análise
-  const [tipoAnalise, setTipoAnalise] = useState<'pdf' | 'call'>('pdf');
+  const [tipoAnalise, setTipoAnalise] = useState<'pdf' | 'call' | 'auto'>('pdf');
 
   // --- TRIAL STATE ---
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
@@ -238,7 +238,11 @@ export default function FinancialDashboard() {
   };
 
   const handleAnalyze = async () => {
-    if (!empresa || !ano || !file) { alert("Preencha todos os campos e anexe o PDF."); return; }
+    const isAuto = tipoAnalise === 'auto';
+    if (!empresa || !ano || (!isAuto && !file)) { 
+      alert(isAuto ? "Preencha o ticker e o ano." : "Preencha todos os campos e anexe o PDF."); 
+      return; 
+    }
     if (!user) return;
 
     // Bloqueia se trial expirado e não é premium
@@ -250,13 +254,21 @@ export default function FinancialDashboard() {
       formData.append("ano", ano);
       formData.append("trimestre", trimestre);
       formData.append("user_id", user.id);
-      formData.append("empresa", empresa.toUpperCase());
-      formData.append("file", file);
       formData.append("locale", locale);
 
-      const urlBackend = tipoAnalise === 'pdf'
-        ? `${API_BASE}/api/analyze`
-        : `${API_BASE}/api/analyze-call`;
+      let urlBackend;
+      if (tipoAnalise === 'pdf') {
+        urlBackend = `${API_BASE}/api/analyze`;
+        formData.append("empresa", empresa.toUpperCase());
+        formData.append("file", file!);
+      } else if (tipoAnalise === 'call') {
+        urlBackend = `${API_BASE}/api/analyze-call`;
+        formData.append("empresa", empresa.toUpperCase());
+        formData.append("file", file!);
+      } else {
+        urlBackend = `${API_BASE}/api/analyze-auto`;
+        formData.append("ticker", empresa.toUpperCase());
+      }
 
       const response = await fetch(urlBackend, { method: "POST", body: formData });
 
@@ -599,7 +611,7 @@ export default function FinancialDashboard() {
                 </div>
 
                 {/* BOTÕES DE ALTERNÂNCIA (TOGGLE) */}
-                <div className="flex justify-center gap-4 mb-8">
+                <div className="flex flex-wrap justify-center gap-4 mb-8">
                     <button 
                       type="button" 
                       onClick={() => setTipoAnalise('pdf')} 
@@ -613,6 +625,13 @@ export default function FinancialDashboard() {
                       className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${tipoAnalise === 'call' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/20' : 'bg-[#161b22] border border-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-800'}`}
                     >
                       {t("newAnalysis.callTranscript")}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setTipoAnalise('auto')} 
+                      className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${tipoAnalise === 'auto' ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/20' : 'bg-[#161b22] border border-gray-800 text-gray-400 hover:text-gray-200 hover:bg-gray-800'}`}
+                    >
+                      {t("newAnalysis.autoSearch")}
                     </button>
                 </div>
 
@@ -634,21 +653,29 @@ export default function FinancialDashboard() {
                     <div className="space-y-2"><label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t("newAnalysis.quarter")}</label><select className="w-full bg-[#0d1117] border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all appearance-none" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">{t("newAnalysis.q1")}</option><option value="2T">{t("newAnalysis.q2")}</option><option value="3T">{t("newAnalysis.q3")}</option><option value="4T">{t("newAnalysis.q4")}</option></select></div>
                   </div>
                   
-                  {/* A CAIXA DE UPLOAD AGORA APARECE SEMPRE */}
-                  <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 md:p-10 flex flex-col items-center justify-center bg-[#0d1117]/50 hover:bg-[#0d1117] hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
-                    <input type="file" onChange={handleFileChange} accept=".pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                    <div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div>
-                    <p className="text-gray-300 font-medium text-lg text-center">
-                      {file ? file.name : (tipoAnalise === 'pdf' ? t("newAnalysis.uploadPdf") : t("newAnalysis.uploadCall"))}
-                    </p>
-                    <p className="text-gray-500 text-sm mt-2 text-center">{t("newAnalysis.supportPdf")}</p>
-                  </div>
+                  {/* A CAIXA DE UPLOAD OU INFO AUTO */}
+                  {tipoAnalise === 'auto' ? (
+                    <div className="border-2 border-dashed border-emerald-500/30 rounded-xl p-6 md:p-10 flex flex-col items-center justify-center bg-emerald-500/5 hover:bg-emerald-500/10 transition-all duration-300 relative">
+                      <div className="bg-emerald-500/20 p-4 rounded-full mb-4"><Zap className="text-emerald-400 w-8 h-8 animate-pulse" /></div>
+                      <p className="text-emerald-100 font-medium text-lg text-center">{t("newAnalysis.autoSearchInfo")}</p>
+                      <p className="text-emerald-500/60 text-sm mt-2 text-center">Nós cuidamos do trabalho pesado.</p>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 md:p-10 flex flex-col items-center justify-center bg-[#0d1117]/50 hover:bg-[#0d1117] hover:border-blue-500/50 transition-all duration-300 cursor-pointer relative">
+                      <input type="file" onChange={handleFileChange} accept=".pdf" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                      <div className="bg-gray-800 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform duration-300"><UploadCloud className="text-blue-400 w-8 h-8" /></div>
+                      <p className="text-gray-300 font-medium text-lg text-center">
+                        {file ? file.name : (tipoAnalise === 'pdf' ? t("newAnalysis.uploadPdf") : t("newAnalysis.uploadCall"))}
+                      </p>
+                      <p className="text-gray-500 text-sm mt-2 text-center">{t("newAnalysis.supportPdf")}</p>
+                    </div>
+                  )}
 
                   <button 
                     onClick={handleAnalyze} 
-                    className={`w-full mt-8 text-white font-bold py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2 ${tipoAnalise === 'pdf' ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/20' : 'bg-purple-600 hover:bg-purple-500 shadow-purple-900/20'}`}
+                    className={`w-full mt-8 text-white font-bold py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2 \${tipoAnalise === 'pdf' ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-900/20' : tipoAnalise === 'call' ? 'bg-purple-600 hover:bg-purple-500 shadow-purple-900/20' : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/20'}`}
                   >
-                    <Activity size={20} /> {tipoAnalise === 'pdf' ? t('newAnalysis.generateReport') : t('newAnalysis.generateCall')}
+                    <Activity size={20} /> {tipoAnalise === 'pdf' ? t('newAnalysis.generateReport') : tipoAnalise === 'call' ? t('newAnalysis.generateCall') : t('newAnalysis.generateAuto')}
                   </button>
                 </div>
               </>
