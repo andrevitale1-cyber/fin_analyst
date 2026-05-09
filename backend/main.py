@@ -170,16 +170,23 @@ def parse_results(text):
             return cleaned
         except: return []
 
-    conclusao_match = re.search(r'(?:Seção 5|Conclusão).*?[\:\–\-]\s*(.*?)(?=(?:Seção 6|Nota Final|Nota Geral|\*\*Nota Geral|$))', text, re.DOTALL | re.IGNORECASE)
-    conclusao = conclusao_match.group(1).strip() if conclusao_match else "Ver análise completa no texto."
+    # Captura a Conclusão/Tese de Investimento (Seção 5)
+    conclusao_match = re.search(r'(?:Seção 5|Conclusão).*?[\:\–\-]?\s*(.*?)(?=(?:Seção 6|Nota Final|Nota Geral|\*\*Nota Geral|$))', text, re.DOTALL | re.IGNORECASE)
+    conclusao = conclusao_match.group(1).strip() if conclusao_match else "Análise concluída. Ver detalhes no relatório."
+
+    # Se a conclusão capturada for muito curta ou falhar, tenta pegar o parágrafo inicial
+    if len(conclusao) < 10:
+        intro_match = re.match(r'^(.*?)(?=Seção 1)', text, re.DOTALL | re.IGNORECASE)
+        if intro_match:
+            conclusao = intro_match.group(1).strip()
 
     return {
-        "receita_nota": get_note(r'Seção 1.*?(\d(?:[\.,]\d)?)\/5', text),
-        "rentabilidade_nota": get_note(r'Seção 2.*?(\d(?:[\.,]\d)?)\/5', text),
-        "divida_nota": get_note(r'Seção 3.*?(\d(?:[\.,]\d)?)\/5', text),
-        "lucro_nota": get_note(r'Seção 4.*?(\d(?:[\.,]\d)?)\/5', text),
-        "nota_geral": get_note(r'Nota Geral.*?(\d(?:[\.,]\d)?)\/5', text),
-        "tese_investimento": conclusao.replace('*', ''),
+        "receita_nota": get_note(r'Nota Seção 1:.*?(\d(?:[\.,]\d)?)\/5', text) or get_note(r'Seção 1.*?(\d(?:[\.,]\d)?)\/5', text),
+        "rentabilidade_nota": get_note(r'Nota Seção 2:.*?(\d(?:[\.,]\d)?)\/5', text) or get_note(r'Seção 2.*?(\d(?:[\.,]\d)?)\/5', text),
+        "divida_nota": get_note(r'Nota Seção 3:.*?(\d(?:[\.,]\d)?)\/5', text) or get_note(r'Seção 3.*?(\d(?:[\.,]\d)?)\/5', text),
+        "lucro_nota": get_note(r'Nota Seção 4:.*?(\d(?:[\.,]\d)?)\/5', text) or get_note(r'Seção 4.*?(\d(?:[\.,]\d)?)\/5', text),
+        "nota_geral": get_note(r'Nota Geral:.*?(\d(?:[\.,]\d)?)\/5', text) or get_note(r'Nota Geral.*?(\d(?:[\.,]\d)?)\/5', text),
+        "tese_investimento": conclusao.replace('*', '').strip(),
         "chart_data": get_chart_data(text),
     }
 
