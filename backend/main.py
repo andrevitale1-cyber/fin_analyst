@@ -102,7 +102,7 @@ def init_db():
 init_db()
 
 # --- AUXILIARES ---
-def extract_text_from_pdf_bytes(file_bytes, max_pages=12):
+def extract_text_from_pdf_bytes(file_bytes, max_pages=30):
     """
     Lê o PDF, mas limita-se às primeiras 'max_pages' para não explodir 
     a memória RAM (OOM Kill) nos servidores gratuitos do Render.
@@ -300,9 +300,9 @@ async def analyze_report(
 
     conn = None
     try:
-        print("📄 [PASSO 2] Extraindo texto do Relatório (Sem limite de páginas)...")
+        print("📄 [PASSO 2] Extraindo texto do Relatório (Limite de 30 páginas)...")
         contents = await file.read()
-        pdf_text = extract_text_from_pdf_bytes(contents, max_pages=999)
+        pdf_text = extract_text_from_pdf_bytes(contents, max_pages=30)
         print(f"✅ [PASSO 3] Texto lido! Foram extraídos {len(pdf_text)} caracteres.")
         
         language_instruction = "IMPORTANT: Write the ENTIRE analysis in English. All section titles, labels, scores, text and conclusions must be in English.\n\n" if locale == "en" else ""
@@ -451,7 +451,7 @@ async def analyze_report_auto(
         raise HTTPException(status_code=500, detail="Erro ao baixar o relatório.")
     
     # 3. Extrair Texto
-    pdf_text = extract_text_from_pdf_bytes(pdf_content, max_pages=999)
+    pdf_text = extract_text_from_pdf_bytes(pdf_content, max_pages=30)
     
     # 4. Construir Prompt Profissional
     prompt = builder.build_prompt(ticker, pdf_text, locale=locale)
