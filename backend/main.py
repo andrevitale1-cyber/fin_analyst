@@ -310,64 +310,14 @@ async def analyze_report(
         print("📄 [PASSO 2] Extraindo texto do Relatório (Limite de 30 páginas)...")
         contents = await file.read()
         pdf_text = extract_text_from_pdf_bytes(contents, max_pages=30)
+        
+        if not pdf_text or len(pdf_text.strip()) < 100:
+            raise HTTPException(status_code=400, detail="O PDF parece estar vazio ou não foi possível extrair o texto de forma legível. Verifique se o arquivo não está protegido ou corrompido.")
+            
         print(f"✅ [PASSO 3] Texto lido! Foram extraídos {len(pdf_text)} caracteres.")
         
-        language_instruction = "IMPORTANT: Write the ENTIRE analysis in English. All section titles, labels, scores, text and conclusions must be in English.\n\n" if locale == "en" else ""
-
-        prompt = f"""
- {language_instruction}REGRAS DE FORMATAÇÃO E ESTILO (Padrão Editorial / Equity Research Sênior):
-Tom de Voz: Seja profissional, elegante, analítico e jornalístico. Crie uma narrativa fluida em vez de apenas jogar dados. Foque na geração de valor.
-
-Formatação Visual: Utilize Tabelas em Markdown (ex: Segmento | 3T24 | 3T25 | Variação) sempre que houver quebra de receitas por segmento, linhas de crédito ou revisão de Guidance. Use bullet points para listar destaques operacionais.
-
-Apresentação Numérica: Escreva os números por extenso com até duas casas decimais (ex: "R$ 11,87 bilhões", "aumento de 13,1%", "expansão de 0,6 p.p."). NÃO use LaTeX.
-
-SISTEMA DE NOTAS: Todas as notas devem ser estritamente números inteiros (1, 2, 3, 4 ou 5) e seguir exatamente o formato Nota Seção X: Y/5.
-
-ESTRUTURA OBRIGATÓRIA DE RESPOSTA:
-[Parágrafo Introdutório]
-(Resuma o trimestre da empresa).
-
-Seção 1: Evolução Operacional e Top Line
-(Analise o crescimento da Receita Líquida. Desconstrua o crescimento por segmento em uma tabela Markdown).
-Nota Seção 1: X/5
-
-Seção 2: Rentabilidade e Margens
-(Analise o EBITDA, Margens e Despesas Operacionais).
-Nota Seção 2: X/5
-
-Seção 3: Estrutura de Capital e Gestão de Risco
-(Analise a Geração de Caixa Livre, Dívida).
-Nota Seção 3: X/5
-
-Seção 4: Sumário Executivo do Lucro Líquido
-(Analise o Bottom-Line).
-Nota Seção 4: X/5
-
-Seção 5: Conclusão Estratégica e Outlook
-(Sintetize a análise de forma coesa).
-
-Seção 6: Nota Final
-Nota Geral: X/5
-
-**Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)**
-Extraia o histórico financeiro dos trimestres disponíveis EXATAMENTE no formato de um array JSON dentro de um bloco de código markdown `json ... `. Não coloque NENHUM texto antes ou depois do bloco de código json.
-Chaves obrigatórias em todos os trimestres: 
-"name" (nome do trimestre, ex: "3T25"), 
-"receita" (valor financeiro ABSOLUTO. Ex: 664500000), 
-"lucro" (Obrigatório. Valor do Lucro Líquido ABSOLUTO. Se prejuízo, negativo), 
-"divida" (Obrigatório. Dívida Líquida ou Bruta. Se não houver = 0),
-"ebitda" (Obrigatório. EBITDA ou Resultado Operacional. Se não houver = 0),
-"margemBruta" (número percentual como float, ex: 15.5), 
-"margemLiquida" (número percentual como float, ex: 10.2).
-
-IMPORTANTE: Apenas no objeto do ÚLTIMO trimestre (o mais recente), inclua as seguintes chaves:
-1. "composicao_receita": OBRIGATÓRIO. JSON detalhando a composição da receita. Subdivida se houver várias naturezas (ex: {{"Canais": {{"Físico": 100, "Web": 50}}, "Geografia": {{"Brasil": 150}}}}). Use valores absolutos.
-2. "despesas_var": OBRIGATÓRIO. Lista de dicionários com a variação percentual A/A das linhas de despesa (SG&A, Administrativas, Vendas). Aumento = positivo, Queda = negativo. Se não achar no texto, extraia do DRE. Ex: [{{"nome": "Vendas", "var_pct": 5.2}}, {{"nome": "Administrativas", "var_pct": -1.5}}]. Se for impossível achar, retorne [{{"nome": "Despesas Gerais", "var_pct": 0.0}}].
-    
-    DADOS DO RELEASE (Use apenas o relevante):
-    {pdf_text[:100000]}
-        """
+        builder = PromptBuilder()
+        prompt = builder.build_prompt(empresa, pdf_text, locale=locale)
 
         print("🧠 [PASSO 4] Enviando para o Google Gemini via Streaming (sem timeout fixo)...")
         

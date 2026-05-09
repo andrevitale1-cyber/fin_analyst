@@ -36,54 +36,52 @@ class PromptBuilder:
         elif sector == "utilidades":
             sector_rules = "- OBRIGATÓRIO: Avaliação da relação Dívida Líquida/EBITDA e previsibilidade regulatória."
 
-        language_instruction = "IMPORTANT: Write the ENTIRE analysis in English.\n\n" if locale == "en" else ""
+        language_instruction = "IMPORTANT: Write the analysis text in English, but ALWAYS KEEP the tags 'Seção 1:', 'Seção 2:', 'Nota Seção X: Y/5' and 'Nota Geral: Y/5' EXACTLY in Portuguese so the system can parse them.\n\n" if locale == "en" else ""
 
         prompt = f"""
 {language_instruction}
-ATUE COMO UM ANALISTA SÊNIOR DE EQUITY RESEARCH (ESTILO WALL STREET).
+ATUE COMO UM ANALISTA SÊNIOR DE EQUITY RESEARCH.
 Sua missão é realizar uma análise fundamentalista profunda da empresa {ticker.upper()}.
 
-FILTROS DE QUALIDADE (GUIDELINES):
-- Foco em alocação de capital e geração de valor no longo prazo.
-- Rigor na análise de despesas não-caixa (Stock Based Compensation).
-- Preferência por negócios com vantagens competitivas claras (Moats) e baixa intensidade de capital (Asset Light).
+REGRAS CRÍTICAS:
+1. USE APENAS OS DADOS FORNECIDOS ABAIXO. Se os dados forem insuficientes, diga 'Dados insuficientes' em vez de inventar números ou empresas.
+2. NUNCA USE 'Empresa Fictícia S.A.' ou dados de exemplo.
+3. MANTENHA AS ETIQUETAS 'Seção 1:', 'Seção 2:', 'Seção 3:', 'Seção 4:', 'Seção 5:', 'Seção 6:' e 'Seção 7:' EXATAMENTE ASSIM.
+
+FILTROS DE QUALIDADE:
+- Foco em alocação de capital e geração de valor.
+- Analise SBC (Stock Based Compensation) e vantagens competitivas.
 
 REGRAS SETORIAIS PARA {sector.upper()}:
 {sector_rules}
 
-ESTILO EDITORIAL:
-- Narrativa técnica, elegante e imparcial.
-- Formatação em tabelas Markdown para dados comparativos.
-- Notas inteiras de 1 a 5.
-
-ESTRUTURA OBRIGATÓRIA:
-[Introdução Analítica] (Resumo executivo do trimestre)
+ESTRUTURA OBRIGATÓRIA (MANTENHA OS NOMES DAS SEÇÕES EM PORTUGUÊS):
+[Introdução Analítica]
 
 Seção 1: Evolução Operacional e Top Line
 Nota Seção 1: X/5
 
 Seção 2: Rentabilidade e Eficiência de Margens
-(Incluir análise de SBC e Lucro Ajustado).
 Nota Seção 2: X/5
 
 Seção 3: Gestão de Capital e Liquidez
 Nota Seção 3: X/5
 
-Seção 4: Performance do Lucro Líquido e Valor ao Acionista
+Seção 4: Performance do Lucro Líquido
 Nota Seção 4: X/5
 
 Seção 5: Conclusão Estratégica e Rating Final
-(Veredito sobre a qualidade do negócio e riscos futuros).
+(Veredito sobre a qualidade).
 
 Seção 6: Nota Final
 Nota Geral: X/5
 
-**Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)**
+**Seção 7: Dados Estruturados para Gráficos**
 Retorne EXATAMENTE um bloco de código JSON para o frontend:
 ```json
 [
   {{
-    "name": "Period",
+    "name": "3T25",
     "receita": 0,
     "lucro": 0,
     "divida": 0,
@@ -97,7 +95,7 @@ Retorne EXATAMENTE um bloco de código JSON para o frontend:
 ]
 ```
 
-DADOS DO RELATÓRIO:
+DADOS REAIS DO RELATÓRIO PARA ANÁLISE:
 {pdf_text[:120000]}
 """
         return prompt
