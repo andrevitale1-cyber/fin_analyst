@@ -95,7 +95,8 @@ Retorne EXATAMENTE um bloco de código JSON para o frontend:
 ]
 ```
 
-DADOS REAIS DO RELATÓRIO PARA ANÁLISE:
+DADOS PARA ANÁLISE:
+Se houver um documento anexado, use-o como fonte primária. Caso contrário, use o texto abaixo:
 {pdf_text[:120000]}
 """
         return prompt

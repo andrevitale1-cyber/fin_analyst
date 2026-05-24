@@ -54,5 +54,12 @@
     "VALE3": "https://www.vale.com/pt/investidores/comunicados-resultados-e-relatorios",
     "VBBR3": "https://ri.vibraenergia.com.br/informacoes-financeiras/central-de-resultados/",
     "VIVT3": "https://ri.telefonica.com.br/informacoes-financeiras/central-de-resultados/",
-    "WEGE3": "https://ri.weg.net/informacoes-financeiras/central-de-resultados/"
+    "WEGE3": "https://ri.weg.net/informacoes-financeiras/central-de-resultados/",
+    "MSFT": "https://www.microsoft.com/en-us/investor/earnings/",
+    "AAPL": "https://investor.apple.com/investor-relations/default.aspx",
+    "GOOGL": "https://abc.xyz/investor/",
+    "AMZN": "https://ir.aboutamazon.com/quarterly-results/default.aspx",
+    "META": "https://investor.fb.com/investor-events/default.aspx",
+    "NVDA": "https://investor.nvidia.com/financial-info/quarterly-results/default.aspx",
+    "TSLA": "https://ir.tesla.com/press-releases"
 }

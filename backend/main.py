@@ -194,9 +194,33 @@ def parse_results(text):
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
 if GEMINI_API_KEY:
     genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    # Usando gemini-1.5-flash que é robusto para leitura de documentos
+    model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     model = None
+
+def upload_to_gemini(file_bytes, filename="temp_report.pdf"):
+    """
+    Faz o upload do PDF diretamente para a API do Google Gemini.
+    Isso permite que a IA 'veja' o documento original (tabelas, imagens, etc).
+    """
+    # Em ambientes como Render/Vercel, /tmp é o local padrão para arquivos temporários
+    temp_path = os.path.join("/tmp", filename) if os.path.exists("/tmp") else filename
+    try:
+        with open(temp_path, "wb") as f:
+            f.write(file_bytes)
+        
+        # Faz o upload usando o SDK
+        uploaded_file = genai.upload_file(path=temp_path, mime_type="application/pdf")
+        print(f"📁 Arquivo enviado ao Gemini: {uploaded_file.uri}")
+        return uploaded_file
+    except Exception as e:
+        print(f"❌ Erro no upload para Gemini: {e}")
+        return None
+    finally:
+        if os.path.exists(temp_path):
+            try: os.remove(temp_path)
+            except: pass
 
 TRIAL_DAYS = 7  # Duração do trial gratuito em dias
 
@@ -307,40 +331,47 @@ async def analyze_report(
 
     conn = None
     try:
-        print("📄 [PASSO 2] Extraindo texto do Relatório (Limite de 30 páginas)...")
+        print("📄 [PASSO 2] Preparando Relatório para IA (Upload Direto)...")
         contents = await file.read()
-        pdf_text = extract_text_from_pdf_bytes(contents, max_pages=30)
         
-        if not pdf_text or len(pdf_text.strip()) < 100:
-            raise HTTPException(status_code=400, detail="O PDF parece estar vazio ou não foi possível extrair o texto de forma legível. Verifique se o arquivo não está protegido ou corrompido.")
+        # Faz upload direto para o Gemini
+        gemini_file = upload_to_gemini(contents, filename=f"report_{empresa}_{user_id}.pdf")
+        
+        # Fallback de texto caso o upload falhe
+        pdf_text = ""
+        if not gemini_file:
+            print("⚠️ Falha no upload nativo. Usando extrator de texto como fallback...")
+            pdf_text = extract_text_from_pdf_bytes(contents, max_pages=30)
+        else:
+            pdf_text = "[ARQUIVO PDF ANEXADO]"
             
-        print(f"✅ [PASSO 3] Texto lido! Foram extraídos {len(pdf_text)} caracteres.")
+        if not gemini_file and (not pdf_text or len(pdf_text.strip()) < 100):
+            raise HTTPException(status_code=400, detail="Não foi possível processar o PDF. Verifique se o arquivo não está protegido ou corrompido.")
+            
+        print(f"✅ [PASSO 3] Relatório processado! Enviando para o Gemini...")
         
         builder = PromptBuilder()
         prompt = builder.build_prompt(empresa, pdf_text, locale=locale)
 
         print("🧠 [PASSO 4] Enviando para o Google Gemini via Streaming (sem timeout fixo)...")
         
-        def _gerar_via_streaming(p: str) -> str:
-            """
-            Usa generate_content_stream para receber tokens incrementalmente.
-            Isso evita o timeout de 60s porque a resposta chega em pedaços.
-            O timeout real do SDK do Gemini é de ~240s, muito mais genéroso.
-            """
+        def _gerar_via_streaming(p: str, g_file=None) -> str:
             full_text = ""
+            # Se tivermos o arquivo, mandamos a lista [arquivo, prompt]
+            inputs = [g_file, p] if g_file else p
             for chunk in model.generate_content(
-                p,
+                inputs,
                 stream=True,
                 generation_config={"temperature": 0.7}
             ):
                 try:
                     full_text += chunk.text
                 except Exception:
-                    pass  # chunks vazios ou de controle
+                    pass
             return full_text
         
-        tarefa_gemini = asyncio.to_thread(_gerar_via_streaming, prompt)
-        # Timeout generousíssimo de 180s como última linha de defesa
+        tarefa_gemini = asyncio.to_thread(_gerar_via_streaming, prompt, gemini_file)
+        # Timeout generousíssimo de 180s
         response_text = await asyncio.wait_for(tarefa_gemini, timeout=180.0)
         print("✅ [PASSO 5] O Google Gemini respondeu com sucesso! Chars recebidos:", len(response_text))
         
@@ -398,7 +429,7 @@ async def analyze_report_auto(
     builder = PromptBuilder()
     
     # 1. Buscar PDF
-    pdf_url = fetcher.fetch_result_pdf(ticker)
+    pdf_url = fetcher.fetch_result_pdf(ticker, ano, trimestre)
     if not pdf_url:
         raise HTTPException(status_code=404, detail=f"Não foi possível localizar o relatório de {ticker} automaticamente.")
     
@@ -407,22 +438,34 @@ async def analyze_report_auto(
     if not pdf_content:
         raise HTTPException(status_code=500, detail="Erro ao baixar o relatório.")
     
-    # 3. Extrair Texto
-    pdf_text = extract_text_from_pdf_bytes(pdf_content, max_pages=30)
+    # 3. Upload para Gemini
+    gemini_file = upload_to_gemini(pdf_content, filename=f"auto_{ticker}.pdf")
+    
+    # Fallback de texto
+    pdf_text = ""
+    if not gemini_file:
+        pdf_text = extract_text_from_pdf_bytes(pdf_content, max_pages=30)
+    else:
+        pdf_text = "[ARQUIVO PDF ANEXADO]"
     
     # 4. Construir Prompt Profissional
     prompt = builder.build_prompt(ticker, pdf_text, locale=locale)
     
-    # 5. Chamar Gemini (reutilizando a lógica de streaming)
-    def _gerar_auto(p: str) -> str:
+    # 5. Chamar Gemini
+    def _gerar_auto(p: str, g_file=None) -> str:
         full_text = ""
-        for chunk in model.generate_content(p, stream=True, generation_config={"temperature": 0.7}):
+        inputs = [g_file, p] if g_file else p
+        for chunk in model.generate_content(
+            inputs, 
+            stream=True, 
+            generation_config={"temperature": 0.7}
+        ):
             try: full_text += chunk.text
             except: pass
         return full_text
 
     try:
-        tarefa_gemini = asyncio.to_thread(_gerar_auto, prompt)
+        tarefa_gemini = asyncio.to_thread(_gerar_auto, prompt, gemini_file)
         response_text = await asyncio.wait_for(tarefa_gemini, timeout=180.0)
         
         # 6. Parse e Salvar
@@ -465,32 +508,37 @@ async def analyze_earnings_call(
 
     conn = None
     try:
-        print("📄 [PASSO 2] Extraindo texto do PDF (Sem limite de páginas estrito)...")
+        print("📄 [PASSO 2] Preparando Transcrição para IA (Upload Direto)...")
         contents = await file.read()
-        texto_transcricao = extract_text_from_pdf_bytes(contents, max_pages=100)
-        print(f"✅ [PASSO 3] PDF lido com sucesso! Foram extraídos {len(texto_transcricao)} caracteres.")
+        
+        # Upload direto para Gemini
+        gemini_file = upload_to_gemini(contents, filename=f"call_{empresa}_{user_id}.pdf")
+        
+        # Fallback de texto
+        texto_transcricao = ""
+        if not gemini_file:
+            texto_transcricao = extract_text_from_pdf_bytes(contents, max_pages=100)
+        else:
+            texto_transcricao = "[ARQUIVO PDF ANEXADO]"
+
+        print(f"✅ [PASSO 3] Call processada! Enviando para o Gemini...")
         
         language_instruction_call = "IMPORTANT: Write the ENTIRE summary in English. All text, labels, timestamps, insights and conclusions must be in English.\n\n" if locale == "en" else ""
 
         prompt = f"""
 {language_instruction_call}Atue como um Analista Financeiro Sênior. Resuma o Earnings Call da {empresa} de forma ultra-objetiva.
 Para cada insight, indique obrigatoriamente o minuto/timestamp aproximado extraído do texto (ex: [12:45]).
-
-Foque exclusivamente em:
-1. Expansões e Crescimento: Planos de novas lojas/unidades, entrada em novos mercados e CAPEX destinado a expansão.
-2. Projeções e Guidance: Números específicos para os próximos meses/trimestres (Receita, Margens, EBITDA).
-3. Tom da Gestão e Q&A: Sentimento dos executivos e as 3 perguntas mais críticas feitas pelos analistas.
-
 Texto da Transcrição:
 {texto_transcricao[:250000]}
         """
 
         print("🧠 [PASSO 4] Enviando para o Google Gemini via Streaming (sem timeout fixo)...")
         
-        def _gerar_call_via_streaming(p: str) -> str:
+        def _gerar_call_via_streaming(p: str, g_file=None) -> str:
             full_text = ""
+            inputs = [g_file, p] if g_file else p
             for chunk in model.generate_content(
-                p,
+                inputs,
                 stream=True,
                 generation_config={"temperature": 0.5}
             ):
@@ -500,7 +548,7 @@ Texto da Transcrição:
                     pass
             return full_text
         
-        tarefa_gemini = asyncio.to_thread(_gerar_call_via_streaming, prompt)
+        tarefa_gemini = asyncio.to_thread(_gerar_call_via_streaming, prompt, gemini_file)
         response_text = await asyncio.wait_for(tarefa_gemini, timeout=180.0)
         print("✅ [PASSO 5] O Google Gemini respondeu com sucesso! Chars:", len(response_text))
         
