@@ -12,18 +12,21 @@ import asyncio
 import stripe
 from pypdf import PdfReader
 from dotenv import load_dotenv
+# Carrega variáveis de ambiente
+load_dotenv()
+
 from report_generator import router as report_router
 from agents.auto_fetcher import AutoFetcher
 from agents.prompt_builder import PromptBuilder
+from agents.x_bot_router import router as x_bot_router
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
-# Carrega variáveis de ambiente
-load_dotenv()
 
 # --- CONFIGURAÇÕES GERAIS ---
 app = FastAPI(title="API Analisador Financeiro")
 
 app.include_router(report_router)
+app.include_router(x_bot_router)
 
 # --- CONFIGURAÇÃO DO CORS ---
 origins = ["*"]
@@ -56,6 +59,8 @@ def get_db_connection():
         raise HTTPException(status_code=500, detail="Erro ao conectar no banco de dados.")
 
 def init_db():
+    conn = None
+    cur = None
     try:
         conn = get_db_connection()
         cur = conn.cursor()
@@ -92,12 +97,29 @@ def init_db():
             );
         ''')
 
+        # Tabela de histórico do bot do X para evitar spam e duplicatas
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS x_bot_history (
+                id SERIAL PRIMARY KEY,
+                tweet_id TEXT UNIQUE NOT NULL,
+                usuario_autor TEXT,
+                texto_original TEXT,
+                resposta_enviada TEXT,
+                data_resposta TIMESTAMP DEFAULT NOW()
+            );
+        ''')
+
         conn.commit()
-        cur.close()
-        conn.close()
         print("✅ Banco de dados inicializado com sucesso!")
     except Exception as e:
         print(f"⚠️ Erro na inicialização do banco: {e}")
+    finally:
+        if cur:
+            try: cur.close()
+            except: pass
+        if conn:
+            try: conn.close()
+            except: pass
 
 init_db()
 
@@ -425,6 +447,9 @@ async def analyze_report_auto(
 ):
     print(f"🚀 [AUTO] Iniciando Análise Automática para {ticker}")
     
+    if not model:
+        raise HTTPException(status_code=500, detail="Erro: Chave Gemini não encontrada.")
+
     fetcher = AutoFetcher()
     builder = PromptBuilder()
     
@@ -464,6 +489,7 @@ async def analyze_report_auto(
             except: pass
         return full_text
 
+    conn = None
     try:
         tarefa_gemini = asyncio.to_thread(_gerar_auto, prompt, gemini_file)
         response_text = await asyncio.wait_for(tarefa_gemini, timeout=180.0)
@@ -486,11 +512,13 @@ async def analyze_report_auto(
         objeto_final["id"] = inserted_id
         conn.commit()
         cur.close()
-        conn.close()
         
         return objeto_final
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if conn:
+            conn.close()
 
 @app.post("/api/analyze-call")
 async def analyze_earnings_call(
@@ -578,7 +606,7 @@ Texto da Transcrição:
         return objeto_final
 
     except asyncio.TimeoutError:
-        print("❌ [ERRO] Tempo limite de 60 segundos excedido!")
+        print("❌ [ERRO] Tempo limite de 180 segundos excedido!")
         raise HTTPException(status_code=504, detail="O servidor da IA demorou muito a responder. Tente novamente.")
     except Exception as e:
         erro_str = str(e)
@@ -717,6 +745,30 @@ def fix_database_clerk():
     finally:
         cur.close()
         conn.close()
+
+# --- AGENDADOR AUTOMATICO EM BACKGROUND DO BOT DO X ---
+async def start_x_bot_scheduler():
+    from agents.x_replier_agent import XReplierAgent
+    agent = XReplierAgent()
+    
+    # Espera 1 minuto (60s) apos o startup do servidor para seguranca
+    await asyncio.sleep(60)
+    
+    while True:
+        try:
+            print("🕒 [Scheduler] Iniciando varredura automatica programada do X Bot...")
+            # Busca e responde de forma automatica ate 3 tweets sobre mercado financeiro
+            agent.run_auto_replier(limit=3)
+        except Exception as e:
+            print(f"❌ [Scheduler] Erro no loop de agendamento do X Bot: {e}")
+        
+        # Espera 1 hora (3600 segundos) antes da proxima rodada
+        await asyncio.sleep(3600)
+
+@app.on_event("startup")
+async def startup_event():
+    # Inicia o agendador do X Bot em background de forma nao-bloqueante
+    asyncio.create_task(start_x_bot_scheduler())
 
 if __name__ == "__main__":
     import uvicorn

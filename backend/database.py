@@ -10,6 +10,9 @@ def get_db_connection():
     if not DATABASE_URL:
         raise ValueError("A variável DATABASE_URL não foi encontrada!")
 
-    # Conecta ao PostgreSQL
-    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    # Conecta ao PostgreSQL (limpa ?schema= se presente para evitar erros no psycopg2 local)
+    if "?schema=" in DATABASE_URL:
+        DATABASE_URL = DATABASE_URL.split("?schema=")[0]
+        
+    conn = psycopg2.connect(DATABASE_URL)
     return conn
