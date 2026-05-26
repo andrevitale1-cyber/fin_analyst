@@ -333,28 +333,13 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
             
             # 5. Envia / Simula o Envio
             success = False
+            log_dir = "backend" if os.path.exists("backend") else "."
+            log_file_path = os.path.join(log_dir, "x_tweets.log")
+            
             if self.mock_mode or "mock" in str(tweet_id):
                 # Modo Simulação: Grava nos logs locais e na tela
                 success = True
-                log_dir = "backend" if os.path.exists("backend") else "."
-                log_file_path = os.path.join(log_dir, "x_tweets.log")
-                
-                log_entry = (
-                    f"=========================================\n"
-                    f"DATA: {datetime.datetime.now().isoformat()}\n"
-                    f"STATUS: SIMULATED REPLY SUCCESS\n"
-                    f"TWEET ORIGINAL ID: {tweet_id}\n"
-                    f"AUTOR: @{username}\n"
-                    f"TEXTO ORIGINAL: {tweet_text}\n"
-                    f"RESPOSTA GERADA ({len(reply_text)} chars):\n{reply_text}\n"
-                    f"=========================================\n\n"
-                )
-                try:
-                    with open(log_file_path, "a", encoding="utf-8") as f:
-                        f.write(log_entry)
-                except Exception as ex:
-                    print(f"Erro ao salvar arquivo de log de tweets: {ex}")
-                
+                status_text = "SIMULATED REPLY SUCCESS"
                 print(f"[MOCK SUCCESS] Tweet respondido com sucesso simulado! Gravado em: {log_file_path}")
             else:
                 # Modo Real: Utiliza API Oficial do X via Tweepy
@@ -365,9 +350,28 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
                     )
                     print(f"[LIVE SUCCESS] Tweet enviado com sucesso no X respondendo @{username}!")
                     success = True
+                    status_text = "LIVE REPLY SUCCESS"
                 except Exception as e:
                     print(f"[X Bot] Falha critica ao publicar tweet real: {e}")
                     success = False
+                    status_text = f"LIVE REPLY FAILED: {e}"
+
+            # Grava no log x_tweets.log em ambas as situações para total transparência
+            log_entry = (
+                f"=========================================\n"
+                f"DATA: {datetime.datetime.now().isoformat()}\n"
+                f"STATUS: {status_text}\n"
+                f"TWEET ORIGINAL ID: {tweet_id}\n"
+                f"AUTOR: @{username}\n"
+                f"TEXTO ORIGINAL: {tweet_text}\n"
+                f"RESPOSTA GERADA ({len(reply_text)} chars):\n{reply_text}\n"
+                f"=========================================\n\n"
+            )
+            try:
+                with open(log_file_path, "a", encoding="utf-8") as f:
+                    f.write(log_entry)
+            except Exception as ex:
+                print(f"Erro ao salvar arquivo de log de tweets: {ex}")
 
             # 6. Salva no histórico local se publicado com sucesso
             if success:
