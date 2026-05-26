@@ -26,11 +26,18 @@ def get_db_connection():
         )
 
 @router.post("/trigger-run")
+@router.get("/trigger-run")
 async def trigger_auto_replier(limit: int = 3):
     """
     Executa manualmente uma varredura para responder a posts do X.
     Funciona em Mock Mode por padrão caso as credenciais não estejam configuradas.
     """
+    bot_enabled = os.getenv("X_BOT_ENABLED", "true").lower() == "true"
+    if not bot_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="O X Bot esta atualmente desativado/pausado nas configuracoes (.env)"
+        )
     try:
         agent = XReplierAgent()
         result = agent.run_auto_replier(limit=limit)
@@ -38,7 +45,7 @@ async def trigger_auto_replier(limit: int = 3):
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao executar robô do X: {str(e)}"
+            detail=f"Erro ao executar robo do X: {str(e)}"
         )
 
 @router.get("/history")

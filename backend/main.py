@@ -12,6 +12,27 @@ import asyncio
 import stripe
 from pypdf import PdfReader
 from dotenv import load_dotenv
+import sys
+
+def safe_print(*args, **kwargs):
+    sep = kwargs.get('sep', ' ')
+    text = sep.join(str(arg) for arg in args)
+    encoding = sys.stdout.encoding or 'utf-8'
+    try:
+        sys.stdout.write(text + kwargs.get('end', '\n'))
+        sys.stdout.flush()
+    except UnicodeEncodeError:
+        try:
+            safe_text = text.encode(encoding, errors='replace').decode(encoding)
+            sys.stdout.write(safe_text + kwargs.get('end', '\n'))
+            sys.stdout.flush()
+        except Exception:
+            safe_text = text.encode('ascii', errors='replace').decode('ascii')
+            sys.stdout.write(safe_text + kwargs.get('end', '\n'))
+            sys.stdout.flush()
+
+print = safe_print
+
 # Carrega variáveis de ambiente
 load_dotenv()
 
@@ -758,9 +779,13 @@ async def start_x_bot_scheduler():
     
     while True:
         try:
-            print("[Scheduler] Iniciando varredura automatica programada do X Bot...")
-            # Busca e responde de forma automatica ate 3 tweets sobre mercado financeiro
-            agent.run_auto_replier(limit=3)
+            bot_enabled = os.getenv("X_BOT_ENABLED", "true").lower() == "true"
+            if not bot_enabled:
+                print("[Scheduler] O X Bot esta desativado no arquivo .env (X_BOT_ENABLED=False). Pulando rodada.")
+            else:
+                print("[Scheduler] Iniciando varredura automatica programada do X Bot...")
+                # Busca e responde de forma automatica ate 3 tweets sobre mercado financeiro
+                agent.run_auto_replier(limit=3)
         except Exception as e:
             print(f"[Scheduler] Erro no loop de agendamento do X Bot: {e}")
         

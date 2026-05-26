@@ -7,6 +7,26 @@ import tweepy
 import google.generativeai as genai
 from dotenv import load_dotenv
 from database import get_db_connection
+import sys
+
+def safe_print(*args, **kwargs):
+    sep = kwargs.get('sep', ' ')
+    text = sep.join(str(arg) for arg in args)
+    encoding = sys.stdout.encoding or 'utf-8'
+    try:
+        sys.stdout.write(text + kwargs.get('end', '\n'))
+        sys.stdout.flush()
+    except UnicodeEncodeError:
+        try:
+            safe_text = text.encode(encoding, errors='replace').decode(encoding)
+            sys.stdout.write(safe_text + kwargs.get('end', '\n'))
+            sys.stdout.flush()
+        except Exception:
+            safe_text = text.encode('ascii', errors='replace').decode('ascii')
+            sys.stdout.write(safe_text + kwargs.get('end', '\n'))
+            sys.stdout.flush()
+
+print = safe_print
 
 load_dotenv()
 
@@ -113,7 +133,7 @@ class XReplierAgent:
             if row:
                 return json.loads(row[0])
         except Exception as e:
-            print(f"❌ [X Bot] Erro ao buscar empresa no banco: {e}")
+            print(f"[X Bot] Erro ao buscar empresa no banco: {e}")
         finally:
             if cur: cur.close()
             if conn: conn.close()
@@ -166,18 +186,18 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
             response = self.gemini_model.generate_content(prompt)
             reply = response.text.strip().replace('"', '')
         except Exception as e:
-            print(f"⚠️ Erro ao gerar resposta com {self.gemini_model.model_name if self.gemini_model else 'Gemini'}: {e}. Tentando fallback...")
+            print(f"[Gemini] Erro ao gerar resposta com {self.gemini_model.model_name if self.gemini_model else 'Gemini'}: {e}. Tentando fallback...")
             try:
                 fallback_model = genai.GenerativeModel('gemini-pro')
                 response = fallback_model.generate_content(prompt)
                 reply = response.text.strip().replace('"', '')
             except Exception as ex:
-                print(f"⚠️ Falha no fallback: {ex}")
+                print(f"[Gemini] Falha no fallback: {ex}")
                 return default_reply[:280]
 
         # Garante limite estrito de caracteres
         if len(reply) > 280:
-            print(f"⚠️ Resposta da IA com {len(reply)} chars. Ajustando para caber nos 280...")
+            print(f"[Gemini] Resposta da IA com {len(reply)} chars. Ajustando para caber nos 280...")
             # Tenta cortar o texto mantendo o link intacto
             link_len = len(self.platform_url) + 5
             reply = reply[:280 - link_len] + f"... {self.platform_url}"
@@ -199,7 +219,7 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
             conn.commit()
             return True
         except Exception as e:
-            print(f"❌ [X Bot] Erro ao registrar histórico: {e}")
+            print(f"[X Bot] Erro ao registrar historico: {e}")
             return False
         finally:
             if cur: cur.close()
@@ -217,7 +237,7 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
             cur.execute("SELECT id FROM x_bot_history WHERE tweet_id = %s", (str(tweet_id),))
             return cur.fetchone() is not None
         except Exception as e:
-            print(f"❌ [X Bot] Erro ao checar histórico: {e}")
+            print(f"[X Bot] Erro ao checar historico: {e}")
             return False
         finally:
             if cur: cur.close()
