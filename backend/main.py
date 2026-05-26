@@ -44,7 +44,9 @@ def get_db_connection():
     try:
         db_url = os.getenv("DATABASE_URL")
         if db_url:
-            conn = psycopg2.connect(db_url, sslmode='require')
+            if "?schema=" in db_url:
+                db_url = db_url.split("?schema=")[0]
+            conn = psycopg2.connect(db_url)
         else:
             conn = psycopg2.connect(
                 host="localhost",
@@ -55,7 +57,7 @@ def get_db_connection():
             )
         return conn
     except Exception as e:
-        print(f"❌ Erro Crítico de Conexão com Banco: {e}")
+        print(f"[DB] Erro Critico de Conexao com Banco: {e}")
         raise HTTPException(status_code=500, detail="Erro ao conectar no banco de dados.")
 
 def init_db():
@@ -110,9 +112,9 @@ def init_db():
         ''')
 
         conn.commit()
-        print("✅ Banco de dados inicializado com sucesso!")
+        print("[DB] Banco de dados inicializado com sucesso!")
     except Exception as e:
-        print(f"⚠️ Erro na inicialização do banco: {e}")
+        print(f"[DB] Erro na inicializacao do banco: {e}")
     finally:
         if cur:
             try: cur.close()
@@ -756,11 +758,11 @@ async def start_x_bot_scheduler():
     
     while True:
         try:
-            print("🕒 [Scheduler] Iniciando varredura automatica programada do X Bot...")
+            print("[Scheduler] Iniciando varredura automatica programada do X Bot...")
             # Busca e responde de forma automatica ate 3 tweets sobre mercado financeiro
             agent.run_auto_replier(limit=3)
         except Exception as e:
-            print(f"❌ [Scheduler] Erro no loop de agendamento do X Bot: {e}")
+            print(f"[Scheduler] Erro no loop de agendamento do X Bot: {e}")
         
         # Espera 1 hora (3600 segundos) antes da proxima rodada
         await asyncio.sleep(3600)

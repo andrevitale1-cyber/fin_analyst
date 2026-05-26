@@ -54,13 +54,13 @@ class XReplierAgent:
                     access_token=self.access_token,
                     access_token_secret=self.access_token_secret
                 )
-                print("🐦 [X Bot] Conectado com sucesso à API Oficial do X!")
+                print("[X Bot] Conectado com sucesso a API Oficial do X!")
             except Exception as e:
-                print(f"⚠️ Erro ao inicializar Tweepy Client. Ativando Mock Mode. Detalhes: {e}")
+                print(f"[X Bot] Erro ao inicializar Tweepy Client. Ativando Mock Mode. Detalhes: {e}")
                 self.mock_mode = True
 
         if self.mock_mode:
-            print("🧪 [X Bot] ATENÇÃO: Iniciando em MOCK MODE (Simulação). Respostas serão gravadas no log local.")
+            print("[X Bot] ATENCAO: Iniciando em MOCK MODE (Simulacao). Respostas serao gravadas no log local.")
 
     def get_db_connection(self):
         return get_db_connection()
@@ -265,7 +265,7 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
         Busca publicações relevantes sobre bolsa e responde de forma personalizada.
         Funciona tanto em modo Oficial (Tweepy) quanto em modo Simulação (Mock).
         """
-        print(f"🚀 [X Bot] Iniciando varredura automatizada (Limite de processamento: {limit})...")
+        print(f"[X Bot] Iniciando varredura automatizada (Limite de processamento: {limit})...")
         
         candidates = []
         if self.mock_mode:
@@ -292,7 +292,7 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
                             "text": t.text
                         })
             except Exception as e:
-                print(f"❌ [X Bot] Erro na busca oficial da API do X. Alternando para simulação rápida: {e}")
+                print(f"[X Bot] Erro na busca oficial da API do X. Alternando para simulacao rapida: {e}")
                 candidates = self.get_mock_tweets()
 
         processed_count = 0
@@ -308,25 +308,25 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
 
             # 1. Ignora se já respondido antes
             if self.is_already_replied(tweet_id):
-                print(f"⏭️ [X Bot] Tweet {tweet_id} de @{username} já foi respondido. Pulando.")
+                print(f"[X Bot] Tweet {tweet_id} de @{username} ja foi respondido. Pulando.")
                 continue
 
             # 2. Detecta o ticker no tweet
             ticker = self.extract_ticker(tweet_text)
             if not ticker and "invalid" in tweet_id:
                 # Tweet irrelevante (ex: caminhar no parque)
-                print(f"⏭️ [X Bot] Tweet {tweet_id} de @{username} não possui contexto financeiro relevante. Pulando.")
+                print(f"[X Bot] Tweet {tweet_id} de @{username} nao possui contexto financeiro relevante. Pulando.")
                 continue
 
-            print(f"🔍 [X Bot] Analisando Tweet relevante de @{username}: '{tweet_text[:60]}...'")
-            print(f"🏷️ [X Bot] Ticker detectado: {ticker}")
+            print(f"[X Bot] Analisando Tweet relevante de @{username}: '{tweet_text[:60]}...'")
+            print(f"[X Bot] Ticker detectado: {ticker}")
 
             # 3. Busca notas do relatório no banco para enriquecer a resposta
             company_data = self.get_company_analysis_from_db(ticker)
             if company_data:
-                print(f"📈 [X Bot] Encontramos dados históricos para {ticker} no banco de dados!")
+                print(f"[X Bot] Encontramos dados historicos para {ticker} no banco de dados!")
             else:
-                print(f"ℹ️ [X Bot] Nenhuma análise anterior de {ticker} no banco. Usando template padrão/Gemini sem notas.")
+                print(f"[X Bot] Nenhuma analise anterior de {ticker} no banco. Usando template padrao/Gemini sem notas.")
 
             # 4. Cria a resposta personalizada
             reply_text = self.generate_reply_text_gemini(tweet_text, ticker, company_data)
@@ -355,7 +355,7 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
                 except Exception as ex:
                     print(f"Erro ao salvar arquivo de log de tweets: {ex}")
                 
-                print(f"📝 [MOCK SUCCESS] Tweet respondido com sucesso simulado! Gravado em: {log_file_path}")
+                print(f"[MOCK SUCCESS] Tweet respondido com sucesso simulado! Gravado em: {log_file_path}")
             else:
                 # Modo Real: Utiliza API Oficial do X via Tweepy
                 try:
@@ -363,10 +363,10 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
                         text=reply_text,
                         in_reply_to_tweet_id=tweet_id
                     )
-                    print(f"📢 [LIVE SUCCESS] Tweet enviado com sucesso no X respondendo @{username}!")
+                    print(f"[LIVE SUCCESS] Tweet enviado com sucesso no X respondendo @{username}!")
                     success = True
                 except Exception as e:
-                    print(f"❌ [X Bot] Falha crítica ao publicar tweet real: {e}")
+                    print(f"[X Bot] Falha critica ao publicar tweet real: {e}")
                     success = False
 
             # 6. Salva no histórico local se publicado com sucesso
