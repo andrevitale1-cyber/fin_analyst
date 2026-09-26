@@ -1,6 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
+from openai_client import OpenAIClient, OpenAIError
 
 load_dotenv()
 
@@ -11,32 +12,24 @@ class SearchClient:
 
     def search_financial_reports(self, ticker, ano, trimestre):
         """
-        Realiza uma busca por releases de resultados usando a API do Tavily.
+        Busca releases via Tavily, ou pela pesquisa web da OpenAI quando não há Tavily.
         """
-        if not self.api_key:
-            print("WARN: TAVILY_API_KEY não configurada. Pulando busca inteligente.")
-            return []
+        query = f"{ticker} {trimestre} {ano} release resultados filetype:pdf"
 
-        query = f"release de resultados {ticker} {trimestre} {ano} filetype:pdf"
-        
-        payload = {
-            "api_key": self.api_key,
-            "query": query,
-            "search_depth": "advanced",
-            "include_domains": [],
-            "exclude_domains": [],
-            "max_results": 5
-        }
-
-        try:
-            response = requests.post(self.base_url, json=payload, timeout=15)
-            if response.status_code == 200:
+        if self.api_key:
+            payload = {
+                "api_key": self.api_key, "query": query, "search_depth": "advanced",
+                "max_results": 5,
+            }
+            try:
+                response = requests.post(self.base_url, json=payload, timeout=15)
+                response.raise_for_status()
                 results = response.json().get("results", [])
-                # Retorna lista de dicts com title, url, content
-                return results
-            else:
-                print(f"ERROR: Erro na busca Tavily: {response.status_code} - {response.text}")
-                return []
-        except Exception as e:
-            print(f"ERROR: Exceção na busca Tavily: {e}")
+                if results:
+                    return results
+            except (requests.RequestException, ValueError):
+                pass
+        try:
+            return OpenAIClient().search_pdf_links(query)
+        except (OpenAIError, TimeoutError):
             return []

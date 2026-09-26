@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator
 from passlib.context import CryptContext
-import google.generativeai as genai
+from openai_client import OpenAIClient, OpenAIError
 import psycopg2
 import os
 import json
@@ -235,38 +235,6 @@ def parse_results(text):
         "chart_data": get_chart_data(text),
     }
 
-# --- CONFIGURAÇÃO GEMINI ---
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-    # Usando gemini-1.5-flash que é robusto para leitura de documentos
-    model = genai.GenerativeModel('gemini-2.5-flash')
-else:
-    model = None
-
-def upload_to_gemini(file_bytes, filename="temp_report.pdf"):
-    """
-    Faz o upload do PDF diretamente para a API do Google Gemini.
-    Isso permite que a IA 'veja' o documento original (tabelas, imagens, etc).
-    """
-    # Em ambientes como Render/Vercel, /tmp é o local padrão para arquivos temporários
-    temp_path = os.path.join("/tmp", filename) if os.path.exists("/tmp") else filename
-    try:
-        with open(temp_path, "wb") as f:
-            f.write(file_bytes)
-        
-        # Faz o upload usando o SDK
-        uploaded_file = genai.upload_file(path=temp_path, mime_type="application/pdf")
-        print(f"📁 Arquivo enviado ao Gemini: {uploaded_file.uri}")
-        return uploaded_file
-    except Exception as e:
-        print(f"❌ Erro no upload para Gemini: {e}")
-        return None
-    finally:
-        if os.path.exists(temp_path):
-            try: os.remove(temp_path)
-            except: pass
-
 TRIAL_DAYS = 7  # Duração do trial gratuito em dias
 
 # --- ROTAS ---
@@ -371,55 +339,20 @@ async def analyze_report(
 ):
     print(f"🔄 [PASSO 1] Iniciando Análise de Relatório (PDF) para User {user_id}: {empresa}")
     
-    if not model:
-        raise HTTPException(status_code=500, detail="Erro: Chave Gemini não encontrada.")
+    if not os.getenv("OPENAI_API_KEY", "").strip():
+        raise HTTPException(status_code=500, detail="Chave OPENAI_API_KEY não encontrada")
 
     conn = None
     try:
         print("📄 [PASSO 2] Preparando Relatório para IA (Upload Direto)...")
         contents = await file.read()
         
-        # Faz upload direto para o Gemini
-        gemini_file = upload_to_gemini(contents, filename=f"report_{empresa}_{user_id}.pdf")
-        
-        # Fallback de texto caso o upload falhe
-        pdf_text = ""
-        if not gemini_file:
-            print("⚠️ Falha no upload nativo. Usando extrator de texto como fallback...")
-            pdf_text = extract_text_from_pdf_bytes(contents, max_pages=30)
-        else:
-            pdf_text = "[ARQUIVO PDF ANEXADO]"
-            
-        if not gemini_file and (not pdf_text or len(pdf_text.strip()) < 100):
-            raise HTTPException(status_code=400, detail="Não foi possível processar o PDF. Verifique se o arquivo não está protegido ou corrompido.")
-            
-        print(f"✅ [PASSO 3] Relatório processado! Enviando para o Gemini...")
-        
-        builder = PromptBuilder()
-        prompt = builder.build_prompt(empresa, pdf_text, locale=locale)
+        prompt = PromptBuilder().build_prompt(empresa, "[ARQUIVO PDF ANEXADO]", locale=locale)
+        response_text = await asyncio.wait_for(
+            asyncio.to_thread(OpenAIClient().analyze_document, prompt, pdf_bytes=contents),
+            timeout=180.0,
+        )
 
-        print("🧠 [PASSO 4] Enviando para o Google Gemini via Streaming (sem timeout fixo)...")
-        
-        def _gerar_via_streaming(p: str, g_file=None) -> str:
-            full_text = ""
-            # Se tivermos o arquivo, mandamos a lista [arquivo, prompt]
-            inputs = [g_file, p] if g_file else p
-            for chunk in model.generate_content(
-                inputs,
-                stream=True,
-                generation_config={"temperature": 0.7}
-            ):
-                try:
-                    full_text += chunk.text
-                except Exception:
-                    pass
-            return full_text
-        
-        tarefa_gemini = asyncio.to_thread(_gerar_via_streaming, prompt, gemini_file)
-        # Timeout generousíssimo de 180s
-        response_text = await asyncio.wait_for(tarefa_gemini, timeout=180.0)
-        print("✅ [PASSO 5] O Google Gemini respondeu com sucesso! Chars recebidos:", len(response_text))
-        
         if not response_text.strip():
             raise HTTPException(status_code=500, detail="A IA retornou uma resposta vazia. Tente novamente.")
         
@@ -448,15 +381,15 @@ async def analyze_report(
         print(f"🎉 [PASSO 8] Análise concluída! ID: {inserted_id}. Retornando ao Frontend.")
         return objeto_final
 
-    except asyncio.TimeoutError:
+    except (asyncio.TimeoutError, TimeoutError):
         print("❌ [ERRO] Tempo limite de 180 segundos excedido!")
         raise HTTPException(status_code=504, detail="O servidor da IA demorou muito a responder. Tente com um PDF menor ou aguarde e tente novamente.")
-    except Exception as e:
-        erro_str = str(e)
-        print(f"❌ [ERRO CRÍTICO] Falha na análise: {erro_str}")
-        if "503" in erro_str or "high demand" in erro_str.lower() or "overloaded" in erro_str.lower():
-            raise HTTPException(status_code=503, detail="Os servidores do Google estão temporariamente sobrecarregados. Aguarde 1 minuto e tente novamente.")
-        raise HTTPException(status_code=500, detail=erro_str)
+    except HTTPException:
+        raise
+    except OpenAIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
+    except Exception:
+        raise HTTPException(status_code=500, detail="Não foi possível concluir a análise. Tente novamente.") from None
     finally:
         if conn: conn.close()
 
@@ -470,53 +403,32 @@ async def analyze_report_auto(
 ):
     print(f"🚀 [AUTO] Iniciando Análise Automática para {ticker}")
     
-    if not model:
-        raise HTTPException(status_code=500, detail="Erro: Chave Gemini não encontrada.")
+    if not os.getenv("OPENAI_API_KEY", "").strip():
+        raise HTTPException(status_code=500, detail="Chave OPENAI_API_KEY não encontrada")
 
     fetcher = AutoFetcher()
     builder = PromptBuilder()
     
-    # 1. Buscar PDF
-    pdf_url = fetcher.fetch_result_pdf(ticker, ano, trimestre)
-    if not pdf_url:
-        raise HTTPException(status_code=404, detail=f"Não foi possível localizar o relatório de {ticker} automaticamente.")
+    try:
+        document = await asyncio.wait_for(
+            asyncio.to_thread(fetcher.fetch_result_pdf, ticker, ano, trimestre), timeout=180.0,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    except (asyncio.TimeoutError, TimeoutError):
+        raise HTTPException(status_code=504, detail="A busca demorou muito. Faça o upload manual do PDF.") from None
+    if not document:
+        raise HTTPException(status_code=404, detail=f"Não foi possível localizar o relatório de {ticker}. Faça o upload manual do PDF.")
     
-    # 2. Download
-    pdf_content = fetcher.download_pdf(pdf_url)
-    if not pdf_content:
-        raise HTTPException(status_code=500, detail="Erro ao baixar o relatório.")
-    
-    # 3. Upload para Gemini
-    gemini_file = upload_to_gemini(pdf_content, filename=f"auto_{ticker}.pdf")
-    
-    # Fallback de texto
-    pdf_text = ""
-    if not gemini_file:
-        pdf_text = extract_text_from_pdf_bytes(pdf_content, max_pages=30)
-    else:
-        pdf_text = "[ARQUIVO PDF ANEXADO]"
-    
-    # 4. Construir Prompt Profissional
-    prompt = builder.build_prompt(ticker, pdf_text, locale=locale)
-    
-    # 5. Chamar Gemini
-    def _gerar_auto(p: str, g_file=None) -> str:
-        full_text = ""
-        inputs = [g_file, p] if g_file else p
-        for chunk in model.generate_content(
-            inputs, 
-            stream=True, 
-            generation_config={"temperature": 0.7}
-        ):
-            try: full_text += chunk.text
-            except: pass
-        return full_text
-
+    prompt = builder.build_prompt(ticker, "[ARQUIVO PDF ANEXADO]", locale=locale)
     conn = None
     try:
-        tarefa_gemini = asyncio.to_thread(_gerar_auto, prompt, gemini_file)
-        response_text = await asyncio.wait_for(tarefa_gemini, timeout=180.0)
-        
+        response_text = await asyncio.wait_for(
+            asyncio.to_thread(OpenAIClient().analyze_document, prompt,
+                              pdf_bytes=document.pdf_bytes, pdf_text=document.text),
+            timeout=180.0,
+        )
+
         # 6. Parse e Salvar
         dados_estruturados = parse_results(response_text)
         objeto_final = {
@@ -536,9 +448,17 @@ async def analyze_report_auto(
         conn.commit()
         cur.close()
         
+        # Fonte apenas na resposta HTTP; o formato persistido continua intacto.
+        objeto_final["source"] = {"name": document.source, "url": document.url}
         return objeto_final
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except (asyncio.TimeoutError, TimeoutError):
+        raise HTTPException(status_code=504, detail="O servidor da IA demorou muito a responder. Tente novamente.") from None
+    except HTTPException:
+        raise
+    except OpenAIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
+    except Exception:
+        raise HTTPException(status_code=500, detail="Não foi possível concluir a análise. Tente novamente.") from None
     finally:
         if conn:
             conn.close()
@@ -554,26 +474,16 @@ async def analyze_earnings_call(
 ):
     print(f"🎙️ [PASSO 1] Iniciando análise de Call para {empresa} ({trimestre}/{ano})")
     
-    if not model:
-        raise HTTPException(status_code=500, detail="Erro: Chave Gemini não encontrada.")
+    if not os.getenv("OPENAI_API_KEY", "").strip():
+        raise HTTPException(status_code=500, detail="Chave OPENAI_API_KEY não encontrada")
 
     conn = None
     try:
         print("📄 [PASSO 2] Preparando Transcrição para IA (Upload Direto)...")
         contents = await file.read()
         
-        # Upload direto para Gemini
-        gemini_file = upload_to_gemini(contents, filename=f"call_{empresa}_{user_id}.pdf")
-        
-        # Fallback de texto
-        texto_transcricao = ""
-        if not gemini_file:
-            texto_transcricao = extract_text_from_pdf_bytes(contents, max_pages=100)
-        else:
-            texto_transcricao = "[ARQUIVO PDF ANEXADO]"
+        texto_transcricao = "[ARQUIVO PDF ANEXADO]"
 
-        print(f"✅ [PASSO 3] Call processada! Enviando para o Gemini...")
-        
         language_instruction_call = "IMPORTANT: Write the ENTIRE summary in English. All text, labels, timestamps, insights and conclusions must be in English.\n\n" if locale == "en" else ""
 
         prompt = f"""
@@ -583,26 +493,11 @@ Texto da Transcrição:
 {texto_transcricao[:250000]}
         """
 
-        print("🧠 [PASSO 4] Enviando para o Google Gemini via Streaming (sem timeout fixo)...")
-        
-        def _gerar_call_via_streaming(p: str, g_file=None) -> str:
-            full_text = ""
-            inputs = [g_file, p] if g_file else p
-            for chunk in model.generate_content(
-                inputs,
-                stream=True,
-                generation_config={"temperature": 0.5}
-            ):
-                try:
-                    full_text += chunk.text
-                except Exception:
-                    pass
-            return full_text
-        
-        tarefa_gemini = asyncio.to_thread(_gerar_call_via_streaming, prompt, gemini_file)
-        response_text = await asyncio.wait_for(tarefa_gemini, timeout=180.0)
-        print("✅ [PASSO 5] O Google Gemini respondeu com sucesso! Chars:", len(response_text))
-        
+        response_text = await asyncio.wait_for(
+            asyncio.to_thread(OpenAIClient().analyze_document, prompt, pdf_bytes=contents),
+            timeout=180.0,
+        )
+
         if not response_text.strip():
             raise HTTPException(status_code=500, detail="A IA retornou uma resposta vazia. Tente novamente.")
         
@@ -628,15 +523,15 @@ Texto da Transcrição:
         print(f"🎉 [PASSO 7] Análise concluída! ID: {inserted_id}. Retornando ao Frontend.")
         return objeto_final
 
-    except asyncio.TimeoutError:
+    except (asyncio.TimeoutError, TimeoutError):
         print("❌ [ERRO] Tempo limite de 180 segundos excedido!")
         raise HTTPException(status_code=504, detail="O servidor da IA demorou muito a responder. Tente novamente.")
-    except Exception as e:
-        erro_str = str(e)
-        print(f"❌ [ERRO CRÍTICO] Falha na análise: {erro_str}")
-        if "503" in erro_str or "high demand" in erro_str.lower() or "overloaded" in erro_str.lower():
-            raise HTTPException(status_code=503, detail="Os servidores do Google estão temporariamente sobrecarregados. Aguarde 1 minuto e tente novamente.")
-        raise HTTPException(status_code=500, detail=erro_str)
+    except HTTPException:
+        raise
+    except OpenAIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
+    except Exception:
+        raise HTTPException(status_code=500, detail="Não foi possível concluir a análise. Tente novamente.") from None
     finally:
         if conn: conn.close()
     
@@ -769,33 +664,7 @@ def fix_database_clerk():
         cur.close()
         conn.close()
 
-# --- AGENDADOR AUTOMATICO EM BACKGROUND DO BOT DO X ---
-async def start_x_bot_scheduler():
-    from agents.x_replier_agent import XReplierAgent
-    agent = XReplierAgent()
-    
-    # Espera 1 minuto (60s) apos o startup do servidor para seguranca
-    await asyncio.sleep(60)
-    
-    while True:
-        try:
-            bot_enabled = os.getenv("X_BOT_ENABLED", "true").lower() == "true"
-            if not bot_enabled:
-                print("[Scheduler] O X Bot esta desativado no arquivo .env (X_BOT_ENABLED=False). Pulando rodada.")
-            else:
-                print("[Scheduler] Iniciando varredura automatica programada do X Bot...")
-                # Busca e responde de forma automatica ate 3 tweets sobre mercado financeiro
-                agent.run_auto_replier(limit=3)
-        except Exception as e:
-            print(f"[Scheduler] Erro no loop de agendamento do X Bot: {e}")
-        
-        # Espera 1 hora (3600 segundos) antes da proxima rodada
-        await asyncio.sleep(3600)
-
-@app.on_event("startup")
-async def startup_event():
-    # Inicia o agendador do X Bot em background de forma nao-bloqueante
-    asyncio.create_task(start_x_bot_scheduler())
+# Rascunhos do X são gerados sob demanda; sem agendamento automático.
 
 if __name__ == "__main__":
     import uvicorn

@@ -3,15 +3,12 @@ uvicorn
 pydantic
 bcrypt==3.2.2
 passlib==1.7.4
-google-generativeai
 psycopg2-binary
-pypdf
+pypdf>=4.0.0
 python-dotenv
 python-multipart
 stripe
-matplotlib==3.10.0
-pandas==2.2.3
-seaborn==0.13.2
 beautifulsoup4
 requests
 tweepy
+httpx>=0.27.0

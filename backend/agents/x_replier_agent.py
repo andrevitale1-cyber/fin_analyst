@@ -4,7 +4,7 @@ import json
 import random
 import datetime
 import tweepy
-import google.generativeai as genai
+from openai_client import OpenAIClient
 from dotenv import load_dotenv
 from database import get_db_connection
 import sys
@@ -37,7 +37,7 @@ class XReplierAgent:
         self.access_token = os.getenv("X_ACCESS_TOKEN")
         self.access_token_secret = os.getenv("X_ACCESS_TOKEN_SECRET")
         self.bearer_token = os.getenv("X_BEARER_TOKEN")
-        self.platform_url = os.getenv("PLATFORM_URL", "https://finanalyser.ai")
+        self.platform_url = os.getenv("PLATFORM_URL", "https://finanalyser.com.br")
         self.promo_tweet_url = os.getenv("PROMO_TWEET_URL", "https://x.com/Finanalyser_ai/status/2047846896727687269")
         
         # Ativa Mock Mode se alguma credencial de escrita estiver faltando
@@ -48,19 +48,7 @@ class XReplierAgent:
             self.access_token_secret
         ])
         
-        # Configuração do Gemini
-        gemini_key = os.getenv("GEMINI_API_KEY")
-        if gemini_key:
-            genai.configure(api_key=gemini_key)
-            try:
-                self.gemini_model = genai.GenerativeModel('gemini-1.5-flash')
-            except Exception:
-                try:
-                    self.gemini_model = genai.GenerativeModel('gemini-pro')
-                except Exception:
-                    self.gemini_model = None
-        else:
-            self.gemini_model = None
+        self.openai_client = OpenAIClient()
 
         # Inicialização do cliente Tweepy
         self.client = None
@@ -139,15 +127,15 @@ class XReplierAgent:
             if conn: conn.close()
         return None
 
-    def generate_reply_text_gemini(self, original_tweet, ticker, company_data=None):
+    def generate_reply_text(self, original_tweet, ticker, company_data=None):
         """
-        Usa o Google Gemini para gerar uma resposta ultra personalizada, persuasiva,
+        Usa a OpenAI para gerar uma resposta curta de rascunho,
         curta (máximo 280 caracteres) e no mesmo idioma/tom do tweet original.
         """
         # Template básico em caso de falha da IA
         default_reply = f"Já temos a análise completa de {ticker or 'esta empresa'} estruturada! Processamos receita, dividendos, divida e tese fundamentalista em segundos. Veja como funciona no nosso post oficial de lançamento: {self.promo_tweet_url}"
         
-        if not self.gemini_model:
+        if not self.openai_client.api_key:
             return default_reply[:280]
 
         # Constrói o contexto com base na análise do banco de dados (se houver)
@@ -165,7 +153,7 @@ class XReplierAgent:
             )
 
         prompt = f"""
-Você é o robô de divulgação oficial da plataforma FinAnalyst (finanalyser.ai), uma ferramenta de IA que lê relatórios financeiros (PDFs) de resultados e os resume em 30 segundos com notas fundamentalistas de 1 a 5 de forma ultra-profissional.
+Você é o robô de divulgação oficial da plataforma FinAnalyst (finanalyser.com.br), uma ferramenta de IA que lê relatórios financeiros (PDFs) de resultados e os resume em 30 segundos com notas fundamentalistas de 1 a 5 de forma ultra-profissional.
 
 Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpática, prestativa e altamente persuasiva, convidando o usuário a conhecer o FinAnalyst.
 
@@ -183,21 +171,14 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
 6. Nunca use aspas na resposta final.
 """
         try:
-            response = self.gemini_model.generate_content(prompt)
-            reply = response.text.strip().replace('"', '')
-        except Exception as e:
-            print(f"[Gemini] Erro ao gerar resposta com {self.gemini_model.model_name if self.gemini_model else 'Gemini'}: {e}. Tentando fallback...")
-            try:
-                fallback_model = genai.GenerativeModel('gemini-pro')
-                response = fallback_model.generate_content(prompt)
-                reply = response.text.strip().replace('"', '')
-            except Exception as ex:
-                print(f"[Gemini] Falha no fallback: {ex}")
-                return default_reply[:280]
+            reply = self.openai_client.chat_text(prompt).strip().replace('"', '')
+        except Exception:
+            print("[OpenAI] Não foi possível gerar o rascunho. Usando template.")
+            return default_reply[:280]
 
         # Garante limite estrito de caracteres
         if len(reply) > 280:
-            print(f"[Gemini] Resposta da IA com {len(reply)} chars. Ajustando para caber nos 280...")
+            print(f"[OpenAI] Resposta da IA com {len(reply)} chars. Ajustando para caber nos 280...")
             # Tenta cortar o texto mantendo o link intacto
             link_len = len(self.platform_url) + 5
             reply = reply[:280 - link_len] + f"... {self.platform_url}"
@@ -346,71 +327,24 @@ Sua tarefa é responder ao seguinte Tweet de forma ultra-personalizada, simpáti
             if company_data:
                 print(f"[X Bot] Encontramos dados historicos para {ticker} no banco de dados!")
             else:
-                print(f"[X Bot] Nenhuma analise anterior de {ticker} no banco. Usando template padrao/Gemini sem notas.")
+                print(f"[X Bot] Nenhuma analise anterior de {ticker} no banco. Usando template padrao/OpenAI sem notas.")
 
             # 4. Cria a resposta personalizada
-            reply_text = self.generate_reply_text_gemini(tweet_text, ticker, company_data)
+            reply_text = self.generate_reply_text(tweet_text, ticker, company_data)
             
-            # 5. Envia / Simula o Envio
-            success = False
-            log_dir = "backend" if os.path.exists("backend") else "."
-            log_file_path = os.path.join(log_dir, "x_tweets.log")
-            
-            if self.mock_mode or "mock" in str(tweet_id):
-                # Modo Simulação: Grava nos logs locais e na tela
-                success = True
-                status_text = "SIMULATED REPLY SUCCESS"
-                print(f"[MOCK SUCCESS] Tweet respondido com sucesso simulado! Gravado em: {log_file_path}")
-            else:
-                # Modo Real: Utiliza API Oficial do X via Tweepy
-                try:
-                    self.client.create_tweet(
-                        text=reply_text,
-                        in_reply_to_tweet_id=tweet_id
-                    )
-                    print(f"[LIVE SUCCESS] Tweet enviado com sucesso no X respondendo @{username}!")
-                    success = True
-                    status_text = "LIVE REPLY SUCCESS"
-                except Exception as e:
-                    print(f"[X Bot] Falha critica ao publicar tweet real: {e}")
-                    success = False
-                    status_text = f"LIVE REPLY FAILED: {e}"
-
-            # Grava no log x_tweets.log em ambas as situações para total transparência
-            log_entry = (
-                f"=========================================\n"
-                f"DATA: {datetime.datetime.now().isoformat()}\n"
-                f"STATUS: {status_text}\n"
-                f"TWEET ORIGINAL ID: {tweet_id}\n"
-                f"AUTOR: @{username}\n"
-                f"TEXTO ORIGINAL: {tweet_text}\n"
-                f"RESPOSTA GERADA ({len(reply_text)} chars):\n{reply_text}\n"
-                f"=========================================\n\n"
-            )
-            try:
-                with open(log_file_path, "a", encoding="utf-8") as f:
-                    f.write(log_entry)
-            except Exception as ex:
-                print(f"Erro ao salvar arquivo de log de tweets: {ex}")
-
-            # 6. Salva no histórico local se publicado com sucesso
-            if success:
-                self.record_reply_history(tweet_id, username, tweet_text, reply_text)
-                replies_sent.append({
-                    "tweet_id": tweet_id,
-                    "username": username,
-                    "tweet_text": tweet_text,
-                    "reply_text": reply_text
-                })
-                processed_count += 1
-                
-                # Cooldown curto de 2 segundos no simulador e real para estabilidade
-                import time
-                time.sleep(1.5)
+            # Rascunhos apenas: não publica nem registra como resposta enviada.
+            replies_sent.append({
+                "tweet_id": tweet_id,
+                "username": username,
+                "tweet_text": tweet_text,
+                "reply_text": reply_text,
+            })
+            processed_count += 1
 
         return {
             "status": "success",
             "replies_processed": processed_count,
+            "draft_only": True,
             "mock_mode": self.mock_mode,
             "replies": replies_sent
         }

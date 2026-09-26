@@ -12,6 +12,7 @@ Frontend:   window.open(`${API_BASE}/api/report/${item.id}`, '_blank')
 """
 
 import json, re, html as _h
+import os
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 
@@ -195,7 +196,14 @@ SECTION_CHARTS = {
             "id": "cS1B", "title": "Composição da Receita", "sub": "Share de Categorias (Último Trimestre)",
             "js": """
             try {
-                const wrap = document.getElementById('cS1B')?.parentElement;
+                const mainCanvas = document.getElementById('cS1B');
+                const parent = mainCanvas?.parentElement;
+                const wrap = document.createElement('div');
+                wrap.id = 'cS1B-dyn';
+                if (parent) {
+                    mainCanvas.hidden = true;
+                    parent.appendChild(wrap);
+                }
                 if(wrap && typeof CD !== 'undefined' && CD.length > 0) {
                     let compData = {};
                     for(let i=CD.length-1; i>=0; i--){
@@ -218,13 +226,12 @@ SECTION_CHARTS = {
                     if(keys.length === 0) {
                         wrap.innerHTML = '<div style="padding:30px;text-align:center;color:#9CA3AF;font-size:12px;">Dados não disponíveis.</div>';
                     } else {
-                        wrap.innerHTML = ''; 
                         wrap.style.display = 'flex';
-                        wrap.style.flexDirection = 'column'; 
-                        wrap.style.gap = '40px'; 
+                        wrap.style.flexDirection = 'row';
+                        wrap.style.gap = '12px';
                         wrap.style.alignItems = 'center';
-                        wrap.style.padding = '20px 0';
-                        wrap.style.height = 'auto'; 
+                        wrap.style.padding = '0';
+                        wrap.style.height = '100%';
                         
                         keys.forEach((catName, idx) => {
                             const dataObj = cats[catName];
@@ -232,9 +239,11 @@ SECTION_CHARTS = {
                             const data = Object.values(dataObj).map(v => parseFloat(v));
                             
                             const col = document.createElement('div');
-                            col.style.width = '100%';
+                            col.style.flex = '1';
+                            col.style.minWidth = '0';
                             col.style.display = 'flex';
                             col.style.flexDirection = 'column';
+                            col.style.height = '100%';
                             
                             if(keys.length > 1) {
                                 const title = document.createElement('div');
@@ -250,11 +259,14 @@ SECTION_CHARTS = {
                             
                             const canWrap = document.createElement('div');
                             canWrap.style.position = 'relative';
-                            canWrap.style.height = '240px'; 
+                            canWrap.style.flex = '1';
+                            canWrap.style.minHeight = '0';
                             canWrap.style.width = '100%';
                             
                             const can = document.createElement('canvas');
                             can.id = 'donut_dinamico_' + idx;
+                            can.width = 640;
+                            can.height = 260;
                             can.style.cursor = 'zoom-in';
                             can.onclick = () => openModal(can.id);
                             
@@ -429,6 +441,7 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
         elif s["num"] in section_titles_i18n:
             s["title"] = section_titles_i18n[s["num"]]
     raw_cd = data.get("chart_data") or _extract_charts(analise)
+    raw_cd = [d for d in raw_cd if isinstance(d, dict)] if isinstance(raw_cd, list) else []
     comp_data = _extract_composicao(analise)
     
     cd = [d for d in raw_cd if str(d.get("name","")) in analise]
@@ -547,7 +560,7 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
       {evo_html}
   </div>
   <div class="cp-wrap" title="Clique para expandir">
-    <canvas id="{cfg['id']}" onclick="openModal('{cfg['id']}')"></canvas>
+    <canvas width="640" height="260" id="{cfg['id']}" onclick="openModal('{cfg['id']}')"></canvas>
   </div>
 </div>"""
 
@@ -647,6 +660,12 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
         conclusion_title = "Strategic Conclusion & Outlook" if en else "Conclusão Estratégica e Outlook"
         conclusion_body  = f'<div class="c-body">{tese_html}</div>'
 
+    drafts_html = ""
+    if not is_call:
+        platform_url = os.getenv("PLATFORM_URL", "https://finanalyser.com.br")
+        draft_pt = f"Análise de {empresa} ({periodo}): nota geral {g:.1f}/5. Confira receita, margens, dívida e lucro no FinAnalyzer. {platform_url}"
+        draft_en = f"{empresa} analysis ({periodo}): overall score {g:.1f}/5. Explore revenue, margins, debt and earnings on FinAnalyzer. {platform_url}/en"
+        drafts_html = f'<section class="sec-block no-print"><div class="sec-inner"><h2>Rascunhos para o X · PT / EN</h2><p>{_h.escape(draft_pt[:280])}</p><p>{_h.escape(draft_en[:280])}</p></div></section>'
     html_lang = "en" if en else "pt-BR"
     return f"""<!DOCTYPE html>
 <html lang="{html_lang}">
@@ -667,8 +686,10 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
   body{{background:#fff}}
   .no-print{{display:none!important}}
   .page-break{{break-before:page}}
-  .sec-block{{break-inside:avoid}}
-  .chart-panel {{ break-inside: avoid; }}
+  .sec-block{{break-inside:auto;overflow:visible}}
+  .sec-charts{{display:block}}
+  .chart-panel{{margin-bottom:20px}}
+  .chart-panel {{ break-inside: avoid; page-break-inside: avoid; }}
   .cp-wrap {{ height: 280px !important; }}
 }}
 
@@ -788,7 +809,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 .tbl tbody tr:last-child td{{border-bottom:none}}
 .tbl tbody tr:hover td{{background:#F8FAFC}}
 
-.sec-charts{{display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:20px;width:100%}}
+.sec-charts{{display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;width:100%;min-width:0}}
 
 .nota-box-inline{{border-radius:10px;padding:12px 18px;text-align:right;}}
 .nota-box-label{{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;
@@ -804,6 +825,15 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 .cp-title{{font-size:12px;font-weight:600;color:#111827;margin-bottom:2px}}
 .cp-sub{{font-size:11px;color:#9CA3AF;}}
 .cp-wrap{{position:relative;width:100%;height:260px; margin-top: 10px;}}
+
+.cp-wrap canvas{{display:block;width:100% !important;height:100% !important}}
+.cp-wrap canvas[hidden]{{display:none !important}}
+#cS1B-dyn{{height:100%;width:100%}}
+@media(max-width:720px){{
+  .sec-charts{{grid-template-columns:1fr}}
+  .cp-wrap{{height:220px}}
+  .tb-nav{{display:none}}
+}}
 
 /* ─── MODAL (LIGHTBOX) ─── */
 .modal {{
@@ -878,7 +908,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
   <div class="modal-content" onclick="event.stopPropagation()">
     <button class="modal-close" onclick="closeModal()">×</button>
     <div class="modal-canvas-wrap">
-      <canvas id="modalCanvas"></canvas>
+      <canvas width="640" height="260" id="modalCanvas"></canvas>
     </div>
   </div>
 </div>
@@ -925,6 +955,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
     {secs_html}
   </div>
 
+  {drafts_html}
   <div class="divider page-break"></div>
 
   <div id="conclusao">
@@ -943,7 +974,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 </div>
 
 <script>
-try {{ Chart.register(ChartDataLabels); }} catch(e) {{ console.error("DataLabels error", e); }}
+
 
 const CD = __CHART_JSON__;
 const COMP_DATA = __COMPOSICAO_JSON__;
@@ -1012,8 +1043,8 @@ try {{
       
       const sorted = [...CD].sort((a, b) => {{
         const A = a?.name || ''; const B = b?.name || '';
-        const ma = String(A).toUpperCase().match(/(\d)\s*T\s*(\d{{2,4}})/);
-        const mb = String(B).toUpperCase().match(/(\d)\s*T\s*(\d{{2,4}})/);
+        const ma = String(A).toUpperCase().match(/(\\d)\\s*T\\s*(\\d{{2,4}})/);
+        const mb = String(B).toUpperCase().match(/(\\d)\\s*T\\s*(\\d{{2,4}})/);
         const key = (m) => m ? [Number(m[2]) < 100 ? 2000 + Number(m[2]) : Number(m[2]), Number(m[1])] : [9999, 9];
         const ka = key(ma), kb = key(mb);
         if (ka[0] !== kb[0]) return ka[0] - kb[0];
@@ -1090,6 +1121,7 @@ const BASE = {{
 let activeModalChart = null;
 
 function openModal(chartId) {{
+    if (!window.Chart) return;
     const originalChart = Chart.getChart(chartId);
     if(!originalChart) return;
     
@@ -1117,6 +1149,25 @@ function closeModal(e) {{
     }}
 }}
 
+async function initializeCharts() {{
+  if (!Array.isArray(CD) || CD.length === 0) {{
+    document.querySelectorAll('.cp-wrap').forEach(w => w.textContent = 'Sem série histórica neste relatório');
+    return;
+  }}
+  if (!window.Chart) {{
+    await new Promise(resolve => {{
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+      script.onload = resolve;
+      script.onerror = resolve;
+      document.head.appendChild(script);
+    }});
+  }}
+  if (!window.Chart) {{
+    document.querySelectorAll('.cp-wrap').forEach(w => w.textContent = 'Não foi possível carregar os gráficos.');
+    return;
+  }}
+  if (window.ChartDataLabels) Chart.register(ChartDataLabels);
 try {{
   if (CD.length > 0) {{
       const labels = CD.map(d => d.name || '');
@@ -1129,6 +1180,8 @@ try {{
       {charts_js}
   }}
 }} catch(e) {{ console.error("Chart generation error:", e); }}
+}}
+initializeCharts();
 
 </script>
 </body>

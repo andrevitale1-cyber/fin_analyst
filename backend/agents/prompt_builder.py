@@ -77,7 +77,10 @@ Seção 6: Nota Final
 Nota Geral: X/5
 
 **Seção 7: Dados Estruturados para Gráficos**
-Retorne EXATAMENTE um bloco de código JSON para o frontend:
+Retorne um ÚNICO bloco JSON no final, com a lista abaixo, sem HTML ou Chart.js.
+Inclua apenas períodos presentes no documento; NUNCA invente trimestres.
+segmentos deve conter objetos com nome e valor; despesas_var, nome e var_pct.
+Se não houver série histórica, retorne [].
 ```json
 [
   {{
@@ -97,6 +100,6 @@ Retorne EXATAMENTE um bloco de código JSON para o frontend:
 
 DADOS PARA ANÁLISE:
 Se houver um documento anexado, use-o como fonte primária. Caso contrário, use o texto abaixo:
-{pdf_text[:120000]}
+{pdf_text[:180000]}
 """
         return prompt
