@@ -12,7 +12,6 @@ Frontend:   window.open(`${API_BASE}/api/report/${item.id}`, '_blank')
 """
 
 import json, re, html as _h
-import os
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
 
@@ -660,12 +659,6 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
         conclusion_title = "Strategic Conclusion & Outlook" if en else "Conclusão Estratégica e Outlook"
         conclusion_body  = f'<div class="c-body">{tese_html}</div>'
 
-    drafts_html = ""
-    if not is_call:
-        platform_url = os.getenv("PLATFORM_URL", "https://finanalyser.com.br")
-        draft_pt = f"Análise de {empresa} ({periodo}): nota geral {g:.1f}/5. Confira receita, margens, dívida e lucro no FinAnalyzer. {platform_url}"
-        draft_en = f"{empresa} analysis ({periodo}): overall score {g:.1f}/5. Explore revenue, margins, debt and earnings on FinAnalyzer. {platform_url}/en"
-        drafts_html = f'<section class="sec-block no-print"><div class="sec-inner"><h2>Rascunhos para o X · PT / EN</h2><p>{_h.escape(draft_pt[:280])}</p><p>{_h.escape(draft_en[:280])}</p></div></section>'
     html_lang = "en" if en else "pt-BR"
     return f"""<!DOCTYPE html>
 <html lang="{html_lang}">
@@ -955,7 +948,6 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
     {secs_html}
   </div>
 
-  {drafts_html}
   <div class="divider page-break"></div>
 
   <div id="conclusao">

@@ -216,7 +216,10 @@ def parse_results(text):
         except: return []
 
     # Captura a Conclusão/Tese de Investimento (Seção 5)
-    conclusao_match = re.search(r'(?:Seção 5|Conclusão).*?[\:\–\-]?\s*(.*?)(?=(?:Seção 6|Nota Final|Nota Geral|\*\*Nota Geral|$))', text, re.DOTALL | re.IGNORECASE)
+    conclusao_match = re.search(
+        r'^\*{0,2}Seção\s*5\s*:[^\n]*\n(.*?)(?=^\*{0,2}Seção\s*6\b|^\*{0,2}Nota\s+Geral\b|\Z)',
+        text, re.DOTALL | re.IGNORECASE | re.MULTILINE,
+    )
     conclusao = conclusao_match.group(1).strip() if conclusao_match else "Análise concluída. Ver detalhes no relatório."
 
     # Se a conclusão capturada for muito curta ou falhar, tenta pegar o parágrafo inicial
@@ -347,7 +350,7 @@ async def analyze_report(
         print("📄 [PASSO 2] Preparando Relatório para IA (Upload Direto)...")
         contents = await file.read()
         
-        prompt = PromptBuilder().build_prompt(empresa, "[ARQUIVO PDF ANEXADO]", locale=locale)
+        prompt = PromptBuilder().build_prompt(empresa, "[ARQUIVO PDF ANEXADO]", locale=locale, periodo=f"{trimestre}/{ano}")
         response_text = await asyncio.wait_for(
             asyncio.to_thread(OpenAIClient().analyze_document, prompt, pdf_bytes=contents),
             timeout=180.0,
@@ -420,7 +423,7 @@ async def analyze_report_auto(
     if not document:
         raise HTTPException(status_code=404, detail=f"Não foi possível localizar o relatório de {ticker}. Faça o upload manual do PDF.")
     
-    prompt = builder.build_prompt(ticker, "[ARQUIVO PDF ANEXADO]", locale=locale)
+    prompt = builder.build_prompt(ticker, "[ARQUIVO PDF ANEXADO]", locale=locale, periodo=f"{trimestre}/{ano}")
     conn = None
     try:
         response_text = await asyncio.wait_for(

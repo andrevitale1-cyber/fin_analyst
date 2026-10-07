@@ -248,7 +248,8 @@ def test_report_invalid_chart_data():
     assert 'const CD = [];' in html
     assert "Sem série histórica neste relatório" in html
     assert 'width="640" height="260"' in html
-    assert 'Rascunhos para o X' in html
+    assert 'Rascunhos para o X' not in html
+    assert 'Análise de AAPL (1T/2025): nota geral' not in html
 
 
 def test_bot_generates_drafts_even_with_write_credentials(monkeypatch, tmp_path):
