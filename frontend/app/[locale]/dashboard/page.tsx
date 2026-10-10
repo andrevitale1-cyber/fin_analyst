@@ -6,10 +6,10 @@ import { useTranslations, useLocale } from "next-intl";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
-  BarChart3, TrendingUp, DollarSign, Percent, Activity, Loader2,
+  BarChart3, TrendingUp, DollarSign, Percent, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
   GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check, Menu,
-  Search, ArrowRight, Sparkles, ShieldCheck, ExternalLink
+  Search, ArrowRight, Sparkles, ExternalLink
 } from "lucide-react";
 
 // API_BASE configurada para o seu Render
@@ -143,7 +143,8 @@ export default function FinancialDashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Estado para escolher qual tipo de análise
-  const [tipoAnalise, setTipoAnalise] = useState<'pdf' | 'call' | 'auto'>('auto');
+  const [tipoAnalise, setTipoAnalise] = useState<'pdf' | 'auto'>('auto');
+  const [tipoDocumento, setTipoDocumento] = useState<'report' | 'transcript'>('report');
   const [analysisError, setAnalysisError] = useState("");
 
   // --- TRIAL STATE ---
@@ -259,18 +260,22 @@ export default function FinancialDashboard() {
       formData.append("user_id", user.id);
       formData.append("locale", locale);
 
-      let urlBackend;
-      if (tipoAnalise === 'pdf') {
-        urlBackend = `${API_BASE}/api/analyze`;
-        formData.append("empresa", empresa.toUpperCase());
-        formData.append("file", file!);
-      } else if (tipoAnalise === 'call') {
+      let urlBackend: string;
+      const isTranscript = tipoDocumento === 'transcript';
+      if (isAuto && isTranscript) {
+        urlBackend = `${API_BASE}/api/analyze-call-auto`;
+        formData.append("company", empresa.trim());
+      } else if (isAuto) {
+        urlBackend = `${API_BASE}/api/analyze-auto`;
+        formData.append("ticker", empresa.trim());
+      } else if (isTranscript) {
         urlBackend = `${API_BASE}/api/analyze-call`;
-        formData.append("empresa", empresa.toUpperCase());
+        formData.append("empresa", empresa.trim());
         formData.append("file", file!);
       } else {
-        urlBackend = `${API_BASE}/api/analyze-auto`;
-        formData.append("ticker", empresa.toUpperCase());
+        urlBackend = `${API_BASE}/api/analyze`;
+        formData.append("empresa", empresa.trim());
+        formData.append("file", file!);
       }
 
       const response = await fetch(urlBackend, { method: "POST", body: formData });
@@ -486,7 +491,7 @@ export default function FinancialDashboard() {
         </div>
       </aside>
       
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 relative bg-[radial-gradient(ellipse_at_80%_0%,rgba(24,83,145,0.22),transparent_40%)]">
+      <main className={`flex-1 overflow-y-auto p-4 md:p-8 relative ${currentView === 'dashboard' ? 'bg-[#f7f8fc] text-slate-900' : 'bg-[#08101e] bg-[radial-gradient(ellipse_at_80%_0%,rgba(24,83,145,0.22),transparent_40%)]'}`}>
         {isSidebarCollapsed && (
           <button onClick={() => setIsSidebarCollapsed(false)} className="hidden md:flex absolute top-6 left-4 z-10 items-center gap-2 text-gray-400 hover:text-white bg-[#161b22] border border-gray-800 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:border-blue-500"><Menu size={18} /> {t("sidebar.menu")}</button>
         )}
@@ -603,84 +608,84 @@ export default function FinancialDashboard() {
         )}
 
         {currentView === 'dashboard' && (
-          <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-6xl mx-auto pb-12">
-            <div className="relative overflow-hidden rounded-[2rem] border border-sky-400/15 bg-gradient-to-br from-[#142b46] via-[#102039] to-[#0a182c] px-6 py-8 md:px-10 md:py-10 shadow-[0_28px_80px_rgba(0,0,0,0.22)]">
-              <div className="absolute -right-16 -top-20 h-72 w-72 rounded-full bg-sky-400/10 blur-3xl pointer-events-none" />
-              <div className="relative max-w-2xl">
-                <span className="inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-sky-200"><Sparkles size={14} /> FinAnalyzer Workspace</span>
-                <h1 className="mt-5 text-3xl md:text-5xl font-semibold leading-tight tracking-tight text-white">{t("newAnalysis.title")}</h1>
-                <p className="mt-4 text-sm md:text-base leading-relaxed text-slate-300">{t("newAnalysis.desc")}</p>
-                <div className="mt-6 flex flex-wrap gap-2 text-xs font-medium text-slate-200">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><ShieldCheck size={15} className="text-sky-300" /> SEC + B3</span>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2"><UploadCloud size={15} className="text-sky-300" /> {t("newAnalysis.manualFallback")}</span>
-                </div>
+          <section className="relative isolate min-h-full animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-6xl mx-auto pb-12">
+            <div aria-hidden="true" className="pointer-events-none absolute -left-32 top-20 -z-10 h-80 w-80 rounded-full bg-cyan-200/60 blur-3xl" />
+            <div aria-hidden="true" className="pointer-events-none absolute -right-24 top-[28rem] -z-10 h-96 w-96 rounded-full bg-violet-200/50 blur-3xl" />
+            <div aria-hidden="true" className="pointer-events-none absolute right-[18%] top-10 -z-10 h-36 w-36 rotate-12 rounded-[2rem] bg-amber-200/45 blur-2xl" />
+            <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white/90 px-6 py-8 shadow-[0_24px_70px_rgba(38,57,94,0.10)] backdrop-blur md:px-10 md:py-10">
+              <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full border-[36px] border-cyan-100/70" />
+              <div className="relative max-w-3xl">
+                <h1 className="text-3xl font-semibold leading-tight tracking-tight text-slate-900 md:text-5xl">{t("newAnalysis.title")}</h1>
+                <p className="mt-4 text-sm leading-relaxed text-slate-600 md:text-base">{t("newAnalysis.desc")}</p>
               </div>
             </div>
 
             {loading ? (
-              <div className="mt-6 flex min-h-80 flex-col items-center justify-center rounded-3xl border border-white/10 bg-[#101d30] px-6 text-center">
-                <Loader2 className="mb-5 h-12 w-12 animate-spin text-sky-400" />
-                <h2 className="text-2xl font-semibold text-white">{t("newAnalysis.analyzing")}</h2>
-                <p className="mt-2 max-w-lg text-sm text-slate-400">{t("newAnalysis.processing")}</p>
+              <div className="mt-6 flex min-h-80 flex-col items-center justify-center rounded-3xl border border-slate-200 bg-white/90 px-6 text-center shadow-lg shadow-slate-200/50">
+                <Loader2 className="mb-5 h-12 w-12 animate-spin text-sky-500" />
+                <h2 className="text-2xl font-semibold text-slate-900">{t("newAnalysis.analyzing")}</h2>
+                <p className="mt-2 max-w-lg text-sm text-slate-500">{t("newAnalysis.processing")}</p>
               </div>
             ) : (
               <>
-                <div className="mt-7 grid gap-3 md:grid-cols-3">
+                <div className="mt-7 grid gap-3 md:grid-cols-2">
                   {([
                     { id: 'auto' as const, icon: <Search size={20} />, title: t("newAnalysis.autoSearch"), desc: t("newAnalysis.autoModeDesc") },
-                    { id: 'pdf' as const, icon: <FileText size={20} />, title: t("newAnalysis.pdfReport"), desc: t("newAnalysis.pdfModeDesc") },
-                    { id: 'call' as const, icon: <Activity size={20} />, title: t("newAnalysis.callTranscript"), desc: t("newAnalysis.callModeDesc") },
+                    { id: 'pdf' as const, icon: <UploadCloud size={20} />, title: t("newAnalysis.manualMode"), desc: t("newAnalysis.manualModeDesc") },
                   ]).map(mode => (
-                    <button key={mode.id} type="button" aria-pressed={tipoAnalise === mode.id} onClick={() => { setTipoAnalise(mode.id); setAnalysisError(""); }} className={`rounded-2xl border p-5 text-left transition-all duration-200 hover:-translate-y-0.5 ${tipoAnalise === mode.id ? 'border-sky-400/60 bg-sky-400/10 shadow-[0_12px_36px_rgba(14,86,150,0.18)]' : 'border-white/10 bg-[#101d30] hover:border-white/25'}`}>
-                      <span className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${tipoAnalise === mode.id ? 'bg-sky-400/20 text-sky-200' : 'bg-white/5 text-slate-400'}`}>{mode.icon}</span>
-                      <span className="block text-sm font-semibold text-white">{mode.title}</span>
-                      <span className="mt-1 block text-xs leading-relaxed text-slate-400">{mode.desc}</span>
+                    <button key={mode.id} type="button" aria-pressed={tipoAnalise === mode.id} onClick={() => { setTipoAnalise(mode.id); setAnalysisError(""); }} className={`rounded-2xl border p-5 text-left transition-all duration-200 hover:-translate-y-0.5 ${tipoAnalise === mode.id ? 'border-sky-400 bg-sky-50 shadow-[0_12px_36px_rgba(14,86,150,0.12)]' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
+                      <span className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${tipoAnalise === mode.id ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-500'}`}>{mode.icon}</span>
+                      <span className="block text-sm font-semibold text-slate-900">{mode.title}</span>
+                      <span className="mt-1 block text-xs leading-relaxed text-slate-500">{mode.desc}</span>
                     </button>
                   ))}
                 </div>
 
-                <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_270px]">
-                  <div className="rounded-3xl border border-white/10 bg-[#101d30] p-5 md:p-7 shadow-2xl">
-                    <div className="mb-6 flex items-center justify-between gap-3 border-b border-white/10 pb-5">
-                      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-300">{t("newAnalysis.setupLabel")}</p><h2 className="mt-1 text-xl font-semibold text-white">{tipoAnalise === 'auto' ? t("newAnalysis.autoSearch") : tipoAnalise === 'pdf' ? t("newAnalysis.pdfReport") : t("newAnalysis.callTranscript")}</h2></div>
-                      <span className="rounded-lg bg-sky-400/10 px-2.5 py-1.5 text-xs font-semibold text-sky-200">01 / 02</span>
+                <div className="mt-5">
+                  <div className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-[0_18px_55px_rgba(38,57,94,0.08)] md:p-7">
+                    <div className="mb-6 flex items-center justify-between gap-3 border-b border-slate-100 pb-5">
+                      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">{t("newAnalysis.setupLabel")}</p><h2 className="mt-1 text-xl font-semibold text-slate-900">{tipoAnalise === 'auto' ? t("newAnalysis.autoSearch") : t("newAnalysis.manualMode")}</h2></div>
+                      <span className="rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-600">01 / 02</span>
                     </div>
-                    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_140px_160px]">
-                      <label className="block space-y-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{tipoAnalise === 'pdf' ? t("newAnalysis.companyInput") : t("newAnalysis.tickerInput")}
-                        <input type="text" placeholder={tipoAnalise === 'pdf' ? t("newAnalysis.companyPlaceholder") : t("newAnalysis.tickerPlaceholder")} className="w-full rounded-xl border border-white/10 bg-[#0a1628] px-4 py-3.5 text-sm font-medium normal-case text-white placeholder:text-slate-600 outline-none transition focus:border-sky-400/70 focus:ring-2 focus:ring-sky-400/15" value={empresa} onChange={(e) => setEmpresa(e.target.value)} />
+                    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_140px_160px]">
+                      <label className="block space-y-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{t("newAnalysis.companyInput")}
+                        <input type="text" placeholder={t("newAnalysis.companySearchPlaceholder")} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-medium normal-case text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15" value={empresa} onChange={(e) => setEmpresa(e.target.value)} />
                       </label>
-                      <label className="block space-y-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{t("newAnalysis.year")}
-                        <input type="text" inputMode="numeric" maxLength={4} placeholder="2025" className="w-full rounded-xl border border-white/10 bg-[#0a1628] px-4 py-3.5 text-sm font-medium text-white placeholder:text-slate-600 outline-none transition focus:border-sky-400/70 focus:ring-2 focus:ring-sky-400/15" value={ano} onChange={(e) => setAno(e.target.value)} />
+                      <label className="block space-y-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{t("newAnalysis.documentType")}
+                        <select value={tipoDocumento} onChange={(e) => setTipoDocumento(e.target.value as 'report' | 'transcript')} className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-medium text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15"><option value="report">{t("newAnalysis.reportOption")}</option><option value="transcript">{t("newAnalysis.transcriptOption")}</option></select>
                       </label>
-                      <label className="block space-y-2 text-xs font-semibold uppercase tracking-wider text-slate-400">{t("newAnalysis.quarter")}
-                        <select className="w-full rounded-xl border border-white/10 bg-[#0a1628] px-4 py-3.5 text-sm font-medium text-white outline-none transition focus:border-sky-400/70 focus:ring-2 focus:ring-sky-400/15" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">{t("newAnalysis.q1")}</option><option value="2T">{t("newAnalysis.q2")}</option><option value="3T">{t("newAnalysis.q3")}</option><option value="4T">{t("newAnalysis.q4")}</option></select>
+                      <label className="block space-y-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{t("newAnalysis.year")}
+                        <input type="text" inputMode="numeric" maxLength={4} placeholder="2025" className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15" value={ano} onChange={(e) => setAno(e.target.value)} />
+                      </label>
+                      <label className="block space-y-2 text-xs font-semibold uppercase tracking-wider text-slate-500">{t("newAnalysis.quarter")}
+                        <select className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-medium text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15" value={trimestre} onChange={(e) => setTrimestre(e.target.value)}><option value="1T">{t("newAnalysis.q1")}</option><option value="2T">{t("newAnalysis.q2")}</option><option value="3T">{t("newAnalysis.q3")}</option><option value="4T">{t("newAnalysis.q4")}</option></select>
                       </label>
                     </div>
 
                     {tipoAnalise === 'auto' ? (
-                      <div className="mt-6 flex gap-4 rounded-2xl border border-sky-400/20 bg-sky-400/5 p-4 md:p-5">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-400/15 text-sky-300"><Search size={20} /></div>
-                        <div><p className="text-sm font-semibold text-sky-100">{t("newAnalysis.autoSearchInfo")}</p><p className="mt-1 text-xs leading-relaxed text-slate-400">{t("newAnalysis.autoDisclaimer")}</p></div>
+                      <div className="mt-6 flex gap-4 rounded-2xl border border-cyan-100 bg-cyan-50/70 p-4 md:p-5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-100 text-cyan-700"><Search size={20} /></div>
+                        <div><p className="text-sm font-semibold text-slate-800">{tipoDocumento === 'transcript' ? t("newAnalysis.autoCallInfo") : t("newAnalysis.autoSearchInfo")}</p><p className="mt-1 text-xs leading-relaxed text-slate-600">{tipoDocumento === 'transcript' ? t("newAnalysis.autoCallDisclaimer") : t("newAnalysis.autoDisclaimer")}</p></div>
                       </div>
                     ) : (
-                      <label className="relative mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-[#0a1628] p-8 text-center transition hover:border-sky-400/60 hover:bg-sky-400/5">
+                      <label className="relative mt-6 flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center transition hover:border-sky-400 hover:bg-sky-50">
                         <input type="file" onChange={handleFileChange} accept="application/pdf,.pdf" className="sr-only" />
-                        <UploadCloud className="mb-3 h-8 w-8 text-sky-300" />
-                        <span className="max-w-full break-all text-sm font-semibold text-white">{file ? file.name : tipoAnalise === 'pdf' ? t("newAnalysis.uploadPdf") : t("newAnalysis.uploadCall")}</span>
+                        <UploadCloud className="mb-3 h-8 w-8 text-sky-600" />
+                        <span className="max-w-full break-all text-sm font-semibold text-slate-900">{file ? file.name : tipoDocumento === 'report' ? t("newAnalysis.uploadPdf") : t("newAnalysis.uploadCall")}</span>
                         <span className="mt-1 text-xs text-slate-500">{t("newAnalysis.supportPdf")}</span>
                       </label>
                     )}
 
-                    {analysisError && <div role="alert" className="mt-5 rounded-xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100"><p>{analysisError}</p>{tipoAnalise === 'auto' && <button type="button" onClick={() => { setTipoAnalise('pdf'); setAnalysisError(""); }} className="mt-3 inline-flex items-center gap-2 font-semibold text-sky-200 hover:text-white">{t("newAnalysis.tryManual")} <ArrowRight size={15} /></button>}</div>}
-                    <button type="button" onClick={handleAnalyze} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-500 px-5 py-4 text-sm font-bold text-white shadow-lg shadow-sky-950/40 transition hover:bg-sky-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300"><Sparkles size={18} />{tipoAnalise === 'pdf' ? t("newAnalysis.generateReport") : tipoAnalise === 'call' ? t("newAnalysis.generateCall") : t("newAnalysis.generateAuto")}<ArrowRight size={18} /></button>
+                    {analysisError && <div role="alert" className="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"><p>{analysisError}</p>{tipoAnalise === 'auto' && <button type="button" onClick={() => { setTipoAnalise('pdf'); setAnalysisError(""); }} className="mt-3 inline-flex items-center gap-2 font-semibold text-sky-700 hover:text-sky-900">{t("newAnalysis.tryManual")} <ArrowRight size={15} /></button>}</div>}
+                    <button type="button" onClick={handleAnalyze} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-5 py-4 text-sm font-bold text-white shadow-lg shadow-sky-900/15 transition hover:bg-sky-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600"><Sparkles size={18} />{tipoAnalise === 'pdf' ? tipoDocumento === 'report' ? t("newAnalysis.generateReport") : t("newAnalysis.generateCall") : tipoDocumento === 'transcript' ? t("newAnalysis.generateAutoCall") : t("newAnalysis.generateAuto")}<ArrowRight size={18} /></button>
                   </div>
 
-                  <aside className="rounded-3xl border border-white/10 bg-[#101d30]/80 p-6">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-300">{t("newAnalysis.howItWorks")}</p>
+                  <aside className="mt-7 rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">{t("newAnalysis.howItWorks")}</p>
                     <div className="mt-6 space-y-7">
-                      {[t("newAnalysis.stepOne"), t("newAnalysis.stepTwo"), t("newAnalysis.stepThree")].map((step, index) => <div key={index} className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-400/30 bg-sky-400/10 text-xs font-bold text-sky-200">{index + 1}</span><p className="pt-1 text-sm leading-relaxed text-slate-300">{step}</p></div>)}
+                      {[t("newAnalysis.stepOne"), t("newAnalysis.stepTwo"), t("newAnalysis.stepThree")].map((step, index) => <div key={index} className="flex gap-3"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-sky-200 bg-sky-50 text-xs font-bold text-sky-700">{index + 1}</span><p className="pt-1 text-sm leading-relaxed text-slate-600">{step}</p></div>)}
                     </div>
-                    <div className="mt-8 border-t border-white/10 pt-5 text-xs leading-relaxed text-slate-500">{t("newAnalysis.manualFallbackNote")}</div>
+                    <div className="mt-8 border-t border-slate-100 pt-5 text-xs leading-relaxed text-slate-500">{t("newAnalysis.manualFallbackNote")}</div>
                   </aside>
                 </div>
               </>

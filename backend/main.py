@@ -398,12 +398,16 @@ async def analyze_report(
 
 @app.post("/api/analyze-auto")
 async def analyze_report_auto(
-    ticker: str = Form(...),
+    ticker: str = Form(default=""),
+    company: str = Form(default=""),
     ano: str = Form(...),
     trimestre: str = Form(...),
     user_id: str = Form(...),
     locale: str = Form(default="pt")
 ):
+    ticker = (company or ticker).strip()
+    if not ticker:
+        raise HTTPException(status_code=400, detail="Informe o nome da empresa.")
     print(f"🚀 [AUTO] Iniciando Análise Automática para {ticker}")
     
     if not os.getenv("OPENAI_API_KEY", "").strip():
@@ -424,7 +428,7 @@ async def analyze_report_auto(
     if not document:
         detail = (f"Could not find an official earnings release for {ticker} in the requested period. You can upload the release PDF manually."
                   if locale == "en" else
-                  f"Não foi possível localizar o release de resultados de {ticker} no período solicitado. Você também pode enviar o PDF manualmente.")
+                  f"Não foi possível localizar o release de resultados de {ticker} no período solicitado. Faça o upload manual do PDF para continuar.")
         raise HTTPException(status_code=404, detail=detail)
     
     prompt = builder.build_prompt(ticker, "[ARQUIVO PDF ANEXADO]", locale=locale, periodo=f"{trimestre}/{ano}")
@@ -469,6 +473,62 @@ async def analyze_report_auto(
     finally:
         if conn:
             conn.close()
+
+@app.post("/api/analyze-call-auto")
+async def analyze_earnings_call_auto(
+    company: str = Form(...),
+    ano: str = Form(...),
+    trimestre: str = Form(...),
+    user_id: str = Form(...),
+    locale: str = Form(default="pt"),
+):
+    if not os.getenv("OPENAI_API_KEY", "").strip():
+        raise HTTPException(status_code=500, detail="Chave OPENAI_API_KEY não encontrada")
+    try:
+        document = await asyncio.wait_for(asyncio.to_thread(
+            AutoFetcher().fetch_transcript, company, ano, trimestre,
+        ), timeout=90.0)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from None
+    except (asyncio.TimeoutError, TimeoutError):
+        raise HTTPException(status_code=504, detail="A busca pela transcrição demorou muito. Envie o PDF manualmente.") from None
+    if not document:
+        message = (f"No public earnings-call transcript for {company} was found for {trimestre}/{ano}. Upload the PDF manually."
+                   if locale == "en" else
+                   f"Não foi encontrada uma transcrição pública de {company} para {trimestre}/{ano}. Envie o PDF manualmente.")
+        raise HTTPException(status_code=404, detail=message)
+    if locale == "en":
+        prompt = f"""Analyze {company}'s {trimestre}/{ano} earnings-call transcript as a senior financial analyst. Write the entire analysis in English.
+Organize key themes under: performance and demand; guidance and outlook; segments and customers; margins, cash and capital; risks and material management answers.
+Separate company-reported facts from your analysis. Do not invent timestamps if the source does not include them. Cite concrete transcript details and end with a balanced conclusion.
+TRANSCRIPT:\n{document.text[:180000]}"""
+    else:
+        prompt = f"""Analise a transcrição da earnings call de {company} referente a {trimestre}/{ano} como analista financeiro sênior. Escreva toda a análise em português.
+Organize os principais temas em: desempenho e demanda; guidance e perspectivas; segmentos e clientes; margens, caixa e capital; riscos e respostas relevantes da administração.
+Separe fatos apresentados pela empresa de interpretação analítica. Não invente timestamps quando a fonte não os trouxer. Cite dados concretos da transcrição e termine com uma síntese equilibrada.
+TRANSCRIÇÃO:\n{document.text[:180000]}"""
+    try:
+        response_text = await asyncio.wait_for(asyncio.to_thread(
+            OpenAIClient().analyze_document, prompt, pdf_bytes=document.pdf_bytes,
+        ), timeout=180.0)
+        result = {"metadata": {"empresa": company, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call"}, "analise_completa": response_text, "data": {}, "source": {"name": document.source, "url": document.url}}
+        conn = get_db_connection()
+        try:
+            cur = conn.cursor()
+            saved_result = {key: value for key, value in result.items() if key != "source"}
+            cur.execute("INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s) RETURNING id", (company, ano, trimestre, json.dumps(saved_result), str(user_id)))
+            result["id"] = cur.fetchone()[0]
+            conn.commit()
+            cur.close()
+        finally:
+            conn.close()
+        return result
+    except OpenAIError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Não foi possível concluir a análise da transcrição.") from None
 
 @app.post("/api/analyze-call")
 async def analyze_earnings_call(

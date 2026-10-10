@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import tempfile
+import unicodedata
 from urllib.parse import unquote, urljoin, urlparse
 
 import requests
@@ -29,6 +30,17 @@ class AutoFetcher:
     def resolve_ticker(self, ticker):
         """Accept common Brazilian symbols typed without their share-class suffix."""
         ticker = ticker.strip().upper()
+        company_aliases = {
+            "ITAU": "ITUB4", "ITAU UNIBANCO": "ITUB4", "ITAU UNIBANCO HOLDING": "ITUB4",
+            "PETROBRAS": "PETR4", "PETROLEO BRASILEIRO": "PETR4", "VALE": "VALE3",
+            "AMBEV": "ABEV3", "BRADESCO": "BBDC4", "BANCO DO BRASIL": "BBAS3",
+            "ITAUSA": "ITSA4", "SANTANDER BRASIL": "SANB11", "WEG": "WEGE3",
+            "LOCALIZA": "RENT3", "LOJAS RENNER": "LREN3", "B3": "B3SA3",
+            "APPLE": "AAPL", "MICROSOFT": "MSFT", "GOOGLE": "GOOGL", "ALPHABET": "GOOGL",
+        }
+        normalized = " ".join("".join(c for c in unicodedata.normalize("NFKD", ticker) if not unicodedata.combining(c)).split())
+        if normalized in company_aliases:
+            return company_aliases[normalized]
         if ticker in self.ir_urls:
             return ticker
         if ticker.isalpha() and len(ticker) >= 3:
@@ -73,8 +85,8 @@ class AutoFetcher:
 
     def fetch_result_pdf(self, ticker, ano, trimestre):
         ticker = self.resolve_ticker(ticker)
-        if not re.fullmatch(r"[A-Z0-9]{1,10}", ticker):
-            raise ValueError("Ticker inválido.")
+        if not re.fullmatch(r"[\w .&'-]{1,100}", ticker, re.UNICODE):
+            raise ValueError("Informe um nome de empresa ou ticker válido.")
         match = re.fullmatch(r"(?:([1-4])[TQ]?|[TQ]([1-4]))", str(trimestre).upper())
         if not match or not re.fullmatch(r"\d{4}", str(ano)) or not 1900 <= int(ano) <= 2100:
             raise ValueError("Ano ou trimestre inválido. Use ano com quatro dígitos e trimestre de 1T a 4T.")
@@ -88,7 +100,7 @@ class AutoFetcher:
                 return document
         except (OSError, ValueError, TypeError, KeyError):
             pass
-        if re.fullmatch(r"[A-Z]{1,5}", ticker) and ticker not in self.ir_urls:
+        if re.fullmatch(r"[A-Z]{1,5}", ticker):
             document = SECFetcher().fetch(ticker, year, quarter)
         else:
             document = self._fetch_b3(ticker, year, quarter)
@@ -103,6 +115,44 @@ class AutoFetcher:
             except OSError:
                 pass
         return document
+
+    def fetch_transcript(self, company, ano, trimestre):
+        match = re.fullmatch(r"(?:([1-4])[TQ]?|[TQ]([1-4]))", str(trimestre).upper())
+        if not match or not re.fullmatch(r"\d{4}", str(ano)):
+            raise ValueError("Ano ou trimestre inválido.")
+        year, quarter = int(ano), int(match.group(1) or match.group(2))
+        issuer = self.resolve_ticker(company)
+        query_name = company if not re.fullmatch(r"[A-Z0-9]{1,10}", issuer) else issuer
+        results = self.search_client.search_transcripts(query_name, year, quarter)
+        for item in results:
+            title = item.get("title", "")
+            url = item.get("url", "")
+            evidence = f"{title} {item.get('content', '')} {url}"
+            if not self._valid_url(url) or not self._period_matches(evidence, year, quarter):
+                continue
+            if not re.search(r"transcript|transcri[cç][aã]o|teleconfer[eê]ncia|earnings call", evidence, re.I):
+                continue
+            document = self._download_transcript(url, year, quarter)
+            if document:
+                return document
+        return None
+
+    def _download_transcript(self, url, year, quarter):
+        if not self._valid_url(url):
+            return None
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+            if not self._valid_url(response.url) or not response.content.startswith(b"%PDF-"):
+                return None
+            text = OpenAIClient.extract_text(response.content)
+            if not self._period_matches(text[:12000], year, quarter):
+                return None
+            if not re.search(r"transcript|transcri[cç][aã]o|teleconfer[eê]ncia|earnings call|operator:", text, re.I):
+                return None
+            return FetchedDocument(response.url, "Earnings Call Transcript", pdf_bytes=response.content, text=text[:180000])
+        except (requests.RequestException, OpenAIError):
+            return None
 
     def _fetch_b3(self, ticker, year, quarter):
         ir_url = self.ir_urls.get(ticker)
@@ -124,6 +174,12 @@ class AutoFetcher:
         results = self.search_client.search_financial_reports(ticker, year, f"{quarter}T")
         candidates = self._candidates(results, year, quarter)
         for candidate in candidates[:12]:
+            evidence = candidate["title"] + " " + candidate["url"]
+            mentioned_quarters = re.findall(r"(?<![A-Z0-9])([1-4][TQ]|[TQ][1-4])[\s_./-]*(?:20\d{2}|\d{2})", evidence.upper())
+            if mentioned_quarters and not self._period_matches(evidence, year, quarter):
+                continue
+            if re.search(r"20\d{2}", evidence) and not self._period_matches(evidence, year, quarter):
+                continue
             document = self._download_release(candidate["url"], year, quarter)
             if document:
                 return document
@@ -135,6 +191,10 @@ class AutoFetcher:
             url = result.get("url")
             title = result.get("title", "")
             evidence = f"{title} {result.get('content', '')} {url or ''}"
+            if re.search(r"annual report|annual accounts|form 10-k", evidence, re.I) and not re.search(
+                r"quarterly|earnings release|quarterly results|resultados trimestrais|central de resultados", evidence, re.I
+            ):
+                continue
             if self._valid_url(url) and re.search(
                 r"release|resultados?|results?|earnings|financial results|central de resultados|demonstra[cç][oõ]es|an[aá]lise gerencial|apresenta[cç][aã]o|relat[oó]rio.*trimestral|\.pdf",
                 evidence, re.I,

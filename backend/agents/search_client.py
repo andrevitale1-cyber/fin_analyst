@@ -43,3 +43,29 @@ class SearchClient:
             return OpenAIClient().search_pdf_links(query)
         except (OpenAIError, TimeoutError):
             return []
+
+    def search_transcripts(self, company, year, quarter):
+        queries = [
+            f'"{company}" {quarter}T {year} earnings call transcript filetype:pdf',
+            f'"{company}" {quarter}T {year} transcrição teleconferência resultados filetype:pdf',
+        ]
+        for query in queries:
+            if self.api_key:
+                try:
+                    response = requests.post(self.base_url, json={
+                        "api_key": self.api_key, "query": query,
+                        "search_depth": "advanced", "max_results": 5,
+                    }, timeout=15)
+                    response.raise_for_status()
+                    results = response.json().get("results", [])
+                    if results:
+                        return results
+                except (requests.RequestException, ValueError):
+                    pass
+            try:
+                results = OpenAIClient().search_pdf_links(query)
+                if results:
+                    return results
+            except (OpenAIError, TimeoutError):
+                pass
+        return []
