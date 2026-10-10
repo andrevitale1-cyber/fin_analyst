@@ -176,7 +176,7 @@ def parse_results(text):
         match = re.search(pattern, txt, re.DOTALL | re.IGNORECASE)
         if match:
             try:
-                return float(match.group(1).replace(',', '.'))
+                return int(match.group(1))
             except:
                 return 0.0
         return 0.0
@@ -229,12 +229,12 @@ def parse_results(text):
             conclusao = intro_match.group(1).strip()
 
     return {
-        "receita_nota": get_note(r'Nota Seção 1:.*?(\d(?:[\.,]\d)?)\/5', text) or get_note(r'Seção 1.*?(\d(?:[\.,]\d)?)\/5', text),
-        "rentabilidade_nota": get_note(r'Nota Seção 2:.*?(\d(?:[\.,]\d)?)\/5', text) or get_note(r'Seção 2.*?(\d(?:[\.,]\d)?)\/5', text),
-        "divida_nota": get_note(r'Nota Seção 3:.*?(\d(?:[\.,]\d)?)\/5', text) or get_note(r'Seção 3.*?(\d(?:[\.,]\d)?)\/5', text),
-        "lucro_nota": get_note(r'Nota Seção 4:.*?(\d(?:[\.,]\d)?)\/5', text) or get_note(r'Seção 4.*?(\d(?:[\.,]\d)?)\/5', text),
-        "nota_geral": get_note(r'Nota Geral:.*?(\d(?:[\.,]\d)?)\/5', text) or get_note(r'Nota Geral.*?(\d(?:[\.,]\d)?)\/5', text),
-        "tese_investimento": conclusao.replace('*', '').strip(),
+        "receita_nota": get_note(r'Nota Seção 1:\s*([1-5])\s*/\s*5', text),
+        "rentabilidade_nota": get_note(r'Nota Seção 2:\s*([1-5])\s*/\s*5', text),
+        "divida_nota": get_note(r'Nota Seção 3:\s*([1-5])\s*/\s*5', text),
+        "lucro_nota": get_note(r'Nota Seção 4:\s*([1-5])\s*/\s*5', text),
+        "nota_geral": get_note(r'Nota Geral:\s*([1-5])\s*/\s*5', text),
+        "tese_investimento": conclusao.strip(),
         "chart_data": get_chart_data(text),
     }
 

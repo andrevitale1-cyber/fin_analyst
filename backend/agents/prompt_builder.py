@@ -55,15 +55,27 @@ FILTROS DE QUALIDADE:
 - Foco em alocação de capital e geração de valor.
 - Analise SBC (Stock Based Compensation) e vantagens competitivas quando houver evidência no documento.
 - Em cada seção 1 a 4, desenvolva a análise em parágrafos: dado atual e comparação com período equivalente do ano anterior ou trimestre anterior quando disponíveis; principais causas da mudança; consequência para qualidade do resultado e risco. Calcule variações apenas com bases comparáveis e mostre a conta ou os valores usados.
+- Abra cada bloco analítico com uma frase de destaque em negrito que traga a métrica, o valor do período e a comparação mais útil. Em seguida, explique os fatores que moveram o resultado, a qualidade/recorrência desse movimento e sua implicação. Não repita o mesmo número sem acrescentar interpretação.
 - Vá além de adjetivos como 'forte' e 'sólido': explique o que melhorou, o que piorou e se o movimento parece recorrente ou pontual. Considere segmentos, preço/volume, custos, margens, caixa, capital de giro e endividamento apenas quando o documento trouxer dados.
 - Se faltar comparativo, fluxo de caixa, guidance ou outra métrica necessária, diga explicitamente o que não é possível concluir. Não transforme ausência de dado em nota máxima.
+- Priorize a composição e a contribuição dos segmentos de negócio para a receita e para seu crescimento. Não destaque concentração geográfica por padrão; mencione geografia apenas quando houver exposição comprovada e material a risco regulatório, comercial ou operacional.
+- Não trate aquisições, capex estratégico, recompra ou dividendos como positivos/negativos automaticamente. Avalie preço, financiamento, efeitos recorrentes, diluição, obrigações contingentes, retorno esperado e execução apenas com evidências do release. Separe crescimento orgânico de crescimento adquirido.
+
+CRITÉRIOS DAS NOTAS:
+Avalie a qualidade do trimestre da empresa, não a atratividade da ação nem sua cotação. Compare com períodos equivalentes e considere sazonalidade, mix, rentabilidade, geração de caixa, risco e recorrência:
+- 5 (Excelente): desempenho operacional amplamente forte, com crescimento e rentabilidade/caixa sustentáveis e sem deterioração material que altere a tese.
+- 4 (Bom): execução positiva e criação de valor, com pressões ou ressalvas pontuais que não dominam o trimestre.
+- 3 (Regular): resultado misto; ganhos e fraquezas relevantes se compensam ou a execução permanece sem melhora clara.
+- 2 (Ruim): deterioração relevante em indicadores centrais, conversão de caixa, risco de crédito/alavancagem ou execução, sem evidência suficiente de que seja apenas temporária.
+- 1 (Muito Ruim): deterioração disseminada, falha operacional grave ou risco material de liquidez/solvência.
+A nota final deve refletir o conjunto e não ser automaticamente alta por crescimento de receita. Explique o principal fator que sustenta a nota e o principal limitador.
 
 REGRAS SETORIAIS PARA {sector.upper()}:
 {sector_rules}
 
-PADRÃO EDITORIAL OBRIGATÓRIO:
+PADRÃO EDITORIAL E FORMATAÇÃO:
 - Use tom profissional, elegante, analítico e jornalístico. Construa uma narrativa fluida e foque em geração de valor.
-- Use tabelas Markdown quando houver quebra de receitas por segmento, linhas de crédito ou revisão de guidance. Use bullet points para destaques operacionais, despesas e linhas de serviços/seguros quando houver dados.
+- Use tabelas Markdown quando houver quebra de receitas por segmento, linhas de crédito ou revisão de guidance. Para segmentos, prefira as colunas segmento, receita, participação na receita, comparação anual e contribuição para o crescimento. Use bullet points para destaques operacionais, despesas e linhas de serviços/seguros quando houver dados.
 - Escreva valores por extenso com até duas casas decimais, como "R$ 11,87 bilhões", "aumento de 13,1%" e "expansão de 0,6 p.p.". Não use LaTex.
 - Para instituições financeiras, trate de Margem Financeira (NII), ROE, Índice de Eficiência, Custo de Crédito, NPL/inadimplência e Basileia (CET1), se houver dados.
 - Para varejo ou indústria, trate de Receita Líquida, EBITDA, Margem Bruta/EBITDA, Dívida Líquida/EBITDA e Vendas Mesmas Lojas (SSS), se houver dados.
@@ -75,7 +87,7 @@ ESTRUTURA OBRIGATÓRIA (MANTENHA OS NOMES DAS SEÇÕES EM PORTUGUÊS):
 Escreva três a cinco linhas resumindo o trimestre, classificando-o como sólido, fraco ou desafiador e explicando o principal motor do desempenho.
 
 Seção 1: Evolução Operacional e Top Line
-Analise Receita Líquida, Carteira de Crédito ou Volume de Vendas. Discuta preço versus volume, desconstrua o crescimento por segmento e compare períodos quando houver base comparável. Inclua tabela Markdown de segmentos e variações quando os dados permitirem.
+Analise Receita Líquida, Carteira de Crédito ou Volume de Vendas. Discuta preço versus volume e desconstrua o crescimento pelo mix de negócios: valor, participação de cada segmento na receita, variação comparável e contribuição para o crescimento total. Inclua tabela Markdown quando os dados permitirem. Não substitua a participação dos segmentos na receita por uma divisão geográfica.
 Nota Seção 1: X/5
 
 Seção 2: Rentabilidade e Margens
@@ -91,20 +103,16 @@ Analise lucro líquido e ROE quando disponível. Identifique efeitos não recorr
 Nota Seção 4: X/5
 
 Seção 5: Conclusão Estratégica e Outlook
-Escreva uma tese crítica e específica, em quatro parágrafos separados por linha em branco:
-1) Convicção: conecte crescimento, margens, conversão de lucro em caixa, balanço e alocação de capital usando os fatos mais relevantes do documento.
-2) Pontos de atenção: identifique riscos materiais, contradições entre métricas e dependências de produtos/segmentos, com o dado que sustenta cada ponto.
-3) Cenários e gatilhos: explique o que deve ser monitorado nos próximos resultados e quais mudanças melhorariam ou enfraqueceriam a tese, sem inventar projeções.
-4) Veredito: sintetize a qualidade operacional e a resiliência financeira, separando qualidade da empresa de preço da ação. Sem cotação, valuation ou custo de capital, não afirme que a ação está barata/cara e não faça recomendação de compra ou venda.
-Evite frases genéricas e repetições das seções anteriores. Se os dados forem limitados, explicite o limite da conclusão. Diga que o resultado superou, atendeu ou frustrou expectativas somente se o documento trouxer expectativas, guidance ou uma base comparável. Se houver revisão de guidance, inclua uma tabela Markdown comparando guidance anterior e revisado.
+Escreva "Conclusão IA:" seguida de um ou dois parágrafos concisos e específicos. Sintetize a nota do trimestre; conecte os principais motores, a conversão em caixa, riscos e sustentabilidade; indique os gatilhos a acompanhar. Não copie as seções anteriores. Diga que superou, atendeu ou frustrou expectativas somente quando o release fornecer uma expectativa explícita. Se houver revisão de guidance, inclua tabela Markdown comparando o anterior e o revisado. Distinga a qualidade operacional do preço da ação e não faça recomendação de compra ou venda sem valuation.
 
 Seção 6: Nota Final
 Nota Geral: X/5
+Classificação do Trimestre: Excelente, Bom, Regular, Ruim ou Muito Ruim (correspondente à nota de 5, 4, 3, 2 ou 1)
 
 **Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)**
 Retorne um ÚNICO bloco JSON no final, com a lista abaixo, sem HTML ou Chart.js.
 Extraia os últimos quatro trimestres disponíveis, ou o máximo que houver. Inclua apenas períodos presentes no documento; NUNCA invente trimestres.
-segmentos deve conter objetos com nome e valor; despesas_var, nome e var_pct.
+segmentos deve conter objetos de segmentos de negócio com nome e valor de receita em unidade consistente; despesas_var, nome e var_pct. Use a mesma unidade monetária em todos os trimestres, quando possível. Não use países/regiões como segmentos. composicao_receita, se preenchida, deve repetir apenas a composição por negócios.
 Se não houver série histórica, retorne [].
 ```json
 [

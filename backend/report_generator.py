@@ -29,16 +29,16 @@ def _f(v) -> float:
 
 def _score_theme(n: float, locale: str = "pt") -> dict:
     en = locale == "en"
-    if n <= 1.5:
+    if n <= 1:
         return dict(label="Very Poor" if en else "Muito Ruim", text="#7F1D1D", bg="#FEF2F2",
                     border="#FECACA", bar="#DC2626", badge_bg="#FEE2E2", badge_text="#991B1B", icon="")
-    if n <= 2.5:
+    if n <= 2:
         return dict(label="Poor" if en else "Ruim",      text="#9A3412", bg="#FFF7ED",
                     border="#FED7AA", bar="#EA580C", badge_bg="#FFEDD5", badge_text="#9A3412", icon="")
-    if n <= 3.5:
+    if n <= 3:
         return dict(label="Fair" if en else "Regular",   text="#78350F", bg="#FFFBEB",
                     border="#FDE68A", bar="#D97706", badge_bg="#FEF3C7", badge_text="#92400E", icon="")
-    if n <= 4.5:
+    if n <= 4:
         return dict(label="Good" if en else "Bom",       text="#14532D", bg="#F0FDF4",
                     border="#BBF7D0", bar="#16A34A", badge_bg="#DCFCE7", badge_text="#15803D", icon="")
     return         dict(label="Excellent" if en else "Excelente",text="#052E16", bg="#ECFDF5",
@@ -79,24 +79,10 @@ def _extract_charts(text: str) -> list:
         pass
     return []
 
-def _extract_composicao(text: str) -> dict:
-    """Extrai o JSON específico de Composição de Receita"""
-    try:
-        for m in re.finditer(r"```json\s*([\s\S]*?)\s*```", text or ""):
-            raw = json.loads(m.group(1))
-            if isinstance(raw, dict):
-                if "Composição da Receita" in raw:
-                    return raw["Composição da Receita"]
-                elif any(isinstance(v, (int, float, dict)) for v in raw.values()):
-                    return raw
-    except Exception:
-        pass
-    return {}
-
 def _clean_md(text: str) -> str:
     if not text: return ""
     lines = text.split("\n")
-    out, in_table, in_ul = [], False, False
+    out, in_table, in_ul, table_has_header = [], False, False, False
     for line in lines:
         s = line.strip()
         if s.startswith("|") and s.endswith("|"):
@@ -104,15 +90,17 @@ def _clean_md(text: str) -> str:
                 if in_ul: out.append("</ul>"); in_ul = False
                 out.append('<div class="tbl-wrap"><table class="tbl"><tbody>')
                 in_table = True
+                table_has_header = False
             cells = [c.strip() for c in s.strip("|").split("|")]
             if all(re.match(r"^[-:]+$", c) for c in cells): continue
-            is_hdr = not any("<td>" in r for r in out[-6:])
-            tag = "th" if is_hdr else "td"
+            tag = "th" if not table_has_header else "td"
             row = "".join(f"<{tag}>{_h.escape(c)}</{tag}>" for c in cells)
             out.append(f"<tr>{row}</tr>")
+            table_has_header = True
             continue
         if in_table:
             out.append("</tbody></table></div>"); in_table = False
+            table_has_header = False
         m_ul = re.match(r"^[-•*]\s*", s)
         if m_ul:
             if not in_ul: out.append('<ul class="md-ul">'); in_ul = True
@@ -160,9 +148,9 @@ def _parse_sections(text: str) -> list:
         m = re.search(pat, text or "", re.IGNORECASE)
         if not m: continue
         body = m.group(1).strip()
-        nm = re.search(rf"Nota\s+Se[cç][aã]o\s+{n}[:\s]+(\d[.,]?\d?)\s*/\s*5", body, re.IGNORECASE)
+        nm = re.search(rf"Nota\s+Se[cç][aã]o\s+{n}[:\s]+([1-5])\s*/\s*5", body, re.IGNORECASE)
         nota = _f(nm.group(1)) if nm else None
-        body = re.sub(rf"\*?\*?Nota\s+Se[cç][aã]o\s+{n}[:\s]+\d[.,]?\d?\s*/\s*5\*?\*?", "", body).strip()
+        body = re.sub(rf"\*?\*?Nota\s+Se[cç][aã]o\s+{n}[:\s]+[1-5]\s*/\s*5\*?\*?", "", body).strip()
         body = re.sub(r"```json[\s\S]*?```", "", body).strip()
         secs.append({"num": n, "title": titles.get(n, f"Section {n}"), "body": body, "nota": nota})
     return secs
@@ -192,7 +180,7 @@ SECTION_CHARTS = {
 ]},options:{...BASE,scales:{x:XA,y:YA}}});"""
         },
 {
-            "id": "cS1B", "title": "Composição da Receita", "sub": "Share de Categorias (Último Trimestre)",
+            "id": "cS1B", "title": "Participação por Segmento de Negócio", "sub": "Mix da receita no trimestre mais recente",
             "js": """
             try {
                 const mainCanvas = document.getElementById('cS1B');
@@ -206,11 +194,12 @@ SECTION_CHARTS = {
                 if(wrap && typeof CD !== 'undefined' && CD.length > 0) {
                     let compData = {};
                     for(let i=CD.length-1; i>=0; i--){
-                        if(CD[i].composicao_receita && Object.keys(CD[i].composicao_receita || {}).length > 0) { 
-                            compData = CD[i].composicao_receita; 
-                            break; 
-                        } else if(CD[i].segmentos && CD[i].segmentos.length > 0) {
-                            CD[i].segmentos.forEach(s => compData[s.nome] = parseFloat(s.valor));
+                        if(CD[i].segmentos && CD[i].segmentos.length > 0) {
+                            CD[i].segmentos.forEach(s => {
+                                if(s && typeof s.nome === 'string' && Number.isFinite(Number(s.valor))) {
+                                    compData[s.nome] = Number(s.valor);
+                                }
+                            });
                             break;
                         }
                     }
@@ -218,7 +207,7 @@ SECTION_CHARTS = {
                     let cats = {};
                     if(Object.keys(compData).length > 0) {
                         const isNested = Object.values(compData).some(v => typeof v === 'object' && !Array.isArray(v) && v !== null);
-                        cats = isNested ? compData : { "Composição Geral": compData };
+                        cats = isNested ? compData : { "Segmentos de Negócio": compData };
                     }
                     
                     const keys = Object.keys(cats);
@@ -441,7 +430,6 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
             s["title"] = section_titles_i18n[s["num"]]
     raw_cd = data.get("chart_data") or _extract_charts(analise)
     raw_cd = [d for d in raw_cd if isinstance(d, dict)] if isinstance(raw_cd, list) else []
-    comp_data = _extract_composicao(analise)
     
     cd = [d for d in raw_cd if str(d.get("name","")) in analise]
     if not cd: cd = raw_cd
@@ -451,10 +439,8 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
     
     # Se for call, não passamos gráficos
     cj   = json.dumps(cd) if not is_call else "[]"
-    cj_comp = json.dumps(comp_data) if not is_call else "{}"
 
-    tese_c    = re.sub(r"\*\*|\*", "", tese).strip()
-    tese_html = "".join(f"<p>{_h.escape(p.strip())}</p>" for p in tese_c.split("\n\n") if p.strip()) or f"<p>{_h.escape(tese_c)}</p>"
+    tese_html = _clean_md(tese) or f"<p>{_h.escape(tese)}</p>"
 
     def _hero_ring(nota, size=110):
         t  = _score_theme(nota, locale)
@@ -470,7 +456,7 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
             f'<circle cx="{cx}" cy="{cy}" r="{R}" fill="none" stroke="{t["bar"]}" stroke-width="10"'
             f' stroke-dasharray="{dash:.1f} {gap:.1f}" stroke-dashoffset="{off:.1f}" stroke-linecap="round"/>'
             f'<text x="{cx}" y="{cy-6}" text-anchor="middle" dominant-baseline="middle"'
-            f' style="font-family:\'DM Sans\',sans-serif;font-size:{size//4}px;font-weight:700;fill:{t["bar"]}">{nota:.1f}</text>'
+            f' style="font-family:\'DM Sans\',sans-serif;font-size:{size//4}px;font-weight:700;fill:{t["bar"]}">{nota:.0f}</text>'
             f'<text x="{cx}" y="{cy+14}" text-anchor="middle"'
             f' style="font-family:\'DM Sans\',sans-serif;font-size:11px;fill:#9CA3AF;">/5</text>'
             f'</svg>'
@@ -489,7 +475,7 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
     else:
         hero_right_html = f"""
         <div class="hero-right">
-          <span class="hero-score-lbl">{'AI Score — Weighted Average' if en else 'Score IA — Média Ponderada'}</span>
+          <span class="hero-score-lbl">{'AI Quarter Rating' if en else 'Nota IA do Trimestre'}</span>
           {_hero_ring(g, 110)}
           <div class="hero-score-verdict">{tg['label']}</div>
         </div>
@@ -640,8 +626,8 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
         conclusion_grid_html = f"""
       <div class="c-grid">
         <div>
-          <div class="c-cell-lbl">{'Final Score' if en else 'Score Final'}</div>
-          <div class="c-cell-val">{g:.1f} / 5</div>
+          <div class="c-cell-lbl">{'AI Quarter Rating' if en else 'Nota IA do Trimestre'}</div>
+          <div class="c-cell-val">{g:.0f} / 5</div>
           <span class="vtag {vcls}">{vtitle}</span>
         </div>
         <div>
@@ -656,7 +642,7 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
           </div>
         </div>
       </div>"""
-        conclusion_title = "Strategic Conclusion & Outlook" if en else "Conclusão Estratégica e Outlook"
+        conclusion_title = "AI Conclusion" if en else "Conclusão IA"
         conclusion_body  = f'<div class="c-body">{tese_html}</div>'
 
     html_lang = "en" if en else "pt-BR"
@@ -918,7 +904,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
     <a href="#conclusao" class="tb-link">{'Summary' if en else 'Resumo'}</a>
   </nav>
   <div class="tb-right">
-    <span><span class="tb-score-lbl">{"Status" if is_call else ("AI Score" if en else "Score IA")}</span><span class="tb-score">{('Call Analyzed' if en else 'Call Analisado') if is_call else f"{g:.1f}/5"}</span></span>
+    <span><span class="tb-score-lbl">{"Status" if is_call else ("AI Quarter Rating" if en else "Nota IA do Trimestre")}</span><span class="tb-score">{('Call Analyzed' if en else 'Call Analisado') if is_call else f"{g:.0f}/5"}</span></span>
     <button class="print-btn" onclick="window.print()">
      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> {'Save PDF' if en else 'Salvar PDF'}
     </button>
@@ -969,7 +955,6 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 
 
 const CD = __CHART_JSON__;
-const COMP_DATA = __COMPOSICAO_JSON__;
 const NOTAS = {{ receita:__RN__, lucro:__LN__, divida:__DN__, roe:__REN__, geral:__G__ }};
 
 const formatBRL = (v) => {{
@@ -1017,9 +1002,9 @@ try {{
         const run = ts => {{
             if (!st) st = ts;
             const p = Math.min((ts - st) / 800, 1);
-            el.textContent = (tgt * (1 - Math.pow(1-p,3))).toFixed(1);
+            el.textContent = (tgt * (1 - Math.pow(1-p,3))).toFixed(0);
             if (p < 1) requestAnimationFrame(run);
-            else el.textContent = tgt.toFixed(1);
+            else el.textContent = tgt.toFixed(0);
         }};
         setTimeout(() => requestAnimationFrame(run), 400);
     }}
@@ -1058,7 +1043,7 @@ try {{
         {{v: formatBRL(last.lucro),     l: 'Lucro',      d: delta(last.lucro, prev?.lucro)}},
         {{v: formatPct(last.margemBruta),    l: 'Mg. Bruta',  d: delta(last.margemBruta, prev?.margemBruta)}},
         {{v: formatPct(last.margemLiquida),  l: 'Mg. Líquida',d: delta(last.margemLiquida, prev?.margemLiquida)}},
-        {{v: NOTAS.geral.toFixed(1)+'/5', l: 'Score IA', d: ''}},
+        {{v: NOTAS.geral.toFixed(0)+'/5', l: 'Nota IA do Trimestre', d: ''}},
       ].forEach(it => {{
         const c = document.createElement('div');
         c.className = 'sum-cell';
@@ -1179,7 +1164,6 @@ initializeCharts();
 </body>
 </html>
 """.replace("__CHART_JSON__", cj)\
-   .replace("__COMPOSICAO_JSON__", cj_comp)\
    .replace("__RN__",  str(rn))\
    .replace("__LN__",  str(ln))\
    .replace("__DN__",  str(dn))\
