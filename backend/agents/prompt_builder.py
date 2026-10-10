@@ -36,7 +36,34 @@ class PromptBuilder:
         elif sector == "utilidades":
             sector_rules = "- OBRIGATÓRIO: Avaliação da relação Dívida Líquida/EBITDA e previsibilidade regulatória."
 
-        language_instruction = "IMPORTANT: Write the analysis text in English, but ALWAYS KEEP the tags 'Seção 1:', 'Seção 2:', 'Nota Seção X: Y/5' and 'Nota Geral: Y/5' EXACTLY in Portuguese so the system can parse them.\n\n" if locale == "en" else ""
+        english = locale == "en"
+        language_instruction = (
+            "OUTPUT LANGUAGE: English. Write every part of the analysis in clear, idiomatic English, including the introduction, section headings, score labels, classification, conclusion, and all prose. Keep the machine-readable labels exactly as specified in the English output template below. Do not mix Portuguese into the analysis.\n\n"
+            if english else ""
+        )
+        section_labels = [
+            "Section 1: Operating Performance and Top Line",
+            "Section 2: Profitability and Margins",
+            "Section 3: Capital Structure and Risk Management",
+            "Section 4: Net Income Summary",
+            "Section 5: Strategic Conclusion and Outlook",
+            "Section 6: Final Rating",
+        ] if english else [
+            "Seção 1: Evolução Operacional e Top Line",
+            "Seção 2: Rentabilidade e Margens",
+            "Seção 3: Estrutura de Capital e Gestão de Risco",
+            "Seção 4: Sumário Executivo do Lucro Líquido",
+            "Seção 5: Conclusão Estratégica e Outlook",
+            "Seção 6: Nota Final",
+        ]
+        score_labels = [f"Section Score {i}: X/5" for i in range(1, 5)] if english else [f"Nota Seção {i}: X/5" for i in range(1, 5)]
+        overall_label = "Overall Score: X/5" if english else "Nota Geral: X/5"
+        classification_label = "Quarter Classification: Excellent, Good, Fair, Poor, or Very Poor" if english else "Classificação do Trimestre: Excelente, Bom, Regular, Ruim ou Muito Ruim"
+        section_rule = "Use the exact section and score labels shown in the required structure below." if english else "MANTENHA AS ETIQUETAS 'Seção 1:', 'Seção 2:', 'Seção 3:', 'Seção 4:', 'Seção 5:', 'Seção 6:' e 'Seção 7:' EXATAMENTE ASSIM."
+        chart_heading = "Section 7: Structured Data for Charts (MANDATORY)" if english else "Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)"
+        data_heading = "DATA FOR ANALYSIS:" if english else "DADOS PARA ANÁLISE:"
+        number_style = ('Use the source currency and units as reported, with up to two decimal places (e.g., "$11.87 billion", "a 13.1% increase", "a 0.6 percentage-point expansion"). Do not convert currencies.'
+                        if english else 'Escreva valores por extenso com até duas casas decimais, como "R$ 11,87 bilhões", "aumento de 13,1%" e "expansão de 0,6 p.p.". Não use LaTeX.')
 
         prompt = f"""
 {language_instruction}
@@ -47,7 +74,7 @@ Período solicitado: {periodo or 'identifique no documento'}.
 REGRAS CRÍTICAS:
 1. USE APENAS OS DADOS FORNECIDOS ABAIXO. Se os dados forem insuficientes, diga 'Dados insuficientes' em vez de inventar números ou empresas.
 2. NUNCA USE 'Empresa Fictícia S.A.' ou dados de exemplo.
-3. MANTENHA AS ETIQUETAS 'Seção 1:', 'Seção 2:', 'Seção 3:', 'Seção 4:', 'Seção 5:', 'Seção 6:' e 'Seção 7:' EXATAMENTE ASSIM.
+3. {section_rule} Always return the structured chart data in the required JSON code block.
 4. Confirme o período do documento antes de analisar. Se divergir do período solicitado, destaque a divergência; não misture trimestres nem apresente dados de outro período como se fossem do solicitado.
 5. Diferencie fatos divulgados, cálculos derivados e interpretação. Para cada número relevante, informe período, unidade e, quando identificável, página ou tabela de origem. Nunca invente uma referência.
 
@@ -62,13 +89,13 @@ FILTROS DE QUALIDADE:
 - Não trate aquisições, capex estratégico, recompra ou dividendos como positivos/negativos automaticamente. Avalie preço, financiamento, efeitos recorrentes, diluição, obrigações contingentes, retorno esperado e execução apenas com evidências do release. Separe crescimento orgânico de crescimento adquirido.
 
 CRITÉRIOS DAS NOTAS:
-Avalie a qualidade do trimestre da empresa, não a atratividade da ação nem sua cotação. Compare com períodos equivalentes e considere sazonalidade, mix, rentabilidade, geração de caixa, risco e recorrência:
+Avalie a qualidade e a resiliência de longo prazo do negócio, não a atratividade da ação nem sua cotação. Use sempre a mesma régua entre novas análises da mesma empresa. Para a nota geral, atribua internamente notas de 1 a 5 a quatro dimensões e calcule: 40% capacidade estrutural de crescimento e durabilidade competitiva (tendência de demanda, share, backlog, contratos, parcerias e guidance com evidência), 25% execução operacional realizada no trimestre e no ciclo recente, 20% rentabilidade e conversão em caixa (considerando investimentos de crescimento e itens não recorrentes), e 15% balanço, diluição e riscos de execução/concentração. Arredonde a média ponderada para o inteiro mais próximo e explique os fatores que a puxam para cima ou para baixo; não conte o mesmo fato duas vezes. Leading indicators divulgados pela empresa podem sustentar nota mais alta antes de aparecerem na DRE, desde que sejam concretos, quantificados e plausíveis; identifique-os como prospectivos e não os contabilize como receita ou lucro já realizados. Um lucro líquido pressionado por aquisições, SBC ou custos extraordinários não deve, isoladamente, sobrepor uma trajetória operacional de longo prazo robusta, mas seus efeitos de caixa, diluição, contingências e execução devem reduzir a nota na proporção do risco. Não premie anúncios vagos, pipeline não contratado ou guidance sem base verificável. Compare períodos e considere sazonalidade:
 - 5 (Excelente): desempenho operacional amplamente forte, com crescimento e rentabilidade/caixa sustentáveis e sem deterioração material que altere a tese.
 - 4 (Bom): execução positiva e criação de valor, com pressões ou ressalvas pontuais que não dominam o trimestre.
 - 3 (Regular): resultado misto; ganhos e fraquezas relevantes se compensam ou a execução permanece sem melhora clara.
 - 2 (Ruim): deterioração relevante em indicadores centrais, conversão de caixa, risco de crédito/alavancagem ou execução, sem evidência suficiente de que seja apenas temporária.
 - 1 (Muito Ruim): deterioração disseminada, falha operacional grave ou risco material de liquidez/solvência.
-A nota final deve refletir o conjunto e não ser automaticamente alta por crescimento de receita. Explique o principal fator que sustenta a nota e o principal limitador.
+A nota final deve refletir o conjunto ponderado, não ser automaticamente alta por crescimento de receita nem cair apenas por um trimestre fraco de lucro contábil. Explique em termos concretos o principal fator de longo prazo que sustenta a nota e o principal limitador. Mantenha a mesma nota quando os fatos e o horizonte analisado forem essencialmente os mesmos; não varie a nota por diferenças de redação.
 
 REGRAS SETORIAIS PARA {sector.upper()}:
 {sector_rules}
@@ -76,40 +103,40 @@ REGRAS SETORIAIS PARA {sector.upper()}:
 PADRÃO EDITORIAL E FORMATAÇÃO:
 - Use tom profissional, elegante, analítico e jornalístico. Construa uma narrativa fluida e foque em geração de valor.
 - Use tabelas Markdown quando houver quebra de receitas por segmento, linhas de crédito ou revisão de guidance. Para segmentos, prefira as colunas segmento, receita, participação na receita, comparação anual e contribuição para o crescimento. Use bullet points para destaques operacionais, despesas e linhas de serviços/seguros quando houver dados.
-- Escreva valores por extenso com até duas casas decimais, como "R$ 11,87 bilhões", "aumento de 13,1%" e "expansão de 0,6 p.p.". Não use LaTex.
+- {number_style}
 - Para instituições financeiras, trate de Margem Financeira (NII), ROE, Índice de Eficiência, Custo de Crédito, NPL/inadimplência e Basileia (CET1), se houver dados.
 - Para varejo ou indústria, trate de Receita Líquida, EBITDA, Margem Bruta/EBITDA, Dívida Líquida/EBITDA e Vendas Mesmas Lojas (SSS), se houver dados.
 - Contextualize aquisições separando crescimento orgânico da consolidação de M&As; não reduza a nota apenas pela existência de M&A.
 - Todas as notas são inteiros: 1, 2, 3, 4 ou 5. Não use decimais nas notas.
 
-ESTRUTURA OBRIGATÓRIA (MANTENHA OS NOMES DAS SEÇÕES EM PORTUGUÊS):
+ESTRUTURA OBRIGATÓRIA (USE OS NOMES DAS SEÇÕES ABAIXO):
 [Parágrafo introdutório sem título]
 Escreva três a cinco linhas resumindo o trimestre, classificando-o como sólido, fraco ou desafiador e explicando o principal motor do desempenho.
 
-Seção 1: Evolução Operacional e Top Line
+{section_labels[0]}
 Analise Receita Líquida, Carteira de Crédito ou Volume de Vendas. Discuta preço versus volume e desconstrua o crescimento pelo mix de negócios: valor, participação de cada segmento na receita, variação comparável e contribuição para o crescimento total. Inclua tabela Markdown quando os dados permitirem. Não substitua a participação dos segmentos na receita por uma divisão geográfica.
-Nota Seção 1: X/5
+{score_labels[0]}
 
-Seção 2: Rentabilidade e Margens
+{section_labels[1]}
 Analise EBITDA, Margem Financeira, Índice de Eficiência ou Resultado Operacional. Explique alavancagem operacional, diluição ou pressão de custos.
-Nota Seção 2: X/5
+{score_labels[1]}
 
-Seção 3: Estrutura de Capital e Gestão de Risco
+{section_labels[2]}
 Para bancos, analise qualidade do crédito, inadimplência acima de 90 dias, custo do crédito e Basileia. Para empresas não financeiras, analise fluxo de caixa livre, Dívida Líquida/EBITDA, perfil da dívida e despesas financeiras.
-Nota Seção 3: X/5
+{score_labels[2]}
 
-Seção 4: Sumário Executivo do Lucro Líquido
+{section_labels[3]}
 Analise lucro líquido e ROE quando disponível. Identifique efeitos não recorrentes, marcação a mercado ou créditos tributários e conecte o lucro à eficiência descrita anteriormente.
-Nota Seção 4: X/5
+{score_labels[3]}
 
-Seção 5: Conclusão Estratégica e Outlook
-Escreva "Conclusão IA:" seguida de um ou dois parágrafos concisos e específicos. Sintetize a nota do trimestre; conecte os principais motores, a conversão em caixa, riscos e sustentabilidade; indique os gatilhos a acompanhar. Não copie as seções anteriores. Diga que superou, atendeu ou frustrou expectativas somente quando o release fornecer uma expectativa explícita. Se houver revisão de guidance, inclua tabela Markdown comparando o anterior e o revisado. Distinga a qualidade operacional do preço da ação e não faça recomendação de compra ou venda sem valuation.
+{section_labels[4]}
+Escreva uma conclusão editorial no padrão de uma nota de resultados fundamentalista: 4 a 6 parágrafos curtos, analíticos e fluidos, sem repetir mecanicamente as seções anteriores. Cada parágrafo deve começar com uma frase de destaque em negrito, específica e apoiada em um dado/indicador do release, seguida da interpretação e implicação. Cubra os principais motores de longo prazo, qualidade do crescimento e participação dos segmentos, margem/lucro versus investimentos de crescimento, caixa e balanço, riscos/contrapontos e o que monitorar. Encerre com um parágrafo iniciado por "Conclusão IA:" / "AI Conclusion:" que dê o veredito equilibrado e explique a nota. Não invente expectativas; só diga que superou ou frustrou expectativas quando o release apresentar uma referência explícita. Quando mencionar guidance, backlog, contratos ou parcerias, separe claramente evidência prospectiva de receita/lucro já reconhecidos. Sem recomendação de compra/venda ou opinião de valuation.
 
-Seção 6: Nota Final
-Nota Geral: X/5
-Classificação do Trimestre: Excelente, Bom, Regular, Ruim ou Muito Ruim (correspondente à nota de 5, 4, 3, 2 ou 1)
+{section_labels[5]}
+{overall_label}
+{classification_label} (corresponding to the final score)
 
-**Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)**
+**{chart_heading}**
 Retorne um ÚNICO bloco JSON no final, com a lista abaixo, sem HTML ou Chart.js.
 Extraia os últimos quatro trimestres disponíveis, ou o máximo que houver. Inclua apenas períodos presentes no documento; NUNCA invente trimestres.
 segmentos deve conter objetos de segmentos de negócio com nome e valor de receita em unidade consistente; despesas_var, nome e var_pct. Use a mesma unidade monetária em todos os trimestres, quando possível. Não use países/regiões como segmentos. composicao_receita, se preenchida, deve repetir apenas a composição por negócios.
@@ -131,7 +158,7 @@ Se não houver série histórica, retorne [].
 ]
 ```
 
-DADOS PARA ANÁLISE:
+{data_heading}
 Se houver um documento anexado, use-o como fonte primária. Caso contrário, use o texto abaixo:
 {pdf_text[:40000]}
 """

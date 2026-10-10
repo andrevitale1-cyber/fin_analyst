@@ -217,23 +217,23 @@ def parse_results(text):
 
     # Captura a Conclusão/Tese de Investimento (Seção 5)
     conclusao_match = re.search(
-        r'^\*{0,2}Seção\s*5\s*:[^\n]*\n(.*?)(?=^\*{0,2}Seção\s*6\b|^\*{0,2}Nota\s+Geral\b|\Z)',
+        r'^\*{0,2}(?:Seção|Section)\s*5\s*:[^\n]*\n(.*?)(?=^\*{0,2}(?:Seção|Section)\s*6\b|^\*{0,2}(?:Nota\s+Geral|Overall\s+Score)\b|\Z)',
         text, re.DOTALL | re.IGNORECASE | re.MULTILINE,
     )
     conclusao = conclusao_match.group(1).strip() if conclusao_match else "Análise concluída. Ver detalhes no relatório."
 
     # Se a conclusão capturada for muito curta ou falhar, tenta pegar o parágrafo inicial
     if len(conclusao) < 10:
-        intro_match = re.match(r'^(.*?)(?=Seção 1)', text, re.DOTALL | re.IGNORECASE)
+        intro_match = re.match(r'^(.*?)(?=(?:Seção|Section) 1)', text, re.DOTALL | re.IGNORECASE)
         if intro_match:
             conclusao = intro_match.group(1).strip()
 
     return {
-        "receita_nota": get_note(r'Nota Seção 1:\s*([1-5])\s*/\s*5', text),
-        "rentabilidade_nota": get_note(r'Nota Seção 2:\s*([1-5])\s*/\s*5', text),
-        "divida_nota": get_note(r'Nota Seção 3:\s*([1-5])\s*/\s*5', text),
-        "lucro_nota": get_note(r'Nota Seção 4:\s*([1-5])\s*/\s*5', text),
-        "nota_geral": get_note(r'Nota Geral:\s*([1-5])\s*/\s*5', text),
+        "receita_nota": get_note(r'(?:Nota Seção 1|Section Score 1):\s*([1-5])\s*/\s*5', text),
+        "rentabilidade_nota": get_note(r'(?:Nota Seção 2|Section Score 2):\s*([1-5])\s*/\s*5', text),
+        "divida_nota": get_note(r'(?:Nota Seção 3|Section Score 3):\s*([1-5])\s*/\s*5', text),
+        "lucro_nota": get_note(r'(?:Nota Seção 4|Section Score 4):\s*([1-5])\s*/\s*5', text),
+        "nota_geral": get_note(r'(?:Nota Geral|Overall Score):\s*([1-5])\s*/\s*5', text),
         "tese_investimento": conclusao.strip(),
         "chart_data": get_chart_data(text),
     }
@@ -411,6 +411,7 @@ async def analyze_report_auto(
 
     fetcher = AutoFetcher()
     builder = PromptBuilder()
+    ticker = fetcher.resolve_ticker(ticker)
     
     try:
         document = await asyncio.wait_for(
@@ -421,7 +422,10 @@ async def analyze_report_auto(
     except (asyncio.TimeoutError, TimeoutError):
         raise HTTPException(status_code=504, detail="A busca demorou muito. Faça o upload manual do PDF.") from None
     if not document:
-        raise HTTPException(status_code=404, detail=f"Não foi possível localizar o relatório de {ticker}. Faça o upload manual do PDF.")
+        detail = (f"Could not find an official earnings release for {ticker} in the requested period. You can upload the release PDF manually."
+                  if locale == "en" else
+                  f"Não foi possível localizar o release de resultados de {ticker} no período solicitado. Você também pode enviar o PDF manualmente.")
+        raise HTTPException(status_code=404, detail=detail)
     
     prompt = builder.build_prompt(ticker, "[ARQUIVO PDF ANEXADO]", locale=locale, periodo=f"{trimestre}/{ano}")
     conn = None
@@ -487,14 +491,21 @@ async def analyze_earnings_call(
         
         texto_transcricao = "[ARQUIVO PDF ANEXADO]"
 
-        language_instruction_call = "IMPORTANT: Write the ENTIRE summary in English. All text, labels, timestamps, insights and conclusions must be in English.\n\n" if locale == "en" else ""
-
-        prompt = f"""
-{language_instruction_call}Atue como um Analista Financeiro Sênior. Resuma o Earnings Call da {empresa} de forma ultra-objetiva.
+        if locale == "en":
+            prompt = f"""
+You are a senior financial analyst. Summarize {empresa}'s earnings call concisely in English.
+Write the entire summary in English, including headings, timestamps, insights and conclusions.
+For every insight, include the approximate minute/timestamp found in the transcript (e.g., [12:45]). Do not invent timestamps.
+Transcript:
+{texto_transcricao[:250000]}
+            """
+        else:
+            prompt = f"""
+Atue como um Analista Financeiro Sênior. Resuma o Earnings Call da {empresa} de forma ultra-objetiva.
 Para cada insight, indique obrigatoriamente o minuto/timestamp aproximado extraído do texto (ex: [12:45]).
 Texto da Transcrição:
 {texto_transcricao[:250000]}
-        """
+            """
 
         response_text = await asyncio.wait_for(
             asyncio.to_thread(OpenAIClient().analyze_document, prompt, pdf_bytes=contents),

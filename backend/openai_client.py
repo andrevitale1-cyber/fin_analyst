@@ -64,7 +64,7 @@ class OpenAIClient:
         with self._client() as client:
             result = self._request(client, "responses", json={
                 "model": self.model,
-                "input": query + '\nRetorne somente JSON: [{"title":"...","url":"https://...pdf"}]. Até 5 PDFs oficiais. Sem inventar URLs.',
+                "input": query + '\nReturn only JSON: [{"title":"...","url":"https://..."}]. Find up to 8 official earnings-release PDFs or official investor-relations result pages that link to them. Do not invent URLs.',
                 "tools": [{"type": "web_search", "search_context_size": "low"}],
                 "tool_choice": "required",
                 "max_output_tokens": 700,
@@ -76,7 +76,7 @@ class OpenAIClient:
         import json
         try:
             links = json.loads(text.strip().removeprefix("```json").removesuffix("```").strip())
-            return [item for item in links[:5] if isinstance(item, dict) and isinstance(item.get("url"), str)] if isinstance(links, list) else []
+            return [item for item in links[:8] if isinstance(item, dict) and isinstance(item.get("url"), str)] if isinstance(links, list) else []
         except (ValueError, TypeError):
             return []
 

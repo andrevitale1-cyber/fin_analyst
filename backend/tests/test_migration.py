@@ -13,8 +13,9 @@ from pypdf import PdfWriter
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from openai_client import OpenAIClient, OpenAIError
 from agents.auto_fetcher import AutoFetcher
+from agents.prompt_builder import PromptBuilder
 from agents.sec_fetcher import FetchedDocument, SECFetcher
-from report_generator import generate_report_html
+from report_generator import _parse_sections, generate_report_html
 
 
 ANALYSIS = "\n".join(f"Seção {i}: Teste\nResultados do trimestre.\nNota Seção {i}: 4/5" for i in range(1, 5)) + '\nSeção 5: Conclusão\nEmpresa com resultados consistentes.\nNota Geral: 4/5\n```json\n[{"name":"1T25","receita":100,"lucro":20,"margemBruta":40,"margemLiquida":20,"segmentos":[{"nome":"Serviços","valor":100}]}]\n```'
@@ -90,6 +91,66 @@ def test_cache_persists_without_refetch(tmp_path, monkeypatch):
     assert AutoFetcher(tmp_path).fetch_result_pdf("aapl", "2025", "1T") == document
     assert AutoFetcher(tmp_path).fetch_result_pdf("AAPL", "2025", "Q1") == document
     fetch.assert_called_once_with("AAPL", 2025, 1)
+
+
+def test_brazilian_ticker_without_share_class_resolves_to_b3():
+    fetcher = AutoFetcher()
+    assert fetcher.resolve_ticker("ITUB") == "ITUB4"
+    assert fetcher.resolve_ticker("VALE") == "VALE3"
+    assert fetcher.resolve_ticker("MRVL") == "MRVL"
+
+
+def test_search_candidates_allow_official_result_pages_without_period_in_title():
+    fetcher = AutoFetcher()
+    candidates = fetcher._candidates([
+        {"title": "Itaú Unibanco — Central de Resultados", "url": "https://ri.example.com/resultados"},
+        {"title": "Annual report", "url": "https://ri.example.com/annual.pdf"},
+    ], 2025, 1)
+    assert [candidate["url"] for candidate in candidates] == ["https://ri.example.com/resultados"]
+
+
+def test_official_result_page_follows_quarter_pdf_link(monkeypatch):
+    fetcher = AutoFetcher()
+    html = '<html><body>Resultados 1T25<a href="/release.pdf">1T25 Release de Resultados</a></body></html>'
+    pdf = Mock(content=b"%PDF-test", url="https://ri.example.com/release.pdf", headers={"Content-Type": "application/pdf"})
+    page = Mock(content=html.encode(), text=html, url="https://ri.example.com/resultados", headers={"Content-Type": "text/html"})
+    monkeypatch.setattr("requests.get", Mock(side_effect=[page, pdf]))
+    monkeypatch.setattr(OpenAIClient, "extract_text", staticmethod(lambda _: "Resultados 1T25 Receita líquida"))
+    document = fetcher._download_release(page.url, 2025, 1)
+    assert document and document.pdf_bytes == b"%PDF-test" and document.source == "B3/RI"
+
+
+def test_prompt_and_parser_support_english_analysis_and_long_term_score(api):
+    prompt = PromptBuilder().build_prompt("MRVL", "Release text", locale="en", periodo="2T/2026")
+    assert "OUTPUT LANGUAGE: English" in prompt
+    assert "Section 1: Operating Performance and Top Line" in prompt
+    assert "backlog" in prompt and "40%" in prompt
+
+    main, _ = api
+    analysis = """Quarter overview in English.
+Section 1: Operating Performance and Top Line
+**Revenue reached $2.0 billion, up 20%.**
+Section Score 1: 5/5
+Section 2: Profitability and Margins
+Margin expanded.
+Section Score 2: 4/5
+Section 3: Capital Structure and Risk Management
+Cash conversion remained strong.
+Section Score 3: 4/5
+Section 4: Net Income Summary
+Net income included a one-off charge.
+Section Score 4: 3/5
+Section 5: Strategic Conclusion and Outlook
+**AI Conclusion:** Durable growth is supported by contracted demand.
+Section 6: Final Rating
+Overall Score: 4/5
+"""
+    parsed = main.parse_results(analysis)
+    assert parsed["nota_geral"] == 4
+    assert parsed["tese_investimento"].startswith("**AI Conclusion:**")
+    sections = _parse_sections(analysis)
+    assert sections[0]["body"] == "Quarter overview in English."
+    assert sections[1]["nota"] == 5
 
 
 def test_unmapped_petr4_wrong_quarter_rejected(tmp_path, monkeypatch):

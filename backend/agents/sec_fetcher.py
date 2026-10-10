@@ -39,18 +39,7 @@ class SECFetcher:
                 if archive["filingFrom"] < (date.fromisoformat(end) + timedelta(days=90)).isoformat() and archive["filingTo"] >= start:
                     name = quote(archive["name"], safe="")
                     batches.append(self._get(f"https://data.sec.gov/submissions/{name}").json())
-            # 10-Q / 10-K têm reportDate explícito e são a fonte mais segura para o balanço.
-            for batch in batches:
-                for i, form in enumerate(batch.get("form", [])):
-                    if form not in ("10-Q", "10-K", "10-Q/A", "10-K/A"):
-                        continue
-                    report_dates = batch.get("reportDate", [])
-                    if i >= len(report_dates) or not start <= report_dates[i] < end:
-                        continue
-                    document = self._filing_document(batch, i, cik)
-                    if document:
-                        return document
-            # Para empresas que só publicam 8-K/6-K, confirme o trimestre no release.
+            # Prefer the company's official earnings announcement; fall back to its filing below.
             for batch in batches:
                 for i, form in enumerate(batch.get("form", [])):
                     if form not in ("8-K", "6-K") or not start <= batch["filingDate"][i] < (date.fromisoformat(end) + timedelta(days=90)).isoformat():
@@ -60,6 +49,17 @@ class SECFetcher:
                         continue
                     document = self._filing_document(batch, i, cik, exhibit=True)
                     if document and self._mentions_quarter(document.text, year, quarter):
+                        return document
+            # 10-Q / 10-K remain a fallback when no matching release is filed.
+            for batch in batches:
+                for i, form in enumerate(batch.get("form", [])):
+                    if form not in ("10-Q", "10-K", "10-Q/A", "10-K/A"):
+                        continue
+                    report_dates = batch.get("reportDate", [])
+                    if i >= len(report_dates) or not start <= report_dates[i] < end:
+                        continue
+                    document = self._filing_document(batch, i, cik)
+                    if document:
                         return document
         except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
             return None

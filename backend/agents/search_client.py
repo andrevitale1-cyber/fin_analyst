@@ -14,7 +14,17 @@ class SearchClient:
         """
         Busca releases via Tavily, ou pela pesquisa web da OpenAI quando não há Tavily.
         """
-        query = f"{ticker} {trimestre} {ano} release resultados filetype:pdf"
+        issuers = {
+            "ITUB4": "Itaú Unibanco",
+            "ITSA4": "Itaúsa",
+            "BBAS3": "Banco do Brasil",
+            "BBDC4": "Bradesco",
+            "SANB11": "Santander Brasil",
+            "PETR4": "Petrobras",
+            "VALE3": "Vale",
+        }
+        issuer = issuers.get(ticker.upper(), "")
+        query = f"{ticker} {issuer} {trimestre} {ano} earnings release resultados trimestrais central de resultados PDF RI"
 
         if self.api_key:
             payload = {

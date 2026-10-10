@@ -138,19 +138,19 @@ def _parse_sections(text: str) -> list:
         4: "Sumário Executivo do Lucro Líquido",
     }
     secs = []
-    intro = re.search(r"^([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*1)", text or "", re.IGNORECASE)
+    intro = re.search(r"^([\s\S]*?)(?=\*?\*?(?:Se[cç][aã]o|Section)\s*1)", text or "", re.IGNORECASE)
     if intro:
         b = intro.group(1).strip().replace("**", "")
         if b: secs.append({"num": 0, "title": "__OVERVIEW_TITLE__", "body": b, "nota": None})
     
     for n in range(1, 5):
-        pat = rf"\*?\*?Se[cç][aã]o\s*{n}[:\s\–\-].*?\n([\s\S]*?)(?=\*?\*?Se[cç][aã]o\s*{n+1}|\Z)"
+        pat = rf"\*?\*?(?:Se[cç][aã]o|Section)\s*{n}[:\s\–\-].*?\n([\s\S]*?)(?=\*?\*?(?:Se[cç][aã]o|Section)\s*{n+1}|\Z)"
         m = re.search(pat, text or "", re.IGNORECASE)
         if not m: continue
         body = m.group(1).strip()
-        nm = re.search(rf"Nota\s+Se[cç][aã]o\s+{n}[:\s]+([1-5])\s*/\s*5", body, re.IGNORECASE)
+        nm = re.search(rf"(?:Nota\s+Se[cç][aã]o\s+{n}|Section\s+Score\s+{n})[:\s]+([1-5])\s*/\s*5", body, re.IGNORECASE)
         nota = _f(nm.group(1)) if nm else None
-        body = re.sub(rf"\*?\*?Nota\s+Se[cç][aã]o\s+{n}[:\s]+[1-5]\s*/\s*5\*?\*?", "", body).strip()
+        body = re.sub(rf"\*?\*?(?:Nota\s+Se[cç][aã]o\s+{n}|Section\s+Score\s+{n})[:\s]+[1-5]\s*/\s*5\*?\*?", "", body).strip()
         body = re.sub(r"```json[\s\S]*?```", "", body).strip()
         secs.append({"num": n, "title": titles.get(n, f"Section {n}"), "body": body, "nota": nota})
     return secs
@@ -423,11 +423,17 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
         3: "Capital Structure & Risk" if en else "Estrutura de Capital e Gestão de Risco",
         4: "Net Income Summary" if en else "Sumário Executivo do Lucro Líquido",
     }
+    section_titles_en = {
+        1: "Revenue & Top Line",
+        2: "Profitability & Margins",
+        3: "Capital Structure & Risk Management",
+        4: "Net Income Summary",
+    }
     for s in secs:
         if s["title"] == "__OVERVIEW_TITLE__":
             s["title"] = "Quarter Overview" if en else "Visão Geral do Trimestre"
         elif s["num"] in section_titles_i18n:
-            s["title"] = section_titles_i18n[s["num"]]
+            s["title"] = section_titles_en[s["num"]] if en else section_titles_i18n[s["num"]]
     raw_cd = data.get("chart_data") or _extract_charts(analise)
     raw_cd = [d for d in raw_cd if isinstance(d, dict)] if isinstance(raw_cd, list) else []
     
