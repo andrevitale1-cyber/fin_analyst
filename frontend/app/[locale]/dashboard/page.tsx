@@ -18,16 +18,16 @@ const STRIPE_CHECKOUT_URL_MONTHLY = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67
 const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/3cI6oIgdleEBgmNdI967S01"; 
 
 const getColumnDefinitions = (t: any) => [
-  { key: 'empresa', label: t('company'), align: 'center', minWidth: 'min-w-[140px]', color: 'text-gray-100 font-medium' },
-  { key: 'nota_geral', label: t('finalScore'), align: 'center', color: 'text-blue-400 font-bold' },
-  { key: 'receita_nota', label: t('netRevenue'), align: 'center', color: 'text-gray-300' },
-  { key: 'lucro_nota', label: t('netIncome'), align: 'center', color: 'text-gray-300' },
-  { key: 'divida_nota', label: t('netDebt'), align: 'center', color: 'text-gray-300' },
-  { key: 'rentabilidade_nota', label: t('profitability'), align: 'center', color: 'text-gray-300' },
-  { key: 'soma_total', label: t('sum'), align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
-  { key: 'qtde_tri', label: t('analyzedResults'), align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
-  { key: 'media', label: t('average'), align: 'center', bg: 'bg-gray-800/30', color: 'text-gray-300' },
-  { key: 'last_analysed_quarter', label: t('lastQuarter'), align: 'center', color: 'text-gray-400 font-medium' },
+  { key: 'empresa', label: t('company'), align: 'center', minWidth: 'min-w-[140px]', color: 'text-slate-900 font-medium' },
+  { key: 'nota_geral', label: t('finalScore'), align: 'center', color: 'text-sky-700 font-bold' },
+  { key: 'receita_nota', label: t('netRevenue'), align: 'center', color: 'text-slate-600' },
+  { key: 'lucro_nota', label: t('netIncome'), align: 'center', color: 'text-slate-600' },
+  { key: 'divida_nota', label: t('netDebt'), align: 'center', color: 'text-slate-600' },
+  { key: 'rentabilidade_nota', label: t('profitability'), align: 'center', color: 'text-slate-600' },
+  { key: 'soma_total', label: t('sum'), align: 'center', bg: 'bg-slate-50/70', color: 'text-slate-600' },
+  { key: 'qtde_tri', label: t('analyzedResults'), align: 'center', bg: 'bg-slate-50/70', color: 'text-slate-600' },
+  { key: 'media', label: t('average'), align: 'center', bg: 'bg-slate-50/70', color: 'text-slate-600' },
+  { key: 'last_analysed_quarter', label: t('lastQuarter'), align: 'center', color: 'text-slate-500 font-medium' },
 ];
 
 function Feature({ text, disabled = false }: any) {
@@ -387,14 +387,14 @@ export default function FinancialDashboard() {
   };
 
   const renderCellContent = (item: any, key: string, colDef: any) => {
-    if (key === 'empresa') return <span className={`${colDef.color || 'text-white'} font-bold`}>{item[key]?.toString().toUpperCase()}</span>;
-    if (key === 'trimestre') return <span className="bg-blue-900/30 text-blue-300 py-1 px-2 rounded text-xs font-bold border border-blue-500/20">{item[key]}</span>;
-    if (key === 'media') return <span className={`px-2 py-1 rounded font-bold ${item.media >= 4 ? 'text-green-400' : 'text-yellow-400'}`}>{item[key]}</span>;
+    if (key === 'empresa') return <span className={`${colDef.color || 'text-slate-900'} font-bold`}>{item[key]?.toString().toUpperCase()}</span>;
+    if (key === 'trimestre') return <span className="bg-sky-50 text-sky-700 py-1 px-2 rounded text-xs font-bold border border-blue-500/20">{item[key]}</span>;
+    if (key === 'media') return <span className={`px-2 py-1 rounded font-bold ${item.media >= 4 ? 'text-emerald-700' : 'text-amber-700'}`}>{item[key]}</span>;
     if (key.includes('nota') || key === 'nota_final') {
       const val = item[key];
-      return <span className={`font-bold text-base ${val >= 4 ? 'text-emerald-400' : val >= 3 ? 'text-yellow-400' : 'text-red-400'}`}>{val}</span>;
+      return <span className={`font-bold text-base ${val >= 4 ? 'text-emerald-700' : val >= 3 ? 'text-amber-700' : 'text-red-600'}`}>{val}</span>;
     }
-    return <span className={`${colDef.color || 'text-gray-300'}`}>{item[key]}</span>;
+    return <span className={`${colDef.color || 'text-slate-600'}`}>{item[key]}</span>;
   };
 
   if (!isLoaded || !trialChecked) return <div className="flex h-screen items-center justify-center bg-[#0E1117]"><Loader2 className="animate-spin text-blue-500" /></div>;
@@ -494,9 +494,9 @@ export default function FinancialDashboard() {
         </div>
       </aside>
       
-      <main className={`flex-1 min-w-0 overflow-y-auto p-4 md:p-8 relative ${(currentView === 'dashboard' || currentView === 'result') ? 'bg-[#f7f8fc] text-slate-900' : 'bg-[#08101e] bg-[radial-gradient(ellipse_at_80%_0%,rgba(24,83,145,0.22),transparent_40%)]'}`}>
+      <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-8 relative bg-[#f7f8fc] text-slate-900">
         <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-gray-800">
-          <div className="flex items-center gap-3"><button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-[#161b22] border border-gray-800 rounded-lg text-white hover:bg-gray-800 active:scale-95 transition-all"><Menu size={24} /></button><span className={`font-bold text-lg tracking-tight ${currentView === 'dashboard' || currentView === 'result' ? 'text-slate-900' : 'text-white'}`}>FinAnalyzer <span className="text-blue-500">.AI</span></span></div>
+          <div className="flex items-center gap-3"><button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-[#161b22] border border-gray-800 rounded-lg text-white hover:bg-gray-800 active:scale-95 transition-all"><Menu size={24} /></button><span className="font-bold text-lg tracking-tight text-slate-900">FinAnalyzer <span className="text-blue-500">.AI</span></span></div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
@@ -504,23 +504,23 @@ export default function FinancialDashboard() {
         </div>
 
         {currentView === 'table' && (
-          <div className="animate-in fade-in duration-500 max-w-[98%] mx-auto pb-20">
-            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pt-0">
-              <div><h1 className="text-2xl md:text-3xl font-bold text-white tracking-tight">{t("table.title")}</h1><p className="text-gray-400 mt-1 text-sm md:text-base">{t("table.desc")}</p></div>
+          <div className="animate-in fade-in duration-500 max-w-6xl mx-auto pb-20">
+            <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 rounded-[2rem] border border-slate-200 bg-white/90 p-6 md:p-10 shadow-[0_24px_70px_rgba(38,57,94,0.10)]">
+              <div><h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">{t("table.title")}</h1><p className="text-slate-500 mt-1 text-sm md:text-base">{t("table.desc")}</p></div>
               <div className="relative" ref={columnMenuRef}>
-                <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#161b22] border-gray-700 hover:border-blue-500 text-gray-300'}`}><Settings2 size={18} /><span>{t("table.configColumns")}</span></button>
+                <button onClick={() => setShowColumnMenu(!showColumnMenu)} className={`flex items-center gap-2 border px-4 py-2 rounded-xl transition-all shadow-lg w-full md:w-auto justify-center ${showColumnMenu ? 'bg-blue-600 border-blue-500 text-white' : 'bg-white/90 border-slate-200 hover:border-blue-500 text-slate-600'}`}><Settings2 size={18} /><span>{t("table.configColumns")}</span></button>
                 {showColumnMenu && (
-                  <div className="absolute right-0 mt-3 w-80 bg-[#161b22]/95 backdrop-blur-md border border-gray-700 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
-                    <div className="p-4 border-b border-gray-700 flex justify-between items-center bg-[#0d1117]/50"><span className="text-sm font-bold text-white">{t("table.columnView")}</span><button onClick={() => setShowColumnMenu(false)} className="text-gray-400 hover:text-white"><X size={16} /></button></div>
+                  <div className="absolute right-0 mt-3 w-80 max-w-[calc(100vw-4rem)] bg-white/95 backdrop-blur-md border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 origin-top-right">
+                    <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50"><span className="text-sm font-bold text-slate-900">{t("table.columnView")}</span><button onClick={() => setShowColumnMenu(false)} className="text-slate-500 hover:text-sky-700"><X size={16} /></button></div>
                     <div className="p-2 max-h-[400px] overflow-y-auto space-y-1">
-                      <p className="px-2 py-1 text-xs text-gray-500 font-medium uppercase tracking-wider mb-2">{t("table.dragToReorder")}</p>
+                      <p className="px-2 py-1 text-xs text-slate-500 font-medium uppercase tracking-wider mb-2">{t("table.dragToReorder")}</p>
                       {columnOrder.map((colKey, index) => {
                         const col = columnDefsMap[colKey];
                         const isVisible = visibleColumns[colKey];
                         return (
-                          <div key={colKey} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onClick={() => toggleColumn(colKey)} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border border-transparent ${draggedItemIndex === index ? 'bg-blue-900/20 border-blue-500/50 opacity-50' : 'hover:bg-white/5 hover:border-gray-700'}`}>
-                            <div className="flex items-center gap-3"><div className="cursor-grab text-gray-600 hover:text-gray-300"><GripVertical size={16} /></div><span className={`text-sm font-medium ${isVisible ? 'text-gray-200' : 'text-gray-500'}`}>{col.label}</span></div>
-                            <div className={`p-1.5 rounded-lg transition-colors ${isVisible ? 'bg-blue-500/10 text-blue-400' : 'bg-gray-800 text-gray-600'}`}>{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}</div>
+                          <div key={colKey} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onClick={() => toggleColumn(colKey)} className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border border-transparent ${draggedItemIndex === index ? 'bg-sky-100 border-blue-500/50 opacity-50' : 'hover:bg-slate-100 hover:border-slate-200'}`}>
+                            <div className="flex items-center gap-3"><div className="cursor-grab text-slate-400 hover:text-slate-600"><GripVertical size={16} /></div><span className={`text-sm font-medium ${isVisible ? 'text-slate-900' : 'text-slate-500'}`}>{col.label}</span></div>
+                            <div className={`p-1.5 rounded-lg transition-colors ${isVisible ? 'bg-blue-500/10 text-sky-700' : 'bg-slate-100 text-slate-400'}`}>{isVisible ? <Eye size={14} /> : <EyeOff size={14} />}</div>
                           </div>
                         );
                       })}
@@ -529,26 +529,26 @@ export default function FinancialDashboard() {
                 )}
               </div>
             </header>
-            <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl flex flex-col overflow-hidden">
+            <div className="bg-white/90 border border-slate-200 rounded-2xl shadow-[0_18px_55px_rgba(38,57,94,0.08)] flex flex-col overflow-hidden">
               <div className="overflow-x-auto w-full">
                 <table className={`text-left border-collapse ${visibleCount > 8 ? 'min-w-[1200px]' : 'w-full'}`}>
                   <thead>
-                    <tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500">
+                    <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
                       {columnOrder.map((colKey, index) => {
                         const col = columnDefsMap[colKey];
                         if (!visibleColumns[colKey]) return null;
                         const isDragging = draggedItemIndex === index;
                         return (
-                          <th key={col.key} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onDragOver={(e) => e.preventDefault()} onClick={() => handleSort(col.key)} className={`py-3 px-3 font-semibold transition-all relative group select-none cursor-grab active:cursor-grabbing ${col.color || ''} ${col.minWidth || ''} ${isDragging ? 'opacity-30 bg-blue-500/10 border-2 border-dashed border-blue-500' : 'hover:bg-white/5'}`} style={{ textAlign: col.align as any }}>
-                            <div className={`flex items-center gap-2 ${col.align === 'center' ? 'justify-center' : ''}`}><GripVertical size={12} className="text-gray-700 group-hover:text-gray-400 transition-colors opacity-0 group-hover:opacity-100" />{col.label}{sortConfig?.key === col.key ? (sortConfig?.direction === 'asc' ? <ArrowUp size={12} className="text-blue-400"/> : <ArrowDown size={12} className="text-blue-400"/>) : <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-30 transition-opacity"/>}</div>
+                          <th key={col.key} draggable onDragStart={() => onDragStart(index)} onDragEnter={() => onDragEnter(index)} onDragEnd={onDragEnd} onDragOver={(e) => e.preventDefault()} onClick={() => handleSort(col.key)} className={`py-3 px-3 font-semibold transition-all relative group select-none cursor-grab active:cursor-grabbing ${col.color || ''} ${col.minWidth || ''} ${isDragging ? 'opacity-30 bg-blue-500/10 border-2 border-dashed border-blue-500' : 'hover:bg-slate-100'}`} style={{ textAlign: col.align as any }}>
+                            <div className={`flex items-center gap-2 ${col.align === 'center' ? 'justify-center' : ''}`}><GripVertical size={12} className="text-slate-400 group-hover:text-slate-500 transition-colors opacity-0 group-hover:opacity-100" />{col.label}{sortConfig?.key === col.key ? (sortConfig?.direction === 'asc' ? <ArrowUp size={12} className="text-sky-700"/> : <ArrowDown size={12} className="text-sky-700"/>) : <ArrowUpDown size={12} className="opacity-0 group-hover:opacity-30 transition-opacity"/>}</div>
                           </th>
                         );
                       })}
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-800 text-sm">
+                  <tbody className="divide-y divide-slate-100 text-sm">
                     {sortedTableData.map((item: any) => (
-                      <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group">
+                      <tr key={item.id} className="hover:bg-sky-50/60 transition-colors group">
                         {columnOrder.map(colKey => {
                           const col = columnDefsMap[colKey];
                           if (!visibleColumns[colKey]) return null;
@@ -559,49 +559,49 @@ export default function FinancialDashboard() {
                   </tbody>
                 </table>
               </div>
-              {sortedTableData.length === 0 && <div className="p-12 text-center text-gray-500">{t("table.empty")}</div>}
+              {sortedTableData.length === 0 && <div className="p-12 text-center text-slate-500">{t("table.empty")}</div>}
             </div>
           </div>
         )}
         
         {currentView === 'history' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto">
-            <header className="flex items-center justify-between mb-8 pt-0">
-              <div><h1 className="text-3xl font-bold text-white tracking-tight">{t("historyView.title")}</h1><p className="text-gray-400 mt-1">{t("historyView.desc")}</p></div>
+            <header className="flex flex-col gap-4 md:flex-row md:items-center justify-between mb-8 rounded-[2rem] border border-slate-200 bg-white/90 p-6 md:p-10 shadow-[0_24px_70px_rgba(38,57,94,0.10)]">
+              <div><h1 className="text-3xl font-bold text-slate-900 tracking-tight">{t("historyView.title")}</h1><p className="text-slate-500 mt-1">{t("historyView.desc")}</p></div>
               <div className="relative">
-                <input type="text" placeholder={t("historyView.searchPlaceholder")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-[#161b22] border border-gray-700 rounded-xl px-4 py-2.5 pl-10 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-64" />
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"><X size={14} /></button>}
+                <input type="text" placeholder={t("historyView.searchPlaceholder")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="bg-white/90 border border-slate-200 rounded-xl px-4 py-2.5 pl-10 text-sm text-slate-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all w-full md:w-64" />
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-sky-700 transition-colors"><X size={14} /></button>}
               </div>
             </header>
-            <div className="bg-[#161b22] border border-gray-800 rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-white/90 border border-slate-200 rounded-2xl shadow-[0_18px_55px_rgba(38,57,94,0.08)] overflow-hidden">
              <div className="overflow-x-auto">
               <table className="w-full min-w-[800px] text-left border-collapse">
-                <thead><tr className="border-b border-gray-800 bg-[#0d1117]/50 text-xs uppercase tracking-wider text-gray-500"><th className="py-5 px-6 font-semibold">{t("company")}</th><th className="py-5 px-6 font-semibold">{t("historyView.period")}</th><th className="py-5 px-6 font-semibold">{t("historyView.date")}</th><th className="py-5 px-6 text-center font-semibold">{t("historyView.score")}</th><th className="py-5 px-6 text-right font-semibold">{t("historyView.actions")}</th></tr></thead>
-                <tbody className="divide-y divide-gray-800">
+                <thead><tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wider text-slate-500"><th className="py-5 px-6 font-semibold">{t("company")}</th><th className="py-5 px-6 font-semibold">{t("historyView.period")}</th><th className="py-5 px-6 font-semibold">{t("historyView.date")}</th><th className="py-5 px-6 text-center font-semibold">{t("historyView.score")}</th><th className="py-5 px-6 text-right font-semibold">{t("historyView.actions")}</th></tr></thead>
+                <tbody className="divide-y divide-slate-100">
                   {filteredHistory.map((item: any) => (
-                    <tr key={item.id} className="hover:bg-white/[0.02] transition-colors group cursor-pointer" onClick={() => { 
+                    <tr key={item.id} className="hover:bg-sky-50/60 transition-colors group cursor-pointer" onClick={() => {
                       setResult({ ...item.conteudo, id: item.id }); 
                       setEmpresa(item.empresa); 
                       setCurrentView('result'); 
                     }}>
-                      <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-gray-200">{item.empresa?.toUpperCase()}</span></div></td>
-                      <td className="py-4 px-6 text-gray-400">{item.periodo}</td>
-                      <td className="py-4 px-6 text-gray-500 text-sm">{formatarData(item.data)}</td>
+                      <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-slate-900">{item.empresa?.toUpperCase()}</span></div></td>
+                      <td className="py-4 px-6 text-slate-500">{item.periodo}</td>
+                      <td className="py-4 px-6 text-slate-500 text-sm">{formatarData(item.data)}</td>
                       <td className="py-4 px-6 text-center">
                         {item.nota > 0 ? (
-                          <span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold ${item.nota >= 4 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : item.nota >= 3 ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>{item.nota}</span>
+                          <span className={`inline-flex items-center justify-center w-12 h-8 rounded-lg text-sm font-bold ${item.nota >= 4 ? 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20' : item.nota >= 3 ? 'bg-amber-500/10 text-amber-700 border border-amber-500/20' : 'bg-red-500/10 text-red-600 border border-red-500/20'}`}>{item.nota}</span>
                         ) : (
-                          <span className="text-purple-400 text-xs bg-purple-500/10 border border-purple-500/20 px-2 py-1 rounded-md font-semibold">CALL</span>
+                          <span className="text-purple-600 text-xs bg-purple-500/10 border border-purple-500/20 px-2 py-1 rounded-md font-semibold">CALL</span>
                         )}
                       </td>
-                      <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">{t("historyView.details")} <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
+                      <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-sky-700 hover:text-sky-700 transition-colors flex items-center gap-1">{t("historyView.details")} <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
                     </tr>
                   ))}
                 </tbody>
               </table>
              </div> 
-              {filteredHistory.length === 0 && <div className="p-12 text-center text-gray-500">{searchQuery ? `Nenhum resultado para "${searchQuery}".` : t("historyView.empty")}</div>}
+              {filteredHistory.length === 0 && <div className="p-12 text-center text-slate-500">{searchQuery ? `Nenhum resultado para "${searchQuery}".` : t("historyView.empty")}</div>}
             </div>
           </div>
         )}
