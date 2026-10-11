@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
+import AudienceCards from "@/components/AudienceCards";
 import LanguageSwitcher from "../../components/LanguageSwitcher";
 import { Link } from "@/i18n/routing";
 import {
@@ -1354,46 +1355,7 @@ function LandingPageContent({ locale }: { locale: string }) {
         </div>
       </section>
 
-      {/* Audience cards */}
-      <section className="overflow-hidden bg-[#3025ef] px-5 py-14 text-white sm:py-20 lg:py-24">
-        <div className="mx-auto grid max-w-7xl gap-12 md:grid-cols-2 md:gap-6 lg:gap-8">
-          <article className="min-w-0">
-            <h2 className="mb-5 text-3xl font-medium tracking-tight">Clients</h2>
-            <Link href="/dashboard" aria-label={locale === "en" ? "Start your personal investment analysis" : "Começar sua análise como investidor pessoa física"} className="group relative block aspect-[1.58] overflow-hidden rounded-[1.5rem] bg-[#080b1e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
-              <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
-                {Array.from({ length: 25 }, (_, i) => (
-                  <div key={i} className="absolute w-[4.1%] rounded-[2px] border-r border-blue-200/20 shadow-[8px_0_18px_rgba(0,0,0,0.6)] transition-transform duration-700 motion-safe:group-hover:-translate-y-2" style={{ left: `${i * 4.3 - 3}%`, top: `${12 + i * 2.1}%`, height: '76%', background: i % 4 === 0 ? 'linear-gradient(90deg,#10152d 0%,#5271a9 18%,#193fae 43%,#081733 77%,#030716 100%)' : 'linear-gradient(90deg,#121629 0%,#657087 20%,#242d46 42%,#111932 75%,#050b1b 100%)' }} />
-                ))}
-              </div>
-              <span aria-hidden="true" className="absolute bottom-4 right-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#3025ef] text-[40px] font-extralight leading-none sm:h-16 sm:w-16">+</span>
-            </Link>
-            <p className="mt-5 text-xl leading-[1.45] tracking-tight lg:text-2xl">
-              {locale === "en" ? <>For individual investors who want to understand companies and analyze results faster. <span className="text-white/65">Clear explanations and organized information, even if you are just getting started with investing.</span></> : <>Para o investidor pessoa física que quer entender as empresas e analisar resultados com mais agilidade. <span className="text-white/65">Explicações claras e informações organizadas, mesmo para quem está começando a investir.</span></>}
-            </p>
-          </article>
-          <article className="min-w-0">
-            <h2 className="mb-5 text-3xl font-medium tracking-tight">Services</h2>
-            <Link href="/dashboard" aria-label={locale === "en" ? "Explore analysis for businesses and professionals" : "Conhecer análises para empresas e profissionais"} className="group relative block aspect-[1.58] overflow-hidden rounded-[1.5rem] bg-[#101422] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
-              <div aria-hidden="true" className="absolute inset-0 transition-transform duration-700 motion-safe:group-hover:scale-[1.025]">
-                {[
-                  { label: locale === "en" ? "Company" : "Empresa", value: 'MSFT', color: '#b75d87', left: '-8%', top: '-5%', width: '48%', rotate: '-31deg' },
-                  { label: locale === "en" ? "Period" : "Período", value: '2T/2026', color: '#e8838c', left: '-6%', top: '20%', width: '51%', rotate: '-31deg' },
-                  { label: locale === "en" ? "Source" : "Fonte", value: locale === "en" ? 'Official' : 'Oficial', color: '#00a782', left: '62%', top: '-4%', width: '37%', rotate: '16deg' },
-                  { label: locale === "en" ? "Document" : "Documento", value: 'Release', color: '#5840ba', left: '56%', top: '21%', width: '44%', rotate: '16deg' },
-                  { label: locale === "en" ? "Focus" : "Foco", value: locale === "en" ? 'Margins' : 'Margens', color: '#9c60ed', left: '32%', top: '35%', width: '42%', rotate: '13deg' },
-                  { label: locale === "en" ? "Analysis" : "Análise", value: locale === "en" ? 'Results' : 'Resultados', color: '#4a4cff', left: '-3%', top: '51%', width: '48%', rotate: '-5deg' },
-                  { label: locale === "en" ? "Report" : "Relatório", value: locale === "en" ? 'Fundamentals' : 'Fundamentos', color: '#8974b9', left: '30%', top: '63%', width: '73%', rotate: '-16deg' },
-                  { label: locale === "en" ? "Workflow" : "Fluxo", value: locale === "en" ? 'Search. Analyze.' : 'Busque. Analise.', color: '#eb6c73', left: '16%', top: '88%', width: '64%', rotate: '0deg' },
-                ].map((item) => <div key={item.label} className="absolute flex h-[18%] items-center justify-between gap-2 rounded-[12px] border border-white/30 px-[4%] text-white/85 shadow-sm" style={{ left: item.left, top: item.top, width: item.width, backgroundColor: item.color, transform: `rotate(${item.rotate})` }}><span className="text-[clamp(9px,1vw,15px)] text-white/50">{item.label}</span><span className="text-[clamp(14px,2.1vw,32px)] font-medium tracking-tight">{item.value}</span></div>)}
-              </div>
-              <span aria-hidden="true" className="absolute bottom-4 right-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#3025ef] text-[40px] font-extralight leading-none sm:h-16 sm:w-16">+</span>
-            </Link>
-            <p className="mt-5 text-xl leading-[1.45] tracking-tight lg:text-2xl">
-              {locale === "en" ? <>For businesses, analysts, and professional investors who need greater speed in their research. <span className="text-white/65">Bring fundamentals, reports, and sources together to streamline financial analysis and support your team's work.</span></> : <>Para investidores pessoa jurídica, analistas e profissionais que precisam de mais agilidade nas análises. <span className="text-white/65">Reúna fundamentos, relatórios e fontes para acelerar a leitura de resultados e apoiar o trabalho da sua equipe.</span></>}
-            </p>
-          </article>
-        </div>
-      </section>
+      <AudienceCards locale={locale} />
 
       {/* --- EDITORIAL BRAND MOMENT: cinematic statement flowing into FinAnalyzer wordmark --- */}
       <section className="relative isolate flex min-h-[360px] items-center justify-center overflow-hidden bg-[#07101f] px-6 py-20 text-center sm:min-h-[440px] sm:py-28">

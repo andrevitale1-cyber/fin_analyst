@@ -10,7 +10,7 @@ export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     // 1. Pegamos o objeto de autenticação
     const authObject = await auth();
-    
+
     // 2. Se não tiver ID de usuário (não logado), redireciona manualmente
     if (!authObject.userId) {
       return authObject.redirectToSignIn();
@@ -21,7 +21,7 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|mp4|webm|wasm|riv)).*)',
     '/(api|trpc)(.*)',
   ],
-};
+};
