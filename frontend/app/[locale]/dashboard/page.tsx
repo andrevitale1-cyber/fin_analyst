@@ -413,7 +413,7 @@ export default function FinancialDashboard() {
         <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden animate-in fade-in" onClick={() => setIsSidebarOpen(false)} />
       )}
 
-      <aside className={`fixed inset-y-0 left-0 z-50 bg-[#0b1526] border-r border-white/10 flex flex-col p-6 transition-all duration-300 ease-in-out md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarCollapsed ? 'md:w-20 md:px-3' : 'w-72'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 bg-[#0b1526] border-r border-white/10 flex flex-col p-6 transition-all duration-300 ease-in-out shrink-0 md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarCollapsed ? 'md:w-20 md:px-3' : 'w-72'}`}>
         <div className="flex items-center justify-between mb-10 px-2">
           <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'md:justify-center md:w-full' : ''}`}>
             <div className="w-9 h-9 bg-gradient-to-br from-sky-400 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/30 flex-shrink-0">
@@ -429,13 +429,16 @@ export default function FinancialDashboard() {
           )}
         </div>
 
+        {isSidebarCollapsed && (
+          <button onClick={() => setIsSidebarCollapsed(false)} aria-label={t("sidebar.menu")} title={t("sidebar.menu")} className="hidden md:flex mb-4 h-10 w-full items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-white"><Menu size={20} /></button>
+        )}
         <nav className="space-y-2">
           <NavItem icon={<LayoutDashboard />} label={t("nav.newAnalysis")} active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} collapsed={isSidebarCollapsed} />
           <NavItem icon={<TableIcon />} label={t("nav.aggregatedTable")} active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} collapsed={isSidebarCollapsed} />
           <NavItem icon={<History />} label={t("nav.history")} active={currentView === 'history'} onClick={() => handleNavClick('history')} collapsed={isSidebarCollapsed} />
         </nav>
 
-        {!isPremium && (
+        {!isPremium && !isSidebarCollapsed && (
           <div className="mt-auto mb-6 px-2">
             {/* Banner de trial */}
             <div className={`border p-4 rounded-xl mb-4 space-y-3 ${
@@ -479,25 +482,21 @@ export default function FinancialDashboard() {
           </div>
         )}
         
-        {isPremium && <div className="mt-auto" />}
+        {(isPremium || isSidebarCollapsed) && <div className="mt-auto" />}
 
-        <div className="mt-4 px-2 py-3 border-t border-gray-800 flex flex-col gap-3">
-           <div className="px-2 w-full">
-              <LanguageSwitcher />
+        <div className="mt-4 py-3 border-t border-gray-800 flex flex-col gap-3">
+           <div className="w-full">
+              <LanguageSwitcher compact={isSidebarCollapsed} />
            </div>
            <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all w-full">
-              <UserButton showName={true} appearance={{ elements: { userButtonBox: "flex flex-row-reverse w-full justify-start gap-3", userButtonOuterIdentifier: "!text-white !font-bold text-sm tracking-wide", avatarBox: "w-9 h-9 ring-2 ring-gray-700" } }} />
+              <UserButton showName={!isSidebarCollapsed} appearance={{ elements: { userButtonBox: "flex flex-row-reverse w-full justify-start gap-3", userButtonOuterIdentifier: "!text-white !font-bold text-sm tracking-wide", avatarBox: "w-9 h-9 ring-2 ring-gray-700" } }} />
            </div>
         </div>
       </aside>
       
-      <main className={`flex-1 overflow-y-auto p-4 md:p-8 relative ${currentView === 'dashboard' ? 'bg-[#f7f8fc] text-slate-900' : 'bg-[#08101e] bg-[radial-gradient(ellipse_at_80%_0%,rgba(24,83,145,0.22),transparent_40%)]'}`}>
-        {isSidebarCollapsed && (
-          <button onClick={() => setIsSidebarCollapsed(false)} className="hidden md:flex absolute top-6 left-4 z-10 items-center gap-2 text-gray-400 hover:text-white bg-[#161b22] border border-gray-800 px-3 py-2 rounded-xl text-sm font-medium transition-all hover:border-blue-500"><Menu size={18} /> {t("sidebar.menu")}</button>
-        )}
-        
+      <main className={`flex-1 min-w-0 overflow-y-auto p-4 md:p-8 relative ${(currentView === 'dashboard' || currentView === 'result') ? 'bg-[#f7f8fc] text-slate-900' : 'bg-[#08101e] bg-[radial-gradient(ellipse_at_80%_0%,rgba(24,83,145,0.22),transparent_40%)]'}`}>
         <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-gray-800">
-          <div className="flex items-center gap-3"><button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-[#161b22] border border-gray-800 rounded-lg text-white hover:bg-gray-800 active:scale-95 transition-all"><Menu size={24} /></button><span className="font-bold text-lg text-white tracking-tight">FinAnalyzer <span className="text-blue-500">.AI</span></span></div>
+          <div className="flex items-center gap-3"><button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-[#161b22] border border-gray-800 rounded-lg text-white hover:bg-gray-800 active:scale-95 transition-all"><Menu size={24} /></button><span className={`font-bold text-lg tracking-tight ${currentView === 'dashboard' || currentView === 'result' ? 'text-slate-900' : 'text-white'}`}>FinAnalyzer <span className="text-blue-500">.AI</span></span></div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
@@ -696,23 +695,23 @@ export default function FinancialDashboard() {
         {currentView === 'result' && result && (
           <div className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-              <button onClick={() => setCurrentView('history')} className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-gray-800 group-hover:bg-gray-700 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">{t("result.backHistory")}</span></button>
+              <button onClick={() => setCurrentView('history')} className="text-slate-500 hover:text-sky-700 flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-slate-100 group-hover:bg-slate-200 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">{t("result.backHistory")}</span></button>
               
-              <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'bg-gray-700 text-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'}`}>
+              <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'bg-gray-700 text-slate-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'}`}>
                 {!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? <Lock size={18} /> : <Download size={18} />}
                 {isPremium ? t('result.viewReport') : `${t('result.viewReport')} (${downloadCount}/${WEEKLY_DOWNLOAD_LIMIT})`}
               </button>
             </div>
             
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-12 border-b border-gray-800 pb-8">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-7 rounded-[2rem] border border-slate-200 bg-white/90 p-6 md:p-10 shadow-[0_24px_70px_rgba(38,57,94,0.10)]">
               <div>
-                <h2 className="text-gray-500 uppercase tracking-widest text-xs font-bold mb-2">{t("result.analysisReport")}</h2>
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{result.metadata?.empresa?.toUpperCase()}</h1>
-                <p className={`text-xl font-medium ${result.metadata?.tipo === "Earnings Call" ? 'text-purple-400' : 'text-blue-400'}`}>
+                <h2 className="text-slate-500 uppercase tracking-widest text-xs font-bold mb-2">{t("result.analysisReport")}</h2>
+                <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-2">{result.metadata?.empresa?.toUpperCase()}</h1>
+                <p className={`text-xl font-medium ${result.metadata?.tipo === "Earnings Call" ? 'text-purple-600' : 'text-sky-700'}`}>
                   {result.metadata?.tipo === "Earnings Call" ? `Earnings Call · ${result.metadata?.periodo}` : result.metadata?.periodo}
                 </p>
                 {result.source?.url && /^https?:\/\//.test(result.source.url) && (
-                  <a href={result.source.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-sky-400/20 bg-sky-400/10 px-3 py-2 text-sm text-sky-200 transition hover:bg-sky-400/20">
+                  <a href={result.source.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-sky-400/20 bg-sky-400/10 px-3 py-2 text-sm text-sky-700 transition hover:bg-sky-400/20">
                     <ExternalLink size={15} />{locale === 'en' ? 'View source document' : 'Ver documento de origem'} · {result.source.name}
                   </a>
                 )}
@@ -720,10 +719,10 @@ export default function FinancialDashboard() {
               
               {/* Só mostra a nota geral se não for um Earnings Call */}
               {result.metadata?.tipo !== "Earnings Call" && (
-                <div className="flex items-center gap-6 bg-[#161b22] p-6 rounded-2xl border border-gray-800 w-full md:w-auto justify-between md:justify-start">
-                  <div className="text-right"><p className="text-sm text-gray-400 font-medium uppercase">{t("result.aiScore")}</p><p className="text-xs text-gray-500">{t("result.basedOn")}</p></div>
-                  <div className={`text-4xl font-bold ${Number(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-400' : Number(result.data?.nota_geral || 0) >= 3 ? 'text-amber-400' : 'text-red-400'}`}>
-                    {result.data?.nota_geral}<span className="text-lg text-gray-600">/5</span>
+                <div className="flex items-center gap-6 bg-white/90 p-6 rounded-2xl border border-slate-200 w-full md:w-auto justify-between md:justify-start">
+                  <div className="text-right"><p className="text-sm text-slate-500 font-medium uppercase">{t("result.aiScore")}</p><p className="text-xs text-slate-500">{t("result.basedOn")}</p></div>
+                  <div className={`text-4xl font-bold ${Number(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-700' : Number(result.data?.nota_geral || 0) >= 3 ? 'text-amber-700' : 'text-red-600'}`}>
+                    {result.data?.nota_geral}<span className="text-lg text-slate-400">/5</span>
                   </div>
                 </div>
               )}
@@ -731,23 +730,23 @@ export default function FinancialDashboard() {
             
             {/* Oculta as caixinhas de pilares numéricos se for Earnings Call, já que é uma análise textual */}
             {result.metadata?.tipo !== "Earnings Call" && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                {[{ label: "netRevenue", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-blue-400" /> }, { label: "netIncome", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-400" /> }, { label: "netDebt", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-400" /> }, { label: "profitability", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-400" /> }].map((item, idx) => (
-                  <div key={idx} className="bg-[#161b22] border border-gray-800 p-6 rounded-2xl hover:border-gray-700 transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4"><span className="text-gray-400 text-sm font-medium">{t(item.label as any)}</span><div className="bg-gray-900 p-2 rounded-lg">{item.icon}</div></div>
-                    <div className="flex items-end gap-2"><span className="text-3xl font-bold text-white">{item.val}</span><span className="text-gray-600 text-sm mb-1">/5</span></div>
-                    <div className="w-full bg-gray-800 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${Number(item.val || 0) >= 4 ? 'bg-green-500' : Number(item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${(Number(item.val || 0) / 5) * 100}%` }} /></div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-7">
+                {[{ label: "netRevenue", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-sky-700" /> }, { label: "netIncome", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-600" /> }, { label: "netDebt", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-600" /> }, { label: "profitability", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-700" /> }].map((item, idx) => (
+                  <div key={idx} className="bg-white/90 border border-slate-200 p-6 rounded-2xl hover:border-slate-300 transition-all duration-300">
+                    <div className="flex items-center justify-between mb-4"><span className="text-slate-500 text-sm font-medium">{t(item.label as any)}</span><div className="bg-slate-100 p-2 rounded-lg">{item.icon}</div></div>
+                    <div className="flex items-end gap-2"><span className="text-3xl font-bold text-slate-900">{item.val}</span><span className="text-slate-400 text-sm mb-1">/5</span></div>
+                    <div className="w-full bg-slate-100 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${Number(item.val || 0) >= 4 ? 'bg-green-500' : Number(item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${(Number(item.val || 0) / 5) * 100}%` }} /></div>
                   </div>
                 ))}
               </div>
             )}
             
-            <div className="bg-[#161b22] border border-gray-800 rounded-3xl p-6 md:p-10 shadow-2xl">
-              <h3 className="text-2xl font-bold text-white mb-8 flex items-center gap-3">
+            <div className="bg-white/90 border border-slate-200 rounded-3xl p-6 md:p-10 shadow-[0_18px_55px_rgba(38,57,94,0.08)]">
+              <h3 className="text-2xl font-bold text-slate-900 mb-8 flex items-center gap-3">
                 <FileText className={result.metadata?.tipo === "Earnings Call" ? "text-purple-500" : "text-blue-500"} /> 
                 {result.metadata?.tipo === "Earnings Call" ? t('result.transcriptAnalysis') : t('result.investmentThesis')}
               </h3>
-              <div className="prose prose-invert prose-lg max-w-none text-gray-300 leading-relaxed whitespace-pre-line">
+              <div className="prose prose-lg max-w-none text-slate-600 leading-relaxed whitespace-pre-line">
                 {result.data?.tese_investimento ? result.data.tese_investimento : (result.analise_completa || "Sem análise textual disponível.")}
               </div>
             </div>
