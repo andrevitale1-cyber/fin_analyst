@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import AudienceCards from "@/components/AudienceCards";
+import AnalysisStory from "@/components/AnalysisStory";
 import LanguageSwitcher from "../../components/LanguageSwitcher";
 import { Link } from "@/i18n/routing";
 import {
@@ -1284,7 +1285,7 @@ function LandingPageContent({ locale }: { locale: string }) {
   const historicoInView = useInView(historicoRef, { once: true, margin: "-100px" });
 
   return (
-    <div className="min-h-screen bg-[#0A0D14] text-gray-100 font-sans antialiased selection:bg-blue-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[#0A0D14] text-gray-100 font-sans antialiased selection:bg-blue-500/30 overflow-x-clip">
 
       {/* --- NAVBAR --- */}
       <nav className="border-b border-white/10 bg-[#0A0D14]/80 backdrop-blur-xl sticky top-0 z-30">
@@ -1357,26 +1358,7 @@ function LandingPageContent({ locale }: { locale: string }) {
 
       <AudienceCards locale={locale} />
 
-      {/* --- EDITORIAL BRAND MOMENT: cinematic statement flowing into FinAnalyzer wordmark --- */}
-      <section className="relative isolate flex min-h-[360px] items-center justify-center overflow-hidden bg-[#07101f] px-6 py-20 text-center sm:min-h-[440px] sm:py-28">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_100%,rgba(25,104,177,0.48),transparent_58%),linear-gradient(180deg,#07101f_0%,#0a1b31_100%)]" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 flex h-[82%] items-end justify-center gap-[2px] opacity-25 sm:gap-1">
-          {Array.from({ length: 28 }, (_, i) => <div key={i} className="w-[3.6%] border-x border-slate-400/25 bg-gradient-to-t from-slate-500/20 to-sky-200/10" style={{ height: `${38 + ((i * 17) % 57)}%` }} />)}
-        </div>
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#07101f]/40 via-transparent to-[#07101f]/25" />
-        <div className="max-w-6xl">
-          <p className="mb-6 text-[10px] font-bold uppercase tracking-[0.25em] text-blue-200/75 sm:text-xs">{locale === "en" ? "A clearer way to read company results" : "Uma forma mais clara de ler resultados"}</p>
-          <h2 className="text-3xl font-semibold leading-[1.08] tracking-[-0.045em] text-white sm:text-5xl md:text-6xl lg:text-7xl">
-            {locale === "en" ? <>Financial reports hold the story.<br />We help you see what matters.</> : <>Os relatórios guardam a história.<br />A análise revela o que importa.</>}
-          </h2>
-        </div>
-      </section>
-      <section className="overflow-hidden bg-[#e8f1ff] px-5 py-12 text-center text-[#151d3a] sm:py-16">
-        <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.23em] text-[#4053ca] sm:text-xs">{locale === "en" ? "Source-linked financial intelligence" : "Inteligência financeira com fontes verificáveis"}</p>
-        <div className="mx-auto max-w-full overflow-hidden text-[16vw] font-semibold leading-none tracking-[-0.085em] sm:text-[14vw] lg:text-[12vw]">
-          <span className="bg-gradient-to-r from-[#3428ff] via-[#4265e8] to-[#ef665d] bg-clip-text text-transparent">FinAnalyzer</span><span className="align-top text-[0.28em] tracking-normal text-[#53617c]"> AI</span>
-        </div>
-      </section>
+      <AnalysisStory locale={locale} />
 
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
