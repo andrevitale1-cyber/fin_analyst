@@ -1,4 +1,4 @@
-.story { position: relative; height: 400svh; background: #040313; color: white; font-family: "Audience Reyhan", sans-serif; }
+.story { position: relative; height: 400svh; margin-top: -50svh; background: #040313; color: white; font-family: "Audience Reyhan", sans-serif; }
 .sticky { position: sticky; top: 0; height: 100svh; overflow: hidden; }
 .scene { position: absolute; inset: 0; }
 .scene:not(:first-child) { opacity: 0; }
@@ -7,9 +7,16 @@
 .text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 24px; background: radial-gradient(ellipse at center, transparent 0%, #0c101850 100%); }
 .text h2 { max-width: 1050px; margin: 0; font-size: clamp(32px, 4vw, 76px); font-weight: 500; line-height: 1.12; letter-spacing: -.045em; text-wrap: balance; }
 .text p { max-width: 780px; margin: 32px 0 0; font-size: clamp(18px, 1.6vw, 26px); line-height: 1.4; text-wrap: balance; }
-.solution { min-height: 100svh; display: grid; place-items: center; padding: 100px 24px; background: #eaf2ff; color: #2e21de; font-family: "Audience Reyhan", sans-serif; text-align: center; }
-.solution h2 { margin: 0; font-size: clamp(42px, 5.5vw, 100px); line-height: 1.06; letter-spacing: -.055em; font-weight: 500; }
-.solution h2 span { display: inline-block; margin: .12em 0; font-size: clamp(48px, 9vw, 170px); background: linear-gradient(110deg, #2e21de 40%, #ef665d 95%); color: transparent; background-clip: text; }
-.solution p { max-width: 660px; margin: 32px auto 0; font-size: clamp(18px, 1.6vw, 26px); line-height: 1.4; text-wrap: balance; }
+.solution { position: relative; isolation: isolate; min-height: 100svh; display: grid; place-items: center; overflow: hidden; padding: 100px 24px; background: #eaf2ff; color: #2e21de; font-family: "Audience Reyhan", sans-serif; text-align: center; }
+.solutionText { position: relative; z-index: 1; }
+.solution h2 { margin: 0; font-size: clamp(32px, 4.3vw, 68px); line-height: 1.06; letter-spacing: -.045em; font-weight: 500; }
+.solution h2 span { display: inline-block; margin: .08em 0; }
+.rectangles { position: absolute; width: min(110vw, 1100px); aspect-ratio: 1; perspective: 1200px; pointer-events: none; }
+.ring { position: absolute; inset: 0; transform-style: preserve-3d; animation: orbit 20s linear infinite; animation-play-state: paused; }
+.solution[data-active="true"] .ring { animation-play-state: running; }
+.block { position: absolute; left: 50%; top: 50%; width: 32%; height: 6%; margin-left: -16%; margin-top: -3%; transform: rotateZ(var(--angle)) translateX(116%) rotateY(-14deg); background: linear-gradient(90deg, #1a58fbb8, #88a5fc55 55%, #acbffc22); border: 1px solid #d4ddff55; box-shadow: -18px 22px 24px #3b67db1c; transform-style: preserve-3d; }
+.block::before { content: ""; position: absolute; inset: -30% 0 auto; height: 30%; transform: skewX(-30deg); transform-origin: bottom; background: linear-gradient(90deg, #a2b7ff66, #cad5fd44); }
+.block::after { content: ""; position: absolute; left: -5%; top: -15%; width: 5%; height: 100%; transform: skewY(30deg); background: #547ce34d; }
+@keyframes orbit { from { transform: rotateX(22deg) rotateZ(-12deg); } to { transform: rotateX(22deg) rotateZ(348deg); } }
 @media (max-width: 743px) { .text { padding: 90px 24px; } .text h2 { font-size: clamp(30px, 7vw, 48px); } .solution { min-height: 80svh; } }
-@media (prefers-reduced-motion: reduce) { .story { height: auto; } .sticky { position: static; height: auto; } .scene, .scene:not(:first-child) { position: relative; height: 80svh; opacity: 1 !important; } .text { transform: none !important; } }
+@media (prefers-reduced-motion: reduce) { .story { height: auto; margin-top: 0; } .sticky { position: static; height: auto; } .scene, .scene:not(:first-child) { position: relative; height: 80svh; opacity: 1 !important; } .text { transform: none !important; opacity: 1 !important; } .ring { animation: none; transform: rotateX(22deg) rotateZ(-12deg); } }

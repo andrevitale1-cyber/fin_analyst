@@ -17,6 +17,8 @@ export default function AudienceCards({ locale }: { locale: string }) {
   const [desktop, setDesktop] = useState(false);
   const reduce = useReducedMotion();
   const { scrollYProgress } = useScroll({ target: section, offset: ["start end", "end end"] });
+  const { scrollYProgress: exitProgress } = useScroll({ target: section, offset: ["end center", "end start"] });
+  const exitOpacity = useTransform(exitProgress, [0, 1], [1, 0]);
   const revealY = useTransform(scrollYProgress, (p) => desktop && !reduce ? 140 * Math.pow(1 - p, 3) : 0);
   const revealOpacity = useTransform(scrollYProgress, (p) => desktop && !reduce ? 1 - Math.pow(1 - p, 3) : 1);
   useEffect(() => {
@@ -68,7 +70,7 @@ export default function AudienceCards({ locale }: { locale: string }) {
   };
   const plus = <span className={styles.plus} aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M20.75 11.25H12.75V3.25H11.25V11.25H3.25V12.75H11.25V20.75H12.75V12.75H20.75V11.25Z" fill="currentColor" /></svg></span>;
 
-  return <section ref={section} className={styles.section} aria-label={english ? "Who FinAnalyzer is for" : "Para quem é o FinAnalyzer"}>
+  return <motion.section ref={section} className={styles.section} style={reduce ? undefined : { opacity: exitOpacity }} aria-label={english ? "Who FinAnalyzer is for" : "Para quem é o FinAnalyzer"}>
     <div className={styles.grid}>
       <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><Link href="/dashboard" className={styles.card} onMouseEnter={playVideo} onFocus={playVideo}>
         <h2>Clients</h2>
@@ -88,5 +90,5 @@ export default function AudienceCards({ locale }: { locale: string }) {
         <p>{english ? <><strong>For businesses, analysts, and professional investors who need greater speed in their research.</strong> Bring fundamentals, reports, and sources together to streamline financial analysis and support your team&apos;s work.</> : <><strong>Para investidores pessoa jurídica, analistas e profissionais que precisam de mais agilidade nas análises.</strong> Reúna fundamentos, relatórios e fontes para acelerar a leitura de resultados e apoiar o trabalho da sua equipe.</>}</p>
       </Link></motion.div>
     </div>
-  </section>;
+  </motion.section>;
 }
