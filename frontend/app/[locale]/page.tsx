@@ -1300,19 +1300,19 @@ function LandingPageContent({ locale }: { locale: string }) {
           <div className="hidden md:flex items-center gap-6">
             <a href="#funcionalidades" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{locale === "en" ? "Features" : "Funcionalidades"}</a>
             <a href="#planos" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{locale === "en" ? "Pricing" : "Preços"}</a>
-            <a href="/dashboard" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{locale === "en" ? "Sign In" : "Entrar"}</a>
-            <a href="/dashboard" className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-full font-bold transition-all text-sm hover:scale-105">
+            <Link href="/dashboard" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{locale === "en" ? "Sign In" : "Entrar"}</Link>
+            <Link href="/dashboard" className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-full font-bold transition-all text-sm hover:scale-105">
               {locale === "en" ? "Get Started Free" : "Começar Grátis"}
-            </a>
+            </Link>
           </div>
 
           <div className="flex md:hidden items-center gap-2">
-            <a href="/dashboard" className="border border-white/30 text-white px-3 py-2 rounded-full font-semibold text-sm hover:bg-white/10 transition-colors">
+            <Link href="/dashboard" className="border border-white/30 text-white px-3 py-2 rounded-full font-semibold text-sm hover:bg-white/10 transition-colors">
               {locale === "en" ? "Sign In" : "Entrar"}
-            </a>
-            <a href="/dashboard" className="bg-white text-black px-3 py-2 rounded-full font-bold text-sm">
+            </Link>
+            <Link href="/dashboard" className="bg-white text-black px-3 py-2 rounded-full font-bold text-sm">
               {locale === "en" ? "Sign Up" : "Cadastrar"}
-            </a>
+            </Link>
             <button className="w-8 h-8 flex flex-col items-center justify-center gap-1.5 ml-1">
               <span className="w-5 h-0.5 bg-white rounded-full" />
               <span className="w-5 h-0.5 bg-white rounded-full" />
@@ -1321,33 +1321,153 @@ function LandingPageContent({ locale }: { locale: string }) {
         </div>
       </nav>
 
-      {/* --- HERO SECTION --- */}
-      <section
-        className="relative min-h-[80vh] lg:min-h-[140vh] w-full flex flex-col items-center justify-start pt-16 lg:pt-32 bg-cover bg-bottom bg-no-repeat"
-        style={{ backgroundImage: "url('/hero2.png')" }}
-      >
-        <div className="max-w-5xl mx-auto px-6 text-center relative z-10 flex flex-col items-center">
-          <h1 className="text-[2.6rem] md:text-5xl lg:text-[6rem] font-serif font-bold text-white tracking-tighter mb-6 leading-none">
-            {locale === "en" ? <>The New Era of <br /><span className="text-white tracking-tighter mb-8 leading-none">Asset Analysis.</span></> : <>A Nova Era Da <br /><span className="text-white tracking-tighter mb-8 leading-none">Análise de Ativos.</span></>}
-          </h1>
-
-          <p className="text-base md:text-2xl text-gray-300 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-medium tracking-tight">
-            {locale === "en" ? "Speed up your quarterly earnings analysis. Let AI structure the data and generate insights to support your investment decisions." : "Acelere a leitura de relatórios trimestrais. Deixe a IA estruturar os dados e gerar insights para apoiar sua decisão de investimento."}
+      {/* --- HERO: FinAnalyzer visual identity with a centered fintech headline --- */}
+      <section className="relative isolate overflow-hidden bg-[#080a1d] px-5 pb-0 pt-16 text-center md:pt-24">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_15%,rgba(49,72,255,0.28),transparent_54%),linear-gradient(180deg,#080a1d_0%,#0b1029_75%,#111c46_100%)]" />
+        <div className="pointer-events-none absolute left-1/2 top-24 -z-10 h-72 w-[min(90vw,900px)] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[120px]" />
+        <div className="mx-auto flex max-w-6xl flex-col items-center">
+          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-300/20 bg-blue-400/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.22em] text-blue-200">
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.9)]" />
+            {locale === "en" ? "Financial analysis, from the source" : "Análise financeira, direto da fonte"}
           </p>
-
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full md:w-auto">
-            <a href="/dashboard" className="w-full md:w-auto bg-blue-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-blue-400 transition-transform hover:scale-105 flex items-center justify-center gap-2 shadow-[0_0_40px_-10px_rgba(59,130,246,0.7)]">
-              {locale === "en" ? "Create Free Account" : "Criar Conta Grátis"} <ArrowRight size={20} />
-            </a>
-            <a href="#funcionalidades" className="w-full md:w-auto px-10 py-4 rounded-full font-bold text-lg text-white border border-white/30 hover:bg-white/10 transition-all backdrop-blur-md bg-black/20">
-              {locale === "en" ? "See Features" : "Ver Funcionalidades"}
+          <h1 className="max-w-5xl text-[2.75rem] font-semibold leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[5.7rem]">
+            <span className="bg-gradient-to-r from-[#4d82ff] via-[#68b5ff] to-[#9bd7ff] bg-clip-text text-transparent">
+              {locale === "en" ? "Understand every" : "Entenda cada"}
+            </span>
+            <br />
+            {locale === "en" ? "company result." : "resultado da empresa."}
+          </h1>
+          <p className="mx-auto mb-8 mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg md:mb-9 md:mt-7 md:text-xl">
+            {locale === "en"
+              ? "Turn official earnings releases into clear, source-linked insights on revenue, margins, debt, and profitability."
+              : "Transforme releases oficiais em análises claras, com fontes verificáveis sobre receita, margens, dívida e rentabilidade."}
+          </p>
+          <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row sm:gap-4">
+            <Link href="/dashboard" className="flex w-full items-center justify-center gap-2 rounded-full bg-[#3428ff] px-8 py-4 text-base font-bold text-white shadow-[0_12px_40px_-14px_rgba(69,86,255,0.9)] transition hover:-translate-y-0.5 hover:bg-[#493fff] sm:w-auto">
+              {locale === "en" ? "Analyze a company" : "Analisar uma empresa"} <ArrowRight size={18} />
+            </Link>
+            <a href="#funcionalidades" className="w-full rounded-full border border-white/20 bg-white/[0.04] px-8 py-4 text-base font-semibold text-white transition hover:border-white/40 hover:bg-white/[0.08] sm:w-auto">
+              {locale === "en" ? "Explore the platform" : "Conhecer a plataforma"}
             </a>
           </div>
+
+          <div className="relative mt-14 w-full max-w-5xl overflow-hidden rounded-t-[2rem] border border-white/10 bg-[#0d1430]/90 p-3 shadow-[0_-24px_100px_-45px_rgba(59,100,255,0.55)] sm:mt-16 sm:rounded-t-[2.5rem] sm:p-5">
+            <div className="flex items-center justify-between border-b border-white/10 px-2 pb-3 sm:px-4 sm:pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-500/20 text-blue-300"><BarChart3 size={17} /></div>
+                <span className="text-xs font-semibold text-white sm:text-sm">FinAnalyzer <span className="text-blue-300">AI</span></span>
+              </div>
+              <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-[10px] font-semibold text-emerald-200 sm:text-xs">
+                {locale === "en" ? "Official source connected" : "Fonte oficial conectada"}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 py-3 sm:grid-cols-4 sm:gap-3 sm:py-4">
+              {[
+                { title: locale === "en" ? "Revenue" : "Receita", value: "01" },
+                { title: locale === "en" ? "Margins" : "Margens", value: "02" },
+                { title: locale === "en" ? "Debt & risk" : "Dívida e risco", value: "03" },
+                { title: locale === "en" ? "Profitability" : "Rentabilidade", value: "04" },
+              ].map((item) => (
+                <div key={item.title} className="rounded-xl border border-white/10 bg-white/[0.035] p-3 text-left sm:rounded-2xl sm:p-4">
+                  <div className="mb-4 flex items-center justify-between">
+                    <span className="text-[10px] font-medium text-slate-400 sm:text-xs">{item.title}</span>
+                    <span className="text-[9px] font-bold tracking-widest text-blue-300/80">{item.value}</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white/10"><div className="h-full w-3/4 rounded-full bg-gradient-to-r from-blue-500 to-cyan-300" /></div>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#090e22] p-4 text-left sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{locale === "en" ? "Quarterly analysis" : "Análise trimestral"}</p>
+                <p className="mt-1 text-sm font-semibold text-white sm:text-base">Microsoft <span className="font-medium text-slate-400">· 2T/2026</span></p>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-medium text-emerald-300"><Check size={15} /> {locale === "en" ? "Ready to explore" : "Pronta para explorar"}</div>
+            </div>
+            <div className="pointer-events-none absolute -bottom-16 left-1/2 h-28 w-3/4 -translate-x-1/2 rounded-full bg-blue-500/20 blur-3xl" />
+          </div>
+        </div>
+      </section>
+
+      {/* --- TWO-PANEL OVERVIEW: adapted to FinAnalyzer, not a copy of Clear Street --- */}
+      <section className="relative overflow-hidden bg-[#3025ef] px-5 py-14 text-white sm:py-20 lg:py-24">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_35%,rgba(128,161,255,0.25),transparent_34%),radial-gradient(circle_at_90%_90%,rgba(109,56,255,0.5),transparent_40%)]" />
+        <div className="relative mx-auto grid max-w-7xl gap-10 md:grid-cols-2 md:gap-6 lg:gap-8">
+          <article className="min-w-0">
+            <h2 className="mb-5 text-2xl font-semibold tracking-tight sm:text-3xl">{locale === "en" ? "Companies" : "Empresas"}</h2>
+            <div className="group relative flex h-[260px] items-end overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#091128] p-5 sm:h-[340px] sm:rounded-[2rem] sm:p-7">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_20%_50%,rgba(34,111,255,0.24),transparent_50%),linear-gradient(115deg,#0b1533,#080c19)]" />
+              <div className="absolute inset-0 flex items-center justify-center gap-[3px] overflow-hidden opacity-80 sm:gap-1">
+                {Array.from({ length: 22 }, (_, i) => (
+                  <div key={i} className="h-[55%] w-2 rounded-full bg-gradient-to-b from-blue-300 via-blue-600 to-slate-900 shadow-[0_0_18px_rgba(74,123,255,0.25)] transition-transform duration-700 group-hover:-translate-y-3 sm:w-3" style={{ opacity: 0.25 + ((i * 7) % 7) / 10, height: `${40 + ((i * 13) % 36)}%` }} />
+                ))}
+              </div>
+              <div className="relative z-10 flex w-full items-end justify-between gap-3">
+                <div className="flex flex-wrap gap-2">
+                  {["MSFT", "AAPL", "NVDA"].map((ticker) => <span key={ticker} className="rounded-full border border-white/15 bg-[#0a1024]/75 px-3 py-1.5 text-[10px] font-bold tracking-wide text-white/90 backdrop-blur sm:text-xs">{ticker}</span>)}
+                </div>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#3529ff] text-white shadow-lg sm:h-12 sm:w-12"><ArrowRight size={21} /></span>
+              </div>
+            </div>
+            <p className="mt-5 max-w-lg text-sm leading-6 text-white/80 sm:text-base">
+              {locale === "en" ? "Follow the companies you care about and bring their reported results into one clear workflow." : "Acompanhe as empresas que importam para você e reúna os resultados publicados em um fluxo claro."}
+            </p>
+          </article>
+
+          <article className="min-w-0">
+            <h2 className="mb-5 text-2xl font-semibold tracking-tight sm:text-3xl">{locale === "en" ? "Analysis" : "Análises"}</h2>
+            <div className="group relative flex h-[260px] items-center justify-center overflow-hidden rounded-[1.6rem] border border-white/10 bg-[#0b1021] p-5 sm:h-[340px] sm:rounded-[2rem] sm:p-7">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_25%,rgba(74,61,255,0.35),transparent_55%)]" />
+              <div className="relative grid w-full max-w-lg grid-cols-2 gap-3 transition-transform duration-700 group-hover:scale-[1.02] sm:gap-4">
+                {[
+                  { label: locale === "en" ? "Revenue" : "Receita", icon: DollarSign, color: "text-sky-300", amount: "01" },
+                  { label: locale === "en" ? "Margins" : "Margens", icon: Percent, color: "text-violet-300", amount: "02" },
+                  { label: locale === "en" ? "Debt & risk" : "Dívida e risco", icon: AlertCircle, color: "text-rose-300", amount: "03" },
+                  { label: locale === "en" ? "Profitability" : "Rentabilidade", icon: TrendingUp, color: "text-emerald-300", amount: "04" },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  return <div key={item.label} className="rounded-2xl border border-white/10 bg-[#11182d]/90 p-4 shadow-xl backdrop-blur sm:p-5"><div className="mb-4 flex items-center justify-between"><Icon size={18} className={item.color} /><span className="text-[9px] font-bold tracking-[0.16em] text-white/35">{item.amount}</span></div><p className="text-xs font-semibold text-white/90 sm:text-sm">{item.label}</p><div className="mt-3 h-1.5 rounded-full bg-white/10"><div className="h-full w-4/5 rounded-full bg-gradient-to-r from-blue-500 to-cyan-300" /></div></div>;
+                })}
+              </div>
+            </div>
+            <p className="mt-5 max-w-lg text-sm leading-6 text-white/80 sm:text-base">
+              {locale === "en" ? "Move from official filings to structured fundamentals, charts, and a focused company report." : "Vá de documentos oficiais a fundamentos organizados, gráficos e um relatório focado na empresa."}
+            </p>
+          </article>
+        </div>
+      </section>
+
+      {/* --- EDITORIAL BRAND MOMENT: cinematic statement flowing into FinAnalyzer wordmark --- */}
+      <section className="relative isolate flex min-h-[360px] items-center justify-center overflow-hidden bg-[#07101f] px-6 py-20 text-center sm:min-h-[440px] sm:py-28">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_100%,rgba(25,104,177,0.48),transparent_58%),linear-gradient(180deg,#07101f_0%,#0a1b31_100%)]" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 flex h-[82%] items-end justify-center gap-[2px] opacity-25 sm:gap-1">
+          {Array.from({ length: 28 }, (_, i) => <div key={i} className="w-[3.6%] border-x border-slate-400/25 bg-gradient-to-t from-slate-500/20 to-sky-200/10" style={{ height: `${38 + ((i * 17) % 57)}%` }} />)}
+        </div>
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#07101f]/40 via-transparent to-[#07101f]/25" />
+        <div className="max-w-6xl">
+          <p className="mb-6 text-[10px] font-bold uppercase tracking-[0.25em] text-blue-200/75 sm:text-xs">{locale === "en" ? "A clearer way to read company results" : "Uma forma mais clara de ler resultados"}</p>
+          <h2 className="text-3xl font-semibold leading-[1.08] tracking-[-0.045em] text-white sm:text-5xl md:text-6xl lg:text-7xl">
+            {locale === "en" ? <>Financial reports hold the story.<br />We help you see what matters.</> : <>Os relatórios guardam a história.<br />A análise revela o que importa.</>}
+          </h2>
+        </div>
+      </section>
+      <section className="overflow-hidden bg-[#e8f1ff] px-5 py-12 text-center text-[#151d3a] sm:py-16">
+        <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.23em] text-[#4053ca] sm:text-xs">{locale === "en" ? "Source-linked financial intelligence" : "Inteligência financeira com fontes verificáveis"}</p>
+        <div className="mx-auto max-w-full overflow-hidden text-[16vw] font-semibold leading-none tracking-[-0.085em] sm:text-[14vw] lg:text-[12vw]">
+          <span className="bg-gradient-to-r from-[#3428ff] via-[#4265e8] to-[#ef665d] bg-clip-text text-transparent">FinAnalyzer</span><span className="align-top text-[0.28em] tracking-normal text-[#53617c]"> AI</span>
         </div>
       </section>
 
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
+
+        <section className="bg-[#0A0D14] px-6 pb-2 pt-20 text-center sm:pt-28">
+          <div className="mx-auto max-w-3xl">
+            <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.24em] text-blue-300">{locale === "en" ? "Unlock the full picture" : "Veja o quadro completo"}</p>
+            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-5xl">{locale === "en" ? "From earnings release to clear insight." : "Do release à análise com clareza."}</h2>
+            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">{locale === "en" ? "Explore the tools that make company results easier to understand, compare, and revisit." : "Conheça os recursos que ajudam a entender, comparar e revisitar os resultados das empresas."}</p>
+          </div>
+        </section>
 
         {/* BLOCO 1: UPLOAD */}
         <section

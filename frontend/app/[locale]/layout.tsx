@@ -13,10 +13,48 @@ const playfair = Playfair_Display({
   variable: "--font-playfair"
 });
 
-export const metadata: Metadata = {
-  title: "FinAnalyzer",
-  description: "AI Financial Analysis",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const isEnglish = locale === "en";
+
+  return {
+    metadataBase: new URL("https://finanalyser.com.br"),
+    title: {
+      default: isEnglish
+        ? "FinAnalyzer | AI-powered financial statement analysis"
+        : "FinAnalyzer | Análise de resultados financeiros com IA",
+      template: "%s | FinAnalyzer",
+    },
+    description: isEnglish
+      ? "Find official company earnings releases and earnings call transcripts automatically. Analyze financial performance with AI, clear metrics, and source links."
+      : "Encontre releases de resultados e transcripts de empresas automaticamente. Analise o desempenho financeiro com IA, indicadores claros e links para as fontes.",
+    applicationName: "FinAnalyzer",
+    openGraph: {
+      type: "website",
+      siteName: "FinAnalyzer",
+      locale: isEnglish ? "en_US" : "pt_BR",
+      title: isEnglish
+        ? "FinAnalyzer | AI-powered financial analysis"
+        : "FinAnalyzer | Análise financeira com inteligência artificial",
+      description: isEnglish
+        ? "Analyze company earnings releases and call transcripts with AI and traceable sources."
+        : "Analise releases de resultados e transcripts de calls com IA e fontes verificáveis.",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: isEnglish
+        ? "FinAnalyzer | AI-powered financial analysis"
+        : "FinAnalyzer | Análise financeira com inteligência artificial",
+      description: isEnglish
+        ? "Find and analyze company earnings documents with AI and source links."
+        : "Encontre e analise documentos financeiros com IA e links para as fontes.",
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
