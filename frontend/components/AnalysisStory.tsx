@@ -42,7 +42,10 @@ function Scene({ index, progress, title, description, reduced }: { index: number
   }, [progress, syncVideo]);
 
   return <motion.div className={styles.scene} style={reduced ? undefined : { opacity }}>
-    <video ref={video} className={styles.video} src={`/reference/clearstreet/story-${index + 1}.mp4#t=0.01`} muted loop playsInline preload="metadata" aria-hidden="true" onLoadedData={() => syncVideo(progress.get())} />
+    <video ref={video} className={styles.video} muted loop playsInline preload="metadata" aria-hidden="true" onLoadedData={() => syncVideo(progress.get())}>
+      <source media="(min-width: 744px)" src={`/reference/clearstreet/story-${index + 1}-desktop.mp4#t=0.01`} type="video/mp4" />
+      <source src={`/reference/clearstreet/story-${index + 1}.mp4#t=0.01`} type="video/mp4" />
+    </video>
     <motion.div className={styles.shade} style={reduced ? undefined : { opacity: shade, backgroundColor: index === 0 ? shadeColor : "#040313" }} />
     <motion.div className={styles.text} style={reduced ? undefined : { y, opacity: textOpacity }}>
       <h2>{title}</h2>
@@ -67,12 +70,15 @@ export default function AnalysisStory({ locale }: { locale: string }) {
     <motion.section ref={solution} data-active={solutionVisible && !reduced} className={styles.solution} initial="idle" animate={reduced || solutionVisible ? "active" : "idle"}>
       <motion.div className={styles.rectangles} aria-hidden="true" variants={{ idle: { opacity: 0, scale: .85 }, active: { opacity: 1, scale: 1 } }} transition={{ duration: reduced ? 0 : 2.8, ease: "easeOut" }}>
         <div className={styles.ring}>
-          {Array.from({ length: 24 }, (_, index) => <span key={index} className={styles.block} style={{ "--angle": `${index * 15}deg` } as CSSProperties} />)}
+          {Array.from({ length: 24 }, (_, index) => <span key={index} className={styles.block} style={{ "--angle": `${index * 15}deg`, "--phase": `${index * -.14}s` } as CSSProperties} />)}
         </div>
       </motion.div>
       <motion.div className={styles.solutionText} variants={{ idle: { opacity: 0, y: 20 }, active: { opacity: 1, y: 0 } }} transition={{ duration: reduced ? 0 : 1, delay: reduced ? 0 : .4 }}>
-        <h2>{english ? "This is where" : "É aqui que o"}<br /><span>FinAnalyzer</span><br />{english ? "comes in." : "entra."}</h2>
+        <h2>{english ? "This is where" : "É aqui que o"}<br /><span>FinAnalyzer {english ? "comes in." : "entra."}</span></h2>
       </motion.div>
+      <div className={styles.foreground} aria-hidden="true">
+        {Array.from({ length: 6 }, (_, index) => <span key={index} className={styles.frontBlock} style={{ "--index": index, "--phase": `${index * -.56}s` } as CSSProperties} />)}
+      </div>
     </motion.section>
   </>;
 }

@@ -7,16 +7,20 @@
 .text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 24px; background: radial-gradient(ellipse at center, transparent 0%, #0c101850 100%); }
 .text h2 { max-width: 1050px; margin: 0; font-size: clamp(32px, 4vw, 76px); font-weight: 500; line-height: 1.12; letter-spacing: -.045em; text-wrap: balance; }
 .text p { max-width: 780px; margin: 32px 0 0; font-size: clamp(18px, 1.6vw, 26px); line-height: 1.4; text-wrap: balance; }
-.solution { position: relative; isolation: isolate; min-height: 100svh; display: grid; place-items: center; overflow: hidden; padding: 100px 24px; background: #eaf2ff; color: #2e21de; font-family: "Audience Reyhan", sans-serif; text-align: center; }
+.solution { position: relative; isolation: isolate; height: 62.5vw; min-height: 560px; display: grid; place-items: center; overflow: hidden; padding: 0 24px; background: #eaf2ff; color: #2e21de; font-family: "Audience Reyhan", sans-serif; text-align: center; }
 .solutionText { position: relative; z-index: 1; }
-.solution h2 { margin: 0; font-size: clamp(32px, 4.3vw, 68px); line-height: 1.06; letter-spacing: -.045em; font-weight: 500; }
-.solution h2 span { display: inline-block; margin: .08em 0; }
-.rectangles { position: absolute; width: min(110vw, 1100px); aspect-ratio: 1; perspective: 1200px; pointer-events: none; }
-.ring { position: absolute; inset: 0; transform-style: preserve-3d; animation: orbit 20s linear infinite; animation-play-state: paused; }
-.solution[data-active="true"] .ring { animation-play-state: running; }
-.block { position: absolute; left: 50%; top: 50%; width: 32%; height: 6%; margin-left: -16%; margin-top: -3%; transform: rotateZ(var(--angle)) translateX(116%) rotateY(-14deg); background: linear-gradient(90deg, #1a58fbb8, #88a5fc55 55%, #acbffc22); border: 1px solid #d4ddff55; box-shadow: -18px 22px 24px #3b67db1c; transform-style: preserve-3d; }
-.block::before { content: ""; position: absolute; inset: -30% 0 auto; height: 30%; transform: skewX(-30deg); transform-origin: bottom; background: linear-gradient(90deg, #a2b7ff66, #cad5fd44); }
-.block::after { content: ""; position: absolute; left: -5%; top: -15%; width: 5%; height: 100%; transform: skewY(30deg); background: #547ce34d; }
-@keyframes orbit { from { transform: rotateX(22deg) rotateZ(-12deg); } to { transform: rotateX(22deg) rotateZ(348deg); } }
-@media (max-width: 743px) { .text { padding: 90px 24px; } .text h2 { font-size: clamp(30px, 7vw, 48px); } .solution { min-height: 80svh; } }
-@media (prefers-reduced-motion: reduce) { .story { height: auto; margin-top: 0; } .sticky { position: static; height: auto; } .scene, .scene:not(:first-child) { position: relative; height: 80svh; opacity: 1 !important; } .text { transform: none !important; opacity: 1 !important; } .ring { animation: none; transform: rotateX(22deg) rotateZ(-12deg); } }
+.solution h2 { margin: 0; font-size: clamp(48px, 8.5vw, 170px); line-height: 1.08; letter-spacing: -.045em; font-weight: 500; }
+.solution h2 span { display: inline-block; white-space: nowrap; }
+.rectangles { position: absolute; width: 100%; aspect-ratio: 1.6; perspective: 1100px; pointer-events: none; }
+.ring { position: absolute; inset: -30% 0; transform-style: preserve-3d; animation: orbit 12s linear infinite; animation-play-state: paused; }
+.solution[data-active="true"] .ring, .solution[data-active="true"] .block, .solution[data-active="true"] .frontBlock { animation-play-state: running; }
+.block { position: absolute; left: 50%; top: 50%; width: 33%; height: 7%; margin-left: -16.5%; margin-top: -3.5%; transform-style: preserve-3d; background: linear-gradient(90deg, #1350ffb0, #8ca8fc60 38%, #c5d2fd44); box-shadow: -16px 24px 20px #376be321; animation: tumble 3.35s linear infinite; animation-delay: var(--phase); animation-play-state: paused; }
+.block::before { content: ""; position: absolute; inset: -35% 0 auto; height: 35%; transform: skewX(-35deg); transform-origin: bottom; background: linear-gradient(90deg, #7190fb80, #d5dfff66); }
+.block::after { content: ""; position: absolute; left: -7%; top: -17%; width: 7%; height: 100%; transform: skewY(35deg); background: #164cff99; }
+.foreground { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+.frontBlock { position: absolute; width: 38%; height: 9%; left: calc(-15% + var(--index) * 18%); top: calc(10% + var(--index) * 13%); background: linear-gradient(90deg, #1a54ff66, #b1c5ff38 55%, #eaf2ff08); box-shadow: 0 12px 20px #396be319; filter: blur(2px); animation: drift 3.35s ease-in-out infinite; animation-delay: var(--phase); animation-play-state: paused; }
+@keyframes orbit { from { transform: rotateX(28deg) rotateZ(-20deg); } to { transform: rotateX(28deg) rotateZ(340deg); } }
+@keyframes tumble { from { transform: rotateZ(var(--angle)) translateX(112%) rotateY(-30deg) rotateZ(-20deg); } to { transform: rotateZ(var(--angle)) translateX(112%) rotateY(330deg) rotateZ(-20deg); } }
+@keyframes drift { 0%,100% { transform: translate(-8%, -50%) rotate(-18deg) rotateY(-35deg); opacity: .45; } 50% { transform: translate(12%, 60%) rotate(20deg) rotateY(35deg); opacity: .8; } }
+@media (max-width: 743px) { .text { padding: 90px 24px; } .text h2 { font-size: clamp(30px, 7vw, 48px); } .solution { height: 100svh; min-height: 560px; } .solution h2 { font-size: 8.5vw; } .rectangles { width: 180%; } .frontBlock { width: 65%; } }
+@media (prefers-reduced-motion: reduce) { .story { height: auto; margin-top: 0; } .sticky { position: static; height: auto; } .scene, .scene:not(:first-child) { position: relative; height: 80svh; opacity: 1 !important; } .text { transform: none !important; opacity: 1 !important; } .ring { animation: none; transform: rotateX(28deg) rotateZ(-20deg); } .block { animation: none; transform: rotateZ(var(--angle)) translateX(112%) rotateY(-30deg) rotateZ(-20deg); } .foreground { display: none; } }
