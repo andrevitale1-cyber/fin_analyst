@@ -5,10 +5,11 @@ import { motion, useInView } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import AudienceCards from "@/components/AudienceCards";
 import AnalysisStory from "@/components/AnalysisStory";
+import SearchBenefit from "@/components/SearchBenefit";
 import LanguageSwitcher from "../../components/LanguageSwitcher";
 import { Link } from "@/i18n/routing";
 import {
-  BarChart3, UploadCloud, ArrowRight,
+  BarChart3, ArrowRight,
   FileText, Layout, Database, Check, X,
   Trash2, ChevronRight, DollarSign, Percent,
   AlertCircle, TrendingUp, Download, ChevronLeft, Menu, Activity, Mic
@@ -151,78 +152,6 @@ function ScoreMetricBar({ score, animate }: { score: number; animate: boolean })
         style={{ width: animate ? `${(score / 5) * 100}%` : "0%" }}
       />
     </div>
-  );
-}
-
-function PhoneImage() {
-  const locale = useLocale();
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, margin: "-100px" });
-  const [isDark, setIsDark] = useState(true);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    if (isInView) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      intervalRef.current = setInterval(() => {
-        setIsDark(prev => !prev);
-      }, 2000);
-    } else {
-      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-      setIsDark(true);
-    }
-    return () => { if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; } };
-  }, [isInView]);
-
-  const d = isDark;
-  const screen = d ? "bg-[#0f1117]" : "bg-[#f2f4f8]";
-  const input = d ? "bg-[#1a1d27] border-white/8 text-white" : "bg-white border-gray-200 text-gray-900";
-  const label = d ? "text-gray-500" : "text-gray-400";
-  const titleC = d ? "text-white" : "text-gray-900";
-  const subC = d ? "text-gray-400" : "text-gray-500";
-  const zone = d ? "border-blue-500/40 bg-blue-500/5" : "border-blue-400/60 bg-blue-50";
-  const zoneFile = d ? "text-white" : "text-gray-800";
-  const zoneSub = d ? "text-gray-400" : "text-gray-500";
-  const barC = d ? "bg-white/20" : "bg-black/20";
-  const statusC = d ? "text-white/50" : "text-black/40";
-
-  return (
-    <motion.div ref={ref} initial={{ opacity: 0, y: 80 }} animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 80 }} transition={{ duration: 0.9, ease: "easeOut", delay: 0.2 }} className="w-full max-w-[320px] mx-auto select-none">
-      <div className="relative rounded-[3rem] bg-[#111] shadow-[0_40px_80px_-15px_rgba(0,0,0,0.9)] border border-white/10 overflow-hidden" style={{ padding: "10px" }}>
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-20" />
-        <div className={`relative rounded-[2.4rem] overflow-hidden transition-colors duration-700 ${screen}`} style={{ minHeight: "620px" }}>
-          <div className={`flex items-center justify-between px-6 pt-10 pb-2 text-[10px] font-semibold transition-colors duration-700 ${statusC}`}>
-            <span>9:41</span>
-            <div className="flex items-center gap-1"><span>●●● WiFi </span></div>
-          </div>
-          <div className="px-5 pb-6">
-            <div className="text-center mb-5 mt-2">
-              <p className={`text-base font-bold leading-tight transition-colors duration-700 ${titleC}`}>{locale === "en" ? "New Financial Analysis" : "Nova Análise Financeira"}</p>
-              <p className={`text-xs mt-1 leading-snug transition-colors duration-700 ${subC}`}>{locale === "en" ? "Upload the quarterly report (PDF) for AI processing." : "Carregue o relatório trimestral (PDF) para processamento via IA."}</p>
-            </div>
-            <div className="space-y-3">
-              {[{ label: locale === "en" ? "COMPANY" : "EMPRESA", value: "AMAZON" }, { label: locale === "en" ? "YEAR" : "ANO", value: "2025" }, { label: locale === "en" ? "QUARTER" : "TRIMESTRE", value: locale === "en" ? "1st Quarter" : "1º Trimestre" }].map(f => (
-                <div key={f.label}>
-                  <p className={`text-[9px] font-semibold uppercase tracking-widest mb-1 transition-colors duration-700 ${label}`}>{f.label}</p>
-                  <div className={`rounded-xl border px-3 py-2.5 text-xs font-medium transition-colors duration-700 ${input}`}>{f.value}</div>
-                </div>
-              ))}
-              <div className={`rounded-xl border-2 border-dashed px-4 py-4 text-center mt-1 transition-colors duration-700 ${zone}`}>
-                <UploadCloud size={22} className="mx-auto mb-2 text-blue-500" />
-                <p className={`text-[10px] font-bold transition-colors duration-700 ${zoneFile}`}>AMZN-Q1-2025-Earnings-Release.pdf</p>
-                <p className={`text-[9px] mt-0.5 transition-colors duration-700 ${zoneSub}`}>{locale === "en" ? "Supports PDF up to 10MB" : "Suporta PDF de até 10MB"}</p>
-              </div>
-              <button className="w-full rounded-xl py-3 text-xs font-bold flex items-center justify-center gap-2 mt-1 bg-blue-600 text-white">
-                <span>✦</span> {locale === "en" ? "Generate Analysis" : "Gerar Análise Completa"}
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-center pt-2 pb-1">
-          <div className={`w-24 h-1 rounded-full transition-colors duration-700 ${barC}`} />
-        </div>
-      </div>
-    </motion.div>
   );
 }
 
@@ -1363,39 +1292,14 @@ function LandingPageContent({ locale }: { locale: string }) {
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
 
-        <section className="bg-[#0A0D14] px-6 pb-2 pt-20 text-center sm:pt-28">
-          <div className="mx-auto max-w-3xl">
-            <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.24em] text-blue-300">{locale === "en" ? "Unlock the full picture" : "Veja o quadro completo"}</p>
-            <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-5xl">{locale === "en" ? "From earnings release to clear insight." : "Do release à análise com clareza."}</h2>
-            <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-slate-400 sm:text-base">{locale === "en" ? "Explore the tools that make company results easier to understand, compare, and revisit." : "Conheça os recursos que ajudam a entender, comparar e revisitar os resultados das empresas."}</p>
-          </div>
-        </section>
-
-        {/* BLOCO 1: UPLOAD */}
-        <section
-          className="py-16 lg:py-56 relative bg-cover bg-center bg-no-repeat overflow-hidden"
-          style={{ backgroundImage: "url('/upload.png')" }}
-        >
-          <div className="max-w-7xl mx-auto px-6 relative z-10">
-            <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-16 lg:items-center">
-              <div className="lg:col-span-5 lg:col-start-1 text-center lg:text-left mb-12 lg:mb-0">
-                <div className="w-14 h-14 bg-blue-500/20 rounded-2xl flex items-center justify-center mb-6 border border-blue-400/30 mx-auto lg:mx-0">
-                  <UploadCloud className="text-blue-400 w-7 h-7" />
-                </div>
-                <h2 className="text-4xl md:text-5xl lg:text-[3rem] font-serif font-bold text-white mb-4 tracking-tighter leading-[1.05]">
-                  {locale === "en" ? <>Smart <br />Upload</> : <>Upload <br />Inteligente</>}
-                </h2>
-                <p className="text-base text-gray-300 leading-relaxed mb-8 font-medium tracking-tight max-w-md mx-auto lg:mx-0">
-                  {locale === "en" ? "Simplify your analysis routine. Just drag the Earnings Release PDF. Our AI will generate a complete report in seconds." : "Simplifique sua rotina de análise. Basta arrastar o PDF do Release de Resultados (ITR ou DFP). Nossa IA vai gerar uma análise completa do resultado em segundos."}
-                </p>
-              </div>
-
-              <div className="lg:col-span-6 lg:col-start-7 relative flex justify-center lg:justify-end">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-600/20 blur-[100px] rounded-full pointer-events-none" />
-                <div className="w-full max-w-[260px] lg:max-w-none">
-                  <PhoneImage />
-                </div>
-              </div>
+        <section className="mx-4 rounded-2xl bg-[#f2f3f8] px-5 py-20 sm:mx-6 sm:px-12 sm:py-[120px]">
+          <div className="mx-auto max-w-[1280px]">
+            <h2 className="mx-auto max-w-3xl text-center text-4xl font-bold leading-[1.05] tracking-tight text-[#0a0a1f] sm:text-[56px]">
+              {locale === "en" ? "Unlock" : "Descubra"}<br />
+              <span className="bg-gradient-to-r from-[#3428ff] to-[#62a0ff] bg-clip-text text-transparent">{locale === "en" ? "FinAnalyzer’s key benefits" : "os benefícios do FinAnalyzer"}</span>
+            </h2>
+            <div className="mt-12 grid gap-4 sm:mt-20 lg:grid-cols-[7fr_5fr]">
+              <SearchBenefit locale={locale} />
             </div>
           </div>
         </section>
