@@ -31,9 +31,7 @@ export default function RatingHistoryBenefit({ locale }: { locale: string }) {
   const tooltipX = Math.max(30, Math.min(350, selected.x));
   return <motion.article ref={ref} className={styles.card} initial={reduced ? false : { opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .15 }} transition={{ duration: .6 }}>
     <div className={chartStyles.chart}>
-      <div className={chartStyles.header}><span>Microsoft</span><span className={chartStyles.filter}>{english ? "Quarterly scores" : "Notas trimestrais"}</span></div>
-      <p className={chartStyles.example}>{english ? "Hypothetical example · scores from 0 to 5" : "Exemplo hipotético · notas de 0 a 5"}</p>
-      <svg viewBox="0 0 404 260" role="img" aria-label={english ? "Hypothetical Microsoft score history. These are illustrative values, not actual company ratings." : "Histórico hipotético de notas da Microsoft. Valores ilustrativos, não são avaliações reais da empresa."}>
+      <svg viewBox="0 0 404 260" role="img" aria-label={english ? "Hypothetical score history. These are illustrative values, not actual company ratings." : "Histórico hipotético de notas. Valores ilustrativos, não são avaliações reais da empresa."}>
         <defs><linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#5446ff" stopOpacity=".28" /><stop offset="100%" stopColor="#698eff" stopOpacity="0" /></linearGradient></defs>
         {[40, 76, 112, 148, 184, 220].map(y => <line key={y} x1="22" x2="382" y1={y} y2={y} stroke="#e1e3ec" strokeDasharray="6 6" />)}
         <path d={`${line} L 382 238 L 22 238 Z`} fill={`url(#${gradient})`} />
@@ -46,9 +44,8 @@ export default function RatingHistoryBenefit({ locale }: { locale: string }) {
       </svg>
     </div>
     <div className={styles.copy}>
-      <p className={styles.label}>{english ? "SCORE HISTORY" : "HISTÓRICO DE NOTAS"}</p>
       <h3>{english ? "See how the fundamentals evolve" : "Veja a evolução dos fundamentos"}</h3>
-      <p>{english ? "Compare scores across quarters and identify changes in a company’s fundamentals. Microsoft history shown as a hypothetical example." : "Compare notas entre trimestres e identifique mudanças nos fundamentos da empresa. Histórico da Microsoft apresentado como exemplo hipotético."}</p>
+      <p>{english ? "Compare scores across quarters and identify changes in a company’s fundamentals. Illustrative chart with hypothetical scores." : "Compare notas entre trimestres e identifique mudanças nos fundamentos da empresa. Gráfico ilustrativo com notas hipotéticas."}</p>
     </div>
   </motion.article>;
 }

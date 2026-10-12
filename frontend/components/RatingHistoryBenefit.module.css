@@ -1,7 +1,4 @@
 .chart { margin: 24px; aspect-ratio: 16 / 9; min-height: 220px; text-align: left; }
-.header { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; font-weight: 600; color: #242536; }
-.filter { padding: 6px 10px; border-radius: 5px; background: white; font-size: 10px; font-weight: 400; color: #757889; box-shadow: 0 3px 10px #4430c012; }
-.example { font-size: 10px; color: #757889; margin: 8px 0 2px; }
 .chart svg { display: block; width: 100%; overflow: visible; }
 .chart circle[role="button"] { cursor: pointer; }
 .chart circle[role="button"]:focus-visible { outline: none; stroke: #3428ff; stroke-width: 2; }
