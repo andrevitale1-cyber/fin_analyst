@@ -31,6 +31,7 @@ export default function RatingHistoryBenefit({ locale }: { locale: string }) {
   const tooltipX = Math.max(30, Math.min(350, selected.x));
   return <motion.article ref={ref} className={styles.card} initial={reduced ? false : { opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .15 }} transition={{ duration: .6 }}>
     <div className={chartStyles.chart}>
+      <h4 className={chartStyles.title}>{english ? "Score history" : "Histórico de notas"}</h4>
       <svg viewBox="0 0 404 260" role="img" aria-label={english ? "Hypothetical score history. These are illustrative values, not actual company ratings." : "Histórico hipotético de notas. Valores ilustrativos, não são avaliações reais da empresa."}>
         <defs><linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#5446ff" stopOpacity=".28" /><stop offset="100%" stopColor="#698eff" stopOpacity="0" /></linearGradient></defs>
         {[40, 76, 112, 148, 184, 220].map(y => <line key={y} x1="22" x2="382" y1={y} y2={y} stroke="#e1e3ec" strokeDasharray="6 6" />)}

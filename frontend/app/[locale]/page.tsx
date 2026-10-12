@@ -1293,13 +1293,13 @@ function LandingPageContent({ locale }: { locale: string }) {
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
 
-        <section className="mx-4 rounded-2xl bg-[#f2f3f8] px-5 py-20 sm:mx-6 sm:px-12 sm:py-[120px]">
+        <section className="mx-4 rounded-2xl bg-[#f2f3f8] px-5 py-12 sm:mx-6 sm:px-12 sm:py-16">
           <div className="mx-auto max-w-[1280px]">
-            <h2 className="mx-auto max-w-3xl text-center text-4xl font-bold leading-[1.05] tracking-tight text-[#0a0a1f] sm:text-[56px]">
+            <h2 className="mx-auto max-w-[1080px] text-center text-4xl font-bold leading-[1.05] tracking-tight text-[#0a0a1f] sm:text-[56px]">
               {locale === "en" ? "Unlock" : "Descubra"}<br />
               <span className="bg-gradient-to-r from-[#3428ff] to-[#62a0ff] bg-clip-text text-transparent">{locale === "en" ? "FinAnalyzer’s key benefits" : "os benefícios do FinAnalyzer"}</span>
             </h2>
-            <div className="mt-12 grid gap-4 sm:mt-20 lg:grid-cols-[7fr_5fr]">
+            <div className="mt-10 grid items-stretch gap-4 sm:mt-12 lg:grid-cols-2">
               <SearchBenefit locale={locale} />
               <RatingHistoryBenefit locale={locale} />
             </div>
