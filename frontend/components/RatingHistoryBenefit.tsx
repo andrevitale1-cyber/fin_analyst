@@ -4,7 +4,7 @@ import { motion, useInView, useReducedMotion } from "framer-motion";
 import styles from "./SearchBenefit.module.css";
 import chartStyles from "./RatingHistoryBenefit.module.css";
 
-const scores = [3.5, 4, 3, 3.6, 3.9, 4.8, 4.2, 4.6, 3.7, 4.4, 4.6];
+const scores = [3, 4, 3, 4, 4, 5, 4, 5, 3, 4, 5];
 const points = scores.map((score, index) => ({ x: 22 + index * 36, y: 220 - score * 36 }));
 // Smooth midpoints keep the same rounded line treatment as the reference chart.
 const line = points.reduce((path, point, index) => {
@@ -38,7 +38,7 @@ export default function RatingHistoryBenefit({ locale }: { locale: string }) {
         <motion.path d={line} fill="none" stroke="#4c40ff" strokeWidth="2.5" strokeLinecap="round" initial={reduced ? false : { pathLength: 0 }} whileInView={{ pathLength: 1 }} viewport={{ once: true }} transition={{ duration: 2 }} />
         <motion.circle r="4" fill="#4c40ff" stroke="white" strokeWidth="2" animate={{ cx: selected.x, cy: selected.y }} transition={{ duration: reduced ? 0 : .5 }} />
         <motion.g animate={{ x: tooltipX - 30, y: Math.max(4, selected.y - 48) }} transition={{ duration: reduced ? 0 : .5 }}>
-          <rect width="60" height="30" rx="5" fill="#e6e4ff" /><text x="30" y="20" textAnchor="middle" fill="#4c40ff" fontSize="13" fontWeight="600">{scores[active].toFixed(1)}/5</text>
+          <rect width="60" height="30" rx="5" fill="#e6e4ff" /><text x="30" y="20" textAnchor="middle" fill="#4c40ff" fontSize="13" fontWeight="600">{scores[active]}/5</text>
         </motion.g>
         {points.map((point, index) => <circle key={index} cx={point.x} cy={point.y} r="14" fill="transparent" tabIndex={0} role="button" aria-label={`${english ? "Example" : "Exemplo"} ${index + 1}: ${scores[index]}/5`} onMouseEnter={() => { setInteracting(true); setActive(index); }} onMouseLeave={() => setInteracting(false)} onFocus={() => { setInteracting(true); setActive(index); }} onBlur={() => setInteracting(false)} onClick={() => setActive(index)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setActive(index); } }} />)}
       </svg>

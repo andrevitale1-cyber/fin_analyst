@@ -23,7 +23,7 @@ export default function SearchBenefit({ locale }: { locale: string }) {
 
   return <motion.article ref={card} className={styles.card} initial={reduced ? false : { opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .15 }} transition={{ duration: .6 }}>
     <div className={styles.media}>
-      <video ref={video} src="/benefits/company-search-7040ms.mp4#t=0.01" muted loop playsInline preload="metadata" aria-label={english ? "Company details and official report search demonstration" : "Demonstração do preenchimento da empresa e busca do documento oficial"}
+      <video ref={video} src="/benefits/company-search-clean-7030ms.mp4#t=0.01" muted loop playsInline preload="metadata" aria-label={english ? "Company details and official report search demonstration" : "Demonstração do preenchimento da empresa e busca do documento oficial"}
         onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />
       <button type="button" className={styles.control} aria-label={playing ? (english ? "Pause demonstration" : "Pausar demonstração") : (english ? "Play demonstration" : "Reproduzir demonstração")} onClick={() => {
         const element = video.current;
