@@ -1,29 +1,39 @@
-.section { padding: 40px 32px 64px; background: #f6f7fb; color: #101b30; }
-.container { max-width: 1556px; margin: 0 auto; }
-.header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 52px 54px; border: 1px solid #dfe5f0; border-radius: 44px; background: #ffffffd9; box-shadow: 0 24px 54px #263b6312; }
-.header h2 { margin: 0 0 8px; font-size: clamp(28px, 2.5vw, 42px); font-weight: 700; line-height: 1.2; letter-spacing: -.025em; }
-.header p { margin: 0; color: #627a9a; font-size: 22px; line-height: 1.5; }
+.section { padding: 200px 32px; background: #0a0a1f; color: #101b30; }
+.container { max-width: 1280px; margin: 0 auto; }
+.introduction { text-align: center; color: white; }
+.introduction h2 { max-width: 884px; margin: 0 auto; font-size: 56px; font-weight: 700; line-height: 1.05; letter-spacing: -.025em; }
+.introduction h2 span { color: transparent; background: linear-gradient(225deg, #4b93ff, #9dd0ff); background-clip: text; }
+.introduction > p { max-width: 400px; margin: 24px auto 0; color: #ffffffcc; font-size: 16px; line-height: 24px; }
+.frame { position: relative; isolation: isolate; width: 100%; max-width: 860px; margin: 80px auto 0; padding: 24px; border: 1px solid #ffffff33; border-radius: 24px; background: radial-gradient(circle at 50% 0, #ffffff26, #ffffff0d 80%); filter: drop-shadow(0 0 80px #1a1aff80); }
+.frame::before { content: ""; position: absolute; z-index: -1; left: 50%; top: 50%; width: 84%; max-width: 720px; height: 75%; max-height: 440px; transform: translate(-50%, -50%); border-radius: 12px; background: #1a1aff; }
+.screen { position: relative; overflow: hidden; border-radius: 8px; padding: 24px; background: #f6f7fb; }
+.header { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 24px; border: 1px solid #dfe5f0; border-radius: 24px; background: #ffffffd9; box-shadow: 0 12px 28px #263b6312; }
+.header h3 { margin: 0 0 6px; font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -.025em; }
+.header p { margin: 0; color: #627a9a; font-size: 13px; line-height: 1.5; }
 .configure { position: relative; flex-shrink: 0; color: #4c607d; }
-.configure summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 14px 24px; font-size: 22px; cursor: pointer; background: white; border: 1px solid #dfe5f0; border-radius: 16px; box-shadow: 0 8px 12px #0000001a; }
+.configure summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 10px 12px; font-size: 13px; cursor: pointer; background: white; border: 1px solid #dfe5f0; border-radius: 10px; box-shadow: 0 4px 8px #0000001a; }
 .configure summary::-webkit-details-marker { display: none; }
 .configure fieldset { position: absolute; z-index: 5; top: calc(100% + 12px); right: 0; width: 270px; padding: 16px; border: 1px solid #dfe5f0; border-radius: 16px; background: white; box-shadow: 0 12px 32px #263b6326; }
 .configure legend { font-size: 14px; background: white; padding: 0 4px; }
 .configure label { display: flex; gap: 10px; padding: 8px; font-size: 15px; cursor: pointer; }
 .configure input { accent-color: #0075b5; }
-.scroll { margin-top: 42px; overflow-x: auto; border: 1px solid #dfe5f0; border-radius: 22px; background: #ffffffd9; }
-.scroll table { width: 100%; min-width: 1050px; border-collapse: collapse; table-layout: fixed; text-align: center; }
+.scroll { margin-top: 24px; overflow-x: auto; border: 1px solid #dfe5f0; border-radius: 12px; background: #ffffffd9; }
+.scroll table { width: 100%; min-width: 700px; border-collapse: collapse; table-layout: fixed; text-align: center; }
 .scroll thead { background: #f7f9fc; color: #4c607d; }
-.scroll thead th { height: 76px; padding: 16px 12px; font-size: 16px; line-height: 1.4; font-weight: 600; letter-spacing: .025em; text-transform: uppercase; border-bottom: 1px solid #dfe5f0; }
+.scroll thead th { height: 52px; padding: 10px 6px; font-size: 10px; line-height: 1.4; font-weight: 600; letter-spacing: .025em; text-transform: uppercase; border-bottom: 1px solid #dfe5f0; }
 .scroll th:first-child { width: 14%; color: #101b30; }
 .scroll thead button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font: inherit; text-transform: inherit; cursor: pointer; }
 .scroll thead button svg { color: #0085d3; flex-shrink: 0; }
-.wrapHeading { max-width: 100px; }
-.scroll tbody th, .scroll td { height: 66px; padding: 16px 12px; border-bottom: 1px solid #eef1f7; font-size: 20px; font-weight: 500; }
+.wrapHeading { max-width: 64px; }
+.scroll tbody th, .scroll td { height: 38px; padding: 8px 6px; border-bottom: 1px solid #eef1f7; font-size: 12px; font-weight: 500; }
 .scroll td { color: #627a9a; }
 .scroll tbody tr:last-child > * { border-bottom: 0; }
 .scroll td:nth-child(2), .scroll td:last-child { background: #f8f9fc; }
 .scroll td.score { color: #00875d; font-weight: 700; }
 .scroll td.caution { color: #bf4900; font-weight: 700; }
-.caption { margin: 16px 0 0; text-align: center; color: #627a9a; font-size: 13px; }
+.start { display: flex; align-items: center; justify-content: center; gap: 8px; width: fit-content; margin: 32px auto 0; padding: 16px 20px; color: white; font-size: 16px; font-weight: 700; line-height: 16px; border: 1px solid #ffffff33; border-radius: 6px; background: radial-gradient(circle at 50% 0, #ffffff4d 10%, #ffffff00 80%), #1a1aff; box-shadow: 0 8px 24px -4px #2126ff33; }
+.start:hover { background-color: #4032ff; }
+.start:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+.caption { margin: 16px 0 0; text-align: center; color: #ffffff99; font-size: 13px; }
 .configure summary:focus-visible, .scroll:focus-visible, .scroll button:focus-visible { outline: 2px solid #0085d3; outline-offset: 3px; }
-@media (max-width: 743px) { .section { padding: 24px 16px 40px; } .header { flex-direction: column; align-items: flex-start; padding: 28px 24px; border-radius: 28px; gap: 20px; } .header p { font-size: 16px; } .configure summary { font-size: 16px; padding: 12px 16px; } .configure fieldset { right: auto; left: 0; width: 240px; } .scroll { margin-top: 24px; } }
+@media (max-width: 743px) { .section { padding: 92px 16px; } .introduction h2 { font-size: 30px; } .frame { margin-top: 32px; padding: 10px; border-radius: 10px; } .screen { padding: 16px; border-radius: 4px; } .header { flex-direction: column; align-items: flex-start; padding: 20px 16px; border-radius: 20px; gap: 16px; } .header h3 { font-size: 22px; } .configure fieldset { right: auto; left: 0; width: 220px; } }

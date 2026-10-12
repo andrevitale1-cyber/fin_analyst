@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Settings2 } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowRight, Settings2 } from "lucide-react";
+import { Link } from "@/i18n/routing";
 import styles from "./AggregatedTableSection.module.css";
 
 // Values transcribed from the supplied product screenshot.
@@ -37,8 +38,14 @@ export default function AggregatedTableSection({ locale }: { locale: string }) {
 
   return <section className={styles.section} aria-labelledby="aggregated-table-heading">
     <div className={styles.container}>
+      <div className={styles.introduction}>
+        <h2 id="aggregated-table-heading">{english ? "Compare all your analyses " : "Compare todas as suas análises "}<span>{english ? "in one place" : "em um só lugar"}</span></h2>
+        <p>{english ? "Bring company scores together and compare the fundamentals at a glance." : "Reúna as notas das empresas e compare os fundamentos de um olhar."}</p>
+      </div>
+      <div className={styles.frame}>
+      <div className={styles.screen}>
       <header className={styles.header}>
-        <div><h2 id="aggregated-table-heading">{english ? "Aggregated Table" : "Tabela Agregada"}</h2><p>{english ? "Consolidated view of company performance." : "Visão consolidada do desempenho das empresas."}</p></div>
+        <div><h3>{english ? "Aggregated Table" : "Tabela Agregada"}</h3><p>{english ? "Consolidated view of company performance." : "Visão consolidada do desempenho das empresas."}</p></div>
         <details className={styles.configure}>
           <summary><Settings2 size={20} />{english ? "Configure Columns" : "Configurar colunas"}</summary>
           <fieldset><legend>{english ? "Visible columns" : "Colunas visíveis"}</legend>{keys.map(key => <label key={key}><input type="checkbox" checked={columns.includes(key)} onChange={() => setColumns(current => current.includes(key) ? current.filter(column => column !== key) : keys.filter(column => column === key || current.includes(column)))} />{labels[key]}</label>)}</fieldset>
@@ -49,6 +56,9 @@ export default function AggregatedTableSection({ locale }: { locale: string }) {
           <tbody>{sortedRows.map(row => <tr key={row.company}><th scope="row">{row.company}</th>{columns.map(key => <td key={key} className={keys.indexOf(key) < 5 ? (row[key] === 3 ? styles.caution : styles.score) : undefined}>{row[key]}</td>)}</tr>)}</tbody>
         </table>
       </div>
+      </div>
+      </div>
+      <Link className={styles.start} href="/dashboard">{english ? "Start comparing" : "Começar a comparar"}<ArrowRight size={16} /></Link>
       <p className={styles.caption}>{english ? "Product preview — compare your saved analyses in one place." : "Demonstração do produto — compare suas análises salvas em um só lugar."}</p>
     </div>
   </section>;
