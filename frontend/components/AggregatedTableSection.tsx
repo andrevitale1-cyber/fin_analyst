@@ -17,6 +17,7 @@ const rows = [
 ];
 const keys = ["average", "revenue", "income", "debt", "profitability", "quarter", "results"] as const;
 type Column = typeof keys[number];
+const columnWidths: Record<Column, string> = { average: "11%", revenue: "12%", income: "12%", debt: "10%", profitability: "14%", quarter: "13%", results: "14%" };
 
 export default function AggregatedTableSection({ locale }: { locale: string }) {
   const english = locale === "en";
@@ -44,7 +45,7 @@ export default function AggregatedTableSection({ locale }: { locale: string }) {
         </details>
       </header>
       <div className={styles.scroll} tabIndex={0} role="region" aria-label={english ? "Company comparison table" : "Tabela de comparação de empresas"}>
-        <table><thead><tr><th scope="col">{english ? "Company" : "Empresa"}</th>{columns.map(key => <th key={key} scope="col" aria-sort={sort.key === key ? (sort.descending ? "descending" : "ascending") : "none"}><button onClick={() => setSort({key, descending: sort.key === key ? !sort.descending : true})}>{labels[key]}{sort.key === key && (sort.descending ? <ArrowDown size={15} /> : <ArrowUp size={15} />)}</button></th>)}</tr></thead>
+        <table><thead><tr><th scope="col">{english ? "Company" : "Empresa"}</th>{columns.map(key => <th key={key} scope="col" style={{width: columnWidths[key]}} aria-sort={sort.key === key ? (sort.descending ? "descending" : "ascending") : "none"}><button onClick={() => setSort({key, descending: sort.key === key ? !sort.descending : true})}><span className={key === "average" || key === "profitability" ? undefined : styles.wrapHeading}>{labels[key]}</span>{sort.key === key && (sort.descending ? <ArrowDown size={15} /> : <ArrowUp size={15} />)}</button></th>)}</tr></thead>
           <tbody>{sortedRows.map(row => <tr key={row.company}><th scope="row">{row.company}</th>{columns.map(key => <td key={key} className={keys.indexOf(key) < 5 ? (row[key] === 3 ? styles.caution : styles.score) : undefined}>{row[key]}</td>)}</tr>)}</tbody>
         </table>
       </div>

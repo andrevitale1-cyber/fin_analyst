@@ -17,6 +17,7 @@
 .scroll th:first-child { width: 14%; color: #101b30; }
 .scroll thead button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font: inherit; text-transform: inherit; cursor: pointer; }
 .scroll thead button svg { color: #0085d3; flex-shrink: 0; }
+.wrapHeading { max-width: 100px; }
 .scroll tbody th, .scroll td { height: 66px; padding: 16px 12px; border-bottom: 1px solid #eef1f7; font-size: 20px; font-weight: 500; }
 .scroll td { color: #627a9a; }
 .scroll tbody tr:last-child > * { border-bottom: 0; }
