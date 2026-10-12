@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from "next-intl";
 import AudienceCards from "@/components/AudienceCards";
 import AnalysisStory from "@/components/AnalysisStory";
 import SearchBenefit from "@/components/SearchBenefit";
+import RatingHistoryBenefit from "@/components/RatingHistoryBenefit";
 import LanguageSwitcher from "../../components/LanguageSwitcher";
 import { Link } from "@/i18n/routing";
 import {
@@ -1298,8 +1299,9 @@ function LandingPageContent({ locale }: { locale: string }) {
               {locale === "en" ? "Unlock" : "Descubra"}<br />
               <span className="bg-gradient-to-r from-[#3428ff] to-[#62a0ff] bg-clip-text text-transparent">{locale === "en" ? "FinAnalyzer’s key benefits" : "os benefícios do FinAnalyzer"}</span>
             </h2>
-            <div className="mt-12 sm:mt-20">
+            <div className="mt-12 grid gap-4 sm:mt-20 lg:grid-cols-[7fr_5fr]">
               <SearchBenefit locale={locale} />
+              <RatingHistoryBenefit locale={locale} />
             </div>
           </div>
         </section>
