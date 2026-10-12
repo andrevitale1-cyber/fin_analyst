@@ -10,6 +10,7 @@ import RatingHistoryBenefit from "@/components/RatingHistoryBenefit";
 import ScoreScaleBenefit from "@/components/ScoreScaleBenefit";
 import CompanyLogosBenefit from "@/components/CompanyLogosBenefit";
 import AggregatedTableSection from "@/components/AggregatedTableSection";
+import MetaAnalysisSection from "@/components/MetaAnalysisSection";
 import benefitsStyles from "@/components/BenefitsLayout.module.css";
 import LanguageSwitcher from "../../components/LanguageSwitcher";
 import { Link } from "@/i18n/routing";
@@ -1321,6 +1322,7 @@ function LandingPageContent({ locale }: { locale: string }) {
         </section>
 
         <AggregatedTableSection locale={locale} />
+        <MetaAnalysisSection locale={locale} />
 
         {/* BLOCO 2: SCORE DE IA */}
         <section
