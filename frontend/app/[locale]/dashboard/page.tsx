@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser, UserButton } from "@clerk/nextjs";
 import { useTranslations, useLocale } from "next-intl";
+import { formatPeriod, splitBold } from "../../../lib/analysisText";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import {
   LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
@@ -345,9 +346,9 @@ export default function FinancialDashboard() {
     const q = searchQuery.toLowerCase();
     return historyList.filter((item: any) =>
       item.empresa?.toLowerCase().includes(q) ||
-      item.periodo?.toLowerCase().includes(q)
+      (item.periodo?.toLowerCase().includes(q) || formatPeriod(item.periodo, locale).toLowerCase().includes(q))
     );
-  }, [historyList, searchQuery]);
+  }, [historyList, searchQuery, locale]);
 
   const sortedTableData = useMemo(() => {
     if (!sortConfig) return tableData;
@@ -388,7 +389,8 @@ export default function FinancialDashboard() {
 
   const renderCellContent = (item: any, key: string, colDef: any) => {
     if (key === 'empresa') return <span className={`${colDef.color || 'text-slate-900'} font-bold`}>{item[key]?.toString().toUpperCase()}</span>;
-    if (key === 'trimestre') return <span className="bg-sky-50 text-sky-700 py-1 px-2 rounded text-xs font-bold border border-blue-500/20">{item[key]}</span>;
+    if (key === 'last_analysed_quarter') return <span className={colDef.color}>{formatPeriod(item[key], locale)}</span>;
+    if (key === 'trimestre') return <span className="bg-sky-50 text-sky-700 py-1 px-2 rounded text-xs font-bold border border-blue-500/20">{formatPeriod(item[key], locale)}</span>;
     if (key === 'media') return <span className={`px-2 py-1 rounded font-bold ${item.media >= 4 ? 'text-emerald-700' : 'text-amber-700'}`}>{item[key]}</span>;
     if (key.includes('nota') || key === 'nota_final') {
       const val = item[key];
@@ -586,7 +588,7 @@ export default function FinancialDashboard() {
                       setCurrentView('result'); 
                     }}>
                       <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-slate-900">{item.empresa?.toUpperCase()}</span></div></td>
-                      <td className="py-4 px-6 text-slate-500">{item.periodo}</td>
+                      <td className="py-4 px-6 text-slate-500">{formatPeriod(item.periodo, locale)}</td>
                       <td className="py-4 px-6 text-slate-500 text-sm">{formatarData(item.data)}</td>
                       <td className="py-4 px-6 text-center">
                         {item.nota > 0 ? (
@@ -708,7 +710,7 @@ export default function FinancialDashboard() {
                 <h2 className="text-slate-500 uppercase tracking-widest text-xs font-bold mb-2">{t("result.analysisReport")}</h2>
                 <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-2">{result.metadata?.empresa?.toUpperCase()}</h1>
                 <p className={`text-xl font-medium ${result.metadata?.tipo === "Earnings Call" ? 'text-purple-600' : 'text-sky-700'}`}>
-                  {result.metadata?.tipo === "Earnings Call" ? `Earnings Call · ${result.metadata?.periodo}` : result.metadata?.periodo}
+                  {result.metadata?.tipo === "Earnings Call" ? `Earnings Call · ${formatPeriod(result.metadata?.periodo, locale)}` : formatPeriod(result.metadata?.periodo, locale)}
                 </p>
                 {result.source?.url && /^https?:\/\//.test(result.source.url) && (
                   <a href={result.source.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-sky-400/20 bg-sky-400/10 px-3 py-2 text-sm text-sky-700 transition hover:bg-sky-400/20">
@@ -747,7 +749,7 @@ export default function FinancialDashboard() {
                 {result.metadata?.tipo === "Earnings Call" ? t('result.transcriptAnalysis') : t('result.investmentThesis')}
               </h3>
               <div className="prose prose-lg max-w-none text-slate-600 leading-relaxed whitespace-pre-line">
-                {result.data?.tese_investimento ? result.data.tese_investimento : (result.analise_completa || "Sem análise textual disponível.")}
+                {splitBold(result.data?.tese_investimento || result.analise_completa || "Sem análise textual disponível.").map((part, index) => part.bold ? <strong key={index} className="font-bold text-slate-900">{part.text}</strong> : <React.Fragment key={index}>{part.text}</React.Fragment>)}
               </div>
             </div>
           </div>
