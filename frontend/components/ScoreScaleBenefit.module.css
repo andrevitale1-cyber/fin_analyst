@@ -1,17 +1,28 @@
 .card { position: relative; }
 .stage { position: relative; container-type: inline-size; margin: 16px; aspect-ratio: 984 / 880; overflow: hidden; }
-.orbit { position: absolute; inset: 0; animation: orbit 7s linear infinite; }
+.orbit { position: absolute; inset: 0; animation: orbit 9s linear infinite; }
 .arm { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
-.carrier { width: 0; height: 0; animation: gather 7s ease-in-out infinite; }
-.score { display: grid; place-items: center; width: 14cqw; height: 14cqw; margin: -7cqw; border-radius: 3cqw; background: #fff; color: #424351; font-size: 7cqw; font-weight: 700; box-shadow: 0 3px 12px #181f4b12, inset 0 0 0 1px #ffffff; animation: upright 7s linear infinite; }
+.carrier { width: 0; height: 0; animation: gather 9s ease-in-out infinite; }
+.score { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.6cqw; width: 20cqw; height: 20cqw; margin: -10cqw; border-radius: 3cqw; background: #fff; color: #4f5e74; box-shadow: 0 3px 12px #181f4b12, inset 0 0 0 1px #ffffff; animation: upright 9s linear infinite; }
+.score svg { width: 7cqw; height: 7cqw; }
+.score span { font-size: 2.6cqw; font-weight: 600; text-align: center; }
 .logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 20cqw; height: 20cqw; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 5cqw; color: white; background: linear-gradient(135deg, #5d48ff, #3021ff); box-shadow: 0 8px 26px #3428ff38; }
 .logo svg { width: 10cqw; height: 10cqw; }
 .logo span { font-size: 3cqw; font-weight: 700; letter-spacing: .12em; }
+.logoContent { display: flex; flex-direction: column; align-items: center; animation: logoContent 9s ease-in-out infinite; }
+.result { position: absolute; left: 50%; top: 50%; width: 66cqw; min-height: 23cqw; padding: 4cqw; display: flex; align-items: center; justify-content: center; gap: 5cqw; border: 1px solid #dee2ef; border-radius: 4cqw; background: #fff; color: #607892; animation: result 9s ease-in-out infinite; }
+.result > div { text-align: right; }
+.result span { font-size: 3.4cqw; }
+.result small { display: block; font-size: 2.6cqw; }
+.result strong { font-size: 9cqw; color: #008c63; line-height: 1; }
+.result strong small { display: inline; font-size: 4cqw; color: #91a7c7; }
 .control { position: absolute; top: 24px; right: 24px; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #3428ff; background: #ffffffbd; cursor: pointer; }
 .control:focus-visible { outline: 2px solid #3428ff; outline-offset: 3px; }
-.stage[data-running="false"] .orbit, .stage[data-running="false"] .carrier, .stage[data-running="false"] .score { animation-play-state: paused; }
+.stage[data-running="false"] * { animation-play-state: paused; }
 @keyframes orbit { to { transform: rotate(360deg); } }
 @keyframes upright { to { transform: rotate(-360deg); } }
-@keyframes gather { 0%, 4%, 94%, 100% { transform: translateY(0); opacity: 0; } 16%, 78% { transform: translateY(-30cqw); opacity: 1; } }
+@keyframes gather { 0%, 100% { transform: translateY(-30cqw); opacity: 0; } 8%, 60% { transform: translateY(-30cqw); opacity: 1; } 73%, 97% { transform: translateY(0); opacity: 0; } }
+@keyframes logoContent { 0%, 73%, 100% { opacity: 1; } 79%, 94% { opacity: 0; } }
+@keyframes result { 0%, 74%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(.65); } 80%, 94% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 @media (min-width: 1024px) { .card { grid-column: 1 / -1; width: calc(50% - 8px); justify-self: center; } }
-@media (prefers-reduced-motion: reduce) { .orbit, .score { animation: none; } .carrier { animation: none; transform: translateY(-30cqw); } .control { display: none; } }
+@media (prefers-reduced-motion: reduce) { .stage * { animation: none; } .orbit, .logo { display: none; } .result { transform: translate(-50%, -50%); } .control { display: none; } }
