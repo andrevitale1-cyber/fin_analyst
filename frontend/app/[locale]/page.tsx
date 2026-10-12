@@ -7,6 +7,7 @@ import AudienceCards from "@/components/AudienceCards";
 import AnalysisStory from "@/components/AnalysisStory";
 import SearchBenefit from "@/components/SearchBenefit";
 import RatingHistoryBenefit from "@/components/RatingHistoryBenefit";
+import ScoreScaleBenefit from "@/components/ScoreScaleBenefit";
 import LanguageSwitcher from "../../components/LanguageSwitcher";
 import { Link } from "@/i18n/routing";
 import {
@@ -1302,6 +1303,7 @@ function LandingPageContent({ locale }: { locale: string }) {
             <div className="mt-10 grid items-stretch gap-4 sm:mt-12 lg:grid-cols-2">
               <SearchBenefit locale={locale} />
               <RatingHistoryBenefit locale={locale} />
+              <ScoreScaleBenefit locale={locale} />
             </div>
           </div>
         </section>

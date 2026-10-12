@@ -1,0 +1,17 @@
+.card { position: relative; }
+.stage { position: relative; container-type: inline-size; margin: 16px; aspect-ratio: 984 / 880; overflow: hidden; }
+.orbit { position: absolute; inset: 0; animation: orbit 7s linear infinite; }
+.arm { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.carrier { width: 0; height: 0; animation: gather 7s ease-in-out infinite; }
+.score { display: grid; place-items: center; width: 14cqw; height: 14cqw; margin: -7cqw; border-radius: 3cqw; background: #fff; color: #424351; font-size: 7cqw; font-weight: 700; box-shadow: 0 3px 12px #181f4b12, inset 0 0 0 1px #ffffff; animation: upright 7s linear infinite; }
+.logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 20cqw; height: 20cqw; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 5cqw; color: white; background: linear-gradient(135deg, #5d48ff, #3021ff); box-shadow: 0 8px 26px #3428ff38; }
+.logo svg { width: 10cqw; height: 10cqw; }
+.logo span { font-size: 3cqw; font-weight: 700; letter-spacing: .12em; }
+.control { position: absolute; top: 24px; right: 24px; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #3428ff; background: #ffffffbd; cursor: pointer; }
+.control:focus-visible { outline: 2px solid #3428ff; outline-offset: 3px; }
+.stage[data-running="false"] .orbit, .stage[data-running="false"] .carrier, .stage[data-running="false"] .score { animation-play-state: paused; }
+@keyframes orbit { to { transform: rotate(360deg); } }
+@keyframes upright { to { transform: rotate(-360deg); } }
+@keyframes gather { 0%, 4%, 94%, 100% { transform: translateY(0); opacity: 0; } 16%, 78% { transform: translateY(-30cqw); opacity: 1; } }
+@media (min-width: 1024px) { .card { grid-column: 1 / -1; width: calc(50% - 8px); justify-self: center; } }
+@media (prefers-reduced-motion: reduce) { .orbit, .score { animation: none; } .carrier { animation: none; transform: translateY(-30cqw); } .control { display: none; } }
