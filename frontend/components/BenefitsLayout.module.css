@@ -1,0 +1,9 @@
+.bottom { display: grid; gap: 16px; margin-top: 16px; }
+.right { display: grid; gap: 16px; align-content: start; }
+.cta { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px; padding: 32px 40px; border-radius: 8px; color: #fff; background: #0a0a1f url('/benefits/cta-glow.avif') center / cover; }
+.cta h3 { max-width: 450px; font-size: 32px; font-weight: 700; line-height: 1.1; letter-spacing: -.025em; }
+.cta a { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 16px 20px; border: 1px solid #ffffff55; border-radius: 6px; font-weight: 600; white-space: nowrap; background: radial-gradient(circle at 50% 0, #ffffff4d 10%, #ffffff00 80%), #1a1aff; transition: background-color .2s; }
+.cta a:hover { background-color: #4032ff; }
+.cta a:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+@media (min-width: 1024px) { .bottom { grid-template-columns: 41fr 58fr; } }
+@media (max-width: 743px) { .cta { grid-template-columns: 1fr; padding: 28px; text-align: center; } .cta h3 { font-size: 28px; } .cta a { justify-self: center; } }

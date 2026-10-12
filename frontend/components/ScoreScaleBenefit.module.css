@@ -24,5 +24,4 @@
 @keyframes gather { 0%, 100% { transform: translateY(-30cqw); opacity: 0; } 8%, 60% { transform: translateY(-30cqw); opacity: 1; } 73%, 97% { transform: translateY(0); opacity: 0; } }
 @keyframes logoContent { 0%, 73%, 100% { opacity: 1; } 79%, 94% { opacity: 0; } }
 @keyframes result { 0%, 74%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(.65); } 80%, 94% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-@media (min-width: 1024px) { .card { grid-column: 1 / -1; width: calc(50% - 8px); justify-self: center; } }
 @media (prefers-reduced-motion: reduce) { .stage * { animation: none; } .orbit, .logo { display: none; } .result { transform: translate(-50%, -50%); } .control { display: none; } }

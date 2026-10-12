@@ -8,6 +8,8 @@ import AnalysisStory from "@/components/AnalysisStory";
 import SearchBenefit from "@/components/SearchBenefit";
 import RatingHistoryBenefit from "@/components/RatingHistoryBenefit";
 import ScoreScaleBenefit from "@/components/ScoreScaleBenefit";
+import CompanyLogosBenefit from "@/components/CompanyLogosBenefit";
+import benefitsStyles from "@/components/BenefitsLayout.module.css";
 import LanguageSwitcher from "../../components/LanguageSwitcher";
 import { Link } from "@/i18n/routing";
 import {
@@ -1303,7 +1305,16 @@ function LandingPageContent({ locale }: { locale: string }) {
             <div className="mt-10 grid items-stretch gap-4 sm:mt-12 lg:grid-cols-2">
               <SearchBenefit locale={locale} />
               <RatingHistoryBenefit locale={locale} />
+            </div>
+            <div className={benefitsStyles.bottom}>
               <ScoreScaleBenefit locale={locale} />
+              <div className={benefitsStyles.right}>
+                <CompanyLogosBenefit locale={locale} />
+                <div className={benefitsStyles.cta}>
+                  <h3>{locale === "en" ? "Ready to turn reports into clearer insights?" : "Pronto para transformar relatórios em mais clareza?"}</h3>
+                  <Link href="/dashboard">{locale === "en" ? "Get started" : "Começar agora"}<ArrowRight size={16} /></Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>
