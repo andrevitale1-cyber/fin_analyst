@@ -1298,7 +1298,7 @@ function LandingPageContent({ locale }: { locale: string }) {
               {locale === "en" ? "Unlock" : "Descubra"}<br />
               <span className="bg-gradient-to-r from-[#3428ff] to-[#62a0ff] bg-clip-text text-transparent">{locale === "en" ? "FinAnalyzer’s key benefits" : "os benefícios do FinAnalyzer"}</span>
             </h2>
-            <div className="mt-12 grid gap-4 sm:mt-20 lg:grid-cols-[7fr_5fr]">
+            <div className="mt-12 sm:mt-20">
               <SearchBenefit locale={locale} />
             </div>
           </div>
