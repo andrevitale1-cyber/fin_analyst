@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
 import styles from "./AnalysisStory.module.css";
 
@@ -58,15 +58,21 @@ export default function AnalysisStory({ locale }: { locale: string }) {
   const section = useRef<HTMLElement>(null);
   const solution = useRef<HTMLElement>(null);
   const solutionVideo = useRef<HTMLVideoElement>(null);
+  const loopVideo = useRef<HTMLVideoElement>(null);
+  const [introEnded, setIntroEnded] = useState(false);
   const solutionVisible = useInView(solution, { amount: .15 });
   const reduced = useReducedMotion() ?? false;
   const english = locale === "en";
   useEffect(() => {
-    const video = solutionVideo.current;
-    if (!video) return;
-    if (solutionVisible && !reduced) void video.play().catch(() => {});
-    else video.pause();
-  }, [solutionVisible, reduced]);
+    const intro = solutionVideo.current;
+    const loop = loopVideo.current;
+    const current = introEnded ? loop : intro;
+    const inactive = introEnded ? intro : loop;
+    inactive?.pause();
+    if (!current) return;
+    if (solutionVisible && !reduced) void current.play().catch(() => {});
+    else current.pause();
+  }, [solutionVisible, reduced, introEnded]);
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
   return <>
     <section ref={section} className={styles.story} aria-label={english ? "From reports to understanding" : "Dos relatórios à compreensão"}>
@@ -75,9 +81,10 @@ export default function AnalysisStory({ locale }: { locale: string }) {
       </div>
     </section>
     <motion.section ref={solution} data-active={solutionVisible && !reduced} className={styles.solution} initial="idle" animate={reduced || solutionVisible ? "active" : "idle"}>
-      <video ref={solutionVideo} className={styles.solutionVideo} src="/benefits/solution-plates.mp4#t=0.01" muted loop playsInline preload="metadata" aria-hidden="true" />
+      <video ref={solutionVideo} className={styles.solutionVideo} src="/benefits/finanalyzer-orbit-intro.mp4#t=0.01" muted playsInline preload="metadata" aria-hidden="true" onEnded={() => setIntroEnded(true)} />
+      <video ref={loopVideo} className={styles.solutionVideo} style={{ opacity: introEnded ? 1 : 0 }} src="/benefits/finanalyzer-orbit-loop.mp4#t=0.01" muted loop playsInline preload="auto" aria-hidden="true" />
       <motion.div className={styles.solutionText} variants={{ idle: { opacity: 0, y: 20 }, active: { opacity: 1, y: 0 } }} transition={{ duration: reduced ? 0 : 1, delay: reduced ? 0 : .4 }}>
-        <h2>{english ? "This is where" : "É aqui que o"}<br /><span>FinAnalyzer {english ? "comes in." : "entra."}</span></h2>
+        <h2 aria-label={english ? "This is where FinAnalyzer comes in." : "É aqui que o FinAnalyzer entra."}>{english ? "This is where" : "É aqui que o"}<br /><span>FinAnalyzer</span><br />{english ? "comes in." : "entra."}</h2>
       </motion.div>
     </motion.section>
   </>;

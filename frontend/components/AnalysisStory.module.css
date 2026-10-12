@@ -7,10 +7,10 @@
 .text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 24px; background: radial-gradient(ellipse at center, transparent 0%, #0c101850 100%); }
 .text h2 { max-width: 1050px; margin: 0; font-size: clamp(32px, 4vw, 76px); font-weight: 500; line-height: 1.12; letter-spacing: -.045em; text-wrap: balance; }
 .text p { max-width: 780px; margin: 32px 0 0; font-size: clamp(18px, 1.6vw, 26px); line-height: 1.4; text-wrap: balance; }
-.solution { position: relative; isolation: isolate; height: 62.5vw; min-height: 560px; display: grid; place-items: center; overflow: hidden; padding: 0 24px; background: #eaf2ff; color: #2e21de; font-family: "Audience Reyhan", sans-serif; text-align: center; }
+.solution { position: relative; isolation: isolate; height: 100vw; display: grid; place-items: center; overflow: hidden; padding: 0 24px; background: #eaf2ff; color: #2e21de; font-family: "Audience Reyhan", sans-serif; text-align: center; }
 .solutionText { position: relative; z-index: 1; }
-.solution h2 { margin: 0; font-size: clamp(48px, 8.5vw, 170px); line-height: 1.08; letter-spacing: -.045em; font-weight: 500; }
+.solution h2 { margin: 0; font-size: clamp(26px, 5.8vw, 112px); line-height: 1.08; letter-spacing: -.045em; font-weight: 500; }
 .solution h2 span { display: inline-block; white-space: nowrap; }
-.solutionVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-@media (max-width: 743px) { .text { padding: 90px 24px; } .text h2 { font-size: clamp(30px, 7vw, 48px); } .solution { height: 100svh; min-height: 560px; } .solution h2 { font-size: 8.5vw; } }
+.solutionVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
+@media (max-width: 743px) { .text { padding: 90px 24px; } .text h2 { font-size: clamp(30px, 7vw, 48px); } .solution { height: 100vw; } .solution h2 { font-size: 6vw; } }
 @media (prefers-reduced-motion: reduce) { .story { height: auto; margin-top: 0; } .sticky { position: static; height: auto; } .scene, .scene:not(:first-child) { position: relative; height: 80svh; opacity: 1 !important; } .text { transform: none !important; opacity: 1 !important; } }
