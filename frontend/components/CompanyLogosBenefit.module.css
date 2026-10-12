@@ -11,4 +11,5 @@
 .control:focus-visible { outline: 2px solid #3428ff; outline-offset: 3px; }
 .media[data-running="false"] .track { animation-play-state: paused; }
 @keyframes scroll { to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .track { animation: none; width: 100%; } .group { flex-wrap: wrap; justify-content: center; padding: 0; gap: 10px; } .group:nth-child(2), .control { display: none; } .media { mask-image: none; } .tile { width: 90px; } }
+@media (max-width: 743px) { .media { margin: 12px; padding: 20px 0; } .group { gap: 10px; padding-right: 10px; } .tile { width: 96px; height: 86px; } .control { top: 16px; right: 16px; } }
+@media (prefers-reduced-motion: reduce) { .track { animation: none; } .row { overflow-x: auto; scrollbar-width: thin; } .group:nth-child(2), .control { display: none; } .media { mask-image: none; } }

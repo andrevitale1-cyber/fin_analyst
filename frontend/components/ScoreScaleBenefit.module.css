@@ -25,3 +25,5 @@
 @keyframes logoContent { 0%, 73%, 100% { opacity: 1; } 79%, 94% { opacity: 0; } }
 @keyframes result { 0%, 74%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(.65); } 80%, 94% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .stage * { animation: none; } .orbit, .logo { display: none; } .result { transform: translate(-50%, -50%); } .control { display: none; } }
+
+@media (max-width: 743px) { .stage { margin: 12px; aspect-ratio: 6 / 5; } }

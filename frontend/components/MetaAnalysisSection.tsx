@@ -78,8 +78,8 @@ export default function MetaAnalysisSection({ locale }: { locale: string }) {
         <div className={styles.reportFooter}>{english ? "Scroll to explore the analysis" : "Role para explorar a análise"} ↓</div>
       </article>
       <div className={styles.copy}>
-        <h2 id="meta-analysis-heading">{english ? "Understand the business " : "Entenda o negócio "}<span>{english ? "behind the numbers" : "por trás dos números"}</span></h2>
-        <p>{english ? "Go beyond the score. FinAnalyzer connects revenue, margins, debt and profitability in a clear investment thesis, highlighting the strengths and risks behind each result." : "Vá além da nota. O FinAnalyzer conecta receita, margens, dívida e rentabilidade em uma tese de investimento clara, destacando as forças e os riscos por trás de cada resultado."}</p>
+        <h2 id="meta-analysis-heading">{english ? "AI analysis. " : "Análise por IA. "}<span>{english ? "Clear insights." : "Mais clareza."}</span></h2>
+        <p>{english ? "Understand the quarter’s key results, strengths and risks—without reading the entire report." : "Entenda os principais resultados, pontos fortes e riscos do trimestre sem ler o relatório inteiro."}</p>
         <span className={styles.eyebrow}>{english ? "INSIDE THE AI ANALYSIS" : "DENTRO DA ANÁLISE DE IA"}</span>
         <ul>{features.map(feature => <li key={feature}><Check size={15} />{feature}</li>)}</ul>
         <Link className={styles.start} href="/dashboard">{english ? "Explore your next analysis" : "Explore sua próxima análise"}<ArrowRight size={17} /></Link>

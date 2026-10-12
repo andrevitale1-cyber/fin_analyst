@@ -1224,12 +1224,12 @@ function LandingPageContent({ locale }: { locale: string }) {
 
       {/* --- NAVBAR --- */}
       <nav className="border-b border-white/10 bg-[#0A0D14]/80 backdrop-blur-xl sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-5 h-16 md:h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 md:w-10 md:h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
               <BarChart3 className="text-white w-5 h-5 md:w-6 md:h-6" />
             </div>
-            <span className="text-xl md:text-2xl font-bold tracking-tight text-white">
+            <span className="whitespace-nowrap text-base sm:text-xl md:text-2xl font-bold tracking-tight text-white">
               FinAnalyzer <span className="text-blue-500">.AI</span>
             </span>
           </div>
@@ -1244,30 +1244,29 @@ function LandingPageContent({ locale }: { locale: string }) {
           </div>
 
           <div className="flex md:hidden items-center gap-2">
-            <Link href="/dashboard" className="border border-white/30 text-white px-3 py-2 rounded-full font-semibold text-sm hover:bg-white/10 transition-colors">
-              {locale === "en" ? "Sign In" : "Entrar"}
+            <Link href="/dashboard" className="bg-white text-black px-3 py-2 rounded-full font-bold text-xs whitespace-nowrap">
+              {locale === "en" ? "Get started" : "Começar"}
             </Link>
-            <Link href="/dashboard" className="bg-white text-black px-3 py-2 rounded-full font-bold text-sm">
-              {locale === "en" ? "Sign Up" : "Cadastrar"}
-            </Link>
-            <button className="w-8 h-8 flex flex-col items-center justify-center gap-1.5 ml-1">
-              <span className="w-5 h-0.5 bg-white rounded-full" />
-              <span className="w-5 h-0.5 bg-white rounded-full" />
-            </button>
+            <details className="relative">
+              <summary aria-label={locale === "en" ? "Open navigation" : "Abrir navegação"} className="list-none cursor-pointer flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 [&::-webkit-details-marker]:hidden">
+                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+              </summary>
+              <div className="absolute right-0 top-12 grid min-w-48 gap-1 rounded-xl border border-white/15 bg-[#101629] p-2 shadow-xl">
+                <a href="#funcionalidades" className="rounded-lg px-4 py-3 text-sm">{locale === "en" ? "Features" : "Funcionalidades"}</a>
+                <a href="#planos" className="rounded-lg px-4 py-3 text-sm">{locale === "en" ? "Pricing" : "Preços"}</a>
+                <Link href="/dashboard" className="rounded-lg px-4 py-3 text-sm">{locale === "en" ? "Sign In" : "Entrar"}</Link>
+              </div>
+            </details>
           </div>
         </div>
       </nav>
 
       {/* --- HERO: FinAnalyzer visual identity with a centered fintech headline --- */}
-      <section className="relative isolate overflow-hidden bg-[#080a1d] px-5 pb-20 pt-16 text-center md:pb-28 md:pt-24">
+      <section className="relative isolate overflow-hidden bg-[#080a1d] px-5 pb-12 pt-12 text-center md:pb-28 md:pt-24">
         <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_15%,rgba(49,72,255,0.28),transparent_54%),linear-gradient(180deg,#080a1d_0%,#0b1029_75%,#111c46_100%)]" />
         <div className="pointer-events-none absolute left-1/2 top-24 -z-10 h-72 w-[min(90vw,900px)] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[120px]" />
         <div className="mx-auto flex max-w-6xl flex-col items-center">
-          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-300/20 bg-blue-400/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.22em] text-blue-200">
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_12px_rgba(103,232,249,0.9)]" />
-            {locale === "en" ? "Financial analysis, from the source" : "Análise financeira, direto da fonte"}
-          </p>
-          <h1 className="max-w-5xl text-[2.75rem] font-semibold leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[5.7rem]">
+          <h1 className="max-w-5xl text-[2.25rem] font-semibold leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[5.7rem]">
             <span className="bg-gradient-to-r from-[#4d82ff] via-[#68b5ff] to-[#9bd7ff] bg-clip-text text-transparent">
               {locale === "en" ? "Speed, transparency and clarity" : "Agilidade, transparência e clareza"}
             </span>
@@ -1298,13 +1297,13 @@ function LandingPageContent({ locale }: { locale: string }) {
       {/* --- SECÇÃO: FUNCIONALIDADES --- */}
       <div id="funcionalidades" className="flex flex-col">
 
-        <section className="mx-4 rounded-2xl bg-[#f2f3f8] px-5 py-12 sm:mx-6 sm:px-12 sm:py-16">
+        <section className="mx-2 rounded-2xl bg-[#f2f3f8] px-3 py-8 sm:mx-6 sm:px-12 sm:py-16">
           <div className="mx-auto max-w-[1280px]">
-            <h2 className="mx-auto max-w-[1080px] text-center text-4xl font-bold leading-[1.05] tracking-tight text-[#0a0a1f] sm:text-[56px]">
+            <h2 className="mx-auto max-w-[1080px] text-center text-[28px] font-bold leading-[1.1] tracking-tight text-[#0a0a1f] sm:text-[56px]">
               {locale === "en" ? "Unlock" : "Descubra"}<br />
               <span className="bg-gradient-to-r from-[#3428ff] to-[#62a0ff] bg-clip-text text-transparent">{locale === "en" ? "FinAnalyzer’s key benefits" : "os benefícios do FinAnalyzer"}</span>
             </h2>
-            <div className="mt-10 grid items-stretch gap-4 sm:mt-12 lg:grid-cols-2">
+            <div className="mt-6 grid items-stretch gap-4 sm:mt-12 lg:grid-cols-2">
               <SearchBenefit locale={locale} />
               <RatingHistoryBenefit locale={locale} />
             </div>

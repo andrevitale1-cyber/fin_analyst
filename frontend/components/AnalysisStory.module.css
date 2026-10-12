@@ -12,5 +12,5 @@
 .solution h2 { margin: 0; font-size: clamp(26px, 5.8vw, 112px); line-height: 1.08; letter-spacing: -.045em; font-weight: 500; }
 .solution h2 span { display: inline-block; white-space: nowrap; }
 .solutionVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
-@media (max-width: 743px) { .text { padding: 90px 24px; } .text h2 { font-size: clamp(30px, 7vw, 48px); } .solution { height: 100vw; } .solution h2 { font-size: 6vw; } }
+@media (max-width: 743px) { .text { padding: 90px 24px; } .text h2 { font-size: clamp(30px, 7vw, 48px); } .solution { height: 100vw; } .solution h2 { font-size: clamp(30px, 8vw, 48px); } .solutionVideo { object-fit: cover; } }
 @media (prefers-reduced-motion: reduce) { .story { height: auto; margin-top: 0; } .sticky { position: static; height: auto; } .scene, .scene:not(:first-child) { position: relative; height: 80svh; opacity: 1 !important; } .text { transform: none !important; opacity: 1 !important; } }
