@@ -28,8 +28,8 @@ export default function CompanyLogosBenefit({ locale }: { locale: string }) {
       {paused ? <Play size={18} /> : <Pause size={18} />}
     </button>
     <div className={cardStyles.copy}>
-      <h3>{english ? "Big names. Clearer insights." : "Grandes empresas. Mais clareza."}</h3>
-      <p>{english ? "Go beyond familiar logos. Turn company reports into a clear view of revenue, profitability, debt and financial performance." : "Vá além das marcas que você conhece. Transforme os relatórios das empresas em uma visão clara de receita, rentabilidade, dívida e desempenho financeiro."}</p>
+      <h3>{english ? "Any company. Every result." : "Qualquer empresa. Cada resultado."}</h3>
+      <p>{english ? "Analyze results from any company using its official financial reports. Find the document automatically or upload it yourself, and get a clear view of revenue, profitability, debt and financial performance." : "Analise resultados de qualquer empresa a partir de seus relatórios financeiros oficiais. Encontre o documento automaticamente ou envie o arquivo e obtenha uma visão clara de receita, rentabilidade, dívida e desempenho financeiro."}</p>
     </div>
   </article>;
 }

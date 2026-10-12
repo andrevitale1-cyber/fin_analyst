@@ -79,7 +79,7 @@ export default function AudienceCards({ locale }: { locale: string }) {
           <span className={styles.shade} />
           {plus}
         </div>
-        <p>{english ? <><strong>For individual investors who want to understand companies and analyze results faster.</strong> Clear explanations and organized information, even if you are just getting started with investing.</> : <><strong>Para o investidor pessoa física que quer entender as empresas e analisar resultados com mais agilidade.</strong> Explicações claras e informações organizadas, mesmo para quem está começando a investir.</>}</p>
+        <p>{english ? <><strong>For individual investors, businesses, analysts, and professional investors who want to understand companies and analyze results faster.</strong> Clear explanations for those getting started, and organized research for professionals and teams who need greater speed.</> : <><strong>Para investidores pessoa física, empresas, analistas e investidores profissionais que querem entender as empresas e analisar resultados com mais agilidade.</strong> Explicações claras para quem está começando e pesquisa organizada para profissionais e equipes que precisam ganhar tempo.</>}</p>
       </Link></motion.div>
       <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><Link href="/dashboard" className={styles.card} onMouseEnter={playServices} onFocus={playServices}>
         <h2>Services</h2>
@@ -87,7 +87,7 @@ export default function AudienceCards({ locale }: { locale: string }) {
           <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />
           {plus}
         </div>
-        <p>{english ? <><strong>For businesses, analysts, and professional investors who need greater speed in their research.</strong> Bring fundamentals, reports, and sources together to streamline financial analysis and support your team&apos;s work.</> : <><strong>Para investidores pessoa jurídica, analistas e profissionais que precisam de mais agilidade nas análises.</strong> Reúna fundamentos, relatórios e fontes para acelerar a leitura de resultados e apoiar o trabalho da sua equipe.</>}</p>
+        <p>{english ? <><strong>Find reports, analyze results, and compare companies in one place.</strong> Automatic document search, AI analysis, fundamental scores, an aggregated table, and saved history help you spend less time reading and quickly revisit previous results.</> : <><strong>Encontre relatórios, analise resultados e compare empresas em um só lugar.</strong> Busca automática de documentos, análise por IA, notas dos fundamentos, tabela agregada e histórico salvo para gastar menos tempo lendo e consultar resultados anteriores com agilidade.</>}</p>
       </Link></motion.div>
     </div>
   </motion.section>;

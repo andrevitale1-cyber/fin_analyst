@@ -1269,15 +1269,15 @@ function LandingPageContent({ locale }: { locale: string }) {
           </p>
           <h1 className="max-w-5xl text-[2.75rem] font-semibold leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[5.7rem]">
             <span className="bg-gradient-to-r from-[#4d82ff] via-[#68b5ff] to-[#9bd7ff] bg-clip-text text-transparent">
-              {locale === "en" ? "Understand every" : "Entenda cada"}
+              {locale === "en" ? "Speed, transparency and clarity" : "Agilidade, transparência e clareza"}
             </span>
             <br />
-            {locale === "en" ? "company result." : "resultado da empresa."}
+            {locale === "en" ? "for every investor." : "para cada investidor."}
           </h1>
           <p className="mx-auto mb-8 mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg md:mb-9 md:mt-7 md:text-xl">
             {locale === "en"
-              ? "Turn official earnings releases into clear, source-linked insights on revenue, margins, debt, and profitability."
-              : "Transforme releases oficiais em análises claras, com fontes verificáveis sobre receita, margens, dívida e rentabilidade."}
+              ? "FinAnalyzer brings official reports, AI analysis, company comparisons, and saved research into one platform—helping individual and professional investors understand results faster and revisit them with ease."
+              : "O FinAnalyzer reúne relatórios oficiais, análises por IA, comparação de empresas e histórico em uma plataforma, ajudando investidores individuais e profissionais a entender resultados mais rápido e consultá-los novamente com facilidade."}
           </p>
           <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row sm:gap-4">
             <Link href="/dashboard" className="flex w-full items-center justify-center gap-2 rounded-full bg-[#3428ff] px-8 py-4 text-base font-bold text-white shadow-[0_12px_40px_-14px_rgba(69,86,255,0.9)] transition hover:-translate-y-0.5 hover:bg-[#493fff] sm:w-auto">
