@@ -1,0 +1,242 @@
+[
+  {
+    "name": "NVIDIA",
+    "ticker": "NVDA",
+    "market": "US",
+    "logo": "/benefits/company-logos/NVDA.webp"
+  },
+  {
+    "name": "Apple",
+    "ticker": "AAPL",
+    "market": "US",
+    "logo": "/benefits/company-logos/AAPL.webp"
+  },
+  {
+    "name": "Microsoft",
+    "ticker": "MSFT",
+    "market": "US",
+    "logo": "/benefits/company-logos/MSFT.webp"
+  },
+  {
+    "name": "Amazon",
+    "ticker": "AMZN",
+    "market": "US",
+    "logo": "/benefits/company-logos/AMZN.webp"
+  },
+  {
+    "name": "Alphabet",
+    "ticker": "GOOG",
+    "market": "US",
+    "logo": "/benefits/company-logos/GOOG.webp"
+  },
+  {
+    "name": "Meta",
+    "ticker": "META",
+    "market": "US",
+    "logo": "/benefits/company-logos/META.webp"
+  },
+  {
+    "name": "Broadcom",
+    "ticker": "AVGO",
+    "market": "US",
+    "logo": "/benefits/company-logos/AVGO.webp"
+  },
+  {
+    "name": "Tesla",
+    "ticker": "TSLA",
+    "market": "US",
+    "logo": "/benefits/company-logos/TSLA.webp"
+  },
+  {
+    "name": "Micron",
+    "ticker": "MU",
+    "market": "US",
+    "logo": "/benefits/company-logos/MU.webp"
+  },
+  {
+    "name": "Berkshire Hathaway",
+    "ticker": "BRK-B",
+    "market": "US",
+    "logo": "/benefits/company-logos/BRK-B.webp"
+  },
+  {
+    "name": "Eli Lilly",
+    "ticker": "LLY",
+    "market": "US",
+    "logo": "/benefits/company-logos/LLY.webp"
+  },
+  {
+    "name": "AMD",
+    "ticker": "AMD",
+    "market": "US",
+    "logo": "/benefits/company-logos/AMD.webp"
+  },
+  {
+    "name": "Walmart",
+    "ticker": "WMT",
+    "market": "US",
+    "logo": "/benefits/company-logos/WMT.webp"
+  },
+  {
+    "name": "JPMorgan Chase",
+    "ticker": "JPM",
+    "market": "US",
+    "logo": "/benefits/company-logos/JPM.webp"
+  },
+  {
+    "name": "Visa",
+    "ticker": "V",
+    "market": "US",
+    "logo": "/benefits/company-logos/V.webp"
+  },
+  {
+    "name": "ExxonMobil",
+    "ticker": "XOM",
+    "market": "US",
+    "logo": "/benefits/company-logos/XOM.webp"
+  },
+  {
+    "name": "Johnson & Johnson",
+    "ticker": "JNJ",
+    "market": "US",
+    "logo": "/benefits/company-logos/JNJ.webp"
+  },
+  {
+    "name": "Intel",
+    "ticker": "INTC",
+    "market": "US",
+    "logo": "/benefits/company-logos/INTC.webp"
+  },
+  {
+    "name": "Mastercard",
+    "ticker": "MA",
+    "market": "US",
+    "logo": "/benefits/company-logos/MA.webp"
+  },
+  {
+    "name": "Palantir",
+    "ticker": "PLTR",
+    "market": "US",
+    "logo": "/benefits/company-logos/PLTR.webp"
+  },
+  {
+    "name": "AbbVie",
+    "ticker": "ABBV",
+    "market": "US",
+    "logo": "/benefits/company-logos/ABBV.webp"
+  },
+  {
+    "name": "Cisco",
+    "ticker": "CSCO",
+    "market": "US",
+    "logo": "/benefits/company-logos/CSCO.webp"
+  },
+  {
+    "name": "Costco",
+    "ticker": "COST",
+    "market": "US",
+    "logo": "/benefits/company-logos/COST.webp"
+  },
+  {
+    "name": "Chevron",
+    "ticker": "CVX",
+    "market": "US",
+    "logo": "/benefits/company-logos/CVX.webp"
+  },
+  {
+    "name": "Oracle",
+    "ticker": "ORCL",
+    "market": "US",
+    "logo": "/benefits/company-logos/ORCL.webp"
+  },
+  {
+    "name": "Applied Materials",
+    "ticker": "AMAT",
+    "market": "US",
+    "logo": "/benefits/company-logos/AMAT.webp"
+  },
+  {
+    "name": "Lam Research",
+    "ticker": "LRCX",
+    "market": "US",
+    "logo": "/benefits/company-logos/LRCX.webp"
+  },
+  {
+    "name": "Coca-Cola",
+    "ticker": "KO",
+    "market": "US",
+    "logo": "/benefits/company-logos/KO.webp"
+  },
+  {
+    "name": "Bank of America",
+    "ticker": "BAC",
+    "market": "US",
+    "logo": "/benefits/company-logos/BAC.webp"
+  },
+  {
+    "name": "Caterpillar",
+    "ticker": "CAT",
+    "market": "US",
+    "logo": "/benefits/company-logos/CAT.webp"
+  },
+  {
+    "name": "Petrobras",
+    "ticker": "PBR",
+    "market": "BR",
+    "logo": "/benefits/company-logos/PBR.webp"
+  },
+  {
+    "name": "Itaú Unibanco",
+    "ticker": "ITUB",
+    "market": "BR",
+    "logo": "/benefits/company-logos/ITUB.webp"
+  },
+  {
+    "name": "Nubank",
+    "ticker": "NU",
+    "market": "BR",
+    "logo": "/benefits/company-logos/NU.webp"
+  },
+  {
+    "name": "BTG Pactual",
+    "ticker": "BPAC3.SA",
+    "market": "BR",
+    "logo": "/benefits/company-logos/BPAC3.SA.webp"
+  },
+  {
+    "name": "Vale",
+    "ticker": "VALE",
+    "market": "BR",
+    "logo": "/benefits/company-logos/VALE.webp"
+  },
+  {
+    "name": "Ambev",
+    "ticker": "ABEV",
+    "market": "BR",
+    "logo": "/benefits/company-logos/ABEV.webp"
+  },
+  {
+    "name": "Bradesco",
+    "ticker": "BBD",
+    "market": "BR",
+    "logo": "/benefits/company-logos/BBD.webp"
+  },
+  {
+    "name": "Santander Brasil",
+    "ticker": "BSBR",
+    "market": "BR",
+    "logo": "/benefits/company-logos/BSBR.webp"
+  },
+  {
+    "name": "WEG",
+    "ticker": "WEGE3.SA",
+    "market": "BR",
+    "logo": "/benefits/company-logos/WEGE3.SA.webp"
+  },
+  {
+    "name": "JBS",
+    "ticker": "JBS",
+    "market": "BR",
+    "logo": "/benefits/company-logos/JBS.webp"
+  }
+]

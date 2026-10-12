@@ -1,14 +1,14 @@
 .card { position: relative; }
 .media { margin: 16px; padding: 40px 0; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
 .row { overflow: hidden; padding: 10px 0; }
-.track { display: flex; width: max-content; animation: scroll 28s linear infinite; }
+.track { display: flex; width: max-content; animation: scroll 92s linear infinite; }
 .row:nth-child(2) .track { animation-direction: reverse; }
 .group { display: flex; gap: 18px; padding-right: 18px; }
 .tile { width: 118px; height: 94px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: #fff; border-radius: 12px; box-shadow: 0 3px 12px #181f4b0d; }
-.tile img { width: 36px; height: 36px; opacity: .75; }
-.tile span { font-size: 12px; font-weight: 600; color: #4f5e74; }
+.tile img { width: 36px; height: 36px; object-fit: contain; }
+.tile span { font-size: 12px; font-weight: 600; color: #4f5e74; padding: 0 4px; }
 .control { position: absolute; top: 24px; right: 24px; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #3428ff; background: #fff; cursor: pointer; }
 .control:focus-visible { outline: 2px solid #3428ff; outline-offset: 3px; }
 .media[data-running="false"] .track { animation-play-state: paused; }
 @keyframes scroll { to { transform: translateX(-50%); } }
-@media (prefers-reduced-motion: reduce) { .track { animation: none; width: 100%; } .group { flex-wrap: wrap; justify-content: center; padding: 0; gap: 10px; } .group:nth-child(2), .row:nth-child(2), .control { display: none; } .media { mask-image: none; } .tile { width: 90px; } }
+@media (prefers-reduced-motion: reduce) { .track { animation: none; width: 100%; } .group { flex-wrap: wrap; justify-content: center; padding: 0; gap: 10px; } .group:nth-child(2), .control { display: none; } .media { mask-image: none; } .tile { width: 90px; } }
