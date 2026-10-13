@@ -1,12 +1,12 @@
-.story { position: relative; margin-top: -50vh; background: #040313; color: white; font-family: "Audience Reyhan", sans-serif; }
-.sticky { position: sticky; top: 0; height: 100vh; overflow: hidden; }
-.scene { position: absolute; inset: 0; }
+.story { --pad: clamp(16px, calc(8.278px + 1.98vw), 42px); --gutter: clamp(2px, calc(-.964px + .76vw), 12px); position: relative; margin-top: -50vh; background: #040313; color: white; font-family: "Audience Reyhan", sans-serif; }
+.sticky { position: sticky; top: 0; height: 100vh; display: grid; overflow: hidden; z-index: 0; }
+.scene { grid-column: 1; grid-row: 1; width: 100%; height: 100%; }
+.scene[data-active="true"] { z-index: 1; }
 .video { width: 100%; height: 100%; object-fit: cover; }
-.mobileMedia { display: none; position: absolute; inset: 0; }
-.shade { position: absolute; inset: 0; background: #040313; }
-.scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 0%, #0c101880 100%); }
-.titles { position: relative; padding: 0 18.75%; pointer-events: none; }
-.titlePanel { position: relative; height: 100vh; text-align: center; }
+.scene::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 0%, #0c101880 100%); }
+.scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--overlay-color, #040313); opacity: var(--overlay-opacity, .28); }
+.titles { position: relative; z-index: 2; padding: 0 calc((100% - 2 * var(--pad)) * .1875 - 2 * var(--gutter)); pointer-events: none; display: flex; flex-direction: column; align-items: center; }
+.titlePanel { position: relative; height: 100vh; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; }
 .titlePanel h2 { margin: 0; font-size: clamp(28px, calc(17.275px + 2.75vw), 64px); font-weight: 500; line-height: 1.1; letter-spacing: -1.92px; }
 .titlePanel p { position: absolute; bottom: 50vh; width: 100%; font-size: 18px; }
 .solution { position: relative; isolation: isolate; min-height: 100vh; display: grid; place-items: center; overflow: hidden; padding: 0 24px; background: #eaf2ff; color: #2e21de; font-family: "Audience Reyhan", sans-serif; text-align: center; }
@@ -15,10 +15,6 @@
 .solution h2 span { display: inline-block; white-space: nowrap; }
 .solutionVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 @media (max-width: 743px), (hover: none) and (pointer: coarse) {
-  .desktopMedia { display: none; }
-  .mobileMedia { display: block; }
-  /* Keep the footage visible even when Safari delays scroll updates. */
-  .shade { opacity: var(--mobile-shade, .28) !important; }
   .titlePanel h2 { letter-spacing: -1px; }
   .solution h2 { font-size: clamp(42px, 11vw, 64px); }
 }

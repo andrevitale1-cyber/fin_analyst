@@ -18,7 +18,7 @@ export default function AudienceCards({ locale }: { locale: string }) {
   const [desktop, setDesktop] = useState(false);
   const reduce = useReducedMotion();
   const visible = useInView(section, { amount: .05 });
-  const blocked = useVideoPlayback(video, visible);
+  useVideoPlayback(video, visible);
   const { scrollYProgress } = useScroll({ target: section, offset: ["start end", "end end"] });
   const { scrollYProgress: exitProgress } = useScroll({ target: section, offset: ["end center", "end start"] });
   const exitOpacity = useTransform(exitProgress, [0, 1], [1, 0]);
@@ -68,14 +68,7 @@ export default function AudienceCards({ locale }: { locale: string }) {
       <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><Link href="/dashboard" className={styles.card}>
         <h2>Clients</h2>
         <div className={styles.visual}>
-          <video ref={video} className={`${styles.video} ${styles.desktopMedia}`} style={{ opacity: blocked ? 0 : 1 }} muted loop autoPlay playsInline preload="auto" aria-hidden="true">
-            <source media="(min-width: 744px) and (hover: hover)" src={media + "clients-mobile-v2.mp4"} type="video/mp4" />
-          </video>
-          <picture className={styles.mobileMedia}>
-            <source media="(max-width: 743px), (hover: none) and (pointer: coarse)" srcSet={media + "clients-mobile-fallback.webp"} type="image/webp" />
-            <img className={styles.video} src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="" aria-hidden="true" />
-          </picture>
-          {blocked && <img className={`${styles.video} ${styles.desktopMedia}`} style={{ position: "absolute", inset: 0 }} src={media + "clients-mobile-fallback.webp"} alt="" aria-hidden="true" />}
+          <video ref={video} className={styles.video} src={media + "clients.mp4#t=0.01"} width="580" height="500" muted loop autoPlay playsInline preload="auto" aria-hidden="true" />
           <span className={styles.shade} />
           {plus}
         </div>

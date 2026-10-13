@@ -7,7 +7,6 @@
 .card h2 { margin: 0; font-family: inherit; font-weight: 500; font-size: clamp(18px, calc(16.206px + .46vw), 24px); letter-spacing: -.5px; line-height: 1.1; }
 .visual { position: relative; overflow: hidden; height: clamp(380px, calc(346.655px + 8.55vw), 492px); max-height: calc(67.2px + 24.99vw); border-radius: 12px; background-color: #0d111d; }
 .video, .canvas { width: 100%; height: 100%; display: block; object-fit: cover; }
-.mobileMedia { display: none; position: absolute; inset: 0; }
 .canvas { opacity: 0; }
 .canvas[data-ready="true"] { opacity: 1; }
 .shade { position: absolute; inset: 0; background: #0000004d; opacity: 0; transition: opacity 2.5s cubic-bezier(.19,1,.22,1); }
@@ -17,7 +16,7 @@
 @media (hover: hover) { .card:hover .plus { transform: scale(1.1) rotate(180deg); } .card:hover .shade { opacity: 1; } }
 @media (max-width: 1290px) { .grid { width: calc((100% - 2 * var(--pad)) * .875 - 2 * var(--gutter)); } }
 @media (max-width: 1023px) { .section { padding-top: 64px; } .grid { width: calc(100% - 2 * var(--pad) - 2 * var(--gutter)); gap: var(--pad); } .card h2 { font-size: clamp(22px, calc(19.036px + .76vw), 32px); } .visual { max-height: clamp(300px, calc(242.826px + 14.66vw), 492px); } }
-@media (max-width: 743px), (hover: none) and (pointer: coarse) { .grid { grid-template-columns: 1fr; gap: 64px; } .desktopMedia { display: none; } .mobileMedia { display: block; } }
+@media (max-width: 743px) { .grid { grid-template-columns: 1fr; gap: 64px; } }
 @media (min-width: 2000px) { .section { --pad: 2.1vw; --gutter: .6vw; padding: 6vw 0; } .card { gap: .8vw; } .card h2 { font-size: 1.2vw; } .visual { height: 24.6vw; max-height: calc(67.2px + 24.99vw); border-radius: .6vw; } .card p { font-size: .9vw; } .plus { width: 2.5vw; height: 2.5vw; bottom: .5vw; right: .5vw; } }
 @media (prefers-reduced-motion: reduce) { .section { opacity: 1 !important; } .plus, .shade { transition: none; } }
 

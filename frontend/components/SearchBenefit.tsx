@@ -15,7 +15,7 @@ export default function SearchBenefit({ locale }: { locale: string }) {
 
   return <motion.article ref={card} className={styles.card} initial={reduced ? false : { opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .15 }} transition={{ duration: .6 }}>
     <div className={styles.media}>
-      <video ref={video} src="/benefits/company-search-loop-7015ms.mp4" muted loop playsInline autoPlay preload="auto" aria-label={english ? "Company details and official report search demonstration" : "Demonstração do preenchimento da empresa e busca do documento oficial"} />
+      <video ref={video} src="/benefits/company-search-loop-ios-30fps.mp4#t=0.01" width="1280" height="720" muted loop playsInline autoPlay preload="auto" aria-label={english ? "Company details and official report search demonstration" : "Demonstração do preenchimento da empresa e busca do documento oficial"} />
     </div>
     <div className={styles.copy}>
       <h3>{english ? "Find the report without the manual search" : "Encontre o balanço sem procurar manualmente"}</h3>
