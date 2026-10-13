@@ -68,8 +68,14 @@ export default function AudienceCards({ locale }: { locale: string }) {
       <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><Link href="/dashboard" className={styles.card}>
         <h2>Clients</h2>
         <div className={styles.visual}>
-          <video ref={video} className={styles.video} style={{ opacity: blocked ? 0 : 1 }} src={media + "clients-mobile-v2.mp4"} muted loop autoPlay playsInline preload="auto" aria-hidden="true" />
-          {blocked && <img className={styles.video} style={{ position: "absolute", inset: 0 }} src={media + "clients-mobile-fallback.webp"} alt="" aria-hidden="true" />}
+          <video ref={video} className={`${styles.video} ${styles.desktopMedia}`} style={{ opacity: blocked ? 0 : 1 }} muted loop autoPlay playsInline preload="auto" aria-hidden="true">
+            <source media="(min-width: 744px) and (hover: hover)" src={media + "clients-mobile-v2.mp4"} type="video/mp4" />
+          </video>
+          <picture className={styles.mobileMedia}>
+            <source media="(max-width: 743px), (hover: none) and (pointer: coarse)" srcSet={media + "clients-mobile-fallback.webp"} type="image/webp" />
+            <img className={styles.video} src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="" aria-hidden="true" />
+          </picture>
+          {blocked && <img className={`${styles.video} ${styles.desktopMedia}`} style={{ position: "absolute", inset: 0 }} src={media + "clients-mobile-fallback.webp"} alt="" aria-hidden="true" />}
           <span className={styles.shade} />
           {plus}
         </div>

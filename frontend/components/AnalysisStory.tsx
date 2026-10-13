@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import { motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue, type MotionStyle } from "framer-motion";
 import useVideoPlayback from "./useVideoPlayback";
 import styles from "./AnalysisStory.module.css";
 
@@ -27,14 +27,21 @@ function Scene({ index, progress, reduced, mobile }: { index: number; progress: 
     return index === 2 && local > .5 ? 0 : 1 - Math.sin(local * Math.PI);
   });
   const shadeColor = useTransform(progress, [0, 1 / 6, 1 / 6 + .001, 1], ["#2e21de", "#2e21de", "#040313", "#040313"]);
+  const mobileShade = useTransform(shade, value => Math.max(.15, Math.min(.55, value)));
   const [active, setActive] = useState(index === 0);
   useMotionValueEvent(progress, "change", value => setActive(value >= start && (index === 2 || value < end)));
-  const blocked = useVideoPlayback(video, active);
+  const blocked = useVideoPlayback(video, active && !mobile);
 
   return <div className={styles.scene} style={{ zIndex: active ? 1 : 0 }}>
-    <video ref={video} className={styles.video} style={{ opacity: blocked ? 0 : 1 }} src={`/reference/clearstreet/story-${index + 1}${mobile ? "-mobile-v2" : "-desktop"}.mp4`} muted loop autoPlay playsInline preload="metadata" aria-hidden="true" />
-    {blocked && <img className={styles.video} style={{ position: "absolute", inset: 0 }} src={`/reference/clearstreet/story-${index + 1}-mobile-fallback.webp`} alt="" aria-hidden="true" />}
-    <motion.div className={styles.shade} style={reduced ? { opacity: .28 } : { opacity: shade, backgroundColor: index === 0 ? shadeColor : "#040313" }} />
+    <video ref={video} className={`${styles.video} ${styles.desktopMedia}`} style={{ opacity: blocked ? 0 : 1 }} muted loop autoPlay playsInline preload="metadata" aria-hidden="true">
+      <source media="(min-width: 744px) and (hover: hover)" src={`/reference/clearstreet/story-${index + 1}-desktop.mp4`} type="video/mp4" />
+    </video>
+    {active && <picture className={styles.mobileMedia}>
+      <source media="(max-width: 743px), (hover: none) and (pointer: coarse)" srcSet={`/reference/clearstreet/story-${index + 1}-mobile-fallback.webp`} type="image/webp" />
+      <img className={styles.video} src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt="" aria-hidden="true" />
+    </picture>}
+    {blocked && !mobile && <img className={`${styles.video} ${styles.desktopMedia}`} style={{ position: "absolute", inset: 0 }} src={`/reference/clearstreet/story-${index + 1}-mobile-fallback.webp`} alt="" aria-hidden="true" />}
+    <motion.div className={styles.shade} style={{ "--mobile-shade": reduced ? .28 : mobileShade, opacity: reduced ? .28 : shade, backgroundColor: index === 0 ? shadeColor : "#040313" } as MotionStyle} />
   </div>;
 }
 
@@ -57,7 +64,7 @@ export default function AnalysisStory({ locale }: { locale: string }) {
   const [introEnded, setIntroEnded] = useState(false);
   const [mobile, setMobile] = useState(false);
   useEffect(() => {
-    const query = window.matchMedia("(max-width: 743px)");
+    const query = window.matchMedia("(max-width: 743px), (hover: none) and (pointer: coarse)");
     const sync = () => setMobile(query.matches);
     sync();
     query.addEventListener("change", sync);

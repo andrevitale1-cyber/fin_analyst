@@ -1262,24 +1262,22 @@ function LandingPageContent({ locale }: { locale: string }) {
       </nav>
 
       {/* --- HERO: FinAnalyzer visual identity with a centered fintech headline --- */}
-      <section className="relative isolate overflow-hidden bg-[#080a1d] px-5 pb-12 pt-12 text-center md:pb-28 md:pt-24">
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_15%,rgba(49,72,255,0.28),transparent_54%),linear-gradient(180deg,#080a1d_0%,#0b1029_75%,#111c46_100%)]" />
-        <div className="pointer-events-none absolute left-1/2 top-24 -z-10 h-72 w-[min(90vw,900px)] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[120px]" />
+      <section className="relative isolate overflow-hidden bg-[#2e21de] px-5 pb-12 pt-12 text-center md:pb-28 md:pt-24">
         <div className="mx-auto flex max-w-6xl flex-col items-center">
           <h1 className="max-w-5xl text-[2.25rem] font-semibold leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[5.7rem]">
-            <span className="bg-gradient-to-r from-[#4d82ff] via-[#68b5ff] to-[#9bd7ff] bg-clip-text text-transparent">
+            <span className="text-white">
               {locale === "en" ? "Speed, transparency and clarity" : "Agilidade, transparência e clareza"}
             </span>
             <br />
             {locale === "en" ? "for every investor." : "para cada investidor."}
           </h1>
-          <p className="mx-auto mb-8 mt-6 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg md:mb-9 md:mt-7 md:text-xl">
+          <p className="mx-auto mb-8 mt-6 max-w-2xl text-base leading-7 text-[#9bbcfd] sm:text-lg md:mb-9 md:mt-7 md:text-xl">
             {locale === "en"
               ? "FinAnalyzer brings official reports, AI analysis, company comparisons, and saved research into one platform—helping individual and professional investors understand results faster and revisit them with ease."
               : "O FinAnalyzer reúne relatórios oficiais, análises por IA, comparação de empresas e histórico em uma plataforma, ajudando investidores individuais e profissionais a entender resultados mais rápido e consultá-los novamente com facilidade."}
           </p>
           <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row sm:gap-4">
-            <Link href="/dashboard" className="flex w-full items-center justify-center gap-2 rounded-full bg-[#3428ff] px-8 py-4 text-base font-bold text-white shadow-[0_12px_40px_-14px_rgba(69,86,255,0.9)] transition hover:-translate-y-0.5 hover:bg-[#493fff] sm:w-auto">
+            <Link href="/dashboard" className="flex w-full items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-base font-bold text-[#2e21de] transition hover:-translate-y-0.5 hover:bg-[#eaf2ff] sm:w-auto">
               {locale === "en" ? "Analyze a company" : "Analisar uma empresa"} <ArrowRight size={18} />
             </Link>
             <a href="#funcionalidades" className="w-full rounded-full border border-white/20 bg-white/[0.04] px-8 py-4 text-base font-semibold text-white transition hover:border-white/40 hover:bg-white/[0.08] sm:w-auto">
