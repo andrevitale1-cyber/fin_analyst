@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from "framer-motion";
+import useVideoPlayback from "./useVideoPlayback";
 import styles from "./AnalysisStory.module.css";
 
 const copy = {
@@ -26,23 +27,12 @@ function Scene({ index, progress, title, description, reduced }: { index: number
   const y = useTransform(progress, [start, end], ["50svh", "-50svh"]);
   const shade = useTransform(progress, value => 1 - Math.sin(Math.max(0, Math.min(1, (value - start) * 3)) * Math.PI));
   const shadeColor = useTransform(progress, [0, 1 / 6, 1 / 6 + .001, 1], ["#2e21de", "#2e21de", "#040313", "#040313"]);
-  const syncVideo = useCallback((value: number) => {
-    const element = video.current;
-    if (!element) return;
-    if (!reduced && !window.matchMedia("(prefers-reduced-motion: reduce)").matches && value >= start && value < end) void element.play().catch(() => {});
-    else element.pause();
-  }, [reduced, start, end]);
-  useMotionValueEvent(progress, "change", syncVideo);
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => syncVideo(progress.get());
-    sync();
-    query.addEventListener("change", sync);
-    return () => query.removeEventListener("change", sync);
-  }, [progress, syncVideo]);
+  const [active, setActive] = useState(index === 0);
+  useMotionValueEvent(progress, "change", value => setActive(value >= start && value < end));
+  useVideoPlayback(video, reduced || active);
 
   return <motion.div className={styles.scene} style={reduced ? undefined : { opacity }}>
-    <video ref={video} className={styles.video} muted loop playsInline preload="metadata" aria-hidden="true" onLoadedData={() => syncVideo(progress.get())}>
+    <video ref={video} className={styles.video} muted loop autoPlay playsInline preload="auto" aria-hidden="true">
       <source media="(min-width: 744px)" src={`/reference/clearstreet/story-${index + 1}-desktop.mp4#t=0.01`} type="video/mp4" />
       <source src={`/reference/clearstreet/story-${index + 1}.mp4#t=0.01`} type="video/mp4" />
     </video>
@@ -63,16 +53,8 @@ export default function AnalysisStory({ locale }: { locale: string }) {
   const solutionVisible = useInView(solution, { amount: .15 });
   const reduced = useReducedMotion() ?? false;
   const english = locale === "en";
-  useEffect(() => {
-    const intro = solutionVideo.current;
-    const loop = loopVideo.current;
-    const current = introEnded ? loop : intro;
-    const inactive = introEnded ? intro : loop;
-    inactive?.pause();
-    if (!current) return;
-    if (solutionVisible && !reduced) void current.play().catch(() => {});
-    else current.pause();
-  }, [solutionVisible, reduced, introEnded]);
+  useVideoPlayback(solutionVideo, solutionVisible && !introEnded);
+  useVideoPlayback(loopVideo, solutionVisible && introEnded);
   const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end end"] });
   return <>
     <section ref={section} className={styles.story} aria-label={english ? "From reports to understanding" : "Dos relatórios à compreensão"}>
@@ -80,7 +62,7 @@ export default function AnalysisStory({ locale }: { locale: string }) {
         {copy[english ? "en" : "pt"].map((scene, index) => <Scene key={index} index={index} progress={scrollYProgress} {...scene} reduced={reduced} />)}
       </div>
     </section>
-    <motion.section ref={solution} data-active={solutionVisible && !reduced} className={styles.solution} initial="idle" animate={reduced || solutionVisible ? "active" : "idle"}>
+    <motion.section ref={solution} data-active={solutionVisible} className={styles.solution} initial="idle" animate={reduced || solutionVisible ? "active" : "idle"}>
       <video ref={solutionVideo} className={styles.solutionVideo} src="/benefits/finanalyzer-orbit-intro.mp4#t=0.01" muted playsInline preload="metadata" aria-hidden="true" onEnded={() => setIntroEnded(true)} />
       <video ref={loopVideo} className={styles.solutionVideo} style={{ opacity: introEnded ? 1 : 0 }} src="/benefits/finanalyzer-orbit-loop.mp4#t=0.01" muted loop playsInline preload="auto" aria-hidden="true" />
       <motion.div className={styles.solutionText} variants={{ idle: { opacity: 0, y: 20 }, active: { opacity: 1, y: 0 } }} transition={{ duration: reduced ? 0 : 1, delay: reduced ? 0 : .4 }}>

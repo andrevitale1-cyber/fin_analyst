@@ -20,13 +20,13 @@ export default function RatingHistoryBenefit({ locale }: { locale: string }) {
   const visible = useInView(ref, { amount: .3 });
   const reduced = useReducedMotion();
   const [active, setActive] = useState(5);
-  const [interacting, setInteracting] = useState(false);
+
   const gradient = useId().replace(/:/g, "");
   useEffect(() => {
-    if (!visible || reduced || interacting) return;
+    if (!visible) return;
     const timer = window.setInterval(() => setActive(index => (index + 1) % scores.length), 1600);
     return () => window.clearInterval(timer);
-  }, [visible, reduced, interacting]);
+  }, [visible]);
   const selected = points[active];
   const tooltipX = Math.max(30, Math.min(350, selected.x));
   return <motion.article ref={ref} className={styles.card} initial={reduced ? false : { opacity: 0, y: 32 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: .15 }} transition={{ duration: .6 }}>
@@ -41,7 +41,7 @@ export default function RatingHistoryBenefit({ locale }: { locale: string }) {
         <motion.g animate={{ x: tooltipX - 30, y: Math.max(4, selected.y - 48) }} transition={{ duration: reduced ? 0 : .5 }}>
           <rect width="60" height="30" rx="5" fill="#e6e4ff" /><text x="30" y="20" textAnchor="middle" fill="#4c40ff" fontSize="13" fontWeight="600">{scores[active]}/5</text>
         </motion.g>
-        {points.map((point, index) => <circle key={index} cx={point.x} cy={point.y} r="14" fill="transparent" tabIndex={0} role="button" aria-label={`${english ? "Example" : "Exemplo"} ${index + 1}: ${scores[index]}/5`} onMouseEnter={() => { setInteracting(true); setActive(index); }} onMouseLeave={() => setInteracting(false)} onFocus={() => { setInteracting(true); setActive(index); }} onBlur={() => setInteracting(false)} onClick={() => setActive(index)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setActive(index); } }} />)}
+        {points.map((point, index) => <circle key={index} cx={point.x} cy={point.y} r="14" fill="transparent" tabIndex={0} role="button" aria-label={`${english ? "Example" : "Exemplo"} ${index + 1}: ${scores[index]}/5`} onMouseEnter={() => { setActive(index); }} onFocus={() => { setActive(index); }} onClick={() => setActive(index)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setActive(index); } }} />)}
       </svg>
     </div>
     <div className={styles.copy}>

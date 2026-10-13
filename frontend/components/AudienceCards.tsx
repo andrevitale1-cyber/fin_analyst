@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
-import type { Rive } from "@rive-app/canvas";
+import { motion, useScroll, useTransform, useReducedMotion, useInView } from "framer-motion";
+import type { Rive, LoopEvent } from "@rive-app/canvas";
 import { Link } from "@/i18n/routing";
+import useVideoPlayback from "./useVideoPlayback";
 import styles from "./AudienceCards.module.css";
 
 const media = "/reference/clearstreet/";
@@ -16,6 +17,8 @@ export default function AudienceCards({ locale }: { locale: string }) {
   const english = locale === "en";
   const [desktop, setDesktop] = useState(false);
   const reduce = useReducedMotion();
+  const visible = useInView(section, { amount: .05 });
+  useVideoPlayback(video, visible);
   const { scrollYProgress } = useScroll({ target: section, offset: ["start end", "end end"] });
   const { scrollYProgress: exitProgress } = useScroll({ target: section, offset: ["end center", "end start"] });
   const exitOpacity = useTransform(exitProgress, [0, 1], [1, 0]);
@@ -40,7 +43,8 @@ export default function AudienceCards({ locale }: { locale: string }) {
         const instance = new Rive({
           src: media + "services.riv",
           canvas: canvas.current,
-          autoplay: false,
+          autoplay: true,
+          onLoop: event => { if (!disposed && (event.data as LoopEvent)?.type === "oneshot") { instance.reset(); instance.play(); } },
           layout: new Layout({ fit: Fit.Cover, alignment: Alignment.Center }),
           onLoad: () => {
             if (disposed) return;
@@ -57,31 +61,20 @@ export default function AudienceCards({ locale }: { locale: string }) {
     return () => { disposed = true; observer.disconnect(); resize?.disconnect(); animation.current?.cleanup(); animation.current = null; };
   }, []);
 
-  const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const playVideo = () => {
-    if (!reducedMotion() && video.current) void video.current.play().catch(() => {});
-  };
-  const playServices = () => {
-    if (!reducedMotion() && animation.current && canvas.current?.dataset.ready === "true") {
-      animation.current.stop();
-      animation.current.reset();
-      animation.current.play();
-    }
-  };
   const plus = <span className={styles.plus} aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M20.75 11.25H12.75V3.25H11.25V11.25H3.25V12.75H11.25V20.75H12.75V12.75H20.75V11.25Z" fill="currentColor" /></svg></span>;
 
   return <motion.section ref={section} className={styles.section} style={reduce ? undefined : { opacity: exitOpacity }} aria-label={english ? "Who FinAnalyzer is for" : "Para quem é o FinAnalyzer"}>
     <div className={styles.grid}>
-      <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><Link href="/dashboard" className={styles.card} onMouseEnter={playVideo} onFocus={playVideo}>
+      <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><Link href="/dashboard" className={styles.card}>
         <h2>Clients</h2>
         <div className={styles.visual}>
-          <video ref={video} className={styles.video} src={media + "clients.mp4#t=0.01"} muted playsInline preload="metadata" aria-hidden="true" onEnded={() => { if (video.current) video.current.currentTime = 0; }} />
+          <video ref={video} className={styles.video} src={media + "clients.mp4#t=0.01"} muted loop autoPlay playsInline preload="auto" aria-hidden="true" />
           <span className={styles.shade} />
           {plus}
         </div>
         <p>{english ? <><strong>For individual investors, businesses, analysts, and professional investors who want to understand companies and analyze results faster.</strong> Clear explanations for those getting started, and organized research for professionals and teams who need greater speed.</> : <><strong>Para investidores pessoa física, empresas, analistas e investidores profissionais que querem entender as empresas e analisar resultados com mais agilidade.</strong> Explicações claras para quem está começando e pesquisa organizada para profissionais e equipes que precisam ganhar tempo.</>}</p>
       </Link></motion.div>
-      <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><Link href="/dashboard" className={styles.card} onMouseEnter={playServices} onFocus={playServices}>
+      <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><Link href="/dashboard" className={styles.card}>
         <h2>Services</h2>
         <div className={styles.visual} style={{ backgroundImage: `url(${media}services.jpg)`, backgroundSize: "cover", backgroundPosition: "center" }}>
           <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />

@@ -16,14 +16,11 @@
 .result small { display: block; font-size: 2.6cqw; }
 .result strong { font-size: 9cqw; color: #008c63; line-height: 1; }
 .result strong small { display: inline; font-size: 4cqw; color: #91a7c7; }
-.control { position: absolute; top: 24px; right: 24px; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #3428ff; background: #ffffffbd; cursor: pointer; }
-.control:focus-visible { outline: 2px solid #3428ff; outline-offset: 3px; }
 .stage[data-running="false"] * { animation-play-state: paused; }
 @keyframes orbit { to { transform: rotate(360deg); } }
 @keyframes upright { to { transform: rotate(-360deg); } }
 @keyframes gather { 0%, 100% { transform: translateY(-30cqw); opacity: 0; } 8%, 60% { transform: translateY(-30cqw); opacity: 1; } 73%, 97% { transform: translateY(0); opacity: 0; } }
 @keyframes logoContent { 0%, 73%, 100% { opacity: 1; } 79%, 94% { opacity: 0; } }
 @keyframes result { 0%, 74%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(.65); } 80%, 94% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
-@media (prefers-reduced-motion: reduce) { .stage * { animation: none; } .orbit, .logo { display: none; } .result { transform: translate(-50%, -50%); } .control { display: none; } }
 
 @media (max-width: 743px) { .stage { margin: 12px; aspect-ratio: 6 / 5; } }
