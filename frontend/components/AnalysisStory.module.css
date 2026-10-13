@@ -14,3 +14,12 @@
 .solutionVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 @media (max-width: 743px) { .text { padding: 90px 24px; } .text h2 { font-size: clamp(30px, 7vw, 48px); } .solution { height: 100vw; } .solution h2 { font-size: clamp(30px, 8vw, 48px); } .solutionVideo { object-fit: cover; } }
 @media (prefers-reduced-motion: reduce) { .story { height: auto; margin-top: 0; } .sticky { position: static; height: auto; } .scene, .scene:not(:first-child) { position: relative; height: 80svh; opacity: 1 !important; } .text { transform: none !important; opacity: 1 !important; } }
+
+/* Mobile Safari pauses hidden autoplay layers: keep each scene in normal document flow. */
+@media (max-width: 743px) {
+  .story { height: auto; margin-top: 0; }
+  .sticky { position: static; height: auto; }
+  .scene, .scene:not(:first-child) { position: relative; height: 70svh; min-height: 380px; opacity: 1 !important; }
+  .text { transform: none !important; opacity: 1 !important; padding: 64px 24px; }
+  .shade { opacity: .28 !important; background: #040313 !important; }
+}
