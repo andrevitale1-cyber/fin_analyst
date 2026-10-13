@@ -18,28 +18,35 @@ const copy = {
   ],
 };
 
-function Scene({ index, progress, title, description, reduced, mobile }: { index: number; progress: MotionValue<number>; title: string; description: string; reduced: boolean; mobile: boolean }) {
+function Scene({ index, progress, reduced, mobile }: { index: number; progress: MotionValue<number>; reduced: boolean; mobile: boolean }) {
   const video = useRef<HTMLVideoElement>(null);
   const start = index / 3;
   const end = (index + 1) / 3;
-  const opacity = useTransform(progress, [start, start + .001, end - .001, end], index === 0 ? [1, 1, 1, 0] : index === 2 ? [0, 1, 1, 1] : [0, 1, 1, 0]);
-  const textOpacity = useTransform(progress, [start, start + .06, end - .06, end], [0, 1, 1, 0]);
-  const y = useTransform(progress, [start, end], ["50svh", "-50svh"]);
-  const shade = useTransform(progress, value => 1 - Math.sin(Math.max(0, Math.min(1, (value - start) * 3)) * Math.PI));
+  const shade = useTransform(progress, value => {
+    const local = Math.max(0, Math.min(1, (value - start) * 3));
+    return index === 2 && local > .5 ? 0 : 1 - Math.sin(local * Math.PI);
+  });
   const shadeColor = useTransform(progress, [0, 1 / 6, 1 / 6 + .001, 1], ["#2e21de", "#2e21de", "#040313", "#040313"]);
   const [active, setActive] = useState(index === 0);
-  useMotionValueEvent(progress, "change", value => setActive(value >= start && value < end));
-  const blocked = useVideoPlayback(video, mobile || reduced || active);
+  useMotionValueEvent(progress, "change", value => setActive(value >= start && (index === 2 || value < end)));
+  const blocked = useVideoPlayback(video, active);
 
-  return <motion.div className={styles.scene} style={reduced ? undefined : { opacity }}>
+  return <div className={styles.scene} style={{ display: active ? "block" : "none" }}>
     <video ref={video} className={styles.video} style={{ opacity: blocked ? 0 : 1 }} src={`/reference/clearstreet/story-${index + 1}${mobile ? "-mobile-v2" : "-desktop"}.mp4`} muted loop autoPlay playsInline preload="metadata" aria-hidden="true" />
     {blocked && <img className={styles.video} style={{ position: "absolute", inset: 0 }} src={`/reference/clearstreet/story-${index + 1}-mobile-fallback.webp`} alt="" aria-hidden="true" />}
-    <motion.div className={styles.shade} style={reduced ? undefined : { opacity: shade, backgroundColor: index === 0 ? shadeColor : "#040313" }} />
-    <motion.div className={styles.text} style={reduced ? undefined : { y, opacity: textOpacity }}>
-      <h2>{title}</h2>
-      {description && <p>{description}</p>}
-    </motion.div>
-  </motion.div>;
+    <motion.div className={styles.shade} style={reduced ? { opacity: .28 } : { opacity: shade, backgroundColor: index === 0 ? shadeColor : "#040313" }} />
+  </div>;
+}
+
+function StoryTitle({ title, description, reduced }: { title: string; description: string; reduced: boolean }) {
+  const panel = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: panel, offset: ["start end", "start start"] });
+  const opacity = useTransform(scrollYProgress, [0, .12, .35, .68, .95, 1], [0, .65, 1, 1, .1, 0]);
+  const y = useTransform(scrollYProgress, [0, 1], [20, -20]);
+  return <div ref={panel} className={styles.titlePanel}>
+    <motion.h2 style={reduced ? undefined : { opacity, y }}>{title}</motion.h2>
+    {description && <p>{description}</p>}
+  </div>;
 }
 
 export default function AnalysisStory({ locale }: { locale: string }) {
@@ -65,7 +72,10 @@ export default function AnalysisStory({ locale }: { locale: string }) {
   return <>
     <section ref={section} className={styles.story} aria-label={english ? "From reports to understanding" : "Dos relatórios à compreensão"}>
       <div className={styles.sticky}>
-        {copy[english ? "en" : "pt"].map((scene, index) => <Scene key={index} index={index} progress={scrollYProgress} {...scene} reduced={reduced} mobile={mobile} />)}
+        {copy[english ? "en" : "pt"].map((_, index) => <Scene key={index} index={index} progress={scrollYProgress} reduced={reduced} mobile={mobile} />)}
+      </div>
+      <div className={styles.titles}>
+        {copy[english ? "en" : "pt"].map((scene, index) => <StoryTitle key={index} {...scene} reduced={reduced} />)}
       </div>
     </section>
     <motion.section ref={solution} data-active={solutionVisible} className={styles.solution} initial="idle" animate={reduced || solutionVisible ? "active" : "idle"}>

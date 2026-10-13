@@ -1,25 +1,20 @@
-.story { position: relative; height: 400svh; margin-top: -50svh; background: #040313; color: white; font-family: "Audience Reyhan", sans-serif; }
-.sticky { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+.story { position: relative; margin-top: -50vh; background: #040313; color: white; font-family: "Audience Reyhan", sans-serif; }
+.sticky { position: sticky; top: 0; height: 100vh; overflow: hidden; }
 .scene { position: absolute; inset: 0; }
-.scene:not(:first-child) { opacity: 0; }
 .video { width: 100%; height: 100%; object-fit: cover; }
-.shade { position: absolute; inset: 0; background: #040313; opacity: .28; }
-.text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 80px 24px; background: radial-gradient(ellipse at center, transparent 0%, #0c101850 100%); }
-.text h2 { max-width: 1050px; margin: 0; font-size: clamp(32px, 4vw, 76px); font-weight: 500; line-height: 1.12; letter-spacing: -.045em; text-wrap: balance; }
-.text p { max-width: 780px; margin: 32px 0 0; font-size: clamp(18px, 1.6vw, 26px); line-height: 1.4; text-wrap: balance; }
-.solution { position: relative; isolation: isolate; height: 100vw; display: grid; place-items: center; overflow: hidden; padding: 0 24px; background: #eaf2ff; color: #2e21de; font-family: "Audience Reyhan", sans-serif; text-align: center; }
+.shade { position: absolute; inset: 0; background: #040313; }
+.scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 0%, #0c101880 100%); }
+.titles { position: relative; padding: 0 18.75%; pointer-events: none; }
+.titlePanel { position: relative; height: 100vh; text-align: center; }
+.titlePanel h2 { margin: 0; font-size: clamp(28px, calc(17.275px + 2.75vw), 64px); font-weight: 500; line-height: 1.1; letter-spacing: -1.92px; }
+.titlePanel p { position: absolute; bottom: 50vh; width: 100%; font-size: 18px; }
+.solution { position: relative; isolation: isolate; min-height: 100vh; display: grid; place-items: center; overflow: hidden; padding: 0 24px; background: #eaf2ff; color: #2e21de; font-family: "Audience Reyhan", sans-serif; text-align: center; }
 .solutionText { position: relative; z-index: 1; }
 .solution h2 { margin: 0; font-size: clamp(26px, 5.8vw, 112px); line-height: 1.08; letter-spacing: -.045em; font-weight: 500; }
 .solution h2 span { display: inline-block; white-space: nowrap; }
-.solutionVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
-@media (max-width: 743px) { .text { padding: 90px 24px; } .text h2 { font-size: clamp(30px, 7vw, 48px); } .solution { height: 100vw; } .solution h2 { font-size: clamp(30px, 8vw, 48px); } .solutionVideo { object-fit: cover; } }
-@media (prefers-reduced-motion: reduce) { .story { height: auto; margin-top: 0; } .sticky { position: static; height: auto; } .scene, .scene:not(:first-child) { position: relative; height: 80svh; opacity: 1 !important; } .text { transform: none !important; opacity: 1 !important; } }
-
-/* Mobile Safari pauses hidden autoplay layers: keep each scene in normal document flow. */
+.solutionVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 @media (max-width: 743px) {
-  .story { height: auto; margin-top: 0; }
-  .sticky { position: static; height: auto; }
-  .scene, .scene:not(:first-child) { position: relative; height: 70svh; min-height: 380px; opacity: 1 !important; }
-  .text { transform: none !important; opacity: 1 !important; padding: 64px 24px; }
-  .shade { opacity: .28 !important; background: #040313 !important; }
+  .titlePanel h2 { letter-spacing: -1px; }
+  .solution h2 { font-size: clamp(42px, 11vw, 64px); }
 }
+@media (min-width: 744px) { .solution { min-height: 100vw; } .solutionVideo { object-fit: fill; } }
