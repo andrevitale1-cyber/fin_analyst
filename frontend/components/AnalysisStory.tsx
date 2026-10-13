@@ -31,7 +31,7 @@ function Scene({ index, progress, reduced, mobile }: { index: number; progress: 
   useMotionValueEvent(progress, "change", value => setActive(value >= start && (index === 2 || value < end)));
   const blocked = useVideoPlayback(video, active);
 
-  return <div className={styles.scene} style={{ display: active ? "block" : "none" }}>
+  return <div className={styles.scene} style={{ zIndex: active ? 1 : 0 }}>
     <video ref={video} className={styles.video} style={{ opacity: blocked ? 0 : 1 }} src={`/reference/clearstreet/story-${index + 1}${mobile ? "-mobile-v2" : "-desktop"}.mp4`} muted loop autoPlay playsInline preload="metadata" aria-hidden="true" />
     {blocked && <img className={styles.video} style={{ position: "absolute", inset: 0 }} src={`/reference/clearstreet/story-${index + 1}-mobile-fallback.webp`} alt="" aria-hidden="true" />}
     <motion.div className={styles.shade} style={reduced ? { opacity: .28 } : { opacity: shade, backgroundColor: index === 0 ? shadeColor : "#040313" }} />
