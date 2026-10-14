@@ -500,14 +500,7 @@ async def analyze_earnings_call_auto(
                    if locale == "en" else
                    f"Não foi encontrada uma transcrição pública de {company} para {trimestre}/{ano}. Envie o PDF manualmente.")
         raise HTTPException(status_code=404, detail=message)
-    if locale == "en":
-        prompt = f"""Analyze {company}'s {trimestre}/{ano} earnings-call transcript as a senior financial analyst. Write the entire analysis in English.
-Organize key themes under: performance and demand; guidance and outlook; segments and customers; margins, cash and capital; risks and material management answers.
-Separate company-reported facts from your analysis. Do not invent timestamps if the source does not include them. Cite concrete transcript details and end with a balanced conclusion."""
-    else:
-        prompt = f"""Analise a transcrição da earnings call de {company} referente a {trimestre}/{ano} como analista financeiro sênior. Escreva toda a análise em português.
-Organize os principais temas em: desempenho e demanda; guidance e perspectivas; segmentos e clientes; margens, caixa e capital; riscos e respostas relevantes da administração.
-Separe fatos apresentados pela empresa de interpretação analítica. Não invente timestamps quando a fonte não os trouxer. Cite dados concretos da transcrição e termine com uma síntese equilibrada."""
+    prompt = PromptBuilder().build_call_prompt(company, f"{trimestre}/{ano}", locale=locale)
     try:
         response_text = await asyncio.wait_for(asyncio.to_thread(
             OpenAIClient().analyze_transcript, prompt, document.text,
@@ -557,17 +550,7 @@ async def analyze_earnings_call(
             # Preserve native PDF reading for scanned uploads without selectable text.
             texto_transcricao = ""
 
-        if locale == "en":
-            prompt = f"""
-You are a senior financial analyst. Summarize {empresa}'s earnings call concisely in English.
-Write the entire summary in English, including headings, timestamps, insights and conclusions.
-Include timestamps only when present in the source; do not invent them.
-            """
-        else:
-            prompt = f"""
-Atue como um Analista Financeiro Sênior. Resuma o Earnings Call da {empresa} de forma ultra-objetiva.
-Inclua timestamps apenas quando presentes na fonte; não invente horários.
-            """
+        prompt = PromptBuilder().build_call_prompt(empresa, f"{trimestre}/{ano}", locale=locale)
 
         response_text = await asyncio.wait_for(
             (asyncio.to_thread(OpenAIClient().analyze_transcript, prompt, texto_transcricao)

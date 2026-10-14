@@ -9,13 +9,24 @@
 .titlePanel { position: relative; height: 100vh; width: 100%; text-align: center; display: flex; flex-direction: column; align-items: center; }
 .titlePanel h2 { margin: 0; font-size: clamp(28px, calc(17.275px + 2.75vw), 64px); font-weight: 500; line-height: 1.1; letter-spacing: -1.92px; }
 .titlePanel p { position: absolute; bottom: 50vh; width: 100%; font-size: 18px; }
-.solution { position: relative; isolation: isolate; min-height: 100vh; display: grid; place-items: center; overflow: hidden; padding: 0 24px; background: #eaf2ff; color: #2e21de; font-family: "Audience Reyhan", sans-serif; text-align: center; }
-.solutionText { position: relative; z-index: 1; }
-.solution h2 { margin: 0; font-size: clamp(26px, 5.8vw, 112px); line-height: 1.08; letter-spacing: -.045em; font-weight: 500; }
-.solution h2 span { display: inline-block; white-space: nowrap; }
-.solutionVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-@media (max-width: 743px), (hover: none) and (pointer: coarse) {
-  .titlePanel h2 { letter-spacing: -1px; }
-  .solution h2 { font-size: clamp(42px, 11vw, 64px); }
+@font-face { font-family: "Finup Manrope"; src: url("/reference/finup/manrope-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Finup Manrope"; src: url("/reference/finup/manrope-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Finup Manrope"; src: url("/reference/finup/manrope-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+.solution { position: relative; isolation: isolate; overflow: hidden; padding: 160px 32px 128px; background: #0a0a1f; color: white; font-family: "Finup Manrope", sans-serif; text-align: center; }
+.solutionContent { max-width: 1280px; margin: 0 auto; }
+.solution h2 { margin: 0; font-size: 56px; line-height: 1.05; letter-spacing: -1px; font-weight: 700; }
+.solution h2 span { background: linear-gradient(225deg, #9dd0ff, #4b93ff); background-clip: text; -webkit-text-fill-color: transparent; }
+.solution p { max-width: 460px; margin: 24px auto 48px; font-size: 16px; line-height: 24px; letter-spacing: .5px; font-weight: 500; color: #ffffffcc; }
+.solutionButton { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 50px; padding: 14px 20px; border: 1px solid #ffffff33; border-radius: 6px; font-size: 16px; font-weight: 600; line-height: 20px; background: radial-gradient(circle at 50% 0, #ffffff4d 10%, #ffffff00 80%), #1a1aff; transition: background-color .2s; }
+.solutionButton:hover { background-color: #4032ff; }
+.solutionButton:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+.solutionGlow { position: relative; z-index: -1; display: block; width: 100%; height: auto; margin-top: -96px; pointer-events: none; }
+@media (max-width: 991px) { .solution { padding-top: 96px; padding-bottom: 96px; } .solution h2 { font-size: 44px; } }
+@media (max-width: 743px), (hover: none) and (pointer: coarse) { .titlePanel h2 { letter-spacing: -1px; } }
+@media (max-width: 743px) {
+  .solution { padding: 96px 16px 48px; }
+  .solution h2 { font-size: 30px; letter-spacing: -.5px; }
+  .solution p { margin-bottom: 40px; }
+  .solutionButton { max-width: 100%; min-height: 48px; font-size: 15px; }
+  .solutionGlow { width: 200%; max-width: none; margin-top: -16px; margin-left: -50%; }
 }
-@media (min-width: 744px) and (hover: hover) { .solution { min-height: 100vw; } .solutionVideo { object-fit: fill; } }

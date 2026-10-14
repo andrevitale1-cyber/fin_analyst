@@ -22,6 +22,25 @@ class PromptBuilder:
                 return sector
         return "geral"
 
+    def build_call_prompt(self, empresa, periodo, locale="pt"):
+        if locale == "en":
+            return f"""Analyze {empresa}'s {periodo} earnings call as a senior company analyst. Write in English and use only the supplied transcript. Keep the analysis to 500–800 words, or less when the source is limited, without repeating points across sections. Never invent numbers or past-call comparisons. Clearly distinguish reported facts from AI interpretation. Attribute relevant statements to speakers and use short quotes only when useful. Assess tone from management's words and answers only, never from voice, emotion, or body language. An unanswered question means the transcript lacks an answer; do not claim concealment. Compare guidance with prior guidance only when the transcript supports it, and call it raised, maintained, or lowered only with a sourced comparison.
+
+Use exactly these five sections, in this order:
+1. What explains the results — up to five points. For each, state management's explanation, why it matters, and the AI reading with limits. Cover material revenue, profit, margin, and cash drivers (demand, price, volume/mix, FX, costs, and nonrecurring items), plus meaningful segment, product, region, and customer changes.
+2. Guidance, projections, clues, conditions, and uncertainties — distinguish formal guidance and its assumptions from qualitative clues. Include forward demand, orders, retention, capacity, capex, and competition when discussed.
+3. Q&A — up to three material questions and answers, or unresolved issues. Explain what information is missing when management does not answer.
+4. AI Conclusion — begin with “Predominant tone:” and choose optimistic, confident, cautious, defensive, mixed, or inconclusive. Give two or three textual examples, describe how clear or conditional management's confidence is, and compare prepared remarks with Q&A if they differ. End with the main business message and one watchpoint.
+5. Key moments — only after the conclusion, list up to eight chronological timestamps as “[mm:ss] — Theme: short description; speaker”. Use only timestamps shown in the transcript or verified synchronization. Never estimate from text position or confuse clock time with elapsed recording time. If none are available, write exactly: “The provided transcript contains no timestamps; precise timing could not be identified.”"""
+        return f"""Analise a earnings call de {empresa} referente a {periodo} como analista sênior da empresa. Escreva em português e use apenas a transcrição fornecida. Limite a análise a 500–800 palavras, ou menos quando a fonte for limitada, sem repetir pontos entre as seções. Nunca invente números nem comparações com calls anteriores. Separe claramente fatos reportados de interpretação da IA. Identifique falas relevantes pelo nome do interlocutor e use citações curtas apenas quando forem úteis. Avalie o tom somente pelas palavras e respostas da administração, nunca pela voz, emoção ou linguagem corporal. Uma pergunta sem resposta indica que a transcrição não traz a resposta; não alegue ocultação. Compare o guidance com o anterior somente quando houver suporte na transcrição, e classifique-o como elevado, mantido ou reduzido apenas com comparação citada.
+
+Use exatamente estas cinco seções, nesta ordem:
+1. O que explica os resultados — até cinco pontos. Em cada um, indique a explicação da administração, por que importa e a leitura da IA com seus limites. Cubra fatores materiais de receita, lucro, margem e caixa (demanda, preços, volume/mix, câmbio, custos e itens não recorrentes), além de mudanças relevantes em segmentos, produtos, regiões e clientes.
+2. Guidance, projeções, sinais, condições e incertezas — diferencie guidance formal e suas premissas de sinais qualitativos. Inclua demanda futura, pedidos, retenção, capacidade, capex e concorrência quando discutidos.
+3. Perguntas e respostas — até três perguntas e respostas materiais, ou questões não resolvidas. Explique qual informação falta quando a administração não responder.
+4. Conclusão da IA — comece com “Tom predominante:” e escolha otimista, confiante, cauteloso, defensivo, misto ou inconclusivo. Apresente duas ou três evidências textuais, descreva se a confiança da administração é clara ou condicional e compare as falas preparadas com o Q&A se forem diferentes. Termine com a principal mensagem sobre o negócio e um ponto a acompanhar.
+5. Momentos principais — somente após a conclusão, liste até oito timestamps em ordem cronológica no formato “[mm:ss] — Tema: descrição curta; interlocutor”. Use apenas timestamps presentes na transcrição ou em sincronização verificada. Nunca estime pela posição do texto nem confunda horário do dia com tempo decorrido da gravação. Se não houver nenhum, escreva exatamente: “A transcrição fornecida não contém timestamps; não foi possível identificar a minutagem com precisão.”"""
+
     def build_prompt(self, ticker, pdf_text, locale="pt", periodo=None):
         sector = self.get_sector(ticker)
         

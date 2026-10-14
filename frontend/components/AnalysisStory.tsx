@@ -1,11 +1,12 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { useLayoutEffect, useRef } from "react";
+import { useReducedMotion } from "framer-motion";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CustomEase } from "gsap/CustomEase";
-import useVideoPlayback from "./useVideoPlayback";
+import { Link } from "@/i18n/routing";
+import { ChevronRight } from "lucide-react";
 import styles from "./AnalysisStory.module.css";
 
 const copy = {
@@ -23,15 +24,8 @@ const copy = {
 
 export default function AnalysisStory({ locale }: { locale: string }) {
   const section = useRef<HTMLElement>(null);
-  const solution = useRef<HTMLElement>(null);
-  const solutionVideo = useRef<HTMLVideoElement>(null);
-  const loopVideo = useRef<HTMLVideoElement>(null);
-  const [introEnded, setIntroEnded] = useState(false);
-  const solutionVisible = useInView(solution, { amount: .15 });
   const reduced = useReducedMotion() ?? false;
   const english = locale === "en";
-  useVideoPlayback(solutionVideo, solutionVisible && !introEnded);
-  useVideoPlayback(loopVideo, solutionVisible && introEnded);
 
   useLayoutEffect(() => {
     const root = section.current;
@@ -138,12 +132,13 @@ export default function AnalysisStory({ locale }: { locale: string }) {
         </div>)}
       </div>
     </section>
-    <motion.section ref={solution} data-active={solutionVisible} className={styles.solution} initial="idle" animate={reduced || solutionVisible ? "active" : "idle"}>
-      <video ref={solutionVideo} className={styles.solutionVideo} src="/benefits/finanalyzer-orbit-intro.mp4" muted playsInline preload="metadata" aria-hidden="true" onEnded={() => setIntroEnded(true)} />
-      <video ref={loopVideo} className={styles.solutionVideo} style={{ opacity: introEnded ? 1 : 0 }} src="/benefits/finanalyzer-orbit-loop.mp4" muted loop playsInline preload="auto" aria-hidden="true" />
-      <motion.div className={styles.solutionText} variants={{ idle: { opacity: 0, y: 20 }, active: { opacity: 1, y: 0 } }} transition={{ duration: reduced ? 0 : 1, delay: reduced ? 0 : .4 }}>
-        <h2 aria-label={english ? "This is where FinAnalyzer comes in." : "É aqui que o FinAnalyzer entra."}>{english ? "This is where" : "É aqui que o"}<br /><span>FinAnalyzer</span><br />{english ? "comes in." : "entra."}</h2>
-      </motion.div>
-    </motion.section>
+    <section className={styles.solution} aria-labelledby="first-analysis-heading">
+      <div className={styles.solutionContent}>
+        <h2 id="first-analysis-heading"><span>{english ? "Your next analysis" : "Sua próxima análise"}</span><br />{english ? "starts here." : "começa aqui."}</h2>
+        <p>{english ? "Choose a company and a quarter. Let AI highlight what matters, and revisit your analysis whenever you need it." : "Escolha a empresa e o trimestre. A IA destaca o que importa, e você pode consultar sua análise quando precisar."}</p>
+        <Link href="/dashboard" className={styles.solutionButton}>{english ? "Analyze my first company" : "Analisar minha primeira empresa"}<ChevronRight size={16} aria-hidden="true" /></Link>
+        <img className={styles.solutionGlow} src="/reference/finup/first-analysis-glow.avif" width="1280" height="314" alt="" loading="lazy" />
+      </div>
+    </section>
   </>;
 }

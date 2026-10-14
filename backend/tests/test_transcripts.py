@@ -9,6 +9,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from agents.auto_fetcher import AutoFetcher
+from agents.prompt_builder import PromptBuilder
 from agents.search_client import SearchError
 from agents.sec_fetcher import FetchedDocument
 from openai_client import OpenAIClient, OpenAIError
@@ -178,6 +179,19 @@ def test_transcript_cache_avoids_second_search(tmp_path):
     assert again.fetch_transcript("Apple", "2026", "1T") == doc
 
 
+def test_call_prompt_is_localized_period_specific_and_reserves_timestamps_for_last_section():
+    builder = PromptBuilder()
+    pt = builder.build_call_prompt("Apple", "1T/2026")
+    en = builder.build_call_prompt("Apple", "1T/2026", locale="en")
+    assert "Apple" in pt and "1T/2026" in pt and "Tom predominante:" in pt
+    assert "A transcrição fornecida não contém timestamps; não foi possível identificar a minutagem com precisão." in pt
+    assert "Apple" in en and "1T/2026" in en and "Predominant tone:" in en
+    assert "The provided transcript contains no timestamps; precise timing could not be identified." in en
+    for prompt, last_section in ((pt, "5. Momentos principais"), (en, "5. Key moments")):
+        assert prompt.index("4. ") < prompt.index(last_section)
+        assert "voice, emotion, or body language" in prompt or "voz, emoção ou linguagem corporal" in prompt
+
+
 def test_auto_transcript_route_keeps_body_out_of_prompt_and_sends_text_once(api, monkeypatch):
     main, client = api
     conn = Mock()
@@ -197,6 +211,7 @@ def test_auto_transcript_route_keeps_body_out_of_prompt_and_sends_text_once(api,
     analyze.assert_called_once()
     prompt, text = analyze.call_args.args
     assert "Apple" in prompt and transcript not in prompt
+    assert prompt == PromptBuilder().build_call_prompt("Apple", "1T/2026", locale="en")
     assert text == transcript
 
 
@@ -228,6 +243,7 @@ def test_manual_transcript_route_extracts_and_sends_text_once(api, monkeypatch):
     analyze.assert_called_once()
     prompt, text = analyze.call_args.args
     assert "Apple" in prompt and transcript not in prompt
+    assert prompt == PromptBuilder().build_call_prompt("Apple", "1T/2026", locale="en")
     assert text == transcript
 
 
