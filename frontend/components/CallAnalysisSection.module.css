@@ -1,0 +1,6 @@
+.layout { grid-template-columns: 1fr 1.05fr; }
+.pages { max-height: 580px; overflow-y: auto; scrollbar-color: #bdc9dc #f4f6fa; scrollbar-width: thin; }
+.pages a { display: block; }
+.pages img { display: block; width: 100%; height: auto; }
+.pages:focus-visible, .pages a:focus-visible { outline: 2px solid #3282ff; outline-offset: -3px; }
+@media (max-width: 743px) { .layout { grid-template-columns: 1fr; } .pages { max-height: 420px; } }

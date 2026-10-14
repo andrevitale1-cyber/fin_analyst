@@ -15,6 +15,7 @@
 .badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); padding: 6px 8px; border-radius: 5px; background: #1d423b; color: #00e76d; font-size: 14px; font-weight: 700; line-height: 18px; white-space: nowrap; }
 .heading { text-align: center; }
 .heading h3 { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; line-height: 22px; }
+.description { max-width: 280px; margin: 12px auto 0; color: #ffffff99; font-size: 13px; line-height: 20px; }
 .price { display: flex; justify-content: center; align-items: baseline; gap: 6px; margin-top: 16px; font-size: 16px; line-height: 24px; }
 .price strong { font-weight: 700; }
 .price span { color: #ffffff80; }
@@ -22,6 +23,9 @@
 .action:hover { background-color: #4032ff; }
 .features { flex: 1; list-style: none; padding: 0; margin: 0; }
 .features li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #ffffff1a; color: #ffffff80; font-size: 14px; line-height: 22px; }
+.features li strong, .features li small { display: block; }
+.features li strong { color: #fff; font-weight: 600; }
+.features li small { margin-top: 3px; color: #ffffff99; font-size: 12px; line-height: 18px; }
 .features svg { flex-shrink: 0; color: #00e76d; }
 .note { margin-top: 24px; color: #ffffff99; font-size: 12px; line-height: 18px; text-align: center; }
 @media (max-width: 991px) { .section { padding-top: 96px; padding-bottom: 96px; } .intro h2 { font-size: 44px; } }
