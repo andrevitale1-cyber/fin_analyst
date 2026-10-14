@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { ArrowDown, BarChart3, ChevronDown, Search, X } from "lucide-react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Link } from "@/i18n/routing";
 import styles from "./LandingIntro.module.css";
 
@@ -12,9 +9,6 @@ export default function LandingIntro({ locale }: { locale: string }) {
   const english = locale === "en";
   const [menu, setMenu] = useState<"clients" | "services" | "mobile" | null>(null);
   const header = useRef<HTMLElement>(null);
-  const hero = useRef<HTMLElement>(null);
-  const screen = useRef<HTMLDivElement>(null);
-  const copy = useRef<HTMLDivElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const close = () => setMenu(null);
   const links = [
@@ -39,23 +33,6 @@ export default function LandingIntro({ locale }: { locale: string }) {
     document.addEventListener("keydown", keyboard);
     return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", keyboard); };
   }, [menu]);
-
-  useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
-    const media = gsap.matchMedia();
-    media.add("(min-width: 1291px) and (prefers-reduced-motion: no-preference)", () => {
-      const intro = gsap.fromTo(screen.current, { rotationX: 82, rotationY: -8, scale: .66 },
-        { rotationX: 52, rotationY: 0, scale: 1, duration: 3.8, ease: "power3.out" });
-      ScrollTrigger.create({ trigger: hero.current, start: "top top", end: "bottom bottom", onUpdate: ({ progress }) => {
-        if (!progress && intro.isActive()) return;
-        if (progress) intro.kill();
-        gsap.set(screen.current, { rotationX: 52 * (1 - progress), rotationY: 0, scale: 1 - .16 * progress, y: -140 * progress });
-        gsap.set(copy.current, { y: -125 * progress });
-        screen.current?.style.setProperty("--lift", `${60 * (1 - progress)}px`);
-      } });
-    });
-    return () => media.revert();
-  }, []);
 
   return <>
     <header ref={header} className={styles.navigation}>
@@ -95,15 +72,9 @@ export default function LandingIntro({ locale }: { locale: string }) {
         <Link href="/dashboard" className={styles.primary} onClick={close}>{english ? "Analyze a company" : "Analisar uma empresa"}</Link>
       </div>}
     </header>
-    <section ref={hero} className={styles.hero} aria-labelledby="landing-title">
+    <section className={styles.hero} aria-labelledby="landing-title">
       <div className={styles.inner}>
-        <div className={styles.stage} aria-hidden="true">
-          <div ref={screen} className={styles.screen}>
-            <div className={styles.base}><Image src="/benefits/hero-analysis.png" alt="" width={1384} height={934} priority sizes="(max-width: 743px) 85vw, 75vw" /></div>
-            {[0, 1, 2, 3].map(index => <div key={index} className={`${styles.layer} ${styles[`layer${index}`]}`}><Image src="/benefits/hero-analysis.png" alt="" width={1384} height={934} sizes="(max-width: 743px) 85vw, 75vw" /></div>)}
-          </div>
-        </div>
-        <div ref={copy} className={styles.copy}>
+        <div className={styles.copy}>
           <h1 id="landing-title">{english ? "Speed, transparency and clarity" : "Agilidade, transparência e clareza"}<br className={styles.headlineBreak} /> {english ? "for every investor." : "para cada investidor."}</h1>
           <p>{english
             ? "Official reports, AI analysis, company comparisons and saved research in one platform. Understand results faster and revisit every analysis with ease."
