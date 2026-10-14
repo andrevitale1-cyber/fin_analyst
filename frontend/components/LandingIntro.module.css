@@ -2,20 +2,17 @@
 .pill { display: flex; align-items: center; justify-content: space-between; gap: 18px; height: 52px; padding: 0 10px 0 24px; background: rgba(234, 238, 255, .88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 100px; }
 .brand { display: inline-flex; align-items: center; gap: 5px; font-size: 17px; font-weight: 500; letter-spacing: -.6px; white-space: nowrap; text-decoration: none; }
 .brand svg { flex-shrink: 0; }
-.ai { font-size: 12px; margin-left: 1px; }
-.desktopLinks { display: flex; align-items: center; gap: 24px; }
-.desktopLinks a, .desktopLinks button { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; text-decoration: none; color: inherit; font: inherit; cursor: pointer; }
-.desktopLinks button { border: 0; background: transparent; padding: 12px 0; }
-.desktopLinks a:hover, .desktopLinks button:hover { opacity: .7; }
+.desktopLinks { display: flex; align-items: center; gap: 18px; }
+.desktopLinks a { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; text-decoration: none; color: inherit; font: inherit; cursor: pointer; }
+.desktopLinks a:hover { opacity: .7; }
 .actions { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
 .search { display: grid; place-items: center; width: 26px; height: 32px; }
 .login { border: 1px solid #bdb8f7; border-radius: 100px; padding: 5px 14px; }
 .primary, .menuButton { display: inline-flex; align-items: center; justify-content: center; border: 0; background: #2e21de; color: white; border-radius: 100px; font: 500 14px/1.5 "Audience Reyhan", sans-serif; padding: 6px 14px; text-decoration: none; cursor: pointer; }
 .primary:hover, .menuButton:hover { background: #2214bf; }
 .menuButton { display: none; }
-.dropdown { width: 390px; margin: 12px auto 0; padding: 16px; border-radius: 20px; background: #eef0ff; box-shadow: 0 14px 40px #14107724; display: grid; gap: 4px; }
-.dropdown a, .mobileMenu a { padding: 12px 14px; border-radius: 10px; text-decoration: none; }
-.dropdown a:hover, .mobileMenu a:not(.primary):hover { background: #2e21de0c; }
+.mobileMenu a { padding: 12px 14px; border-radius: 10px; text-decoration: none; }
+.mobileMenu a:not(.primary):hover { background: #2e21de0c; }
 .navigation :is(a,button):focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
 .mobileMenu { display: none; }
 .srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
@@ -29,6 +26,6 @@
 @keyframes down { 0%,100% { transform: translateY(-4px); } 50% { transform: translateY(4px); } }
 @media (max-width: 1290px) { .navigation { width: min(932px, calc(100% - 112px)); } }
 @media (max-width: 1023px) { .navigation { top: 20px; width: calc(100% - 64px); max-width: 620px; } .desktopLinks, .actions { display: none; } .menuButton { display: inline-flex; min-width: 58px; min-height: 32px; } .mobileMenu { display: grid; gap: 4px; margin-top: 12px; padding: 16px; border-radius: 24px; max-height: calc(100svh - 112px); overflow-y: auto; background: #eef0ff; box-shadow: 0 14px 40px #14107724; } .copy h1 { font-size: clamp(40px, calc(34.033px + 1.53vw), 60px); letter-spacing: -1px; } .copy p { font-size: 20px; max-width: 640px; } }
-@media (max-width: 743px) { .navigation { top: 24px; width: calc(100% - 2 * clamp(32px, 11.8vw, 46px)); } .pill { padding-left: 20px; gap: 8px; } .brand { font-size: 17px; } .brand svg { width: 21px; height: 21px; } .ai { font-size: 10px; } .inner { padding: 118px 0 40px; } .copy { padding: 0 18px; gap: 23px; } .copy h1 { max-width: 340px; padding: 0 16px; font-size: 40px; } .copy p { max-width: 358px; font-size: 18px; line-height: 1.1; } .headlineBreak { display: none; } .scrollDown { height: 50px; } }
+@media (max-width: 743px) { .navigation { top: 24px; width: calc(100% - 2 * clamp(32px, 11.8vw, 46px)); } .pill { padding-left: 20px; gap: 8px; } .brand { font-size: 17px; } .brand svg { width: 21px; height: 21px; } .inner { padding: 118px 0 40px; } .copy { padding: 0 18px; gap: 23px; } .copy h1 { max-width: 340px; padding: 0 16px; font-size: 40px; } .copy p { max-width: 358px; font-size: 18px; line-height: 1.1; } .headlineBreak { display: none; } .scrollDown { height: 50px; } }
 @media (max-width: 374px), (max-height: 700px) and (max-width: 743px) { .navigation { width: calc(100% - 40px); } .copy h1 { font-size: 34px; } .copy p { font-size: 17px; } .copy { gap: 18px; } }
 @media (prefers-reduced-motion: reduce) { .scrollDown svg { animation: none; } }

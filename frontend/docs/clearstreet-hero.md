@@ -6,7 +6,7 @@ Destination: the existing FinAnalyzer `/en` and `/pt` homepages. Local preview: 
 
 ## Ownership and references
 
-- `components/LandingIntro.tsx` and its CSS own the floating navigation, desktop dropdowns, mobile menu, static hero composition.
+- `components/LandingIntro.tsx` and its CSS own the floating navigation, ordered desktop links, mobile menu and static hero composition.
 - `app/[locale]/page.tsx` replaces the previous navigation/hero with this component. Remaining authored sections are preserved.
 - The existing local Reyhan regular/medium fonts from Clear Street are reused. The page color is `#2e21de`; supporting text is `#9bbcfd`.
 
@@ -16,7 +16,7 @@ The desktop source has a centered 52px-high lavender navigation capsule, a 200vh
 
 At the user's request, the FinAnalyzer hero displays only its headline, supporting text and scroll link. The Meta report animation, image layers and scroll pinning have been removed. Text is centered within one viewport on desktop and mobile, beneath the floating navigation.
 
-Desktop Clients/Services controls open real dropdowns. Mobile Menu opens a scrollable navigation sheet; selecting a destination, clicking outside or pressing Escape closes it. Search, sign-in and primary actions lead to the existing dashboard. Section anchors reserve space for the fixed header.
+The user-requested section order is shared by desktop and mobile: Clients, Benefits, Aggregated table, AI analysis, Calls, Pricing. The separate FinAnalyzer AI dashboard link and the brand's .AI suffix are removed. Mobile Menu opens a scrollable navigation sheet; selecting a destination, clicking outside or pressing Escape closes it. Search, sign-in and primary actions lead to the existing dashboard. Section anchors reserve space for the fixed header.
 
 ## Verification and remaining differences
 
