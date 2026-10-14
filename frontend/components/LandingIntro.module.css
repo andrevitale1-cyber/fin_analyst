@@ -1,0 +1,47 @@
+.navigation { position: fixed; top: 34px; left: 50%; transform: translateX(-50%); width: min(932px, calc(100% - 64px)); z-index: 50; font: 400 14px/1.5 "Audience Reyhan", sans-serif; color: #2e21de; }
+.pill { display: flex; align-items: center; justify-content: space-between; gap: 18px; height: 52px; padding: 0 10px 0 24px; background: rgba(234, 238, 255, .88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border-radius: 100px; }
+.brand { display: inline-flex; align-items: center; gap: 5px; font-size: 17px; font-weight: 500; letter-spacing: -.6px; white-space: nowrap; text-decoration: none; }
+.brand svg { flex-shrink: 0; }
+.ai { font-size: 12px; margin-left: 1px; }
+.desktopLinks { display: flex; align-items: center; gap: 24px; }
+.desktopLinks a, .desktopLinks button { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; text-decoration: none; color: inherit; font: inherit; cursor: pointer; }
+.desktopLinks button { border: 0; background: transparent; padding: 12px 0; }
+.desktopLinks a:hover, .desktopLinks button:hover { opacity: .7; }
+.actions { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.search { display: grid; place-items: center; width: 26px; height: 32px; }
+.login { border: 1px solid #bdb8f7; border-radius: 100px; padding: 5px 14px; }
+.primary, .menuButton { display: inline-flex; align-items: center; justify-content: center; border: 0; background: #2e21de; color: white; border-radius: 100px; font: 500 14px/1.5 "Audience Reyhan", sans-serif; padding: 6px 14px; text-decoration: none; cursor: pointer; }
+.primary:hover, .menuButton:hover { background: #2214bf; }
+.menuButton { display: none; }
+.dropdown { width: 390px; margin: 12px auto 0; padding: 16px; border-radius: 20px; background: #eef0ff; box-shadow: 0 14px 40px #14107724; display: grid; gap: 4px; }
+.dropdown a, .mobileMenu a { padding: 12px 14px; border-radius: 10px; text-decoration: none; }
+.dropdown a:hover, .mobileMenu a:not(.primary):hover { background: #2e21de0c; }
+.navigation :is(a,button):focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.mobileMenu { display: none; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.hero { position: relative; height: 200svh; background: #2e21de; color: white; font-family: "Audience Reyhan", sans-serif; }
+.inner { position: sticky; top: 0; display: flex; flex-direction: column; height: 100svh; }
+.stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; perspective: 1600px; overflow: clip; }
+.screen { --lift: 60px; position: relative; width: min(980px, 70vw); aspect-ratio: 1.9; transform: rotateX(52deg); transform-style: preserve-3d; }
+.screen img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.base { position: absolute; inset: 0; border-radius: 12px; overflow: hidden; border: 2px solid #7b72ff; background: #182170; box-shadow: 0 30px 45px #170f8666; }
+.base img { opacity: .35; }
+.layer { position: absolute; inset: 0; transform: translateZ(var(--lift)); animation: float 8s ease-in-out infinite alternate; }
+.layer img { filter: brightness(.9); }
+.layer0 { clip-path: inset(0 0 70% 0 round 12px); }
+.layer1 { clip-path: inset(32% 74% 44% 0 round 10px); animation-delay: -2s; }
+.layer2 { clip-path: inset(32% 0 44% 26% round 10px); animation-delay: -4s; }
+.layer3 { clip-path: inset(58% 0 0 0 round 10px); animation-delay: -6s; }
+.copy { position: relative; z-index: 2; text-align: center; display: flex; align-items: center; flex-direction: column; gap: clamp(23px, calc(21px + .53vw), 32px); margin-top: -12svh; padding: 0 clamp(18px, 3.25vw, 54px) 20px; }
+.copy h1 { margin: 0; max-width: 1080px; font-weight: 500; font-size: clamp(40px, calc(35.5px + 1.484vw), 64px); line-height: 1.1; letter-spacing: -1.92px; }
+.copy p { margin: 0; max-width: 704px; color: #9bbcfd; font-weight: 500; font-size: clamp(18px, calc(15.59px + .503vw), 26px); line-height: 1.1; letter-spacing: -.5px; }
+.scrollDown { width: 72px; height: 75px; display: flex; align-items: center; justify-content: center; color: white; }
+.scrollDown svg { animation: down 2s ease-in-out infinite; }
+@keyframes float { from { transform: translateZ(var(--lift)); } to { transform: translateZ(calc(var(--lift) + 8px)); } }
+@keyframes mobileFloat { 0%,100% { transform: rotateX(48deg) rotateY(-3deg); } 50% { transform: rotateX(52deg) rotateY(3deg); } }
+@keyframes down { 0%,100% { transform: translateY(-4px); } 50% { transform: translateY(4px); } }
+@media (max-width: 1290px) { .navigation { width: min(932px, calc(100% - 112px)); } .hero { height: 100svh; min-height: 760px; } .inner { height: 100%; position: relative; } .screen { width: 78vw; max-width: 860px; } }
+@media (max-width: 1023px) { .navigation { top: 20px; width: calc(100% - 64px); max-width: 620px; } .desktopLinks, .actions { display: none; } .menuButton { display: inline-flex; min-width: 58px; min-height: 32px; } .mobileMenu { display: grid; gap: 4px; margin-top: 12px; padding: 16px; border-radius: 24px; max-height: calc(100svh - 112px); overflow-y: auto; background: #eef0ff; box-shadow: 0 14px 40px #14107724; } .hero { min-height: 740px; } .copy { margin-top: -5svh; } .copy h1 { font-size: clamp(40px, calc(34.033px + 1.53vw), 60px); letter-spacing: -1px; } .copy p { font-size: 20px; max-width: 640px; } }
+@media (max-width: 743px) { .navigation { top: 24px; width: calc(100% - 2 * clamp(32px, 11.8vw, 46px)); } .pill { padding-left: 20px; gap: 8px; } .brand { font-size: 17px; } .brand svg { width: 21px; height: 21px; } .ai { font-size: 10px; } .hero { min-height: 700px; } .stage { padding-top: 50px; perspective: 900px; } .screen { width: 85vw; aspect-ratio: 1.65; --lift: 24px; animation: mobileFloat 10s ease-in-out infinite; } .base { border-width: 1px; border-radius: 8px; } .copy { margin-top: -15svh; padding: 0 18px 20px; gap: 23px; min-height: 458px; } .copy h1 { max-width: 340px; padding: 0 16px; font-size: 40px; } .copy p { max-width: 358px; font-size: 18px; line-height: 1.1; } .headlineBreak { display: none; } .scrollDown { height: 50px; margin-top: auto; } }
+@media (max-width: 374px), (max-height: 700px) and (max-width: 743px) { .navigation { width: calc(100% - 40px); } .copy h1 { font-size: 34px; } .copy p { font-size: 17px; } .copy { gap: 18px; min-height: 390px; } .hero { min-height: 660px; } }
+@media (prefers-reduced-motion: reduce) { .layer, .screen, .scrollDown svg { animation: none; } .screen { transform: rotateX(25deg); } .hero { height: 100svh; min-height: 700px; } .inner { position: relative; } }

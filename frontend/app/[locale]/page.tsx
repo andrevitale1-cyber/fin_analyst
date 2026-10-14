@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, useInView } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import AudienceCards from "@/components/AudienceCards";
+import LandingIntro from "@/components/LandingIntro";
 import AnalysisStory from "@/components/AnalysisStory";
 import SearchBenefit from "@/components/SearchBenefit";
 import RatingHistoryBenefit from "@/components/RatingHistoryBenefit";
@@ -1222,71 +1223,7 @@ function LandingPageContent({ locale }: { locale: string }) {
   return (
     <div className="min-h-screen bg-[#0A0D14] text-gray-100 font-sans antialiased selection:bg-blue-500/30 overflow-x-clip">
 
-      {/* --- NAVBAR --- */}
-      <nav className="border-b border-white/10 bg-[#0A0D14]/80 backdrop-blur-xl sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 h-16 md:h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 md:w-10 md:h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
-              <BarChart3 className="text-white w-5 h-5 md:w-6 md:h-6" />
-            </div>
-            <span className="whitespace-nowrap text-base sm:text-xl md:text-2xl font-bold tracking-tight text-white">
-              FinAnalyzer <span className="text-blue-500">.AI</span>
-            </span>
-          </div>
-
-          <div className="hidden md:flex items-center gap-6">
-            <a href="#funcionalidades" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{locale === "en" ? "Features" : "Funcionalidades"}</a>
-            <a href="#planos" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{locale === "en" ? "Pricing" : "Preços"}</a>
-            <Link href="/dashboard" className="text-sm text-gray-300 hover:text-white font-medium transition-colors">{locale === "en" ? "Sign In" : "Entrar"}</Link>
-            <Link href="/dashboard" className="bg-white hover:bg-gray-100 text-black px-6 py-2.5 rounded-full font-bold transition-all text-sm hover:scale-105">
-              {locale === "en" ? "Get Started Free" : "Começar Grátis"}
-            </Link>
-          </div>
-
-          <div className="flex md:hidden items-center gap-2">
-            <Link href="/dashboard" className="bg-white text-black px-3 py-2 rounded-full font-bold text-xs whitespace-nowrap">
-              {locale === "en" ? "Get started" : "Começar"}
-            </Link>
-            <details className="relative">
-              <summary aria-label={locale === "en" ? "Open navigation" : "Abrir navegação"} className="list-none cursor-pointer flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 [&::-webkit-details-marker]:hidden">
-                <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-              </summary>
-              <div className="absolute right-0 top-12 grid min-w-48 gap-1 rounded-xl border border-white/15 bg-[#101629] p-2 shadow-xl">
-                <a href="#funcionalidades" className="rounded-lg px-4 py-3 text-sm">{locale === "en" ? "Features" : "Funcionalidades"}</a>
-                <a href="#planos" className="rounded-lg px-4 py-3 text-sm">{locale === "en" ? "Pricing" : "Preços"}</a>
-                <Link href="/dashboard" className="rounded-lg px-4 py-3 text-sm">{locale === "en" ? "Sign In" : "Entrar"}</Link>
-              </div>
-            </details>
-          </div>
-        </div>
-      </nav>
-
-      {/* --- HERO: FinAnalyzer visual identity with a centered fintech headline --- */}
-      <section className="relative isolate overflow-hidden bg-[#2e21de] px-5 pb-12 pt-12 text-center md:pb-28 md:pt-24">
-        <div className="mx-auto flex max-w-6xl flex-col items-center">
-          <h1 className="max-w-5xl text-[2.25rem] font-semibold leading-[0.98] tracking-[-0.055em] text-white sm:text-6xl lg:text-[5.7rem]">
-            <span className="text-white">
-              {locale === "en" ? "Speed, transparency and clarity" : "Agilidade, transparência e clareza"}
-            </span>
-            <br />
-            {locale === "en" ? "for every investor." : "para cada investidor."}
-          </h1>
-          <p className="mx-auto mb-8 mt-6 max-w-2xl text-base leading-7 text-[#9bbcfd] sm:text-lg md:mb-9 md:mt-7 md:text-xl">
-            {locale === "en"
-              ? "FinAnalyzer brings official reports, AI analysis, company comparisons, and saved research into one platform—helping individual and professional investors understand results faster and revisit them with ease."
-              : "O FinAnalyzer reúne relatórios oficiais, análises por IA, comparação de empresas e histórico em uma plataforma, ajudando investidores individuais e profissionais a entender resultados mais rápido e consultá-los novamente com facilidade."}
-          </p>
-          <div className="flex w-full flex-col items-center justify-center gap-3 sm:w-auto sm:flex-row sm:gap-4">
-            <Link href="/dashboard" className="flex w-full items-center justify-center gap-2 rounded-full bg-white px-8 py-4 text-base font-bold text-[#2e21de] transition hover:-translate-y-0.5 hover:bg-[#eaf2ff] sm:w-auto">
-              {locale === "en" ? "Analyze a company" : "Analisar uma empresa"} <ArrowRight size={18} />
-            </Link>
-            <a href="#funcionalidades" className="w-full rounded-full border border-white/20 bg-white/[0.04] px-8 py-4 text-base font-semibold text-white transition hover:border-white/40 hover:bg-white/[0.08] sm:w-auto">
-              {locale === "en" ? "Explore the platform" : "Conhecer a plataforma"}
-            </a>
-          </div>
-
-        </div>
-      </section>
+      <LandingIntro locale={locale} />
 
       <AudienceCards locale={locale} />
 
