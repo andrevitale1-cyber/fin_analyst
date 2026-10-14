@@ -149,9 +149,8 @@ export default function FinancialDashboard() {
   const [analysisError, setAnalysisError] = useState("");
 
   // --- TRIAL STATE ---
-  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
-  const [isTrialExpired, setIsTrialExpired] = useState(false);
-  const [trialChecked, setTrialChecked] = useState(false);
+  const [trialState, setTrialState] = useState<{ userId: string; status: 'pending' | 'active' | 'expired' | 'unavailable'; daysLeft: number | null }>({ userId: '', status: 'pending', daysLeft: null });
+  const [accessRetry, setAccessRetry] = useState(0);
 
   const [downloadCount, setDownloadCount] = useState(0);
   const WEEKLY_DOWNLOAD_LIMIT = 3;
@@ -178,27 +177,47 @@ export default function FinancialDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const isPremium = user?.publicMetadata?.plan === 'premium';
+  const accessStatus = isPremium ? 'active' : trialState.userId === user?.id ? trialState.status : 'pending';
+  const trialDaysLeft = accessStatus === 'active' ? trialState.daysLeft : null;
+  const isTrialExpired = accessStatus === 'expired';
 
   // --- Verificar acesso ao trial no backend ---
   useEffect(() => {
-    if (!isLoaded || !user) return;
-    if (isPremium) { setTrialChecked(true); return; }
+    if (!isLoaded || !user?.id) return;
+    const userId = user.id;
+    setShowUpgradeModal(false);
+    if (isPremium) {
+      setTrialState({ userId, status: 'active', daysLeft: null });
+      return;
+    }
 
     // Carrega contagem de downloads
-    const downloadKey = `downloads_${user.id}`;
+    const downloadKey = `downloads_${userId}`;
     setDownloadCount(parseInt(localStorage.getItem(downloadKey) || '0'));
 
     // Verifica o trial no backend
-    fetch(`${API_BASE}/api/check-access?user_id=${user.id}&is_premium=false`)
-      .then(r => r.json())
-      .then(data => {
-        setTrialDaysLeft(data.days_left ?? 0);
-        setIsTrialExpired(!data.has_access);
-        if (!data.has_access) setShowUpgradeModal(true);
-        setTrialChecked(true);
+    const controller = new AbortController();
+    let active = true;
+    const timeout = setTimeout(() => controller.abort(), 20_000);
+    setTrialState({ userId, status: 'pending', daysLeft: null });
+    fetch(`${API_BASE}/api/check-access?user_id=${userId}&is_premium=false`, { signal: controller.signal })
+      .then(response => {
+        if (!response.ok) throw new Error('Access check failed');
+        return response.json();
       })
-      .catch(() => setTrialChecked(true));
-  }, [isLoaded, user, isPremium]);
+      .then(data => {
+        if (!active) return;
+        if (typeof data.has_access !== 'boolean') throw new Error('Invalid access response');
+        const status = data.has_access ? 'active' : 'expired';
+        setTrialState({ userId, status, daysLeft: typeof data.days_left === 'number' ? data.days_left : null });
+        if (status === 'expired') setShowUpgradeModal(true);
+      })
+      .catch(() => {
+        if (active) setTrialState({ userId, status: 'unavailable', daysLeft: null });
+      })
+      .finally(() => clearTimeout(timeout));
+    return () => { active = false; clearTimeout(timeout); controller.abort(); };
+  }, [isLoaded, user?.id, isPremium, accessRetry]);
 
   const formatarData = (dataString: string) => {
     if (!dataString) return "-";
@@ -251,7 +270,10 @@ export default function FinancialDashboard() {
     if (!user) return;
 
     // Bloqueia se trial expirado e não é premium
-    if (!isPremium && isTrialExpired) { setShowUpgradeModal(true); return; }
+    if (!isPremium && accessStatus !== 'active') {
+      if (isTrialExpired) setShowUpgradeModal(true);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -283,6 +305,7 @@ export default function FinancialDashboard() {
 
       if (response.status === 403) { setLoading(false); setShowUpgradeModal(true); return; }
       if (!response.ok) {
+        if (response.status === 503) throw new Error(t("newAnalysis.serviceUnavailable"));
         let errorMsg = "Erro na API do Servidor.";
         try {
           const err = await response.json();
@@ -399,7 +422,7 @@ export default function FinancialDashboard() {
     return <span className={`${colDef.color || 'text-slate-600'}`}>{item[key]}</span>;
   };
 
-  if (!isLoaded || !trialChecked) return <div className="flex h-screen items-center justify-center bg-[#0E1117]"><Loader2 className="animate-spin text-blue-500" /></div>;
+  if (!isLoaded || !user) return <div className="flex h-screen flex-col items-center justify-center gap-3 bg-[#0E1117] text-sm text-gray-300" role="status"><Loader2 className="animate-spin text-blue-500" />{t("auth.loading")}</div>;
 
   return (
     <div className="flex h-screen bg-[#08101e] text-gray-100 font-sans overflow-hidden">
@@ -440,7 +463,7 @@ export default function FinancialDashboard() {
           <NavItem icon={<History />} label={t("nav.history")} active={currentView === 'history'} onClick={() => handleNavClick('history')} collapsed={isSidebarCollapsed} />
         </nav>
 
-        {!isPremium && !isSidebarCollapsed && (
+        {!isPremium && !isSidebarCollapsed && accessStatus === 'active' && (
           <div className="mt-auto mb-6 px-2">
             {/* Banner de trial */}
             <div className={`border p-4 rounded-xl mb-4 space-y-3 ${
@@ -677,8 +700,14 @@ export default function FinancialDashboard() {
                       </label>
                     )}
 
-                    {analysisError && <div role="alert" className="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"><p>{analysisError}</p>{tipoAnalise === 'auto' && <button type="button" onClick={() => { setTipoAnalise('pdf'); setAnalysisError(""); }} className="mt-3 inline-flex items-center gap-2 font-semibold text-sky-700 hover:text-sky-900">{t("newAnalysis.tryManual")} <ArrowRight size={15} /></button>}</div>}
-                    <button type="button" onClick={handleAnalyze} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-5 py-4 text-sm font-bold text-white shadow-lg shadow-sky-900/15 transition hover:bg-sky-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600"><Sparkles size={18} />{tipoAnalise === 'pdf' ? tipoDocumento === 'report' ? t("newAnalysis.generateReport") : t("newAnalysis.generateCall") : tipoDocumento === 'transcript' ? t("newAnalysis.generateAutoCall") : t("newAnalysis.generateAuto")}<ArrowRight size={18} /></button>
+                    {!isPremium && accessStatus !== 'active' && (
+                      <div role={accessStatus === 'unavailable' ? 'alert' : 'status'} className="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                        <p>{accessStatus === 'unavailable' ? t("trial.accessUnavailable") : accessStatus === 'expired' ? t("trial.trialExpiredDesc") : t("trial.checkingAccess")}</p>
+                        {accessStatus === 'unavailable' && <button type="button" onClick={() => setAccessRetry(value => value + 1)} className="mt-3 font-semibold text-sky-700 hover:text-sky-900">{t("trial.retryAccess")}</button>}
+                      </div>
+                    )}
+                    {analysisError && <div role="alert" className="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900"><p>{analysisError}</p>{tipoAnalise === 'auto' && analysisError !== t("newAnalysis.serviceUnavailable") && <button type="button" onClick={() => { setTipoAnalise('pdf'); setAnalysisError(""); }} className="mt-3 inline-flex items-center gap-2 font-semibold text-sky-700 hover:text-sky-900">{t("newAnalysis.tryManual")} <ArrowRight size={15} /></button>}</div>}
+                    <button type="button" disabled={loading || (!isPremium && accessStatus !== 'active')} onClick={handleAnalyze} className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-5 py-4 text-sm font-bold text-white shadow-lg shadow-sky-900/15 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600"><Sparkles size={18} />{tipoAnalise === 'pdf' ? tipoDocumento === 'report' ? t("newAnalysis.generateReport") : t("newAnalysis.generateCall") : tipoDocumento === 'transcript' ? t("newAnalysis.generateAutoCall") : t("newAnalysis.generateAuto")}<ArrowRight size={18} /></button>
                   </div>
 
                   <aside className="mt-7 rounded-3xl border border-slate-200 bg-white/80 p-6 shadow-sm">

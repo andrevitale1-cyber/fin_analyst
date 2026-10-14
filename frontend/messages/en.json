@@ -1,5 +1,8 @@
 {
   "Dashboard": {
+    "auth": {
+      "loading": "Loading your account..."
+    },
     "company": "Company",
     "finalScore": "Final Score",
     "netRevenue": "Net Revenue",
@@ -39,7 +42,10 @@
       "trialExpiredDesc": "Your 7-day free trial has ended. Subscribe to FinAnalyzer Pro to continue analyzing.",
       "upgradeNow": "Subscribe Now",
       "trialBannerText": "You are in the free trial period.",
-      "endsIn": "Ends in"
+      "endsIn": "Ends in",
+      "checkingAccess": "Checking your access. You can fill in the form while this finishes.",
+      "accessUnavailable": "We could not check your access. Analysis is paused until we can confirm it.",
+      "retryAccess": "Try again"
     },
     "nav": {
       "newAnalysis": "New Analysis",
@@ -106,6 +112,7 @@
       "stepThree": "AI analyzes the PDF and presents the report with its source.",
       "requiredFields": "Enter a company, a four-digit year, and a PDF for manual analysis.",
       "genericError": "The analysis could not be completed. Please try again.",
+      "serviceUnavailable": "The analysis service is temporarily unavailable. Please try again shortly.",
       "tryManual": "Upload a PDF instead",
       "generateAuto": "Find & Analyze via AI",
       "year": "Year",

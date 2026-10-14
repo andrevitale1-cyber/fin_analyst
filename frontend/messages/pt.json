@@ -1,5 +1,8 @@
 {
   "Dashboard": {
+    "auth": {
+      "loading": "Carregando sua conta..."
+    },
     "company": "Empresa",
     "finalScore": "Nota Final",
     "netRevenue": "Receita",
@@ -39,7 +42,10 @@
       "trialExpiredDesc": "Seu período de avaliação gratuita de 7 dias terminou. Assine o FinAnalyzer Pro para continuar analisando.",
       "upgradeNow": "Assinar Agora",
       "trialBannerText": "Você está no período de trial gratuito.",
-      "endsIn": "Termina em"
+      "endsIn": "Termina em",
+      "checkingAccess": "Verificando seu acesso. Você pode preencher o formulário enquanto isso.",
+      "accessUnavailable": "Não foi possível verificar seu acesso. A análise está pausada até confirmarmos.",
+      "retryAccess": "Tentar novamente"
     },
     "nav": {
       "newAnalysis": "Nova Análise",
@@ -106,6 +112,7 @@
       "stepThree": "A IA analisa o PDF e apresenta o relatório com a fonte.",
       "requiredFields": "Informe a empresa, um ano com quatro dígitos e, no modo manual, anexe um PDF.",
       "genericError": "Não foi possível concluir a análise. Tente novamente.",
+      "serviceUnavailable": "O serviço de análise está temporariamente indisponível. Tente novamente em instantes.",
       "tryManual": "Enviar PDF manualmente",
       "generateAuto": "Buscar e Analisar via IA",
       "year": "Ano",
