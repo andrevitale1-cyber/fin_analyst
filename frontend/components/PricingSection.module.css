@@ -1,0 +1,39 @@
+@font-face { font-family: "Finup Manrope"; src: url("/reference/finup/manrope-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+.section { padding: 160px 32px 200px; background: #0a0a1f; color: white; font-family: "Finup Manrope", sans-serif; scroll-margin-top: 96px; }
+.container { max-width: 1280px; margin: 0 auto; }
+.intro { text-align: center; margin-bottom: 48px; }
+.intro h2 { font-size: 56px; font-weight: 700; line-height: 1.05; letter-spacing: -1px; }
+.intro > p { margin: 24px auto 0; color: #ffffffcc; font-size: 18px; line-height: 27px; }
+.billing { display: inline-flex; padding: 4px; margin-top: 24px; border: 1px solid #ffffff33; border-radius: 6px; background: #ffffff0d; }
+.billing button { min-width: 112px; min-height: 44px; padding: 10px 16px; border-radius: 4px; font-size: 15px; font-weight: 600; color: #ffffff99; cursor: pointer; }
+.billing button[aria-pressed="true"] { background: #1a1aff; color: white; }
+.billing button:focus-visible, .action:focus-visible { outline: 2px solid white; outline-offset: 4px; }
+.intro > .saving { margin-top: 16px; font-size: 14px; line-height: 22px; color: #a5baff; }
+.plans { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 848px; margin: 0 auto; align-items: stretch; }
+.card { position: relative; display: flex; flex-direction: column; min-width: 0; margin: 8px 0; padding: 24px; border: 1px solid #ffffff33; border-radius: 8px; background: #ffffff0d; }
+.premium { margin: 0; padding-top: 32px; padding-bottom: 32px; border-color: #2beb78; background-image: radial-gradient(circle, #1a1aff4d, #1a1aff00); }
+.badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); padding: 6px 8px; border-radius: 5px; background: #1d423b; color: #00e76d; font-size: 14px; font-weight: 700; line-height: 18px; white-space: nowrap; }
+.heading { text-align: center; }
+.heading h3 { display: flex; justify-content: center; align-items: center; gap: 8px; font-size: 20px; font-weight: 600; line-height: 22px; }
+.price { display: flex; justify-content: center; align-items: baseline; gap: 6px; margin-top: 16px; font-size: 16px; line-height: 24px; }
+.price strong { font-weight: 700; }
+.price span { color: #ffffff80; }
+.action { position: relative; isolation: isolate; display: inline-flex; align-items: center; justify-content: center; align-self: center; gap: 6px; min-height: 50px; margin: 32px 0; padding: 14px 20px; border: 1px solid #ffffff33; border-radius: 6px; font-size: 16px; font-weight: 600; line-height: 20px; background: radial-gradient(circle at 50% 0, #ffffff4d 10%, #ffffff00 80%), #1a1aff; transition: background-color .2s; }
+.action:hover { background-color: #4032ff; }
+.features { flex: 1; list-style: none; padding: 0; margin: 0; }
+.features li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #ffffff1a; color: #ffffff80; font-size: 14px; line-height: 22px; }
+.features svg { flex-shrink: 0; color: #00e76d; }
+.note { margin-top: 24px; color: #ffffff99; font-size: 12px; line-height: 18px; text-align: center; }
+@media (max-width: 991px) { .section { padding-top: 96px; padding-bottom: 96px; } .intro h2 { font-size: 44px; } }
+@media (max-width: 743px) {
+  .section { padding: 96px 16px 64px; }
+  .intro { margin-bottom: 32px; }
+  .intro h2 { font-size: 30px; letter-spacing: -.5px; }
+  .intro > p { margin-top: 16px; font-size: 16px; line-height: 24px; }
+  .plans { grid-template-columns: 1fr; gap: 32px; }
+  .card { padding: 24px 16px; }
+  .premium { padding-top: 32px; }
+  .features { margin-top: 32px; }
+  .action { order: 1; margin: 24px 0 0; }
+  .note { margin-top: 16px; }
+}

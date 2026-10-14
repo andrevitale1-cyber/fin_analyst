@@ -190,6 +190,10 @@ def test_call_prompt_is_localized_period_specific_and_reserves_timestamps_for_la
     for prompt, last_section in ((pt, "5. Momentos principais"), (en, "5. Key moments")):
         assert prompt.index("4. ") < prompt.index(last_section)
         assert "voice, emotion, or body language" in prompt or "voz, emoção ou linguagem corporal" in prompt
+        assert "300–450" in prompt
+        assert "Markdown **bold**" in prompt or "Markdown **negrito**" in prompt
+        assert "up to three concise bullets" in prompt or "até três bullets concisos" in prompt
+        assert "up to two material questions" in prompt or "até duas perguntas" in prompt
 
 
 def test_auto_transcript_route_keeps_body_out_of_prompt_and_sends_text_once(api, monkeypatch):
