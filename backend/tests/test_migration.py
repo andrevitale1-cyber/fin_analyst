@@ -170,13 +170,14 @@ def test_unmapped_petr4_wrong_quarter_rejected(tmp_path, monkeypatch):
 def test_transcript_search_uses_company_name_and_selected_quarter(tmp_path):
     fetcher = AutoFetcher(tmp_path)
     document = FetchedDocument("https://example.com/1q25-transcript.pdf", "Earnings Call Transcript", pdf_bytes=b"%PDF-test")
+    fetcher._fetch_transcript_ir = Mock(return_value=None)
     fetcher.search_client.search_transcripts = Mock(return_value=[
         {"title": "Itaú Unibanco earnings call transcript 2Q25", "url": "https://example.com/2q25-transcript.pdf"},
         {"title": "Itaú Unibanco earnings call transcript 1Q25", "url": "https://example.com/1q25-transcript.pdf"},
     ])
     fetcher._download_transcript = Mock(return_value=document)
     assert fetcher.fetch_transcript("Itaú Unibanco", "2025", "1T") == document
-    fetcher._download_transcript.assert_called_once_with("https://example.com/1q25-transcript.pdf", 2025, 1)
+    fetcher._download_transcript.assert_called_once_with("https://example.com/1q25-transcript.pdf", 2025, 1, "Itaú Unibanco")
 
 
 @pytest.mark.parametrize("selected", ["file:///secret.pdf", "https://other.test/1T25.pdf", None])

@@ -59,26 +59,39 @@ class OpenAIClient:
         with self._client() as client:
             return self._chat(client, prompt, system, max_tokens=1000)
 
-    def search_pdf_links(self, query):
+    def search_pdf_links(self, query, document_type="report"):
         """Uma pesquisa web retorna candidatos; o fetcher valida o documento baixado."""
+        target = ("full earnings-call transcripts, in HTML or PDF, preferably from investor relations. Never return earnings releases, summaries, audio-only pages or paywalled content"
+                  if document_type == "transcript" else
+                  "official earnings-release PDFs or official investor-relations result pages that link to them")
         with self._client() as client:
             result = self._request(client, "responses", json={
                 "model": self.model,
-                "input": query + '\nReturn only JSON: [{"title":"...","url":"https://..."}]. Find up to 8 official earnings-release PDFs or official investor-relations result pages that link to them. Do not invent URLs.',
+                "input": query + '\nReturn only JSON: [{"title":"...","url":"https://..."}]. Find up to ' + ("5" if document_type == "transcript" else "8") + ' ' + target + '. Do not invent URLs.',
                 "tools": [{"type": "web_search", "search_context_size": "low"}],
                 "tool_choice": "required",
                 "max_output_tokens": 700,
                 "store": False,
-            })
+            }, timeout=30 if document_type == "transcript" else 90)
         text = "".join(part.get("text", "")
                        for item in result.get("output", []) if item.get("type") == "message"
                        for part in item.get("content", []) if part.get("type") == "output_text")
         import json
         try:
             links = json.loads(text.strip().removeprefix("```json").removesuffix("```").strip())
-            return [item for item in links[:8] if isinstance(item, dict) and isinstance(item.get("url"), str)] if isinstance(links, list) else []
+            if not isinstance(links, list):
+                raise ValueError
+            return [item for item in links[:5 if document_type == "transcript" else 8] if isinstance(item, dict) and isinstance(item.get("url"), str)]
         except (ValueError, TypeError):
+            if document_type == "transcript":
+                raise OpenAIError("A pesquisa de transcrições retornou uma resposta inválida.") from None
             return []
+
+    def analyze_transcript(self, prompt, text):
+        if not text.strip():
+            raise OpenAIError("Transcrição sem texto para análise.")
+        with self._client() as client:
+            return self._chat(client, [{"type": "input_text", "text": prompt + "\n--- TRANSCRIPT ---\n" + text[:180000]}], max_tokens=4000)
 
     @staticmethod
     def extract_text(pdf_bytes):

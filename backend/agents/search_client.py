@@ -5,6 +5,9 @@ from openai_client import OpenAIClient, OpenAIError
 
 load_dotenv()
 
+class SearchError(RuntimeError):
+    pass
+
 class SearchClient:
     def __init__(self):
         self.api_key = os.getenv("TAVILY_API_KEY")
@@ -44,28 +47,37 @@ class SearchClient:
         except (OpenAIError, TimeoutError):
             return []
 
-    def search_transcripts(self, company, year, quarter):
-        queries = [
-            f'"{company}" {quarter}T {year} earnings call transcript filetype:pdf',
-            f'"{company}" {quarter}T {year} transcrição teleconferência resultados filetype:pdf',
-        ]
-        for query in queries:
-            if self.api_key:
-                try:
-                    response = requests.post(self.base_url, json={
-                        "api_key": self.api_key, "query": query,
-                        "search_depth": "advanced", "max_results": 5,
-                    }, timeout=15)
-                    response.raise_for_status()
-                    results = response.json().get("results", [])
-                    if results:
-                        return results
-                except (requests.RequestException, ValueError):
-                    pass
+    def search_transcripts(self, company, year, quarter, allow_openai=False):
+        if allow_openai:
+            query = f'"{company}" Q{quarter} FY{year} {quarter}Q{str(year)[-2:]} {quarter}T{str(year)[-2:]} full earnings call transcript transcrição teleconferência'
             try:
-                results = OpenAIClient().search_pdf_links(query)
-                if results:
-                    return results
-            except (OpenAIError, TimeoutError):
-                pass
-        return []
+                return OpenAIClient().search_pdf_links(query, document_type="transcript")
+            except (OpenAIError, TimeoutError) as exc:
+                raise SearchError("O serviço de pesquisa de transcrições está indisponível. Tente novamente ou envie o PDF.") from exc
+        if not self.api_key:
+            return []
+        queries = [
+            f'"{company}" Q{quarter} {year} earnings call transcript',
+            f'"{company}" {quarter}T{str(year)[-2:]} transcrição teleconferência resultados',
+        ]
+        results, seen, failures = [], set(), 0
+        for query in queries:
+            try:
+                response = requests.post(self.base_url, json={
+                    "api_key": self.api_key, "query": query,
+                    "search_depth": "advanced", "max_results": 5,
+                }, timeout=10)
+                response.raise_for_status()
+                data = response.json()
+                if not isinstance(data, dict) or not isinstance(data.get("results", []), list):
+                    raise ValueError("Invalid search response")
+                for item in data.get("results", []):
+                    url = item.get("url") if isinstance(item, dict) else None
+                    if isinstance(url, str) and url not in seen:
+                        results.append(item)
+                        seen.add(url)
+            except (requests.RequestException, ValueError, TypeError):
+                failures += 1
+        if failures == len(queries):
+            raise SearchError("O serviço de pesquisa de transcrições está indisponível.")
+        return results

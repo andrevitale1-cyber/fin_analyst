@@ -38,6 +38,7 @@ load_dotenv()
 
 from report_generator import router as report_router
 from agents.auto_fetcher import AutoFetcher
+from agents.search_client import SearchError
 from agents.prompt_builder import PromptBuilder
 from agents.x_bot_router import router as x_bot_router
 
@@ -490,6 +491,8 @@ async def analyze_earnings_call_auto(
         ), timeout=90.0)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from None
+    except SearchError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from None
     except (asyncio.TimeoutError, TimeoutError):
         raise HTTPException(status_code=504, detail="A busca pela transcrição demorou muito. Envie o PDF manualmente.") from None
     if not document:
@@ -500,16 +503,14 @@ async def analyze_earnings_call_auto(
     if locale == "en":
         prompt = f"""Analyze {company}'s {trimestre}/{ano} earnings-call transcript as a senior financial analyst. Write the entire analysis in English.
 Organize key themes under: performance and demand; guidance and outlook; segments and customers; margins, cash and capital; risks and material management answers.
-Separate company-reported facts from your analysis. Do not invent timestamps if the source does not include them. Cite concrete transcript details and end with a balanced conclusion.
-TRANSCRIPT:\n{document.text[:180000]}"""
+Separate company-reported facts from your analysis. Do not invent timestamps if the source does not include them. Cite concrete transcript details and end with a balanced conclusion."""
     else:
         prompt = f"""Analise a transcrição da earnings call de {company} referente a {trimestre}/{ano} como analista financeiro sênior. Escreva toda a análise em português.
 Organize os principais temas em: desempenho e demanda; guidance e perspectivas; segmentos e clientes; margens, caixa e capital; riscos e respostas relevantes da administração.
-Separe fatos apresentados pela empresa de interpretação analítica. Não invente timestamps quando a fonte não os trouxer. Cite dados concretos da transcrição e termine com uma síntese equilibrada.
-TRANSCRIÇÃO:\n{document.text[:180000]}"""
+Separe fatos apresentados pela empresa de interpretação analítica. Não invente timestamps quando a fonte não os trouxer. Cite dados concretos da transcrição e termine com uma síntese equilibrada."""
     try:
         response_text = await asyncio.wait_for(asyncio.to_thread(
-            OpenAIClient().analyze_document, prompt, pdf_bytes=document.pdf_bytes,
+            OpenAIClient().analyze_transcript, prompt, document.text,
         ), timeout=180.0)
         result = {"metadata": {"empresa": company, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call"}, "analise_completa": response_text, "data": {}, "source": {"name": document.source, "url": document.url}}
         conn = get_db_connection()
@@ -523,6 +524,8 @@ TRANSCRIÇÃO:\n{document.text[:180000]}"""
         finally:
             conn.close()
         return result
+    except (asyncio.TimeoutError, TimeoutError):
+        raise HTTPException(status_code=504, detail="A análise da transcrição demorou muito. Tente novamente.") from None
     except OpenAIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from None
     except HTTPException:
@@ -546,29 +549,29 @@ async def analyze_earnings_call(
 
     conn = None
     try:
-        print("📄 [PASSO 2] Preparando Transcrição para IA (Upload Direto)...")
+        print("📄 [PASSO 2] Preparando texto da transcrição...")
         contents = await file.read()
-        
-        texto_transcricao = "[ARQUIVO PDF ANEXADO]"
+        try:
+            texto_transcricao = OpenAIClient.extract_text(contents)
+        except OpenAIError:
+            # Preserve native PDF reading for scanned uploads without selectable text.
+            texto_transcricao = ""
 
         if locale == "en":
             prompt = f"""
 You are a senior financial analyst. Summarize {empresa}'s earnings call concisely in English.
 Write the entire summary in English, including headings, timestamps, insights and conclusions.
-For every insight, include the approximate minute/timestamp found in the transcript (e.g., [12:45]). Do not invent timestamps.
-Transcript:
-{texto_transcricao[:250000]}
+Include timestamps only when present in the source; do not invent them.
             """
         else:
             prompt = f"""
 Atue como um Analista Financeiro Sênior. Resuma o Earnings Call da {empresa} de forma ultra-objetiva.
-Para cada insight, indique obrigatoriamente o minuto/timestamp aproximado extraído do texto (ex: [12:45]).
-Texto da Transcrição:
-{texto_transcricao[:250000]}
+Inclua timestamps apenas quando presentes na fonte; não invente horários.
             """
 
         response_text = await asyncio.wait_for(
-            asyncio.to_thread(OpenAIClient().analyze_document, prompt, pdf_bytes=contents),
+            (asyncio.to_thread(OpenAIClient().analyze_transcript, prompt, texto_transcricao)
+             if texto_transcricao else asyncio.to_thread(OpenAIClient().analyze_document, prompt, pdf_bytes=contents)),
             timeout=180.0,
         )
 
