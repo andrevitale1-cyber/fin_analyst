@@ -1,4 +1,6 @@
 from pathlib import Path
+from copy import deepcopy
+import json
 import sys
 
 import pytest
@@ -25,6 +27,7 @@ def valid_report():
 
 def test_schema_requires_every_field_and_forbids_extra_properties():
     schema = report_schema()
+    json.dumps(schema)
 
     def visit(node):
         if isinstance(node, dict):
@@ -38,9 +41,29 @@ def test_schema_requires_every_field_and_forbids_extra_properties():
                 visit(value)
 
     visit(schema)
+    properties = schema["properties"]
+    assert properties["coverage"]["pattern"] == r"^[\s\S]{1,300}$"
+    assert properties["sections"]["minItems"] == properties["sections"]["maxItems"] == 7
+    assert properties["metrics"]["maxItems"] == 30
+    assert properties["watchpoints"]["maxItems"] == 10
+    section = properties["sections"]["items"]["properties"]
+    assert section["title"]["pattern"] == r"^[\s\S]{1,100}$"
+    assert section["summary"]["pattern"] == r"^[\s\S]{0,700}$"
+    assert section["paragraphs"]["maxItems"] == 5
+    assert section["paragraphs"]["items"]["pattern"] == r"^[\s\S]{0,1200}$"
+    assert section["bullets"]["maxItems"] == 8
+    assert section["bullets"]["items"]["pattern"] == r"^[\s\S]{0,300}$"
+    assert section["source_ids"]["maxItems"] == 12
+    assert section["source_ids"]["items"]["pattern"] == r"^[\s\S]{1,40}$"
+    metric = properties["metrics"]["items"]["properties"]
+    assert all(metric[key]["pattern"] == r"^[\s\S]{1,100}$" for key in ("label", "value"))
+    assert metric["source_id"]["pattern"] == r"^[\s\S]{1,40}$"
+    assert properties["watchpoints"]["items"]["pattern"] == r"^[\s\S]{0,300}$"
+    assert properties["valuation"]["properties"]["reason"]["pattern"] == r"^[\s\S]{0,500}$"
+    assert properties["valuation"]["properties"]["source_id"]["anyOf"][0]["pattern"] == r"^[\s\S]{1,40}$"
 
 
-def test_rejects_unknown_source_and_wrong_section_order():
+def test_rejects_unknown_source_and_duplicate_sections_and_normalizes_order():
     source = {"id": "S1", "text": "Quarterly release", "title": "Release", "url": None}
     report = valid_report()
     report["sections"][0]["source_ids"] = ["FAKE"]
@@ -49,8 +72,44 @@ def test_rejects_unknown_source_and_wrong_section_order():
 
     report = valid_report()
     report["sections"][0], report["sections"][1] = report["sections"][1], report["sections"][0]
-    with pytest.raises(ValueError, match="prescribed order"):
+    assert [section["id"] for section in validate_full_report(report, [source])["sections"]] == list(SECTION_IDS)
+
+    report["sections"][0] = report["sections"][1]
+    with pytest.raises(ValueError, match="exactly once"):
         validate_full_report(report, [source])
+
+
+def test_limit_boundaries_pass_and_oversize_values_fail():
+    report = valid_report()
+    report["coverage"] = "c" * 300
+    section = report["sections"][0]
+    section.update(title="t" * 100, summary="s" * 700,
+                   paragraphs=["p" * 1200] * 5, bullets=["b" * 300] * 8,
+                   source_ids=["S1"] * 12)
+    report["metrics"] = [{"label": "l" * 100, "value": "v" * 100, "source_id": "S1"}] * 30
+    report["watchpoints"] = ["w" * 300] * 10
+    report["valuation"]["reason"] = "r" * 500
+    assert len(validate_full_report(report, [{"id": "S1", "text": "Quarterly release"}])["metrics"]) == 30
+
+    oversize = [
+        lambda r: r["sections"][0].update(title="t" * 101),
+        lambda r: r["sections"][0].update(summary="s" * 701),
+        lambda r: r["sections"][0].update(paragraphs=["p"] * 6),
+        lambda r: r["sections"][0].update(paragraphs=["p" * 1201]),
+        lambda r: r["sections"][0].update(bullets=["b"] * 9),
+        lambda r: r["sections"][0].update(bullets=["b" * 301]),
+        lambda r: r["sections"][0].update(source_ids=["S1"] * 13),
+        lambda r: r.update(metrics=r["metrics"] * 31),
+        lambda r: r["metrics"][0].update(value="v" * 101),
+        lambda r: r.update(watchpoints=["w"] * 11),
+        lambda r: r.update(watchpoints=["w" * 301]),
+        lambda r: r["valuation"].update(reason="r" * 501),
+    ]
+    for make_oversize in oversize:
+        candidate = deepcopy(valid_report())
+        make_oversize(candidate)
+        with pytest.raises(ValueError):
+            validate_full_report(candidate, [{"id": "S1", "text": "Quarterly release"}])
 
 
 def test_downgrades_quarterly_eps_or_missing_currency_to_unavailable():

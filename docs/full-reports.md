@@ -35,3 +35,5 @@ This version does not automatically acquire multiple years of statements, live p
 ## Validation
 
 Offline tests cover cache identity, private-source isolation, concurrent requests, failure rollback, ownership checks, signed/expired/forged JWTs, structured output, citations, and unsupported valuation inputs. No paid AI request is needed for regression tests.
+
+The structured-output schema and prompt impose the same text/list limits as the server validator. Valid sections received in a different order are sorted by their IDs without changing their contents; missing/duplicate sections and unknown source IDs remain invalid. Generation failures emit `full_report_failed` with safe provider status/code/parameter/request ID or validation field/type only. Document text, prompts, keys, raw provider messages, and generated input values are never logged. Failed generations are not retried automatically or saved as partial reports.

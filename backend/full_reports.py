@@ -2,11 +2,12 @@
 from datetime import datetime, timezone
 import hashlib
 import json
+import logging
 import re
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from typing import Literal
 
 from agents.auto_fetcher import AutoFetcher
@@ -16,6 +17,7 @@ from full_report_content import build_full_report_prompt, report_schema, validat
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
+logger = logging.getLogger(__name__)
 
 
 def connection():
@@ -208,11 +210,33 @@ def open_report(body: OpenReport, user_id: str = Depends(require_report_user)):
     except HTTPException:
         conn.rollback()
         raise
-    except (OpenAIError, ValueError, TimeoutError):
+    except (OpenAIError, ValueError, TimeoutError) as exc:
         conn.rollback()
-        raise HTTPException(502, "Não foi possível gerar o relatório completo. Tente novamente; nenhuma versão incompleta foi salva.") from None
-    except Exception:
+        # Do not log exception text, source bodies, credentials, or Pydantic's input values.
+        validation = []
+        if isinstance(exc, ValidationError):
+            validation = [{"field": item["loc"][0] if item["loc"] and item["loc"][0] in
+                           {"coverage", "score", "sections", "metrics", "watchpoints", "valuation"} else "other",
+                           "type": item["type"]} for item in exc.errors(include_input=False, include_url=False)]
+        elif type(exc) is ValueError and str(exc) in {
+            "Report list exceeds its allowed size", "Section list exceeds its allowed size",
+            "Section text exceeds its allowed length", "Report text exceeds its allowed length",
+            "Metric text exceeds its allowed length", "Valuation reason exceeds its allowed length",
+            "Score must be between 1 and 5 or null", "Report must contain each prescribed section exactly once",
+            "At least one identified source is required", "Report references an unknown source ID",
+        }:
+            validation = [{"type": str(exc)}]
+        logger.warning("full_report_failed analysis_id=%s error_type=%s provider_status=%s provider_code=%s provider_param=%s request_id=%s validation=%s",
+                       body.analysis_id, type(exc).__name__, getattr(exc, "status_code", None),
+                       getattr(exc, "code", None), getattr(exc, "param", None), getattr(exc, "request_id", None), validation)
+        detail = ("We could not generate the full report. Please try again; no incomplete report was saved."
+                  if body.locale == "en" else
+                  "Não foi possível gerar o relatório completo. Tente novamente; nenhuma versão incompleta foi salva.")
+        raise HTTPException(502, detail) from None
+    except Exception as exc:
         conn.rollback()
-        raise HTTPException(503, "O serviço de relatórios está temporariamente indisponível. Tente novamente.") from None
+        logger.error("full_report_unavailable analysis_id=%s error_type=%s", body.analysis_id, type(exc).__name__)
+        raise HTTPException(503, "The report service is temporarily unavailable. Please try again." if body.locale == "en" else
+                            "O serviço de relatórios está temporariamente indisponível. Tente novamente.") from None
     finally:
         conn.close()

@@ -1,15 +1,19 @@
 """Cliente OpenAI compartilhado pela análise de documentos e rascunhos do X."""
 import io
 import os
+import re
 
 import httpx
 from pypdf import PdfReader
 
 
 class OpenAIError(RuntimeError):
-    def __init__(self, message, status_code=None):
+    def __init__(self, message, status_code=None, *, code=None, param=None, request_id=None):
         super().__init__(message)
         self.status_code = status_code
+        # Keep diagnostic identifiers, never provider messages that may echo document text.
+        for name, value in (("code", code), ("param", param), ("request_id", request_id)):
+            setattr(self, name, value if isinstance(value, str) and re.fullmatch(r"[A-Za-z0-9_.\[\]/-]{1,180}", value) else None)
 
 
 class OpenAIClient:
@@ -24,7 +28,14 @@ class OpenAIClient:
             return response.json()
         except httpx.HTTPStatusError as exc:
             code = exc.response.status_code
-            raise OpenAIError(f"Erro na API OpenAI (HTTP {code}).", status_code=code) from None
+            try:
+                error = exc.response.json().get("error", {})
+                if not isinstance(error, dict): error = {}
+            except (ValueError, AttributeError):
+                error = {}
+            raise OpenAIError(f"Erro na API OpenAI (HTTP {code}).", status_code=code,
+                              code=error.get("code") or error.get("type"), param=error.get("param"),
+                              request_id=exc.response.headers.get("x-request-id")) from None
         except httpx.TimeoutException:
             raise TimeoutError("Tempo limite da API OpenAI excedido.") from None
         except (httpx.RequestError, ValueError):
@@ -104,13 +115,18 @@ class OpenAIClient:
                 "max_output_tokens": 6500, "store": False,
             })
         if result.get("status") != "completed":
-            raise OpenAIError("O relatório completo não foi concluído.")
+            reason = (result.get("incomplete_details") or {}).get("reason")
+            raise OpenAIError("O relatório completo não foi concluído.",
+                              code="output_token_limit" if reason == "max_output_tokens" else "response_incomplete")
+        if any(part.get("type") == "refusal" for item in result.get("output", [])
+               for part in item.get("content", [])):
+            raise OpenAIError("A IA não conseguiu analisar este documento.", code="response_refusal")
         text = "".join(part.get("text", "") for item in result.get("output", []) if item.get("type") == "message"
                        for part in item.get("content", []) if part.get("type") == "output_text")
         try:
             return json.loads(text)
         except (ValueError, TypeError):
-            raise OpenAIError("A IA retornou um relatório inválido.") from None
+            raise OpenAIError("A IA retornou um relatório inválido.", code="invalid_json") from None
 
     @staticmethod
     def extract_text(pdf_bytes):

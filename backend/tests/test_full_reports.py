@@ -291,6 +291,61 @@ def test_structured_output_is_requested_and_truncated_response_rejected(monkeypa
     assert seen[0]["text"]["format"]["strict"] is True and seen[0]["store"] is False
 
 
+def test_provider_error_keeps_safe_identifiers_without_document_or_key(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "secret-api-key")
+    original = httpx.Client
+    def handler(request):
+        return httpx.Response(400, headers={"x-request-id": "req_test123"}, json={"error": {
+            "message": "PRIVATE_DOCUMENT_TEXT secret-api-key", "code": "invalid_json_schema", "param": "text.format.schema"}})
+    monkeypatch.setattr(httpx, "Client", lambda **kw: original(transport=httpx.MockTransport(handler), **kw))
+    with pytest.raises(OpenAIError) as error:
+        OpenAIClient().analyze_full_report("Evidence", reports.report_schema())
+    assert error.value.status_code == 400 and error.value.code == "invalid_json_schema"
+    assert error.value.param == "text.format.schema" and error.value.request_id == "req_test123"
+    assert "PRIVATE_DOCUMENT_TEXT" not in str(error.value) and "secret-api-key" not in str(error.value)
+    assert OpenAIError("error", code="unsafe\nlog text", param="document text").code is None
+
+
+@pytest.mark.parametrize("response,code", [
+    ({"status": "incomplete", "incomplete_details": {"reason": "max_output_tokens"}}, "output_token_limit"),
+    ({"status": "incomplete"}, "response_incomplete"),
+    ({"status": "completed", "output": [{"type": "message", "content": [{"type": "refusal", "refusal": "PRIVATE_REASON"}]}]}, "response_refusal"),
+    ({"status": "completed", "output": [{"type": "message", "content": [{"type": "output_text", "text": "invalid"}]}]}, "invalid_json"),
+])
+def test_full_report_provider_failures_have_distinct_codes_without_retries(monkeypatch, response, code):
+    client = OpenAIClient(); client._client = MagicMock()
+    client._request = Mock(return_value=response)
+    with pytest.raises(OpenAIError) as error: client.analyze_full_report("Evidence", reports.report_schema())
+    assert error.value.code == code and "PRIVATE_REASON" not in str(error.value)
+    client._request.assert_called_once()
+
+
+@pytest.mark.parametrize("locale", ["en", "pt"])
+@pytest.mark.parametrize("failure", ["provider", "validation"])
+def test_generation_failure_is_logged_without_sensitive_content_and_rolls_back(monkeypatch, caplog, locale, failure):
+    conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
+    cur.fetchone.side_effect = [("META", "2026", "1Q", {"metadata": {}}),
+                              ("public", "Official release", "https://example.com", "PRIVATE_SOURCE_TEXT"), None]
+    monkeypatch.setattr(reports, "connection", lambda: conn)
+    ai = Mock(model="test-model")
+    if failure == "provider":
+        ai.analyze_full_report.side_effect = OpenAIError("PRIVATE_EXCEPTION_TEXT", status_code=400,
+                                                       code="invalid_json_schema", request_id="req_123")
+    else:
+        invalid = content(); invalid["coverage"] = "PRIVATE_GENERATED_TEXT" * 30
+        ai.analyze_full_report.return_value = invalid
+    monkeypatch.setattr(reports, "OpenAIClient", lambda: ai)
+    with pytest.raises(HTTPException) as error:
+        reports.open_report(reports.OpenReport(analysis_id=7, locale=locale), "user_one")
+    assert error.value.status_code == 502
+    assert ("We could not generate" in error.value.detail) == (locale == "en")
+    conn.rollback.assert_called_once(); conn.commit.assert_not_called()
+    assert not any("INSERT INTO full_reports" in call.args[0] for call in cur.execute.call_args_list)
+    assert "full_report_failed analysis_id=7" in caplog.text
+    assert "invalid_json_schema" in caplog.text if failure == "provider" else "string_too_long" in caplog.text
+    assert not any(value in caplog.text for value in ("PRIVATE_SOURCE_TEXT", "PRIVATE_EXCEPTION_TEXT", "PRIVATE_GENERATED_TEXT"))
+
+
 def test_schema_failure_prevents_serving_a_half_migrated_application(monkeypatch):
     monkeypatch.setattr("psycopg2.connect", Mock())
     monkeypatch.setattr("dotenv.load_dotenv", lambda *args, **kw: False)
