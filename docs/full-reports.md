@@ -2,18 +2,20 @@
 
 The dashboard's **Explore full report** button opens `/en/dashboard/reports?analysisId=…` (or `/pt/…`). Opening the library itself never generates a report. Generation happens only after a completed analysis is opened through that button.
 
+The default library view is a demonstration gallery, with search at the top. To add a demonstration, run an automatic analysis against a public release/transcript and open **Explore full report** once. The completed full report then appears for every signed-in user. Visitors can browse and open saved demonstrations without triggering AI generation. Search filters company and period; private reports appear separately for their owner.
+
 ## Reuse and privacy
 
 - PostgreSQL retains the source text used by each new analysis (up to the existing 180,000-character limit).
 - A full report is keyed by canonical issuer, requested year and quarter, language, document type, exact retained evidence, model, and prompt revision.
-- Public releases/transcripts may reuse the same full report across users. Each user receives an independent library link, never another user's history or identity.
+- Full reports from public releases/transcripts are visible to all signed-in users and reuse the same saved content. Neither another user's history nor their identity is exposed.
 - Uploaded documents and older analyses without retained originals are scoped to their owner. They cannot enter the public cache.
 - Transaction advisory locks serialize generation for one cache key across processes. A second request waits and reuses the committed result. Failed or invalid generations roll back without saving partial reports.
 - The original short analysis still runs normally. This cache saves subsequent **full-report** generations.
 
 ## Security and deployment
 
-New endpoints require a Clerk session bearer token, verify its RSA signature and claims, and derive the user ID from its signed subject. The analysis must belong to that subject; report reads require a library link.
+New endpoints require a Clerk session bearer token, verify its RSA signature and claims, and derive the user ID from its signed subject. Generation requires ownership of the selected analysis. Saved report reads require either the database's public flag or the subject's own library link. The client and model cannot choose visibility.
 
 Production defaults match the current Clerk instance. Configure these only when using a different instance or local sign-in:
 
@@ -22,7 +24,7 @@ Production defaults match the current Clerk instance. Configure these only when 
 
 For local authenticated previews, explicitly configure the development Clerk issuer and the local origin. No session verification bypass is provided.
 
-`init_db()` adds `analysis_documents`, `full_reports`, and `full_report_access` with `CREATE TABLE IF NOT EXISTS`. Existing history is preserved. The schema is additive; use the service's normal database migration/back-up procedure when deploying. Backend requirements add `PyJWT[crypto]` for RSA verification. No new AI or financial-data subscription is required.
+`init_db()` adds `analysis_documents`, `full_reports`, and `full_report_access` with `CREATE TABLE IF NOT EXISTS`, plus an additive `is_public` flag defaulting to false. Existing reports are published only when a retained public source with nonempty text and a matching citation URL proves their provenance; uploads and legacy expansions stay private. Existing history is preserved. Use the service's normal database migration/back-up procedure when deploying. Backend requirements add `PyJWT[crypto]` for RSA verification. No new AI or financial-data subscription is required.
 
 ## First-version coverage
 

@@ -1,6 +1,8 @@
 import copy
 import importlib
 import json
+import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 import sys
 import threading
@@ -50,8 +52,8 @@ def test_cache_dimensions_and_private_upload_isolation():
 
 def test_shared_hit_links_the_second_user_without_ai():
     cur = Mock()
-    report = {**content(), "id": "shared-id"}
-    cur.fetchone.return_value = (report,)
+    report = {**content(), "id": "shared-id", "is_public": True}
+    cur.fetchone.return_value = (report, True)
     args = arguments("user_second")
     result = reports.generate_or_reuse(cur, "a" * 64, **args)
     assert result == {"report": report, "reused": True}
@@ -75,7 +77,7 @@ def test_simultaneous_requests_generate_once_after_transaction_lock():
     class Cursor:
         def execute(self, sql, params=None):
             if "pg_advisory_xact_lock" in sql: lock.acquire()
-            elif "SELECT content" in sql: self.row = (contents[params[0]],) if params[0] in contents else None
+            elif "SELECT content" in sql: self.row = (contents[params[0]], contents[params[0]]["is_public"]) if params[0] in contents else None
             elif "INSERT INTO full_reports " in sql: contents[params[1]] = json.loads(params[-1])
             elif "INSERT INTO full_report_access" in sql: links.add(params[0])
         def fetchone(self): return self.row
@@ -161,6 +163,7 @@ def test_open_report_route_retains_source_scope_and_never_returns_source_body(mo
     result = response.json()
     assert result["reused"] is False and result["report"]["company"] == "AAPL"
     assert result["report"]["period"] == "1Q/2026" and result["report"]["score"] is None
+    assert result["report"]["is_public"] is bool(evidence and evidence[0] == "public")
     assert all("text" not in source for source in result["report"]["sources"])
     if evidence is None: assert "original document was not retained" in result["report"]["coverage"]
     elif evidence[0] == "private": assert "uploaded" in result["report"]["coverage"]
@@ -168,13 +171,100 @@ def test_open_report_route_retains_source_scope_and_never_returns_source_body(mo
     conn.commit.assert_called_once()
 
 
-def test_report_detail_requires_user_link(monkeypatch):
+def test_private_report_detail_requires_user_link(monkeypatch):
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
     cur.fetchone.return_value = None
     monkeypatch.setattr(reports, "connection", lambda: conn)
     with pytest.raises(HTTPException) as exc: reports.get_report("known-shared-id", "user_other")
     assert exc.value.status_code == 404
     assert cur.execute.call_args.args[1] == ("known-shared-id", "user_other")
+
+
+@pytest.fixture
+def gallery_database(monkeypatch):
+    db = sqlite3.connect(":memory:")
+    db.executescript("""CREATE TABLE full_reports (id TEXT, content TEXT, is_public BOOLEAN, created_at TEXT);
+        CREATE TABLE full_report_access (user_id TEXT, report_id TEXT);""")
+    for report_id, public in [("demo", True), ("own", False), ("other", False)]:
+        report = {**content(), "id": report_id, "company": "AAPL", "period": "1Q/2026",
+                  "locale": "en", "kind": "report", "created_at": "2026-10-14", "is_public": not public}
+        # Deliberately conflicting JSON proves the stored server flag governs visibility metadata.
+        db.execute("INSERT INTO full_reports VALUES (?,?,?,?)", (report_id, json.dumps(report), public, report["created_at"]))
+    db.executemany("INSERT INTO full_report_access VALUES (?,?)", [
+        ("user_one", "demo"), ("user_two", "demo"), ("user_one", "own"), ("user_two", "other")])
+
+    class Connection:
+        @contextmanager
+        def cursor(self):
+            class Cursor:
+                def execute(self, sql, params): self.cursor = db.execute(sql.replace("%s", "?"), params)
+                def fetchone(self): return self.cursor.fetchone()
+                def fetchall(self): return self.cursor.fetchall()
+            yield Cursor()
+        def close(self): pass
+
+    monkeypatch.setattr(reports, "connection", Connection)
+    monkeypatch.setattr(reports, "OpenAIClient", Mock(side_effect=AssertionError("Browsing must never generate")))
+    yield db
+    db.close()
+
+
+def test_gallery_includes_public_demos_and_only_own_private_reports_without_duplicates(gallery_database):
+    before = gallery_database.total_changes
+    result = reports.list_reports("user_one")["reports"]
+    assert [(r["id"], r["is_public"]) for r in result] == [("demo", True), ("own", False)]
+    assert [r["id"] for r in reports.list_reports("user_new")["reports"]] == ["demo"]
+    assert gallery_database.total_changes == before
+
+
+@pytest.mark.parametrize("report_id,user,allowed", [
+    ("demo", "user_new", True), ("own", "user_one", True),
+    ("own", "user_new", False), ("other", "user_one", False), ("missing", "user_one", False),
+])
+def test_saved_report_reads_enforce_public_or_owner_access_without_generation(gallery_database, report_id, user, allowed):
+    before = gallery_database.total_changes
+    if allowed:
+        result = reports.get_report(report_id, user)["report"]
+        assert result["id"] == report_id and result["is_public"] is (report_id == "demo")
+    else:
+        with pytest.raises(HTTPException) as exc: reports.get_report(report_id, user)
+        assert exc.value.status_code == 404
+    assert gallery_database.total_changes == before
+
+
+def test_clients_cannot_publish_reports_or_override_visibility():
+    from pydantic import ValidationError
+    with pytest.raises(ValidationError): reports.OpenReport(analysis_id=1, is_public=True)
+
+
+def test_retained_public_source_promotes_cached_report_without_regeneration():
+    cur = Mock(); cur.fetchone.return_value = ({**content(), "id": "existing"}, False)
+    args = arguments()
+    result = reports.generate_or_reuse(cur, "d" * 64, **args, is_public=True)
+    assert result["reused"] and result["report"]["is_public"]
+    args["client"].analyze_full_report.assert_not_called()
+    assert any(call.args == ("UPDATE full_reports SET is_public=TRUE WHERE id=%s", ("existing",)) for call in cur.execute.call_args_list)
+
+
+def test_existing_reports_are_published_only_with_matching_retained_public_evidence():
+    cur = Mock(); reports.create_tables(cur)
+    migration = next(call.args[0] for call in cur.execute.call_args_list if "UPDATE full_reports AS r" in call.args[0])
+    with sqlite3.connect(":memory:") as db:
+        db.executescript("""CREATE TABLE full_reports (id TEXT, content TEXT, is_public BOOLEAN DEFAULT FALSE);
+            CREATE TABLE full_report_access (report_id TEXT, analysis_id INTEGER);
+            CREATE TABLE analysis_documents (analysis_id INTEGER, visibility TEXT, source_text TEXT, source_url TEXT);""")
+        for index, (visibility, text, url) in enumerate([
+            ("public", "Retained release", "https://example.com/source"),
+            ("private", "Private upload", "https://example.com/source"),
+            ("public", "   ", "https://example.com/source"),
+            ("public", "Other document", "https://example.com/different"),
+            ("public", "Missing citation", None),
+        ]):
+            db.execute("INSERT INTO full_reports (id,content) VALUES (?,?)", (str(index), json.dumps({"sources": [{"url": "https://example.com/source"}]})))
+            db.execute("INSERT INTO full_report_access VALUES (?,?)", (str(index), index))
+            db.execute("INSERT INTO analysis_documents VALUES (?,?,?,?)", (index, visibility, text, url))
+        db.execute(migration)
+        assert db.execute("SELECT id FROM full_reports WHERE is_public").fetchall() == [("0",)]
 
 
 def test_new_endpoints_require_authentication(monkeypatch):

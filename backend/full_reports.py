@@ -32,13 +32,25 @@ def create_tables(cur):
     cur.execute("""CREATE TABLE IF NOT EXISTS full_reports (
         id TEXT PRIMARY KEY, cache_key TEXT UNIQUE NOT NULL, company TEXT NOT NULL,
         period TEXT NOT NULL, locale TEXT NOT NULL, kind TEXT NOT NULL,
-        content JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        content JSONB NOT NULL, is_public BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )""")
+    cur.execute("ALTER TABLE full_reports ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT FALSE")
     cur.execute("""CREATE TABLE IF NOT EXISTS full_report_access (
         user_id TEXT NOT NULL, report_id TEXT NOT NULL REFERENCES full_reports(id) ON DELETE CASCADE,
         analysis_id INTEGER REFERENCES historico(id) ON DELETE SET NULL,
         PRIMARY KEY (user_id, report_id)
     )""")
+    # Only migrate reports whose retained public document matches the report's cited source.
+    # Uploads and older analyses with no original evidence must stay private.
+    cur.execute("""UPDATE full_reports AS r SET is_public=TRUE
+        WHERE NOT r.is_public AND EXISTS (
+            SELECT 1 FROM full_report_access a
+            JOIN analysis_documents d ON d.analysis_id=a.analysis_id
+            WHERE a.report_id=r.id AND d.visibility='public'
+            AND LENGTH(TRIM(d.source_text))>0 AND d.source_url IS NOT NULL
+            AND r.content->'sources'->0->>'url'=d.source_url
+        )""")
 
 
 def save_analysis_document(cur, analysis_id, *, visibility, title, url=None, text="", pdf_bytes=b""):
@@ -69,11 +81,16 @@ def canonical_period(year, quarter):
 
 
 def report_summary(report):
-    return {key: report[key] for key in ("id", "company", "period", "locale", "kind", "created_at", "score")}
+    return {key: report[key] for key in ("id", "company", "period", "locale", "kind", "created_at", "score", "is_public")}
 
 
 def read_report(value):
     return json.loads(value) if isinstance(value, str) else value
+
+
+def stored_report(row):
+    # Visibility comes exclusively from the database, never generated text or client input.
+    return {**read_report(row[0]), "is_public": bool(row[1])}
 
 
 class OpenReport(BaseModel):
@@ -82,14 +99,17 @@ class OpenReport(BaseModel):
     locale: Literal["en", "pt"] = "pt"
 
 
-def generate_or_reuse(cur, key, *, user_id, analysis_id, company, period, locale, kind, sources, client):
+def generate_or_reuse(cur, key, *, user_id, analysis_id, company, period, locale, kind, sources, client, is_public=False):
     # A transaction-scoped lock also deduplicates requests across server processes.
     cur.execute("SET LOCAL lock_timeout = '190s'")
     cur.execute("SELECT pg_advisory_xact_lock(%s)", (int.from_bytes(bytes.fromhex(key)[:8], "big", signed=True),))
-    cur.execute("SELECT content FROM full_reports WHERE cache_key=%s", (key,))
+    cur.execute("SELECT content,is_public FROM full_reports WHERE cache_key=%s", (key,))
     existing = cur.fetchone()
     if existing:
-        report = read_report(existing[0])
+        report = stored_report(existing)
+        if is_public and not report["is_public"]:
+            cur.execute("UPDATE full_reports SET is_public=TRUE WHERE id=%s", (report["id"],))
+            report["is_public"] = True
     else:
         prompt = build_full_report_prompt(company, period, locale, kind, sources)
         content = validate_full_report(client.analyze_full_report(prompt, report_schema()), sources)
@@ -107,11 +127,12 @@ def generate_or_reuse(cur, key, *, user_id, analysis_id, company, period, locale
         if locale == "pt" and content["valuation"]["reason"] == "The source does not explicitly establish positive annual or TTM EPS and its currency.":
             content["valuation"]["reason"] = "A fonte não comprova lucro por ação anual ou dos últimos 12 meses positivo e sua moeda."
         report = {**content, "id": str(uuid.uuid4()), "company": company, "period": period,
-                  "locale": locale, "kind": kind, "created_at": datetime.now(timezone.utc).isoformat(),
+                  "locale": locale, "kind": kind, "is_public": is_public,
+                  "created_at": datetime.now(timezone.utc).isoformat(),
                   "sources": [{key: source[key] for key in ("id", "title", "url")} for source in sources]}
-        cur.execute("""INSERT INTO full_reports (id,cache_key,company,period,locale,kind,content)
-            VALUES (%s,%s,%s,%s,%s,%s,%s::jsonb)""",
-            (report["id"], key, company, period, locale, kind, json.dumps(report)))
+        cur.execute("""INSERT INTO full_reports (id,cache_key,company,period,locale,kind,is_public,content)
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb)""",
+            (report["id"], key, company, period, locale, kind, is_public, json.dumps(report)))
     cur.execute("""INSERT INTO full_report_access (user_id,report_id,analysis_id) VALUES (%s,%s,%s)
         ON CONFLICT (user_id,report_id) DO NOTHING""", (user_id, report["id"], analysis_id))
     return {"report": report, "reused": bool(existing)}
@@ -122,9 +143,11 @@ def list_reports(user_id: str = Depends(require_report_user)):
     conn = connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("""SELECT r.content FROM full_reports r JOIN full_report_access a ON a.report_id=r.id
-                WHERE a.user_id=%s ORDER BY r.created_at DESC LIMIT 200""", (user_id,))
-            return {"reports": [report_summary(read_report(row[0])) for row in cur.fetchall()]}
+            cur.execute("""SELECT r.content,r.is_public FROM full_reports r
+                WHERE r.is_public OR EXISTS (
+                    SELECT 1 FROM full_report_access a WHERE a.report_id=r.id AND a.user_id=%s
+                ) ORDER BY r.is_public DESC,r.created_at DESC LIMIT 200""", (user_id,))
+            return {"reports": [report_summary(stored_report(row)) for row in cur.fetchall()]}
     finally:
         conn.close()
 
@@ -134,12 +157,14 @@ def get_report(report_id: str, user_id: str = Depends(require_report_user)):
     conn = connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("""SELECT r.content FROM full_reports r JOIN full_report_access a ON a.report_id=r.id
-                WHERE r.id=%s AND a.user_id=%s""", (report_id, user_id))
+            cur.execute("""SELECT r.content,r.is_public FROM full_reports r
+                WHERE r.id=%s AND (r.is_public OR EXISTS (
+                    SELECT 1 FROM full_report_access a WHERE a.report_id=r.id AND a.user_id=%s
+                ))""", (report_id, user_id))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(404, "Relatório não encontrado.")
-            return {"report": read_report(row[0])}
+            return {"report": stored_report(row)}
     finally:
         conn.close()
 
@@ -176,7 +201,8 @@ def open_report(body: OpenReport, user_id: str = Depends(require_report_user)):
             key = cache_key(company, year, quarter, body.locale, kind, sources, client.model,
                             private_user=user_id if visibility != "public" else None)
             result = generate_or_reuse(cur, key, user_id=user_id, analysis_id=body.analysis_id, company=company,
-                                      period=f"{quarter}Q/{year}", locale=body.locale, kind=kind, sources=sources, client=client)
+                                      period=f"{quarter}Q/{year}", locale=body.locale, kind=kind, sources=sources,
+                                      client=client, is_public=visibility == "public")
         conn.commit()
         return result
     except HTTPException:
