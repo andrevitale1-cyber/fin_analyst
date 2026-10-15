@@ -143,7 +143,6 @@ def test_owner_check_precedes_source_and_shared_cache(monkeypatch):
 
 
 @pytest.mark.parametrize("evidence", [
-    ("public", "SEC release", "https://www.sec.gov/release", "Source revenue grew."),
     ("private", "Uploaded document", None, "Private source revenue grew."),
     None,
 ])
@@ -276,6 +275,7 @@ def test_new_endpoints_require_authentication(monkeypatch):
     for path in ("/api/full-reports", "/api/full-reports/known-id"):
         assert client.get(path).status_code == 401
     assert client.post("/api/full-reports", json={"analysis_id": 1, "locale": "en"}).status_code == 401
+    assert client.post("/api/full-reports/company", json={"company": "META", "locale": "en"}).status_code == 401
 
 
 def test_structured_output_is_requested_and_truncated_response_rejected(monkeypatch):
@@ -325,7 +325,7 @@ def test_full_report_provider_failures_have_distinct_codes_without_retries(monke
 def test_generation_failure_is_logged_without_sensitive_content_and_rolls_back(monkeypatch, caplog, locale, failure):
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
     cur.fetchone.side_effect = [("META", "2026", "1Q", {"metadata": {}}),
-                              ("public", "Official release", "https://example.com", "PRIVATE_SOURCE_TEXT"), None]
+                              ("private", "Uploaded release", None, "PRIVATE_SOURCE_TEXT"), None]
     monkeypatch.setattr(reports, "connection", lambda: conn)
     ai = Mock(model="test-model")
     if failure == "provider":

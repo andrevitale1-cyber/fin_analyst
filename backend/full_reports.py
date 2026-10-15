@@ -1,8 +1,9 @@
 """Source-backed reports, shared generation and per-user library access."""
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import hashlib
 import json
 import logging
+import os
 import re
 import uuid
 
@@ -13,10 +14,13 @@ from typing import Literal
 from agents.auto_fetcher import AutoFetcher
 from openai_client import OpenAIClient, OpenAIError
 from report_auth import require_report_user
-from full_report_content import build_full_report_prompt, report_schema, validate_full_report
+from full_report_content import build_full_report_prompt, report_schema, validate_full_report, ReportValidationError
+from company_report_content import build_company_report_prompt, company_report_schema, validate_company_report
+from company_research import collect_company_sources
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
+COMPANY_REPORT_VERSION = "company-v1"
 logger = logging.getLogger(__name__)
 
 
@@ -38,6 +42,10 @@ def create_tables(cur):
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )""")
     cur.execute("ALTER TABLE full_reports ADD COLUMN IF NOT EXISTS is_public BOOLEAN NOT NULL DEFAULT FALSE")
+    cur.execute("""CREATE TABLE IF NOT EXISTS company_research_cache (
+        cache_key TEXT PRIMARY KEY, content JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )""")
     cur.execute("""CREATE TABLE IF NOT EXISTS full_report_access (
         user_id TEXT NOT NULL, report_id TEXT NOT NULL REFERENCES full_reports(id) ON DELETE CASCADE,
         analysis_id INTEGER REFERENCES historico(id) ON DELETE SET NULL,
@@ -83,7 +91,8 @@ def canonical_period(year, quarter):
 
 
 def report_summary(report):
-    return {key: report[key] for key in ("id", "company", "period", "locale", "kind", "created_at", "score", "is_public")}
+    return {**{key: report[key] for key in ("id", "company", "period", "locale", "kind", "created_at", "score", "is_public")},
+            **{key: report.get(key) for key in ("scope", "company_name", "as_of")}}
 
 
 def read_report(value):
@@ -99,6 +108,153 @@ class OpenReport(BaseModel):
     model_config = ConfigDict(extra="forbid")
     analysis_id: int = Field(gt=0)
     locale: Literal["en", "pt"] = "pt"
+
+
+class OpenCompanyReport(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    company: str = Field(min_length=1, max_length=100)
+    locale: Literal["en", "pt"] = "pt"
+
+
+def generation_failure(exc, locale, *, analysis_id=None, company=None):
+    # Record diagnostic identifiers, never source text or Pydantic input values.
+    validation = []
+    if isinstance(exc, ValidationError):
+        fields = {"coverage", "score", "sections", "metrics", "watchpoints", "valuation", "market",
+                  "signals", "scorecard", "tracking_metrics", "breakdowns", "financial_history", "projections"}
+        validation = [{"field": item["loc"][0] if item["loc"] and item["loc"][0] in fields else "other",
+                       "type": item["type"]} for item in exc.errors(include_input=False, include_url=False)]
+    elif isinstance(exc, ReportValidationError):
+        validation = [{"type": str(exc)}]
+    if isinstance(exc, (OpenAIError, ValueError, TimeoutError)):
+        logger.warning("full_report_failed analysis_id=%s company=%s error_type=%s provider_status=%s provider_code=%s provider_param=%s request_id=%s validation=%s",
+                       analysis_id, company, type(exc).__name__, getattr(exc, "status_code", None),
+                       getattr(exc, "code", None), getattr(exc, "param", None), getattr(exc, "request_id", None), validation)
+        if getattr(exc, "code", None) == "insufficient_company_sources":
+            return HTTPException(422, "Not enough cited public information was found for this company. Check the ticker and try again." if locale == "en" else
+                                 "Não foram encontradas fontes públicas citadas suficientes para esta companhia. Confira o ticker e tente novamente.")
+        return HTTPException(502, "We could not generate the full report. Please try again; no incomplete report was saved." if locale == "en" else
+                             "Não foi possível gerar o relatório completo. Tente novamente; nenhuma versão incompleta foi salva.")
+    logger.error("full_report_unavailable analysis_id=%s company=%s error_type=%s", analysis_id, company, type(exc).__name__)
+    return HTTPException(503, "The report service is temporarily unavailable. Please try again." if locale == "en" else
+                         "O serviço de relatórios está temporariamente indisponível. Tente novamente.")
+
+
+def canonical_company(company):
+    symbol = AutoFetcher().resolve_ticker(company)
+    aliases = {"MICRON": "MU", "MICRON TECHNOLOGY": "MU", "SERVICENOW": "NOW", "SERVICE NOW": "NOW",
+               "ADVANCED MICRO DEVICES": "AMD", "BROADCOM": "AVGO", "GOOG": "GOOGL",
+               "META PLATFORMS": "META", "NVIDIA CORPORATION": "NVDA", "APPLE INC": "AAPL",
+               "COCA COLA": "KO", "COCA-COLA": "KO", "BERKSHIRE HATHAWAY": "BRK-B",
+               "JPMORGAN": "JPM", "JOHNSON & JOHNSON": "JNJ", "ELI LILLY": "LLY",
+               "WALMART": "WMT", "VISA": "V", "MASTERCARD": "MA", "COSTCO": "COST",
+               "ORACLE": "ORCL", "EXXON MOBIL": "XOM", "CHEVRON": "CVX", "ABBVIE": "ABBV",
+               "BANK OF AMERICA": "BAC", "CATERPILLAR": "CAT", "LAM RESEARCH": "LRCX"}
+    symbol = aliases.get(symbol, symbol).removesuffix(".SA")
+    if not re.fullmatch(r"[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,4})?", symbol):
+        raise HTTPException(422, "Use a stock ticker or a recognized company name. / Informe o ticker ou um nome de empresa reconhecido.")
+    return symbol
+
+
+def company_cache_key(company, model, as_of, locale=None):
+    year, week, _ = datetime.fromisoformat(as_of).isocalendar()
+    payload = [COMPANY_REPORT_VERSION, company, model, year, week, locale]
+    return hashlib.sha256(json.dumps(payload).encode()).hexdigest()
+
+
+def company_evidence(company, model, as_of, client):
+    # A separate committed transaction keeps paid research reusable even if synthesis fails.
+    key = company_cache_key(company, model, as_of)
+    conn = connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SET LOCAL lock_timeout = '190s'")
+            cur.execute("SELECT pg_advisory_xact_lock(%s)", (int.from_bytes(bytes.fromhex(key)[:8], "big", signed=True),))
+            cur.execute("SELECT content FROM company_research_cache WHERE cache_key=%s", (key,))
+            existing = cur.fetchone()
+            if existing:
+                evidence = read_report(existing[0])
+                if evidence.get("error") and evidence["retry_after"] > datetime.now(timezone.utc).isoformat():
+                    raise OpenAIError("Recent company research did not find sufficient evidence.", code=evidence["error"])
+            if not existing or evidence.get("error"):
+                try:
+                    evidence = {"as_of": as_of, "sources": collect_company_sources(client, company, as_of)}
+                except OpenAIError as exc:
+                    if exc.code not in ("insufficient_company_sources", "research_incomplete"):
+                        raise
+                    failed = {"error": exc.code, "retry_after": (datetime.now(timezone.utc) + timedelta(minutes=10)).isoformat()}
+                    cur.execute("""INSERT INTO company_research_cache (cache_key,content) VALUES (%s,%s::jsonb)
+                        ON CONFLICT (cache_key) DO UPDATE SET content=EXCLUDED.content,created_at=NOW()""", (key, json.dumps(failed)))
+                    conn.commit()
+                    raise
+                cur.execute("""INSERT INTO company_research_cache (cache_key,content) VALUES (%s,%s::jsonb)
+                    ON CONFLICT (cache_key) DO UPDATE SET content=EXCLUDED.content,created_at=NOW()""", (key, json.dumps(evidence)))
+        conn.commit()
+        return evidence
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def calculated_company_valuation(content):
+    valuation, market = content["valuation"], content["market"]
+    valuation["fair_value"] = None
+    for scenario in valuation["scenarios"]:
+        future = valuation["base_eps"] * (1 + scenario["growth_percent"] / 100) ** 5 * scenario["pe_multiple"]
+        present = future / (1 + scenario["discount_percent"] / 100) ** 5
+        scenario.update(future_value=round(future, 2), present_value=round(present, 2), upside_percent=None)
+        if market["price"] and market["currency"] == valuation["currency"]:
+            scenario["upside_percent"] = round((future / market["price"] - 1) * 100, 2)
+        if scenario["case"] == "base":
+            valuation["fair_value"] = round(present, 2)
+    return content
+
+
+@router.post("/company")
+def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_report_user)):
+    company = canonical_company(body.company)
+    as_of = datetime.now(timezone.utc).date().isoformat()
+    model = os.getenv("OPENAI_MODEL", "gpt-4.1")
+    key = company_cache_key(company, model, as_of, body.locale)
+    conn = connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SET LOCAL lock_timeout = '190s'")
+            cur.execute("SELECT pg_advisory_xact_lock(%s)", (int.from_bytes(bytes.fromhex(key)[:8], "big", signed=True),))
+            cur.execute("SELECT content,is_public FROM full_reports WHERE cache_key=%s", (key,))
+            existing = cur.fetchone()
+            if existing:
+                report = stored_report(existing)
+            else:
+                client = OpenAIClient()
+                evidence = company_evidence(company, model, as_of, client)
+                sources = evidence["sources"]
+                prompt = build_company_report_prompt(company, evidence["as_of"], body.locale, sources)
+                raw = client.analyze_full_report(prompt, company_report_schema(), max_output_tokens=11000, timeout=120)
+                content = calculated_company_valuation(validate_company_report(raw, sources))
+                if body.locale == "pt" and not content["valuation"]["available"]:
+                    content["valuation"]["reason"] = "Não há evidência suficiente de EPS anual ou TTM positivo e sua moeda para calcular os três cenários."
+                report = {**content, "id": str(uuid.uuid4()), "company": company, "period": "Company overview",
+                          "scope": "company", "as_of": evidence["as_of"], "locale": body.locale, "kind": "company",
+                          "is_public": True, "created_at": datetime.now(timezone.utc).isoformat(),
+                          "sources": [{field: source[field] for field in ("id", "title", "url")} for source in sources]}
+                cur.execute("""INSERT INTO full_reports (id,cache_key,company,period,locale,kind,is_public,content)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb)""",
+                    (report["id"], key, company, report["period"], body.locale, "company", True, json.dumps(report)))
+            cur.execute("""INSERT INTO full_report_access (user_id,report_id) VALUES (%s,%s)
+                ON CONFLICT (user_id,report_id) DO NOTHING""", (user_id, report["id"]))
+        conn.commit()
+        return {"report": report, "reused": bool(existing)}
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as exc:
+        conn.rollback()
+        raise generation_failure(exc, body.locale, company=company) from None
+    finally:
+        conn.close()
 
 
 def generate_or_reuse(cur, key, *, user_id, analysis_id, company, period, locale, kind, sources, client, is_public=False):
@@ -188,6 +344,10 @@ def open_report(body: OpenReport, user_id: str = Depends(require_report_user)):
             company = AutoFetcher().resolve_ticker(company)
             cur.execute("SELECT visibility,source_title,source_url,source_text FROM analysis_documents WHERE analysis_id=%s", (body.analysis_id,))
             evidence = cur.fetchone()
+            if evidence and evidence[0] == "public" and evidence[3].strip():
+                # History links also open the company dossier; private uploads retain their private expansion.
+                conn.rollback()
+                return open_company_report(OpenCompanyReport(company=company, locale=body.locale), user_id)
             if evidence and evidence[3].strip():
                 visibility, title, url, text = evidence
                 basis = "primary" if visibility == "public" else "uploaded"
@@ -210,33 +370,8 @@ def open_report(body: OpenReport, user_id: str = Depends(require_report_user)):
     except HTTPException:
         conn.rollback()
         raise
-    except (OpenAIError, ValueError, TimeoutError) as exc:
-        conn.rollback()
-        # Do not log exception text, source bodies, credentials, or Pydantic's input values.
-        validation = []
-        if isinstance(exc, ValidationError):
-            validation = [{"field": item["loc"][0] if item["loc"] and item["loc"][0] in
-                           {"coverage", "score", "sections", "metrics", "watchpoints", "valuation"} else "other",
-                           "type": item["type"]} for item in exc.errors(include_input=False, include_url=False)]
-        elif type(exc) is ValueError and str(exc) in {
-            "Report list exceeds its allowed size", "Section list exceeds its allowed size",
-            "Section text exceeds its allowed length", "Report text exceeds its allowed length",
-            "Metric text exceeds its allowed length", "Valuation reason exceeds its allowed length",
-            "Score must be between 1 and 5 or null", "Report must contain each prescribed section exactly once",
-            "At least one identified source is required", "Report references an unknown source ID",
-        }:
-            validation = [{"type": str(exc)}]
-        logger.warning("full_report_failed analysis_id=%s error_type=%s provider_status=%s provider_code=%s provider_param=%s request_id=%s validation=%s",
-                       body.analysis_id, type(exc).__name__, getattr(exc, "status_code", None),
-                       getattr(exc, "code", None), getattr(exc, "param", None), getattr(exc, "request_id", None), validation)
-        detail = ("We could not generate the full report. Please try again; no incomplete report was saved."
-                  if body.locale == "en" else
-                  "Não foi possível gerar o relatório completo. Tente novamente; nenhuma versão incompleta foi salva.")
-        raise HTTPException(502, detail) from None
     except Exception as exc:
         conn.rollback()
-        logger.error("full_report_unavailable analysis_id=%s error_type=%s", body.analysis_id, type(exc).__name__)
-        raise HTTPException(503, "The report service is temporarily unavailable. Please try again." if body.locale == "en" else
-                            "O serviço de relatórios está temporariamente indisponível. Tente novamente.") from None
+        raise generation_failure(exc, body.locale, analysis_id=body.analysis_id) from None
     finally:
         conn.close()

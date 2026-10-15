@@ -1,39 +1,37 @@
 # Full report library
 
-The dashboard's **Explore full report** button opens `/en/dashboard/reports?analysisId=…` (or `/pt/…`). Opening the library itself never generates a report. Generation happens only after a completed analysis is opened through that button.
+The default Full Reports screen presents a centered company search, company shortcuts, saved company dossiers, older period reports, and the signed-in user's private reports. Opening the library or typing a filter never starts AI generation. Submitting a company search or choosing an uncached shortcut opens a broad company dossier through `POST /api/full-reports/company` with `{company, locale}`. A saved shortcut opens its report with GET.
 
-The default library view is a demonstration gallery, with search at the top. To add a demonstration, run an automatic analysis against a public release/transcript and open **Explore full report** once. The completed full report then appears for every signed-in user. Visitors can browse and open saved demonstrations without triggering AI generation. Search filters company and period; private reports appear separately for their owner.
+Public automatic analyses link to `/{locale}/dashboard/reports?company=…`. Uploaded and legacy analyses retain their private/period expansion at `?analysisId=…`; historical reports are never relabelled as company-wide research. The company reader ends with an action to open the normal analysis form with its company prefilled. It does not automatically analyze a quarter.
 
-## Reuse and privacy
+## Company research and presentation
 
-- PostgreSQL retains the source text used by each new analysis (up to the existing 180,000-character limit).
-- A full report is keyed by canonical issuer, requested year and quarter, language, document type, exact retained evidence, model, and prompt revision.
-- Full reports from public releases/transcripts are visible to all signed-in users and reuse the same saved content. Neither another user's history nor their identity is exposed.
-- Uploaded documents and older analyses without retained originals are scoped to their owner. They cannot enter the public cache.
-- Transaction advisory locks serialize generation for one cache key across processes. A second request waits and reuses the committed result. Failed or invalid generations roll back without saving partial reports.
-- The original short analysis still runs normally. This cache saves subsequent **full-report** generations.
+The company dossier is a continuous report with linked sections: thesis, business, financials, moat, management, market sentiment, outlook, risks, valuation, and verdict. Supported evidence can also populate six summary signals, seven quality factors, tracking metrics, segment/geography breakdowns, three to five annual financial periods, dated market figures, and sourced management guidance or analyst consensus.
+
+Research uses one bounded OpenAI web-search request (at most four tool operations, 4,000 output tokens), followed by one structured synthesis (at most 11,000 output tokens). Public SEC companyfacts data is requested in parallel from fixed trusted endpoints for annual financial history. Web-search citations become research notes, not claims of verbatim primary-source verification. At least three cited public research sources are required. Model output is validated, and only supplied source IDs can appear in a report.
+
+Missing data stays null/empty. Market prices retain their quoted date and currency and are not represented as real-time prices. Financial history is annual; quarterly EPS is never annualized. The quality score is a whole-number AI assessment calculated from at least three supported quality factors; it is distinct from a quarter's analysis grades.
+
+Valuation uses positive annual/TTM EPS evidenced in a primary source. For SEC evidence the baseline must match the latest disclosed annual EPS. Bear/base/bull growth, P/E and discount rates are explicitly AI assumptions; the server calculates five-year future values, discounted illustrative values, and comparable-currency price changes. These scenarios are separate from sourced management or analyst projections. Valuation is unavailable when its prerequisites are missing. No price target is copied from Clearthesis.
+
+## Reuse, costs and privacy
+
+- Successful company reports are shared across signed-in users, keyed by canonical issuer, language, ISO week, model, and report version.
+- Cited research is committed separately and shared across languages. If synthesis fails, retrying can reuse already collected research.
+- Transaction advisory locks serialize matching requests across server processes; two users requesting the same version generate it only once.
+- Insufficient/incomplete research has a shared ten-minute cooldown to avoid repeatedly charging for the same failed lookup. Requests are not retried automatically.
+- Only explicit company identity and public evidence enter the company research flow; private uploads, user history and account identities are not used as research sources.
+- Uploaded documents and older analyses without retained original evidence remain private. Period expansion keeps its source/content-based cache and ownership checks.
+- Browsing saved reports does not call the AI. OpenAI web search and synthesis use the existing API account and incur normal API usage when a new version is requested.
 
 ## Security and deployment
 
-New endpoints require a Clerk session bearer token, verify its RSA signature and claims, and derive the user ID from its signed subject. Generation requires ownership of the selected analysis. Saved report reads require either the database's public flag or the subject's own library link. The client and model cannot choose visibility.
+All report endpoints require a signed Clerk bearer token. Public reports can be read by any signed-in user; private reports require that user's library link. The client and model cannot choose visibility.
 
-Production defaults match the current Clerk instance. Configure these only when using a different instance or local sign-in:
+Production Clerk defaults are `CLERK_ISSUER=https://clerk.finanalyser.com.br` and `CLERK_AUTHORIZED_PARTIES=https://finanalyser.com.br,https://www.finanalyser.com.br`. Local authenticated previews require explicitly configured development issuer/origin; no authentication bypass is provided.
 
-- `CLERK_ISSUER`: default `https://clerk.finanalyser.com.br`
-- `CLERK_AUTHORIZED_PARTIES`: exact comma-separated frontend origins; default `https://finanalyser.com.br,https://www.finanalyser.com.br`
-
-For local authenticated previews, explicitly configure the development Clerk issuer and the local origin. No session verification bypass is provided.
-
-`init_db()` adds `analysis_documents`, `full_reports`, and `full_report_access` with `CREATE TABLE IF NOT EXISTS`, plus an additive `is_public` flag defaulting to false. Existing reports are published only when a retained public source with nonempty text and a matching citation URL proves their provenance; uploads and legacy expansions stay private. Existing history is preserved. Use the service's normal database migration/back-up procedure when deploying. Backend requirements add `PyJWT[crypto]` for RSA verification. No new AI or financial-data subscription is required.
-
-## First-version coverage
-
-Reports have seven sourced sections: thesis, business, financials, moat, management, risks, and valuation. They expand the selected retained document, including comparative figures already present in it. Missing facts must be identified rather than invented. Older analyses can be expanded privately, with an explicit warning that the original source is unavailable.
-
-This version does not automatically acquire multiple years of statements, live prices, analyst estimates, or industry research. Annual/TTM EPS with source evidence can enable an optional scenario calculator; quarterly EPS is never annualized. Growth, multiples, and discount rates are user assumptions. The calculator performs deterministic arithmetic and does not constitute an AI price target.
+`init_db()` adds `analysis_documents`, `full_reports`, `full_report_access`, and `company_research_cache` without removing history. Existing reports become public only when retained public evidence matches their cited source. Generation failures emit diagnostic identifiers and validation types without logging credentials, source bodies or generated input values. No partial full report is saved on failure.
 
 ## Validation
 
-Offline tests cover cache identity, private-source isolation, concurrent requests, failure rollback, ownership checks, signed/expired/forged JWTs, structured output, citations, and unsupported valuation inputs. No paid AI request is needed for regression tests.
-
-The structured-output schema and prompt impose the same text/list limits as the server validator. Valid sections received in a different order are sorted by their IDs without changing their contents; missing/duplicate sections and unknown source IDs remain invalid. Generation failures emit `full_report_failed` with safe provider status/code/parameter/request ID or validation field/type only. Document text, prompts, keys, raw provider messages, and generated input values are never logged. Failed generations are not retried automatically or saved as partial reports.
+Offline checks cover strict content schemas, source references, numeric/annual EPS guards, deterministic scenario arithmetic, shared cache identity, concurrency, failed research cooldown, ownership, signed/expired/forged JWTs, and rollback. Browser checks use explicit fixtures and mocked authentication/API responses; they do not prove real provider generation or live data availability.

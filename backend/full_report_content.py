@@ -5,6 +5,10 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, conint, constr
 
 
+class ReportValidationError(ValueError):
+    """A fixed validation message containing no source or generated input values."""
+
+
 SECTION_IDS = ("thesis", "business", "financials", "moat", "management", "risks", "valuation")
 SourceID = constr(strict=True, min_length=1, max_length=40)
 LIMITS = {
@@ -182,31 +186,31 @@ def validate_full_report(raw: dict, sources: list) -> dict:
     content = FullReportContent.model_validate(raw)
     result = content.model_dump()
     if len(result["sections"]) != len(SECTION_IDS) or len(result["metrics"]) > LIMITS["metrics"] or len(result["watchpoints"]) > LIMITS["watchpoints"]:
-        raise ValueError("Report list exceeds its allowed size")
+        raise ReportValidationError("Report list exceeds its allowed size")
     for section in result["sections"]:
         if len(section["paragraphs"]) > LIMITS["paragraphs"] or len(section["bullets"]) > LIMITS["bullets"] or len(section["source_ids"]) > LIMITS["source_ids"]:
-            raise ValueError("Section list exceeds its allowed size")
+            raise ReportValidationError("Section list exceeds its allowed size")
         if len(section["title"]) > LIMITS["title"] or len(section["summary"]) > LIMITS["summary"]:
-            raise ValueError("Section text exceeds its allowed length")
+            raise ReportValidationError("Section text exceeds its allowed length")
         if any(len(text) > LIMITS["paragraph"] for text in section["paragraphs"]) or any(len(text) > LIMITS["bullet"] for text in section["bullets"]):
-            raise ValueError("Section text exceeds its allowed length")
+            raise ReportValidationError("Section text exceeds its allowed length")
     if len(result["coverage"]) > LIMITS["coverage"] or any(len(text) > LIMITS["watchpoint"] for text in result["watchpoints"]):
-        raise ValueError("Report text exceeds its allowed length")
+        raise ReportValidationError("Report text exceeds its allowed length")
     if any(len(metric["label"]) > LIMITS["metric_label"] or len(metric["value"]) > LIMITS["metric_value"] for metric in result["metrics"]):
-        raise ValueError("Metric text exceeds its allowed length")
+        raise ReportValidationError("Metric text exceeds its allowed length")
     if len(result["valuation"]["reason"]) > LIMITS["valuation_reason"]:
-        raise ValueError("Valuation reason exceeds its allowed length")
+        raise ReportValidationError("Valuation reason exceeds its allowed length")
     if result["score"] is not None and not 1 <= result["score"] <= 5:
-        raise ValueError("Score must be between 1 and 5 or null")
+        raise ReportValidationError("Score must be between 1 and 5 or null")
     section_ids = [section["id"] for section in result["sections"]]
     if set(section_ids) != set(SECTION_IDS) or len(set(section_ids)) != len(SECTION_IDS):
-        raise ValueError("Report must contain each prescribed section exactly once")
+        raise ReportValidationError("Report must contain each prescribed section exactly once")
     by_id = {section["id"]: section for section in result["sections"]}
     result["sections"] = [by_id[section_id] for section_id in SECTION_IDS]
 
     known = {source.get("id"): source for source in sources if source.get("id")}
     if not known:
-        raise ValueError("At least one identified source is required")
+        raise ReportValidationError("At least one identified source is required")
     refs = []
     for section in result["sections"]:
         refs.extend(section["source_ids"])
@@ -214,7 +218,7 @@ def validate_full_report(raw: dict, sources: list) -> dict:
     if result["valuation"]["source_id"]:
         refs.append(result["valuation"]["source_id"])
     if any(source_id not in known for source_id in refs):
-        raise ValueError("Report references an unknown source ID")
+        raise ReportValidationError("Report references an unknown source ID")
 
     valuation = result["valuation"]
     if valuation["available"]:

@@ -173,6 +173,11 @@ export default function FinancialDashboard() {
   const [file, setFile] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  useEffect(() => {
+    const company = new URLSearchParams(window.location.search).get("company")?.trim() || "";
+    if (company && company.length <= 100 && !/[\u0000-\u001f]/.test(company)) setEmpresa(company);
+  }, []);
+
   const isPremium = user?.publicMetadata?.plan === 'premium';
   const accessStatus = isPremium ? 'active' : trialState.userId === user?.id ? trialState.status : 'pending';
   const trialDaysLeft = accessStatus === 'active' ? trialState.daysLeft : null;
@@ -701,7 +706,14 @@ export default function FinancialDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
               <button onClick={() => setCurrentView('history')} className="text-slate-500 hover:text-sky-700 flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-slate-100 group-hover:bg-slate-200 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">{t("result.backHistory")}</span></button>
               
-              <button onClick={() => result?.id && router.push(`/${locale}/dashboard/reports?analysisId=${encodeURIComponent(String(result.id))}`)} disabled={!result?.id} className="w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50">
+              <button onClick={() => {
+                if (!result?.id) return;
+                const hasPublicSource = typeof result.source?.url === "string" && /^https?:\/\//i.test(result.source.url);
+                const company = result.metadata?.empresa || result.metadata?.company || "";
+                router.push(hasPublicSource && company
+                  ? `/${locale}/dashboard/reports?company=${encodeURIComponent(String(company))}`
+                  : `/${locale}/dashboard/reports?analysisId=${encodeURIComponent(String(result.id))}`);
+              }} disabled={!result?.id} className="w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50">
                 <BookOpen size={18} /> {t('result.exploreFullReport')}
               </button>
             </div>
