@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useReducedMotion, useInView } from "framer-motion";
 import type { Rive, LoopEvent } from "@rive-app/canvas";
-import { Link } from "@/i18n/routing";
 import useVideoPlayback from "./useVideoPlayback";
 import styles from "./AudienceCards.module.css";
 
@@ -61,27 +60,22 @@ export default function AudienceCards({ locale }: { locale: string }) {
     return () => { disposed = true; observer.disconnect(); resize?.disconnect(); animation.current?.cleanup(); animation.current = null; };
   }, []);
 
-  const plus = <span className={styles.plus} aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M20.75 11.25H12.75V3.25H11.25V11.25H3.25V12.75H11.25V20.75H12.75V12.75H20.75V11.25Z" fill="currentColor" /></svg></span>;
-
   return <motion.section id="clients" ref={section} className={styles.section} style={reduce ? undefined : { opacity: exitOpacity }} aria-label={english ? "Who FinAnalyzer is for" : "Para quem é o FinAnalyzer"}>
     <div className={styles.grid}>
-      <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><Link href="/dashboard" className={styles.card}>
+      <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><article className={styles.card}>
         <h2>Clients</h2>
         <div className={styles.visual}>
           <video ref={video} className={styles.video} src={media + "clients.mp4#t=0.01"} width="580" height="500" muted loop autoPlay playsInline preload="auto" aria-hidden="true" />
-          <span className={styles.shade} />
-          {plus}
         </div>
         <p>{english ? <><strong>For individual investors, businesses, analysts, and professional investors who want to understand companies and analyze results faster.</strong> Clear explanations for those getting started, and organized research for professionals and teams who need greater speed.</> : <><strong>Para investidores pessoa física, empresas, analistas e investidores profissionais que querem entender as empresas e analisar resultados com mais agilidade.</strong> Explicações claras para quem está começando e pesquisa organizada para profissionais e equipes que precisam ganhar tempo.</>}</p>
-      </Link></motion.div>
-      <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><Link href="/dashboard" className={styles.card}>
+      </article></motion.div>
+      <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><article className={styles.card}>
         <h2>Services</h2>
         <div className={styles.visual} style={{ backgroundImage: `url(${media}services.jpg)`, backgroundSize: "cover", backgroundPosition: "center" }}>
           <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />
-          {plus}
         </div>
         <p>{english ? <><strong>Find reports, analyze results, and compare companies in one place.</strong> Automatic document search, AI analysis, fundamental scores, an aggregated table, and saved history help you spend less time reading and quickly revisit previous results.</> : <><strong>Encontre relatórios, analise resultados e compare empresas em um só lugar.</strong> Busca automática de documentos, análise por IA, notas dos fundamentos, tabela agregada e histórico salvo para gastar menos tempo lendo e consultar resultados anteriores com agilidade.</>}</p>
-      </Link></motion.div>
+      </article></motion.div>
     </div>
   </motion.section>;
 }
