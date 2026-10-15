@@ -6,11 +6,11 @@ import { useTranslations, useLocale } from "next-intl";
 import { formatPeriod, splitBold } from "../../../lib/analysisText";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import {
-  LayoutDashboard, History, UploadCloud, FileText, Download, ChevronLeft,
+  LayoutDashboard, History, UploadCloud, FileText, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Loader2,
   AlertCircle, Table as TableIcon, Trash2, ArrowUpDown, ArrowUp, ArrowDown,
   GripVertical, Eye, EyeOff, Settings2, X, Zap, Lock, Check, Menu,
-  Search, ArrowRight, Sparkles, ExternalLink
+  Search, ArrowRight, Sparkles, ExternalLink, BookOpen
 } from "lucide-react";
 
 // API_BASE configurada para o seu Render
@@ -152,9 +152,6 @@ export default function FinancialDashboard() {
   const [trialState, setTrialState] = useState<{ userId: string; status: 'pending' | 'active' | 'expired' | 'unavailable'; daysLeft: number | null }>({ userId: '', status: 'pending', daysLeft: null });
   const [accessRetry, setAccessRetry] = useState(0);
 
-  const [downloadCount, setDownloadCount] = useState(0);
-  const WEEKLY_DOWNLOAD_LIMIT = 3;
-
   const [result, setResult] = useState<any>(null);
   const [historyList, setHistoryList] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
@@ -190,10 +187,6 @@ export default function FinancialDashboard() {
       setTrialState({ userId, status: 'active', daysLeft: null });
       return;
     }
-
-    // Carrega contagem de downloads
-    const downloadKey = `downloads_${userId}`;
-    setDownloadCount(parseInt(localStorage.getItem(downloadKey) || '0'));
 
     // Verifica o trial no backend
     const controller = new AbortController();
@@ -389,27 +382,6 @@ export default function FinancialDashboard() {
     });
   }, [tableData, sortConfig]);
 
-  const handleDownload = () => {
-    const id = result?.id; 
-    
-    if (!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT) {
-      setShowUpgradeModal(true);
-      return;
-    }
-
-    if (id) {
-      if (!isPremium && user) {
-        const newDlCount = downloadCount + 1;
-        setDownloadCount(newDlCount);
-        localStorage.setItem(`downloads_${user.id}`, newDlCount.toString());
-      }
-      // Abre o relatório gerado pelo backend numa nova aba
-      window.open(`${API_BASE}/api/report/${id}?locale=${locale}`, '_blank');
-    } else {
-      alert("ID do relatório não encontrado. Tente abrir pelo histórico.");
-    }
-  };
-
   const renderCellContent = (item: any, key: string, colDef: any) => {
     if (key === 'empresa') return <span className={`${colDef.color || 'text-slate-900'} font-bold`}>{item[key]?.toString().toUpperCase()}</span>;
     if (key === 'last_analysed_quarter') return <span className={colDef.color}>{formatPeriod(item[key], locale)}</span>;
@@ -461,6 +433,7 @@ export default function FinancialDashboard() {
           <NavItem icon={<LayoutDashboard />} label={t("nav.newAnalysis")} active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} collapsed={isSidebarCollapsed} />
           <NavItem icon={<TableIcon />} label={t("nav.aggregatedTable")} active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} collapsed={isSidebarCollapsed} />
           <NavItem icon={<History />} label={t("nav.history")} active={currentView === 'history'} onClick={() => handleNavClick('history')} collapsed={isSidebarCollapsed} />
+          <NavItem icon={<BookOpen />} label={t("nav.fullReports")} onClick={() => { setIsSidebarOpen(false); router.push(`/${locale}/dashboard/reports`); }} collapsed={isSidebarCollapsed} />
         </nav>
 
         {!isPremium && !isSidebarCollapsed && accessStatus === 'active' && (
@@ -728,9 +701,8 @@ export default function FinancialDashboard() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
               <button onClick={() => setCurrentView('history')} className="text-slate-500 hover:text-sky-700 flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-slate-100 group-hover:bg-slate-200 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">{t("result.backHistory")}</span></button>
               
-              <button onClick={handleDownload} className={`w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all ${!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? 'bg-gray-700 text-slate-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white'}`}>
-                {!isPremium && downloadCount >= WEEKLY_DOWNLOAD_LIMIT ? <Lock size={18} /> : <Download size={18} />}
-                {isPremium ? t('result.viewReport') : `${t('result.viewReport')} (${downloadCount}/${WEEKLY_DOWNLOAD_LIMIT})`}
+              <button onClick={() => result?.id && router.push(`/${locale}/dashboard/reports?analysisId=${encodeURIComponent(String(result.id))}`)} disabled={!result?.id} className="w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50">
+                <BookOpen size={18} /> {t('result.exploreFullReport')}
               </button>
             </div>
             

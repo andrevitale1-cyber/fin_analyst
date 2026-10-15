@@ -13,20 +13,20 @@ export default function PricingSection({ locale }: { locale: string }) {
         ["Unlimited AI analyses", "Understand key results without reading every page."],
         ["Compare companies", "Review differences to support your decisions."],
         ["Analyze earnings calls", "Bring call insights into your research."],
-        ["Download full reports", "Keep a copy of each finished analysis."],
+        ["Full report library", "Keep detailed research organized and easy to revisit."],
         ["No credit card required", "Explore full access before choosing a plan."],
       ]
     : [
         ["Análises de IA ilimitadas", "Entenda os principais resultados sem ler cada página."],
         ["Compare empresas", "Veja diferenças para apoiar suas decisões."],
         ["Analise earnings calls", "Inclua os insights das calls na sua pesquisa."],
-        ["Baixe relatórios completos", "Guarde uma cópia de cada análise concluída."],
+        ["Biblioteca de relatórios", "Mantenha sua pesquisa organizada e fácil de consultar."],
         ["Sem cartão de crédito", "Explore o acesso completo antes de escolher um plano."],
       ];
   const premiumFeatures = english
     ? [
         ["Unlimited AI analyses", "Get straight to the drivers, strengths and risks."],
-        ["Complete reports", "Read AI insights on screen or download the full report."],
+        ["Complete reports", "Explore the thesis, fundamentals, risks and sources in one place."],
         ["Unlimited analysis history", "Return to saved analyses whenever you need them."],
         ["Company comparisons", "Review companies side by side."],
         ["Documents and earnings calls", "Upload without limits and explore management’s outlook."],
@@ -34,7 +34,7 @@ export default function PricingSection({ locale }: { locale: string }) {
       ]
     : [
         ["Análises de IA ilimitadas", "Vá direto aos fatores, pontos fortes e riscos."],
-        ["Relatórios completos", "Leia a análise na tela ou baixe o relatório completo."],
+        ["Relatórios completos", "Explore a tese, os fundamentos, os riscos e as fontes em um só lugar."],
         ["Histórico de análises ilimitado", "Volte às análises salvas quando precisar."],
         ["Comparação de empresas", "Revise empresas lado a lado."],
         ["Documentos e earnings calls", "Envie arquivos sem limite e entenda as perspectivas da gestão."],

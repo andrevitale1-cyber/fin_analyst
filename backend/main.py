@@ -38,6 +38,7 @@ load_dotenv()
 
 from report_generator import router as report_router
 from call_analysis import without_key_moments
+from full_reports import router as full_reports_router, create_tables as create_full_report_tables, save_analysis_document
 from agents.auto_fetcher import AutoFetcher
 from agents.search_client import SearchError
 from agents.prompt_builder import PromptBuilder
@@ -49,6 +50,7 @@ stripe.api_key = os.getenv("STRIPE_API_KEY")
 app = FastAPI(title="API Analisador Financeiro")
 
 app.include_router(report_router)
+app.include_router(full_reports_router)
 app.include_router(x_bot_router)
 
 # --- CONFIGURAÇÃO DO CORS ---
@@ -134,10 +136,12 @@ def init_db():
             );
         ''')
 
+        create_full_report_tables(cur)
         conn.commit()
         print("[DB] Banco de dados inicializado com sucesso!")
     except Exception as e:
         print(f"[DB] Erro na inicializacao do banco: {e}")
+        raise
     finally:
         if cur:
             try: cur.close()
@@ -379,6 +383,7 @@ async def analyze_report(
         )
         inserted_id = cur.fetchone()[0]
         objeto_final["id"] = inserted_id
+        save_analysis_document(cur, inserted_id, visibility="private", title="Uploaded earnings release", pdf_bytes=contents)
         
         conn.commit()
         cur.close()
@@ -458,6 +463,8 @@ async def analyze_report_auto(
         )
         inserted_id = cur.fetchone()[0]
         objeto_final["id"] = inserted_id
+        save_analysis_document(cur, inserted_id, visibility="public", title=document.source, url=document.url,
+                               text=document.text, pdf_bytes=document.pdf_bytes)
         conn.commit()
         cur.close()
         
@@ -513,6 +520,7 @@ async def analyze_earnings_call_auto(
             saved_result = {key: value for key, value in result.items() if key != "source"}
             cur.execute("INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s) RETURNING id", (company, ano, trimestre, json.dumps(saved_result), str(user_id)))
             result["id"] = cur.fetchone()[0]
+            save_analysis_document(cur, result["id"], visibility="public", title=document.source, url=document.url, text=document.text)
             conn.commit()
             cur.close()
         finally:
@@ -577,6 +585,7 @@ async def analyze_earnings_call(
         )
         inserted_id = cur.fetchone()[0]
         objeto_final["id"] = inserted_id
+        save_analysis_document(cur, inserted_id, visibility="private", title="Uploaded call transcript", text=texto_transcricao)
         
         conn.commit()
         cur.close()

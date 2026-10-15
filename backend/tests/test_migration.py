@@ -304,7 +304,8 @@ def test_manual_auto_same_parser_and_saved_format(api, monkeypatch, openai_clien
     assert manual.json()["data"] == automatic.json()["data"]
     assert automatic.json()["source"]["name"] == "SEC"
     assert manual.json()["data"]["nota_geral"] == 4
-    saved = json.loads(conn.cursor.return_value.execute.call_args.args[1][3])
+    history_insert = next(call for call in reversed(conn.cursor.return_value.execute.call_args_list) if "INSERT INTO historico" in call.args[0])
+    saved = json.loads(history_insert.args[1][3])
     assert set(saved) == {"metadata", "data", "analise_completa"}
     assert analyze.call_args.kwargs["pdf_text"] == "SEC earnings"
 
