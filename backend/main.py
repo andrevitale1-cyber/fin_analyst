@@ -37,6 +37,7 @@ print = safe_print
 load_dotenv()
 
 from report_generator import router as report_router
+from call_analysis import without_key_moments
 from agents.auto_fetcher import AutoFetcher
 from agents.search_client import SearchError
 from agents.prompt_builder import PromptBuilder
@@ -505,7 +506,7 @@ async def analyze_earnings_call_auto(
         response_text = await asyncio.wait_for(asyncio.to_thread(
             OpenAIClient().analyze_transcript, prompt, document.text,
         ), timeout=180.0)
-        result = {"metadata": {"empresa": company, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call"}, "analise_completa": response_text, "data": {}, "source": {"name": document.source, "url": document.url}}
+        result = {"metadata": {"empresa": company, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call"}, "analise_completa": without_key_moments(response_text), "data": {}, "source": {"name": document.source, "url": document.url}}
         conn = get_db_connection()
         try:
             cur = conn.cursor()
@@ -563,7 +564,7 @@ async def analyze_earnings_call(
         
         objeto_final = {
             "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call" },
-            "analise_completa": response_text,
+            "analise_completa": without_key_moments(response_text),
             "data": {} 
         }
 
@@ -679,6 +680,8 @@ def get_history(user_id: str):
         for row in rows:
             try:
                 conteudo = json.loads(row[5])
+                if conteudo.get("metadata", {}).get("tipo") == "Earnings Call":
+                    conteudo["analise_completa"] = without_key_moments(conteudo.get("analise_completa", ""))
                 data_content = conteudo.get('data', {})
                 nota_raw = data_content.get("nota_geral", 0)
                 try: nota = float(str(nota_raw).replace(',', '.'))

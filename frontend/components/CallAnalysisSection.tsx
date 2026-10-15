@@ -27,7 +27,6 @@ const analysis = [
     "**Main business message:** Microsoft is leading in AI/cloud adoption at scale, with diversified demand, and is willing to trade near-term margin for long-term leadership and customer value.",
     "**Watchpoint:** Track supply chain and memory price risks, as well as the pace of capacity ramp and efficiency impacts on margins.",
   ] },
-  { title: "5. Key moments", paragraphs: ["The provided transcript contains no timestamps; precise timing could not be identified."] },
 ];
 
 export default function CallAnalysisSection({ locale }: { locale: string }) {

@@ -1,5 +1,6 @@
 """Offline regressions for earnings-call transcript discovery and analysis."""
 import importlib
+import json
 from pathlib import Path
 import sys
 from unittest.mock import Mock
@@ -179,16 +180,20 @@ def test_transcript_cache_avoids_second_search(tmp_path):
     assert again.fetch_transcript("Apple", "2026", "1T") == doc
 
 
-def test_call_prompt_is_localized_period_specific_and_reserves_timestamps_for_last_section():
+def test_call_prompt_is_localized_and_places_verified_timestamps_inline():
     builder = PromptBuilder()
     pt = builder.build_call_prompt("Apple", "1T/2026")
     en = builder.build_call_prompt("Apple", "1T/2026", locale="en")
     assert "Apple" in pt and "1T/2026" in pt and "Tom predominante:" in pt
-    assert "A transcrição fornecida não contém timestamps; não foi possível identificar a minutagem com precisão." in pt
     assert "Apple" in en and "1T/2026" in en and "Predominant tone:" in en
-    assert "The provided transcript contains no timestamps; precise timing could not be identified." in en
-    for prompt, last_section in ((pt, "5. Momentos principais"), (en, "5. Key moments")):
-        assert prompt.index("4. ") < prompt.index(last_section)
+    assert "imediatamente após essa informação" in pt
+    assert "immediately after that information" in en
+    assert "Quando não houver minutagem, omita" in pt
+    assert "When timing is unavailable, omit" in en
+    for prompt in (pt, en):
+        assert "**5." not in prompt
+        assert "[mm:ss]" in prompt and "[hh:mm:ss]" in prompt
+        assert "Never estimate from text position" in prompt or "Nunca estime pela posição do texto" in prompt
         assert "voice, emotion, or body language" in prompt or "voz, emoção ou linguagem corporal" in prompt
         assert "300–450" in prompt
         assert "Markdown **bold**" in prompt or "Markdown **negrito**" in prompt
@@ -205,13 +210,14 @@ def test_auto_transcript_route_keeps_body_out_of_prompt_and_sends_text_once(api,
     monkeypatch.setattr(AutoFetcher, "fetch_transcript", Mock(return_value=FetchedDocument(
         "https://apple.com/call", "Earnings Call Transcript", text=transcript,
     )))
-    analyze = Mock(return_value="Analysis")
+    analyze = Mock(return_value="Analysis [12:34]\n**5. Key moments**\nOld list")
     monkeypatch.setattr(OpenAIClient, "analyze_transcript", analyze)
     monkeypatch.setenv("OPENAI_API_KEY", "test-placeholder")
     response = client.post("/api/analyze-call-auto", data={
         "company": "Apple", "ano": "2026", "trimestre": "1T", "user_id": "test", "locale": "en",
     })
     assert response.status_code == 200
+    assert response.json()["analise_completa"] == "Analysis [12:34]"
     analyze.assert_called_once()
     prompt, text = analyze.call_args.args
     assert "Apple" in prompt and transcript not in prompt
@@ -228,6 +234,21 @@ def test_search_error_is_returned_as_502_not_not_found(api, monkeypatch):
     })
     assert response.status_code == 502
     assert response.json()["detail"] == "search unavailable"
+
+
+def test_saved_call_history_omits_retired_section_but_preserves_financial_reports(api, monkeypatch):
+    main, _ = api
+    conn = Mock()
+    call = {"metadata": {"tipo": "Earnings Call"}, "analise_completa": "Conclusion [12:34]\n**5. Key moments**\nOld list"}
+    report = {"metadata": {"tipo": "Financial Report"}, "analise_completa": "**5. Strategic outlook**\nKeep this"}
+    conn.cursor.return_value.fetchall.return_value = [
+        (1, "Example", "2026", "1Q", "2026-10-14", json.dumps(call)),
+        (2, "Example", "2026", "1Q", "2026-10-14", json.dumps(report)),
+    ]
+    monkeypatch.setattr(main, "get_db_connection", lambda: conn)
+    history = main.get_history("test-user")
+    assert history[0]["conteudo"]["analise_completa"] == "Conclusion [12:34]"
+    assert history[1]["conteudo"]["analise_completa"] == report["analise_completa"]
 
 
 def test_manual_transcript_route_extracts_and_sends_text_once(api, monkeypatch):

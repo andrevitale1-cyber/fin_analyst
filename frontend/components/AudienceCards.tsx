@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform, useReducedMotion, useInView } from "framer-motion";
-import type { Rive, LoopEvent } from "@rive-app/canvas";
 import useVideoPlayback from "./useVideoPlayback";
 import styles from "./AudienceCards.module.css";
 
@@ -10,8 +9,6 @@ const media = "/reference/clearstreet/";
 
 export default function AudienceCards({ locale }: { locale: string }) {
   const video = useRef<HTMLVideoElement>(null);
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const animation = useRef<Rive | null>(null);
   const section = useRef<HTMLElement>(null);
   const english = locale === "en";
   const [desktop, setDesktop] = useState(false);
@@ -30,36 +27,6 @@ export default function AudienceCards({ locale }: { locale: string }) {
     return () => query.removeEventListener("change", sync);
   }, []);
 
-  useEffect(() => {
-    let disposed = false;
-    let resize: ResizeObserver | undefined;
-    const observer = new IntersectionObserver(([entry]) => {
-      if (!entry.isIntersecting) return;
-      observer.disconnect();
-      void import("@rive-app/canvas").then(({ Rive, Layout, Fit, Alignment, RuntimeLoader }) => {
-        if (disposed || !canvas.current) return;
-        RuntimeLoader.setWasmUrl(media + "rive.wasm");
-        const instance = new Rive({
-          src: media + "services.riv",
-          canvas: canvas.current,
-          autoplay: true,
-          onLoop: event => { if (!disposed && (event.data as LoopEvent)?.type === "oneshot") { instance.reset(); instance.play(); } },
-          layout: new Layout({ fit: Fit.Cover, alignment: Alignment.Center }),
-          onLoad: () => {
-            if (disposed) return;
-            instance.resizeDrawingSurfaceToCanvas();
-            canvas.current?.setAttribute("data-ready", "true");
-            resize = new ResizeObserver(() => instance.resizeDrawingSurfaceToCanvas());
-            if (canvas.current) resize.observe(canvas.current);
-          },
-        });
-        animation.current = instance;
-      });
-    }, { rootMargin: "300px" });
-    if (section.current) observer.observe(section.current);
-    return () => { disposed = true; observer.disconnect(); resize?.disconnect(); animation.current?.cleanup(); animation.current = null; };
-  }, []);
-
   return <motion.section id="clients" ref={section} className={styles.section} style={reduce ? undefined : { opacity: exitOpacity }} aria-label={english ? "Who FinAnalyzer is for" : "Para quem é o FinAnalyzer"}>
     <div className={styles.grid}>
       <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><article className={styles.card}>
@@ -71,8 +38,8 @@ export default function AudienceCards({ locale }: { locale: string }) {
       </article></motion.div>
       <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><article className={styles.card}>
         <h2>Services</h2>
-        <div className={styles.visual} style={{ backgroundImage: `url(${media}services.jpg)`, backgroundSize: "cover", backgroundPosition: "center" }}>
-          <canvas ref={canvas} className={styles.canvas} aria-hidden="true" />
+        <div className={styles.visual}>
+          <img className={styles.video} src="/benefits/services-card.png" alt="" width="1600" height="1232" loading="lazy" />
         </div>
         <p>{english ? <><strong>Find reports, analyze results, and compare companies in one place.</strong> Automatic document search, AI analysis, fundamental scores, an aggregated table, and saved history help you spend less time reading and quickly revisit previous results.</> : <><strong>Encontre relatórios, analise resultados e compare empresas em um só lugar.</strong> Busca automática de documentos, análise por IA, notas dos fundamentos, tabela agregada e histórico salvo para gastar menos tempo lendo e consultar resultados anteriores com agilidade.</>}</p>
       </article></motion.div>

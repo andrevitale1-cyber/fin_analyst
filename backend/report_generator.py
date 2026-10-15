@@ -14,6 +14,7 @@ Frontend:   window.open(`${API_BASE}/api/report/${item.id}`, '_blank')
 import json, re, html as _h
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
+from call_analysis import without_key_moments
 
 router = APIRouter()
 
@@ -108,7 +109,7 @@ def _clean_md(text: str) -> str:
             body = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", body)
             body = body.replace("*", "")
             # Transforma os timestamps (ex: [12:34]) numa badge bonita
-            body = re.sub(r"(\[\d{1,2}:\d{2}\])", r"<span style='color:#7C3AED; font-weight:700; background:#F5F3FF; padding:2px 6px; border-radius:4px; font-family:monospace; font-size:12px;'>\1</span>", body)
+            body = re.sub(r"(\[\d{1,3}:\d{2}(?::\d{2})?\])", r"<span style='color:#7C3AED; font-weight:700; background:#F5F3FF; padding:2px 6px; border-radius:4px; font-family:monospace; font-size:12px;'>\1</span>", body)
             out.append(f"<li>{body}</li>")
             continue
         if in_ul:
@@ -117,7 +118,7 @@ def _clean_md(text: str) -> str:
             s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
             s = s.replace("*", "")
             # Transforma os timestamps (ex: [12:34]) numa badge bonita
-            s = re.sub(r"(\[\d{1,2}:\d{2}\])", r"<span style='color:#7C3AED; font-weight:700; background:#F5F3FF; padding:2px 6px; border-radius:4px; font-family:monospace; font-size:12px;'>\1</span>", s)
+            s = re.sub(r"(\[\d{1,3}:\d{2}(?::\d{2})?\])", r"<span style='color:#7C3AED; font-weight:700; background:#F5F3FF; padding:2px 6px; border-radius:4px; font-family:monospace; font-size:12px;'>\1</span>", s)
             out.append(s)
     if in_table: out.append("</tbody></table></div>")
     if in_ul: out.append("</ul>")
@@ -406,6 +407,8 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
     empresa = (meta.get("empresa") or ("Company" if en else "Empresa")).upper()
     periodo = meta.get("periodo") or ""
     is_call = meta.get("tipo") == "Earnings Call"
+    if is_call:
+        analise = without_key_moments(analise)
 
     rn  = _f(data.get("receita_nota", 0))
     ln  = _f(data.get("lucro_nota", 0))
