@@ -4,10 +4,11 @@ import { useAuth, UserButton } from "@clerk/nextjs";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, Check, ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, ChevronRight, Loader2, Search, Sparkles, TrendingUp } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, ChevronRight, Loader2, Search } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
+import CompanyReportReader from "./CompanyReportReader";
 import { splitBold } from "../lib/analysisText";
-import { formatMetricValue, formatReportMoney, formatReportNumber, type ReportMetric } from "../lib/reportNumbers";
+import { type ReportMetric } from "../lib/reportNumbers";
 import { calculateIllustrativeValue, type ValuationInputs } from "../lib/fullReportValuation";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api-finanalyzer.onrender.com";
@@ -21,13 +22,14 @@ const POPULAR_COMPANIES = [
 type SectionId = typeof SECTION_IDS[number];
 type CompanySectionId = typeof COMPANY_SECTION_IDS[number];
 type FullReportSection = { id: SectionId | CompanySectionId; title: string; summary: string; paragraphs: string[]; bullets: string[]; source_ids: string[] };
-type FullReport = {
+export type FullReport = {
   id: string; company: string; company_name?: string | null; symbol?: string | null; period: string; scope?: "company" | "period"; as_of?: string | null; locale: "en" | "pt"; kind: "report" | "transcript" | "company"; created_at: string; report_version?: string; score: number | null; is_public?: boolean;
   coverage: string; sections: FullReportSection[]; metrics: (ReportMetric & { label: string; value: string; group?: "scale" | "performance" | "valuation"; as_of?: string | null; source_id: string })[];
   signals?: { id: string; label: string; value: string; tone: "positive" | "neutral" | "negative" | "unknown"; source_ids: string[] }[];
   scorecard?: { id: string; label: string; score: number | null; reason: string; source_ids: string[] }[];
   tracking_metrics?: { label: string; expectation: string; status: string; source_ids: string[] }[];
-  breakdowns?: { category: "segment" | "geography"; label: string; value: string; share: number | null; source_id: string }[];
+  breakdowns?: import("../lib/reportBreakdowns").ReportBreakdown[];
+  analyst_consensus?: {rating: string | null; analyst_count: number | null; target_mean: number | null; target_low: number | null; target_high: number | null; bullish: number | null; neutral: number | null; bearish: number | null; currency: string | null; as_of: string | null; source_ids: string[]} | null;
   financial_history?: { period: string; currency: string | null; revenue: number | null; net_income: number | null; free_cash_flow: number | null; source_id: string }[];
   projections?: { period: string; currency: string | null; revenue: number | null; eps: number | null; basis: "management_guidance" | "analyst_consensus"; source_id: string }[];
   market?: { price: number | null; change_percent: number | null; currency: string | null; as_of: string | null; source_id: string | null };
@@ -66,67 +68,6 @@ function CompanyLogo({ symbol, company, small = false }: { symbol?: string | nul
   return safeSymbol && !failed
     ? <img src={companyLogoPath(safeSymbol)} alt="" width={48} height={48} onError={() => setFailed(true)} className={small ? "h-[18px] w-[18px] object-contain" : "h-12 w-12 rounded-xl object-contain"} />
     : <div aria-label={company} className={`flex items-center justify-center rounded-xl bg-sky-50 text-sky-800 ${small ? "h-[18px] w-[18px]" : "h-12 w-12"}`}><Building2 size={22} /></div>;
-}
-
-type CompanyTranslate = (key: string, values?: Record<string, string | number>) => string;
-
-function CompanyReportReader({ report, locale, t, onDashboard, onBack, onRefresh }: { report: FullReport; locale: string; t: CompanyTranslate; onDashboard: () => void; onBack: () => void; onRefresh: () => void }) {
-  const sectionById = new Map(report.sections.map(section => [section.id, section]));
-  const sourceById = new Map(report.sources.map(source => [source.id, source]));
-  const date = (value?: string | null) => value ? formatReportDate(value, locale) : "";
-  const sourceLink = (id?: string | null) => {
-    if (!id) return null;
-    const source = sourceById.get(id);
-    return source ? <a key={id} href={`#source-${encodeURIComponent(id)}`} title={source.title} aria-label={`${t("sources")}: ${source.title}`} className="ml-2 inline-flex align-middle text-xs font-semibold text-sky-800 underline decoration-sky-200 underline-offset-2 hover:text-sky-950">[{report.sources.indexOf(source) + 1}]</a> : null;
-  };
-  const sectionBody = (id: CompanySectionId) => {
-    const section = sectionById.get(id);
-    if (!section) return <p className="mt-3 text-sm text-slate-500">{t("companyNoSection")}</p>;
-    return <div className="mt-4"><p className="text-base leading-7 text-slate-700">{reportText(section.summary)}</p>{section.paragraphs.length > 0 && <div className="mt-4 space-y-4 font-serif text-[16px] leading-8 text-slate-700">{section.paragraphs.map((paragraph, index) => <p key={index}>{reportText(paragraph)}</p>)}</div>}{section.bullets.length > 0 && <ul className="mt-5 space-y-3">{section.bullets.map((bullet, index) => <li key={index} className="flex gap-3 text-sm leading-6 text-slate-700"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-600" /><span>{reportText(bullet)}</span></li>)}</ul>}{section.source_ids.length > 0 && <p className="mt-4">{section.source_ids.map(sourceLink)}</p>}</div>;
-  };
-  const sectionTitle = (id: CompanySectionId) => sectionById.get(id)?.title || t(`companySections.${id}`);
-  const groupLabels = ["scale", "performance", "valuation"] as const;
-  const groupedMetrics = groupLabels.map(group => ({ group, items: (report.metrics || []).filter(metric => metric.group === group) })).filter(item => item.items.length > 0);
-  const history = report.financial_history || [];
-  const maxRevenue = new Set(history.map(item => item.currency)).size === 1 ? Math.max(0, ...history.map(item => item.revenue || 0)) : 0;
-  const breakdowns = report.breakdowns || [];
-  const market = report.market;
-  const valuationScenarios = report.valuation.scenarios || [];
-  const signals = report.signals || [];
-  const scorecard = report.scorecard || [];
-  const companyName = report.company_name || report.company;
-  const ticker = report.company && report.company !== companyName ? report.company : "";
-  const money = (value: number | null | undefined, currency?: string | null) => formatReportMoney(value, currency, locale);
-  const tone = (value: string) => value === "positive" ? "border-emerald-100 bg-emerald-50 text-emerald-800" : value === "negative" ? "border-rose-100 bg-rose-50 text-rose-800" : value === "neutral" ? "border-slate-200 bg-slate-50 text-slate-700" : "border-amber-100 bg-amber-50 text-amber-800";
-  const scoreTone = (score: number | null) => score === null ? "bg-slate-100 text-slate-500" : score >= 4 ? "bg-emerald-50 text-emerald-800" : score <= 2 ? "bg-rose-50 text-rose-800" : "bg-amber-50 text-amber-800";
-
-  return <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm"><div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-5 py-3 md:px-8"><button onClick={onBack} className="inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-50"><ArrowLeft size={16} />{t("backToGallery")}</button>{report.report_version !== "company-v2" && <button onClick={onRefresh} className="rounded-lg bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-100">{t("refreshCompanyReport")}</button>}</div>
-    <header className="bg-[#0c1e35] px-5 py-8 text-white [&_a]:text-sky-200 md:px-10 md:py-11">
-      <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center"><div className="flex min-w-0 items-center gap-4"><img src={companyLogoPath(report.symbol || report.company)} alt="" width={64} height={64} onError={event => { event.currentTarget.style.display = "none"; }} className="h-14 w-14 shrink-0 rounded-2xl bg-white p-2 object-contain" /><div><p className="text-xs font-bold uppercase tracking-[.18em] text-sky-200">{t("companyOverview")}</p><h1 className="mt-1 text-3xl font-bold tracking-tight md:text-5xl">{companyName}</h1><div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-slate-300">{ticker && <span>{ticker}</span>}{report.as_of && <span>{t("companyAsOf", { date: date(report.as_of) })}</span>}</div></div></div>
-        <div className="flex flex-wrap items-center gap-3">{market?.price !== null && market?.price !== undefined && <div className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3"><p className="text-xs uppercase tracking-wide text-slate-300">{t("marketPrice")}</p><p className="mt-1 text-xl font-bold">{money(market.price, market.currency)}</p>{market.change_percent !== null && <p className={`text-xs ${market.change_percent >= 0 ? "text-emerald-300" : "text-rose-300"}`}>{market.change_percent > 0 ? "+" : ""}{formatReportNumber(market.change_percent, locale, false)}%</p>}</div>}{report.score !== null && <div className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3"><p className="text-xs uppercase tracking-wide text-slate-300">{t("qualityScore")}</p><p className="mt-1 text-2xl font-bold">{report.score}<span className="text-sm font-medium text-slate-300"> / 5</span></p></div>}</div></div>
-      {market?.source_id && <p className="mt-2 text-xs text-slate-400">{t("marketAsOf", { date: date(market.as_of) })}{sourceLink(market.source_id)}</p>}
-    </header>
-
-    {signals.length > 0 && <section aria-label={t("companyHighlights")} className="grid gap-3 border-b border-slate-100 bg-slate-50/50 p-5 sm:grid-cols-2 xl:grid-cols-3">{signals.map(signal => <div key={signal.id} className="rounded-xl border border-slate-200 bg-white p-4"><div className="flex items-center gap-2.5"><span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border ${tone(signal.tone)}`}>{signal.tone === "positive" ? <Check size={15} /> : signal.tone === "negative" ? <AlertCircle size={15} /> : <TrendingUp size={15} />}</span><p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">{signal.label}</p></div><p className="mt-3 text-sm font-medium leading-6 text-slate-800">{reportText(signal.value)}</p><p className="mt-3">{signal.source_ids.map(sourceLink)}</p></div>)}</section>}
-
-    <div className="grid lg:grid-cols-[210px_minmax(0,1fr)]"><nav aria-label={t("companyContents")} className="flex gap-1 overflow-x-auto border-b border-slate-100 p-3 lg:sticky lg:top-20 lg:block lg:h-fit lg:border-b-0 lg:border-r lg:p-4">{COMPANY_SECTION_IDS.map(id => <a key={id} href={`#company-section-${id}`} className="whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-sky-50 hover:text-sky-900 lg:mb-1 lg:block">{t(`companySections.${id}`)}</a>)}</nav>
-      <div className="min-w-0 divide-y divide-slate-100">
-        <section id="company-section-thesis" className="scroll-mt-24 p-6 md:p-9"><p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("companySections.thesis")}</p><h2 className="mt-2 font-serif text-2xl font-bold tracking-tight text-slate-950 md:text-3xl">{sectionTitle("thesis")}</h2><div className="mt-5 rounded-2xl border-l-4 border-sky-500 bg-sky-50/70 p-5 font-serif text-lg leading-8 text-slate-800">{sectionBody("thesis")}</div></section>
-        <section className="p-6 md:p-9">{(report.tracking_metrics || []).length > 0 && <div className="mt-8 overflow-x-auto rounded-2xl border border-slate-200"><table className="w-full min-w-[540px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">{t("trackingMetrics")}</th><th className="px-4 py-3">{t("expectation")}</th><th className="px-4 py-3">{t("status")}</th></tr></thead><tbody className="divide-y divide-slate-100">{report.tracking_metrics!.map((item, index) => <tr key={`${item.label}-${index}`}><th className="px-4 py-3 font-semibold">{item.label}{item.source_ids.map(sourceLink)}</th><td className="px-4 py-3">{item.expectation}</td><td className="px-4 py-3">{item.status}</td></tr>)}</tbody></table></div>}{scorecard.length > 0 && <div className="mt-8 rounded-2xl border border-slate-200 p-5"><h3 className="font-bold">{t("qualityScorecard")}</h3><ul className="mt-4 divide-y divide-slate-100">{scorecard.map(item => <li key={item.id} className="grid grid-cols-[52px_minmax(0,1fr)] items-start gap-x-4 gap-y-1 py-4 md:grid-cols-[60px_180px_minmax(0,1fr)]"><span className={`row-span-2 flex h-12 items-center justify-center rounded-xl text-lg font-bold md:row-span-1 ${scoreTone(item.score)}`}>{item.score === null ? "—" : <>{item.score}<span className="ml-0.5 text-xs font-medium opacity-70">/5</span></>}</span><span className="pt-0.5 text-sm font-semibold md:pt-3">{item.label}</span><div className="min-w-0 text-sm leading-6 text-slate-600"><p>{reportText(item.reason)}</p><p className="mt-1">{item.source_ids.map(sourceLink)}</p></div></li>)}</ul></div>}</section>
-        {groupedMetrics.length > 0 && <section className="p-6 md:p-9"><h2 className="font-serif text-2xl font-bold text-slate-950">{t("numbersAtGlance")}</h2>{groupedMetrics.length > 0 && <div className="mt-7 grid gap-4 md:grid-cols-3">{groupedMetrics.map(({ group, items }) => <div key={group} className="rounded-2xl bg-slate-50 p-4"><h3 className="text-xs font-bold uppercase tracking-wide text-slate-500">{t(`metricGroups.${group}`)}</h3><dl className="mt-3 space-y-3">{items.map((metric, index) => <div key={`${metric.label}-${index}`}><dt className="text-xs text-slate-500">{metric.label}{metric.as_of && ` · ${date(metric.as_of)}`}</dt><dd className="mt-1 font-bold text-slate-900">{formatMetricValue(metric, locale)}{sourceLink(metric.source_id)}</dd></div>)}</dl></div>)}</div>}</section>}
-        <section id="company-section-business" className="scroll-mt-24 p-6 md:p-9"><p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("companySections.business")}</p><h2 className="mt-2 font-serif text-2xl font-bold text-slate-950">{sectionTitle("business")}</h2>{sectionBody("business")}{breakdowns.length > 0 && <div className="mt-8 grid gap-6 xl:grid-cols-2">{(["segment", "geography"] as const).map(category => { const items = breakdowns.filter(item => item.category === category); return items.length ? <div key={category} className="rounded-2xl border border-slate-200 p-5"><h3 className="font-bold">{t(category === "segment" ? "segments" : "geography")}</h3>{items.some(item => item.share !== null) && <div className="mx-auto mt-5 flex h-36 w-36 items-center justify-center rounded-full" style={{ background: `conic-gradient(${items.map((item, index) => { const value = Math.max(0, Math.min(100, item.share || 0)); const previous = items.slice(0, index).reduce((sum, row) => sum + Math.max(0, Math.min(100, row.share || 0)), 0); const colors = ["#0284c7", "#38bdf8", "#7dd3fc", "#0f766e", "#34d399", "#64748b"]; return `${colors[index % colors.length]} ${previous}% ${previous + value}%`; }).join(", ")})` }}><div className="flex h-20 w-20 items-center justify-center rounded-full bg-white text-center text-xs font-semibold text-slate-500">{t("reportedMix")}</div></div>}<ul className="mt-4 space-y-2">{items.map((item, index) => <li key={`${item.label}-${index}`} className="flex items-start justify-between gap-3 border-b border-slate-100 pb-2 text-sm"><span>{item.label}</span><span className="text-right font-semibold">{item.value}{item.share !== null ? ` · ${item.share}%` : ""}{sourceLink(item.source_id)}</span></li>)}</ul></div> : null; })}</div>}</section>
-        <section id="company-section-financials" className="scroll-mt-24 p-6 md:p-9"><p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("companySections.financials")}</p><h2 className="mt-2 font-serif text-2xl font-bold text-slate-950">{sectionTitle("financials")}</h2>{sectionBody("financials")}{history.length > 0 && <div className="mt-8 overflow-hidden rounded-2xl border border-slate-200"><div className="border-b border-slate-100 px-4 py-3"><h3 className="font-bold">{t("financialHistory")}</h3><p className="text-xs text-slate-500">{t("historyChartNote")}</p></div><div className="overflow-x-auto"><table className="w-full min-w-[640px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">{t("period")}</th><th className="px-4 py-3">{t("revenue")}</th><th className="px-4 py-3">{t("netIncome")}</th><th className="px-4 py-3">{t("freeCashFlow")}</th><th className="px-4 py-3">{t("sources")}</th></tr></thead><tbody className="divide-y divide-slate-100">{history.map((row, index) => <tr key={`${row.period}-${index}`}><th className="px-4 py-3 font-semibold">{row.period}</th><td className="px-4 py-3"><div>{money(row.revenue, row.currency)}</div>{row.revenue !== null && maxRevenue > 0 && <div className="mt-1 h-1.5 w-full max-w-32 rounded bg-slate-100"><div className="h-1.5 rounded bg-sky-500" style={{ width: `${Math.max(0, Math.min(100, row.revenue / maxRevenue * 100))}%` }} /></div>}</td><td className="px-4 py-3">{money(row.net_income, row.currency)}</td><td className="px-4 py-3">{money(row.free_cash_flow, row.currency)}</td><td className="px-4 py-3">{sourceLink(row.source_id)}</td></tr>)}</tbody></table></div></div>}</section>
-        <section id="company-section-moat" className="scroll-mt-24 p-6 md:p-9"><p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("companySections.moat")}</p><h2 className="mt-2 font-serif text-2xl font-bold text-slate-950">{sectionTitle("moat")}</h2>{sectionBody("moat")}</section>
-        <section id="company-section-management" className="scroll-mt-24 p-6 md:p-9"><p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("companySections.management")}</p><h2 className="mt-2 font-serif text-2xl font-bold text-slate-950">{sectionTitle("management")}</h2>{sectionBody("management")}</section>
-        <section id="company-section-sentiment" className="scroll-mt-24 p-6 md:p-9"><p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("companySections.sentiment")}</p><h2 className="mt-2 font-serif text-2xl font-bold text-slate-950">{sectionTitle("sentiment")}</h2>{sectionBody("sentiment")}{market && <div className="mt-5 grid gap-3 sm:grid-cols-2">{market.price !== null && <div className="rounded-xl bg-slate-50 p-4"><p className="text-xs uppercase text-slate-500">{t("marketPrice")}</p><p className="mt-2 text-xl font-bold">{money(market.price, market.currency)}</p><p className="mt-1 text-xs text-slate-500">{date(market.as_of)}{sourceLink(market.source_id)}</p></div>}{market.change_percent !== null && <div className="rounded-xl bg-slate-50 p-4"><p className="text-xs uppercase text-slate-500">{t("marketChange")}</p><p className="mt-2 text-xl font-bold">{market.change_percent > 0 ? "+" : ""}{formatReportNumber(market.change_percent, locale, false)}%</p><p className="mt-1 text-xs text-slate-500">{date(market.as_of)}{sourceLink(market.source_id)}</p></div>}</div>}</section>
-        <section id="company-section-outlook" className="scroll-mt-24 p-6 md:p-9"><p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("companySections.outlook")}</p><h2 className="mt-2 font-serif text-2xl font-bold text-slate-950">{sectionTitle("outlook")}</h2>{sectionBody("outlook")}{(report.projections || []).length > 0 && <div className="mt-7 overflow-x-auto rounded-2xl border border-slate-200"><table className="w-full min-w-[560px] text-left text-sm"><thead className="bg-slate-50 text-xs uppercase text-slate-500"><tr><th className="px-4 py-3">{t("period")}</th><th className="px-4 py-3">{t("revenue")}</th><th className="px-4 py-3">EPS</th><th className="px-4 py-3">{t("basis")}</th><th className="px-4 py-3">{t("sources")}</th></tr></thead><tbody className="divide-y divide-slate-100">{report.projections!.map((row, index) => <tr key={`${row.period}-${index}`}><th className="px-4 py-3 font-semibold">{row.period}</th><td className="px-4 py-3">{money(row.revenue, row.currency)}</td><td className="px-4 py-3">{money(row.eps, row.currency)}</td><td className="px-4 py-3">{t(row.basis === "management_guidance" ? "managementGuidance" : "analystConsensus")}</td><td className="px-4 py-3">{sourceLink(row.source_id)}</td></tr>)}</tbody></table></div>}</section>
-        <section id="company-section-risks" className="scroll-mt-24 p-6 md:p-9"><p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("companySections.risks")}</p><h2 className="mt-2 font-serif text-2xl font-bold text-slate-950">{sectionTitle("risks")}</h2>{sectionBody("risks")}{report.watchpoints.length > 0 && <ul className="mt-6 space-y-3 rounded-2xl border border-amber-100 bg-amber-50/50 p-5">{report.watchpoints.map((item, index) => <li key={index} className="flex gap-3 text-sm leading-6 text-slate-700"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />{reportText(item)}</li>)}</ul>}</section>
-        <section id="company-section-valuation" className="scroll-mt-24 p-6 md:p-9"><p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("companySections.valuation")}</p><h2 className="mt-2 font-serif text-2xl font-bold text-slate-950">{sectionTitle("valuation")}</h2>{sectionBody("valuation")}<p className="mt-4 text-sm leading-6 text-slate-500">{report.valuation.available ? t("companyScenarioNote") : report.valuation.reason || t("valuationUnavailable")}</p>{report.valuation.fair_value !== null && report.valuation.fair_value !== undefined && <p className="mt-5 rounded-xl bg-sky-50 p-4 text-sm text-slate-700">{t("fairValue")}: <strong>{money(report.valuation.fair_value, report.valuation.currency)}</strong>{report.valuation.source_id && sourceLink(report.valuation.source_id)}</p>}{valuationScenarios.length > 0 && <div className="mt-7 grid gap-4 md:grid-cols-3">{valuationScenarios.map(item => <div key={item.case} className="rounded-2xl border border-slate-200 p-5"><h3 className="font-bold capitalize">{t(`scenarios.${item.case}`)}</h3><p className="mt-1 text-xs text-slate-500">{item.rationale}</p><dl className="mt-4 space-y-2 text-sm"><div className="flex justify-between gap-3"><dt>{t("futureValue")}</dt><dd className="font-semibold">{money(item.future_value, report.valuation.currency)}</dd></div><div className="flex justify-between gap-3"><dt>{t("presentValue")}</dt><dd className="font-semibold">{money(item.present_value, report.valuation.currency)}</dd></div><div className="flex justify-between gap-3"><dt>{t("growthAssumption")}</dt><dd>{item.growth_percent}%</dd></div><div className="flex justify-between gap-3"><dt>P/E</dt><dd>{item.pe_multiple}</dd></div><div className="flex justify-between gap-3"><dt>{t("discountAssumption")}</dt><dd>{item.discount_percent}%</dd></div></dl>{report.valuation.source_id && <p className="mt-3">{sourceLink(report.valuation.source_id)}</p>}</div>)}</div>}</section>
-        <section id="company-section-verdict" className="scroll-mt-24 p-6 md:p-9"><p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("companySections.verdict")}</p><h2 className="mt-2 font-serif text-2xl font-bold text-slate-950">{sectionTitle("verdict")}</h2>{sectionBody("verdict")}</section>
-        <section className="p-6 md:p-9"><h2 className="font-serif text-2xl font-bold text-slate-950">{t("sources")}</h2><ol className="mt-5 grid gap-3 md:grid-cols-2">{report.sources.map((source, index) => <li id={`source-${encodeURIComponent(source.id)}`} key={source.id} className="scroll-mt-28 rounded-xl border border-slate-200 bg-slate-50 p-4"><span className="mr-2 text-xs font-bold text-sky-800">[{index + 1}]</span>{source.url && /^https?:\/\//i.test(source.url) ? <a href={source.url} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-slate-800 underline decoration-slate-300 underline-offset-4 hover:text-sky-800">{source.title}</a> : <span className="text-sm font-semibold text-slate-800">{source.title}</span>}</li>)}</ol><button onClick={onDashboard} className="mt-8 inline-flex items-center gap-2 rounded-xl bg-sky-700 px-5 py-3 text-sm font-bold text-white hover:bg-sky-800"><TrendingUp size={17} />{t("analyzeSpecificResult")}</button></section>
-      </div>
-    </div>
-  </article>;
 }
 
 export default function FullReports() {
@@ -228,6 +169,13 @@ export default function FullReports() {
     setLibraryOwnerId(null);
     setReused(false);
 
+    const refreshLibrary = async (optional = false) => {
+      const list = await loadLibrary(controller.signal).catch(cause => {
+        if (!optional) throw cause;
+        return null;
+      });
+      if (list && sequence === sequenceRef.current) { setReports(list.reports || []); setLibraryOwnerId(userId); }
+    };
     const run = async () => {
       try {
         if (target.type === "generate") {
@@ -249,8 +197,7 @@ export default function FullReports() {
           setReport(result.report);
           setReportOwnerId(userId);
           setReused(result.reused);
-          const list = await loadLibrary(controller.signal);
-          if (sequence === sequenceRef.current) { setReports(list.reports || []); setLibraryOwnerId(userId); }
+          await refreshLibrary(true);
         } else if (target.type === "company") {
           const company = target.company.trim();
           if (!company || company.length > 100 || /[\u0000-\u001f]/.test(company)) throw new Error(t("invalidCompany"));
@@ -260,7 +207,7 @@ export default function FullReports() {
             pending = (async () => {
               const response = await authorizedFetch("/api/full-reports/company", {
                 method: "POST", body: JSON.stringify({ company, locale }),
-              }, 240_000);
+              }, 330_000);
               return readJson<{ report: FullReport; reused: boolean }>(response);
             })();
             generationRef.current.set(key, pending);
@@ -269,16 +216,12 @@ export default function FullReports() {
           const result = await pending;
           if (sequence !== sequenceRef.current) return;
           setReport(result.report); setReportOwnerId(userId); setReused(result.reused);
-          const list = await loadLibrary(controller.signal);
-          if (sequence === sequenceRef.current) { setReports(list.reports || []); setLibraryOwnerId(userId); }
         } else if (target.type === "saved") {
           const result = await openReport(target.reportId, controller.signal);
           if (sequence === sequenceRef.current) { setReport(result.report); setReportOwnerId(userId); setActiveSection("thesis"); setReused(true); }
-          const list = await loadLibrary(controller.signal);
-          if (sequence === sequenceRef.current) { setReports(list.reports || []); setLibraryOwnerId(userId); }
+          await refreshLibrary(true);
         } else {
-          const list = await loadLibrary(controller.signal);
-          if (sequence === sequenceRef.current) { setReports(list.reports || []); setLibraryOwnerId(userId); }
+          await refreshLibrary();
         }
       } catch (cause) {
         if (controller.signal.aborted || sequence !== sequenceRef.current) return;
@@ -321,7 +264,7 @@ export default function FullReports() {
   const formatDate = (value: string) => formatReportDate(value, locale);
   const selectSavedReport = (id: string) => {
     const saved = visibleReports.find(item => item.id === id);
-    if (saved?.scope === "company" && saved.report_version !== "company-v2") { generateCompany(saved.company); return; }
+    if (saved?.scope === "company" && saved.report_version !== "company-v3") { generateCompany(saved.company); return; }
     setTarget({ type: "saved", reportId: id });
     setReused(false);
     router.replace(`/${locale}/dashboard/reports?reportId=${encodeURIComponent(id)}`);
@@ -343,7 +286,7 @@ export default function FullReports() {
   const choosePopularCompany = (company: string) => {
     const normalized = company.trim().toLocaleUpperCase();
     const cached = visibleReports.find(item => item.scope === "company" && item.locale === locale && (item.company.toLocaleUpperCase() === normalized || item.company_name?.toLocaleUpperCase() === normalized));
-    if (cached?.report_version === "company-v2") { selectSavedReport(cached.id); return; }
+    if (cached?.report_version === "company-v3") { selectSavedReport(cached.id); return; }
     generateCompany(company);
   };
   const submitCompanySearch = (event: FormEvent) => {
@@ -387,7 +330,7 @@ export default function FullReports() {
         </div>
       </section>}
 
-      <div className={`mx-auto grid max-w-[1440px] gap-6 px-4 py-6 md:px-8 lg:py-9 ${visibleReport && visibleReport.scope !== "company" ? "lg:grid-cols-[290px_minmax(0,1fr)]" : ""}`}>
+      <div className={`mx-auto grid max-w-[1440px] gap-6 ${visibleReport?.scope === "company" ? "px-0 py-0 sm:px-8 sm:py-9" : "px-4 py-6 md:px-8 lg:py-9"} ${visibleReport && visibleReport.scope !== "company" ? "lg:grid-cols-[290px_minmax(0,1fr)]" : ""}`}>
         {visibleReport && visibleReport.scope !== "company" && <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-24">
           <button onClick={returnToGallery} className="mb-4 flex w-full items-center gap-2 rounded-xl bg-sky-50 px-3 py-2.5 text-sm font-semibold text-sky-900 hover:bg-sky-100"><ArrowLeft size={16} />{t("backToGallery")}</button>
           <div className="flex items-center justify-between px-2 pb-3"><div><p className="text-xs font-bold uppercase tracking-[.14em] text-sky-800">{t("libraryEyebrow")}</p><h2 className="mt-1 text-lg font-bold">{t("libraryTitle")}</h2></div><span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{filteredReports.length}</span></div>
@@ -406,7 +349,7 @@ export default function FullReports() {
             {publicPeriodReports.length > 0 && <section><div className="mb-5"><h2 className="text-xl font-bold text-slate-900">{t("periodReports")}</h2><p className="mt-1 text-sm text-slate-500">{t("periodReportsDescription")}</p></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{publicPeriodReports.map(item => reportCard(item, true))}</div></section>}
             {privateReports.length > 0 && <section><div className="mb-4"><h2 className="text-xl font-bold text-slate-900">{t("yourPrivateReports")}</h2><p className="mt-1 text-sm text-slate-500">{t("privateDescription")}</p></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{privateReports.map(item => reportCard(item, false))}</div></section>}
           </div>}
-          {visibleReport?.scope === "company" && <CompanyReportReader report={visibleReport} locale={locale} t={t} onBack={returnToGallery} onRefresh={() => generateCompany(visibleReport.company)} onDashboard={() => router.push(`/${locale}/dashboard?company=${encodeURIComponent(visibleReport.company)}`)} />}
+          {visibleReport?.scope === "company" && <CompanyReportReader report={visibleReport} locale={locale} t={t} logoPath={companyLogoPath} formatDate={formatDate} onBack={returnToGallery} onRefresh={() => generateCompany(visibleReport.company)} onDashboard={() => router.push(`/${locale}/dashboard?company=${encodeURIComponent(visibleReport.company)}`)} />}
           {visibleReport && visibleReport.scope !== "company" && <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-6 pt-5 md:px-10"><button onClick={returnToGallery} className="mb-4 inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-50"><ArrowLeft size={16} />{t("backToGallery")}</button></div>
             <div className="border-b border-slate-100 bg-gradient-to-br from-white via-white to-sky-50/80 p-6 md:p-10">

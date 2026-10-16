@@ -270,6 +270,31 @@
     "companyScenarioNote": "Illustrative five-year scenarios use AI assumptions for EPS growth, P/E and discount rates. They are separate from sourced management guidance and analyst consensus.",
     "numbersAtGlance": "Numbers at a glance",
     "companyHighlights": "Company highlights",
-    "refreshCompanyReport": "Update company research"
+    "refreshCompanyReport": "Update company research",
+    "qualityAssessment": "The factors below assess business quality and resilience.",
+    "geographyMap": "Company revenue by geography",
+    "totalRevenue": "TOTAL",
+    "analystTarget": "Average analyst target",
+    "lowTarget": "Low",
+    "highTarget": "High",
+    "analystCount": "{count} analysts",
+    "versusCurrentPrice": "vs. current price",
+    "bearishAnalysts": "Bearish",
+    "neutralAnalysts": "Neutral",
+    "bullishAnalysts": "Bullish",
+    "scenarioAssumptions": "What needs to happen",
+    "readingTools": "Reading preferences",
+    "readingHighlights": "Highlight key insights",
+    "readingSerif": "Serif font",
+    "readingSans": "Sans-serif font",
+    "readingSmaller": "Smaller text",
+    "readingLarger": "Larger text",
+    "readAssessment": "View assessment",
+    "signalTone": {
+      "positive": "Favorable",
+      "neutral": "Balanced",
+      "negative": "Unfavorable",
+      "unknown": "Not assessed"
+    }
   }
 }

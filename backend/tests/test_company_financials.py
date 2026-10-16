@@ -153,3 +153,61 @@ def test_redirect_and_non_annual_or_invalid_values_never_become_evidence(monkeyp
 
     monkeypatch.setattr(financials.requests, "get", lambda *args, **kwargs: Redirect())
     assert financials.get_sec_company_source("EXM", "2024-12-31") is None
+
+
+@pytest.mark.parametrize("revenue, expected", [(100, (-20, 60, -10)), (0, None), (-100, None)])
+def test_calculated_margins_preserve_losses_and_skip_nonpositive_revenue(monkeypatch, revenue, expected):
+    start, end, filed = "2023-01-01", "2023-12-31", "2024-02-01"
+    entries = {"Revenues": [fact(revenue, start, end, filed)],
+               "OperatingIncomeLoss": [fact(-20, start, end, filed)],
+               "GrossProfit": [fact(60, start, end, filed)],
+               "NetCashProvidedByUsedInOperatingActivities": [fact(5, start, end, filed)],
+               "PaymentsToAcquirePropertyPlantAndEquipment": [fact(15, start, end, filed)]}
+    install_sec(monkeypatch, payload(entries))
+    source = financials.get_sec_company_source("EXM", "2024-12-31")
+    row = source["annual_financials"][0]
+    names = ("Operating margin (calculated)", "Gross margin (calculated)", "Free cash flow margin (calculated)")
+    if expected is None:
+        assert not any(name in row["values"] for name in names)
+    else:
+        assert tuple(row["values"][name] for name in names) == expected
+        assert all(row["value_units"][name] == "percent" for name in names)
+        assert "Operating margin (calculated) percent -20" in source["text"]
+        assert "Free cash flow margin (calculated) percent -10" in source["text"]
+    assert "ROIC" not in row["values"]
+
+
+def test_margins_require_same_currency_and_exact_annual_period(monkeypatch):
+    end, filed = "2023-12-31", "2024-02-01"
+    entries = {"Revenues": [fact(100, "2023-01-01", end, filed)],
+               "OperatingIncomeLoss": [fact(20, "2023-01-01", end, filed, unit="CAD")],
+               "GrossProfit": [fact(60, "2023-02-01", end, filed)],
+               "NetCashProvidedByUsedInOperatingActivities": [fact(25, "2023-01-01", end, filed)],
+               "PaymentsToAcquirePropertyPlantAndEquipment": [fact(15, "2023-02-01", end, filed)]}
+    install_sec(monkeypatch, payload(entries))
+    source = financials.get_sec_company_source("EXM", "2024-12-31")
+    assert not source["annual_financials"][0]["value_units"]
+    assert "margin (calculated)" not in source["text"]
+    assert "Free cash flow (calculated)" not in source["text"]
+
+
+def test_revenue_cagr_uses_elapsed_years_not_observation_count(monkeypatch):
+    entries = {"Revenues": [fact(100 * 1.1 ** index, f"{year}-01-01", f"{year}-12-31", f"{year+1}-02-01")
+                             for index, year in enumerate(range(2020, 2025))]}
+    install_sec(monkeypatch, payload(entries))
+    source = financials.get_sec_company_source("EXM", "2025-12-31")
+    cagr = source["annual_financials"][0]["revenue_cagr"]
+    assert cagr == {"start_period": "2020-12-31", "end_period": "2024-12-31", "years": 4,
+                    "numeric_value": 10, "unit": "percent"}
+    assert "over 4 elapsed years: percent 10" in source["text"]
+    assert "5-year" not in source["text"]
+
+
+@pytest.mark.parametrize("first,last,currency", [(0, 100, "USD"), (-100, 100, "USD"), (100, -10, "USD"), (100, 200, "CAD")])
+def test_revenue_cagr_omits_invalid_baselines_losses_and_currency_changes(monkeypatch, first, last, currency):
+    entries = {"Revenues": [fact(first, "2022-01-01", "2022-12-31", "2023-02-01"),
+                             fact(last, "2023-01-01", "2023-12-31", "2024-02-01", unit=currency)]}
+    install_sec(monkeypatch, payload(entries))
+    source = financials.get_sec_company_source("EXM", "2024-12-31")
+    assert not any("revenue_cagr" in row for row in source["annual_financials"])
+    assert "Revenue CAGR" not in source["text"]

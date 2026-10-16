@@ -20,7 +20,7 @@ from company_research import collect_company_sources
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
-COMPANY_REPORT_VERSION = "company-v2"
+COMPANY_REPORT_VERSION = "company-v3"
 logger = logging.getLogger(__name__)
 
 
@@ -121,7 +121,7 @@ def generation_failure(exc, locale, *, analysis_id=None, company=None):
     validation = []
     if isinstance(exc, ValidationError):
         fields = {"coverage", "score", "sections", "metrics", "watchpoints", "valuation", "market",
-                  "signals", "scorecard", "tracking_metrics", "breakdowns", "financial_history", "projections"}
+                  "signals", "scorecard", "tracking_metrics", "breakdowns", "financial_history", "projections", "analyst_consensus"}
         validation = [{"field": item["loc"][0] if item["loc"] and item["loc"][0] in fields else "other",
                        "type": item["type"]} for item in exc.errors(include_input=False, include_url=False)]
     elif isinstance(exc, ReportValidationError):
@@ -168,7 +168,7 @@ def company_evidence(company, model, as_of, client):
     conn = connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("SET LOCAL lock_timeout = '190s'")
+            cur.execute("SET LOCAL lock_timeout = '260s'")
             cur.execute("SELECT pg_advisory_xact_lock(%s)", (int.from_bytes(bytes.fromhex(key)[:8], "big", signed=True),))
             cur.execute("SELECT content FROM company_research_cache WHERE cache_key=%s", (key,))
             existing = cur.fetchone()
@@ -221,7 +221,7 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
     conn = connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("SET LOCAL lock_timeout = '190s'")
+            cur.execute("SET LOCAL lock_timeout = '260s'")
             cur.execute("SELECT pg_advisory_xact_lock(%s)", (int.from_bytes(bytes.fromhex(key)[:8], "big", signed=True),))
             cur.execute("SELECT content,is_public FROM full_reports WHERE cache_key=%s", (key,))
             existing = cur.fetchone()

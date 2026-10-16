@@ -187,6 +187,11 @@ def test_sec_units_are_recovered_only_for_known_annual_metrics_with_unique_perio
     assert validate_company_report(raw, sources)["metrics"][0]["numeric_value"] is None
     raw["metrics"][0].update(label="Receita", source_id="S1")
     assert validate_company_report(raw, sources)["metrics"][0]["numeric_value"] is None
+    source["annual_financials"][0]["values"]["Operating margin (calculated)"] = -20
+    source["annual_financials"][0]["value_units"] = {"Operating margin (calculated)": "percent"}
+    raw["metrics"][0].update(label="Margem operacional", source_id="F1")
+    metric = validate_company_report(raw, sources)["metrics"][0]
+    assert metric["numeric_value"] == -20 and metric["unit"] == "percent" and metric["currency"] is None
 
 
 def test_score_is_server_mean_of_at_least_three_supported_ratings():
@@ -267,3 +272,70 @@ def test_scenario_numeric_bounds_and_market_price_are_enforced():
     raw["market"]["price"] = -1
     with pytest.raises(ValueError, match="positive"):
         validate_company_report(raw, [{"id": "S1", "basis": "primary", "text": "Full-year EPS was USD 2.50."}])
+
+
+def geography_report(shares, *, complete=False):
+    raw = valid_report()
+    raw["breakdowns"] = [
+        {"category": "geography", "label": label, "value": "Reported revenue", "share": share,
+         "source_id": "S1", "period": "FY2025", "group_complete": complete}
+        for label, share in zip(("Domestic", "International"), shares)]
+    return raw
+
+
+def test_complete_fraction_group_is_normalized_to_percentage_points_only_once():
+    source = [{"id": "S1", "text": "Domestic and international exhaust annual revenue."}]
+    raw = geography_report([0.515, 0.485], complete=True)
+    result = validate_company_report(raw, source)
+    assert [row["share"] for row in result["breakdowns"]] == [51.5, 48.5]
+    assert [row["share"] for row in validate_company_report(result, source)["breakdowns"]] == [51.5, 48.5]
+    for shares, complete in (([0.515, 0.485], False), ([0.5, 10], True), ([0.5], True), ([51.5, 48.5], True)):
+        raw = geography_report(shares, complete=complete)
+        assert [row["share"] for row in validate_company_report(raw, source)["breakdowns"]] == shares
+
+
+def test_breakdown_shares_can_be_recovered_from_matching_complete_currency_revenue():
+    source = [{"id": "S1", "text": "FY2025 domestic revenue USD 5.15; international USD 4.85; total USD 10."}]
+    raw = geography_report([None, None])
+    for row, value in zip(raw["breakdowns"], (5.15, 4.85)):
+        row.update(numeric_value=value, currency="USD")
+    result = validate_company_report(raw, source)
+    assert [row["share"] for row in result["breakdowns"]] == [51.5, 48.5]
+    for invalid in ({"currency": "CAD"}, {"period": "FY2024"}, {"numeric_value": 1.0}):
+        raw["breakdowns"][0].update(invalid)
+        assert all(row["share"] is None for row in validate_company_report(raw, source)["breakdowns"])
+        raw["breakdowns"][0].update(numeric_value=5.15, currency="USD", period="FY2025")
+
+
+def test_breakdown_currency_and_amount_are_validated_without_guessing():
+    for invalid in ({"numeric_value": float("nan"), "currency": "USD"},
+                    {"numeric_value": -5, "currency": "USD"}, {"numeric_value": 5}, {"currency": "USD"}):
+        raw = geography_report([51.5, 48.5])
+        raw["breakdowns"][0].update(invalid)
+        with pytest.raises(ValueError):
+            validate_company_report(raw, [{"id": "S1", "text": "Reported facts."}])
+
+
+def test_dated_cited_analyst_consensus_supports_partial_values_and_no_invented_counts():
+    raw = valid_report()
+    raw["analyst_consensus"] = {"rating": "Buy", "target_mean": 500, "currency": "USD",
+                                "as_of": "2026-10-15", "source_ids": ["S1"]}
+    result = validate_company_report(raw, [{"id": "S1", "text": "Dated market provider consensus."}])
+    consensus = result["analyst_consensus"]
+    assert consensus["target_mean"] == 500 and consensus["analyst_count"] is None
+    assert consensus["bullish"] is None and consensus["target_low"] is None
+    raw["analyst_consensus"] = {}
+    assert validate_company_report(raw, [{"id": "S1", "text": "Annual report."}])["analyst_consensus"] is None
+
+
+@pytest.mark.parametrize("invalid", [
+    {"source_ids": []}, {"source_ids": ["UNKNOWN"]}, {"as_of": None}, {"as_of": "FY2026"},
+    {"currency": None}, {"target_mean": float("inf")}, {"target_low": 600},
+    {"analyst_count": 10, "bullish": 9, "neutral": 2, "bearish": 0}, {"bullish": -1},
+])
+def test_analyst_consensus_rejects_uncited_undated_inconsistent_values(invalid):
+    raw = valid_report()
+    raw["analyst_consensus"] = {"rating": "Buy", "target_mean": 500, "currency": "USD",
+                                "as_of": "2026-10-15", "source_ids": ["S1"], **invalid}
+    with pytest.raises(ValueError):
+        validate_company_report(raw, [{"id": "S1", "text": "Dated market consensus."}])

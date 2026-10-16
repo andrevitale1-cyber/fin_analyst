@@ -128,14 +128,14 @@ class OpenAIClient:
         except (ValueError, TypeError):
             raise OpenAIError("A IA retornou um relatório inválido.", code="invalid_json") from None
 
-    def research_company(self, prompt):
+    def research_company(self, prompt, *, max_tool_calls=4, max_output_tokens=4000, timeout=70):
         with self._client() as client:
             return self._request(client, "responses", json={
                 "model": self.model, "input": prompt,
                 "tools": [{"type": "web_search", "search_context_size": "low"}],
-                "tool_choice": "required", "max_tool_calls": 4,
-                "max_output_tokens": 4000, "store": False,
-            }, timeout=70)
+                "tool_choice": "required", "max_tool_calls": max_tool_calls,
+                "max_output_tokens": max_output_tokens, "store": False,
+            }, timeout=timeout)
 
     @staticmethod
     def extract_text(pdf_bytes):

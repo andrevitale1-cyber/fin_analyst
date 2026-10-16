@@ -270,6 +270,31 @@
     "companyScenarioNote": "Cenários ilustrativos de cinco anos usam premissas da IA para crescimento do lucro por ação, P/L e desconto. Eles são separados do guidance da gestão e do consenso de analistas citados.",
     "numbersAtGlance": "Indicadores em resumo",
     "companyHighlights": "Destaques da empresa",
-    "refreshCompanyReport": "Atualizar análise da empresa"
+    "refreshCompanyReport": "Atualizar análise da empresa",
+    "qualityAssessment": "Os fatores abaixo resumem a qualidade do negócio e a resiliência da companhia.",
+    "geographyMap": "Distribuição geográfica da receita da empresa",
+    "totalRevenue": "TOTAL",
+    "analystTarget": "Preço-alvo médio dos analistas",
+    "lowTarget": "Mínimo",
+    "highTarget": "Máximo",
+    "analystCount": "{count} analistas",
+    "versusCurrentPrice": "vs. preço atual",
+    "bearishAnalysts": "Pessimistas",
+    "neutralAnalysts": "Neutros",
+    "bullishAnalysts": "Otimistas",
+    "scenarioAssumptions": "O que precisa acontecer",
+    "readingTools": "Preferências de leitura",
+    "readingHighlights": "Destacar os principais pontos",
+    "readingSerif": "Fonte com serifa",
+    "readingSans": "Fonte sem serifa",
+    "readingSmaller": "Diminuir texto",
+    "readingLarger": "Aumentar texto",
+    "readAssessment": "Ver avaliação",
+    "signalTone": {
+      "positive": "Favorável",
+      "neutral": "Equilibrado",
+      "negative": "Desfavorável",
+      "unknown": "Não avaliado"
+    }
   }
 }

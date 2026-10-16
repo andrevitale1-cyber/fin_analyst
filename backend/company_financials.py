@@ -26,6 +26,8 @@ _TAGS = {
     "Noncurrent long-term debt": ("LongTermDebtNoncurrent",),
 }
 _INSTANT = {"Cash and cash equivalents", "Current long-term debt", "Noncurrent long-term debt"}
+_MARGINS = {"Operating margin (calculated)": "Operating income", "Gross margin (calculated)": "Gross profit",
+            "Free cash flow margin (calculated)": "Free cash flow (calculated)"}
 
 
 def _get_json(url):
@@ -84,12 +86,13 @@ def _annual_facts(payload, as_of):
                     value = entry.get("val")
                     if not _number(value):
                         continue
-                    period = periods.setdefault(end, {"filed": {}, "values": {}})
+                    period = periods.setdefault(end, {"filed": {}, "values": {}, "starts": {}})
                     # Restatements replace earlier reports for that period, regardless of fiscal year label.
                     key = (label, unit)
                     if filed > period["filed"].get(key, ""):
                         period["filed"][key] = filed
                         period["values"][key] = value
+                        period["starts"][key] = start
     return periods
 
 
@@ -147,8 +150,17 @@ def get_sec_company_source(symbol, as_of):
                 if metric is not None:
                     values[label] = metric
             ocf, capex = values.get("Operating cash flow"), values.get("Capital expenditures")
-            if ocf is not None and capex is not None:
+            starts = {label: period["starts"].get((label, currency)) for label in _TAGS}
+            if ocf is not None and capex is not None and starts["Operating cash flow"] == starts["Capital expenditures"]:
                 values["Free cash flow (calculated)"] = ocf - capex
+                starts["Free cash flow (calculated)"] = starts["Operating cash flow"]
+            revenue = values.get("Revenue")
+            if revenue is not None and revenue > 0:
+                for label, numerator in _MARGINS.items():
+                    if numerator in values and starts[numerator] == starts["Revenue"]:
+                        margin = values[numerator] / revenue * 100
+                        if math.isfinite(margin):
+                            values[label] = round(margin, 6)
             if values:
                 latest_filed = max(period["filed"].values())
                 history.append((end, latest_filed, currency, values))
@@ -162,20 +174,41 @@ def get_sec_company_source(symbol, as_of):
             lines.append(f"SEC companyfacts for {symbol}; annual facts reported in {history[0][2]}.")
         for end, filed, currency, values in history:
             metrics = "; ".join(
-                f"{label} {currency + '/shares' if label == 'Diluted EPS' else currency} {_format(value)}"
+                f"{label} {'percent' if label in _MARGINS else currency + '/shares' if label == 'Diluted EPS' else currency} {_format(value)}"
                 for label, value in values.items()
             )
             lines.append(f"For the full year ended {end}, filed {filed}: {metrics}.")
             eps = values.get("Diluted EPS")
             if eps is not None:
                 lines.append(f"For the full year ended {end}, diluted earnings per share {currency}/shares {_format(eps)}.")
+        cagr = None
+        revenue_history = [row for row in history if "Revenue" in row[3]]
+        if len(revenue_history) >= 2 and len({row[2] for row in revenue_history}) == 1:
+            latest, oldest = revenue_history[0], revenue_history[-1]
+            start, end = date.fromisoformat(oldest[0]), date.fromisoformat(latest[0])
+            years = (end.year - start.year if (start.month, start.day) == (end.month, end.day)
+                     else (end - start).days / 365.25)
+            first, last = oldest[3]["Revenue"], latest[3]["Revenue"]
+            if years > 0 and first > 0 and last >= 0:
+                try:
+                    growth = ((last / first) ** (1 / years) - 1) * 100
+                except OverflowError:
+                    growth = float("inf")
+                if math.isfinite(growth):
+                    cagr = {"start_period": oldest[0], "end_period": latest[0], "years": round(years, 6),
+                            "numeric_value": round(growth, 6), "unit": "percent"}
+                    lines.append(f"Revenue CAGR (calculated) from {oldest[0]} to {latest[0]}, "
+                                 f"over {_format(round(years, 6))} elapsed years: percent {_format(cagr['numeric_value'])}. "
+                                 "The duration is the elapsed interval between annual endpoints, not the number of observations.")
         return {
             "id": "F1",
             "title": f"SEC companyfacts — {symbol} annual financials",
             "url": _FACTS_URL.format(cik=cik),
             "text": "\n".join(lines),
             "basis": "primary",
-            "annual_financials": [{"period": end, "currency": currency, "values": values}
+            "annual_financials": [{"period": end, "currency": currency, "values": values,
+                                   "value_units": {label: "percent" for label in _MARGINS if label in values},
+                                   **({"revenue_cagr": cagr} if cagr and end == cagr["end_period"] else {})}
                                   for end, _, currency, values in history],
         }
     except (requests.RequestException, ValueError, TypeError, KeyError, AttributeError):

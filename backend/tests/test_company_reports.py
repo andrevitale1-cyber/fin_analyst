@@ -81,7 +81,7 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     report = result["report"]
     assert report["scope"] == report["kind"] == "company"
     assert report["as_of"] == "2026-10-12" and report["is_public"] is True
-    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v2"
+    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v3"
     assert report["score"] == 4 and len(report["sections"]) == 10
     assert report["valuation"]["fair_value"] > 0
     assert all("text" not in source for source in report["sources"])
@@ -223,3 +223,9 @@ def test_company_research_request_is_bounded_and_uses_only_public_company_name()
     assert request["json"]["max_tool_calls"] == 4 and request["json"]["max_output_tokens"] == 4000
     assert request["json"]["tools"][0]["type"] == "web_search" and request["json"]["store"] is False
     assert "META" in request["json"]["input"] and "2026-10-12" in request["json"]["input"]
+
+    client.research_company(research.market_research_prompt("META", "2026-10-12"),
+                            max_tool_calls=2, max_output_tokens=2000, timeout=35)
+    request = client._request.call_args.kwargs
+    assert request["json"]["max_tool_calls"] == 2 and request["json"]["max_output_tokens"] == 2000
+    assert request["timeout"] == 35
