@@ -35,6 +35,14 @@ def test_company_cache_scopes_week_model_language_and_canonical_names():
     with pytest.raises(ValidationError): reports.OpenCompanyReport(company="META", is_public=False)
 
 
+def test_company_report_and_research_cache_version_invalidate_old_outputs(monkeypatch):
+    current = reports.company_cache_key("MSFT", "model", "2026-10-12", "pt")
+    research_current = reports.company_cache_key("MSFT", "model", "2026-10-12")
+    monkeypatch.setattr(reports, "COMPANY_REPORT_VERSION", "company-v1")
+    assert current != reports.company_cache_key("MSFT", "model", "2026-10-12", "pt")
+    assert research_current != reports.company_cache_key("MSFT", "model", "2026-10-12")
+
+
 def test_company_report_cache_hit_skips_research_and_ai_for_another_user(monkeypatch):
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
     report = {"id": "shared-company", "scope": "company", "company": "META"}
@@ -73,11 +81,29 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     report = result["report"]
     assert report["scope"] == report["kind"] == "company"
     assert report["as_of"] == "2026-10-12" and report["is_public"] is True
+    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v2"
     assert report["score"] == 4 and len(report["sections"]) == 10
     assert report["valuation"]["fair_value"] > 0
     assert all("text" not in source for source in report["sources"])
     assert not any("historico" in call.args[0] or "analysis_documents" in call.args[0] for call in cur.execute.call_args_list)
     assert ai.analyze_full_report.call_args.kwargs == {"max_output_tokens": 11000, "timeout": 120}
+    conn.commit.assert_called_once()
+
+
+def test_company_generation_accepts_supported_subsets_without_retry_or_fake_categories(monkeypatch):
+    conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
+    cur.fetchone.return_value = None
+    monkeypatch.setattr(reports, "connection", lambda: conn)
+    monkeypatch.setattr(reports, "company_evidence", lambda *args: {"as_of": "2026-10-12", "sources": SOURCES})
+    raw = valid_report()
+    raw["signals"] = raw["signals"][:2]
+    raw["scorecard"] = raw["scorecard"][:3]
+    ai = Mock(analyze_full_report=Mock(return_value=raw))
+    monkeypatch.setattr(reports, "OpenAIClient", lambda: ai)
+    report = reports.open_company_report(reports.OpenCompanyReport(company="GOOGL"), "user_one")["report"]
+    assert len(report["signals"]) == 2 and len(report["scorecard"]) == 3
+    assert report["score"] == 4
+    ai.analyze_full_report.assert_called_once()
     conn.commit.assert_called_once()
 
 

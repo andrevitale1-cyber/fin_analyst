@@ -80,6 +80,8 @@ def test_uses_annual_periods_restatements_as_of_cutoff_and_eps_proof(monkeypatch
     assert source and source["id"] == "F1" and source["basis"] == "primary"
     assert source["url"] == financials._FACTS_URL.format(cik=123)
     assert "For the full year ended 2023-12-31, filed 2024-02-01: Revenue USD 120" in source["text"]
+    assert source["annual_financials"][0]["values"]["Revenue"] == 120
+    assert source["annual_financials"][0]["currency"] == "USD"
     assert "For the full year ended 2023-12-31, diluted earnings per share USD/shares 1.5." in source["text"]
     assert "Free cash flow (calculated) USD 18" in source["text"]
     assert "USD 999" not in source["text"] and "USD 55" not in source["text"] and "USD 0.7" not in source["text"]
@@ -121,6 +123,19 @@ def test_bad_symbols_and_transient_sec_failures_return_none_and_retry(monkeypatc
 def test_small_reported_eps_is_not_rounded_to_a_different_value():
     assert financials._format(0.000051) == "0.000051"
     assert financials._format(2500000000) == "2500000000"
+
+
+def test_alternative_revenue_tag_and_balance_only_dates_preserve_annual_history(monkeypatch):
+    entries = {
+        "RevenueFromContractWithCustomerIncludingAssessedTax": [
+            fact(100, "2023-01-01", "2023-12-31", "2024-02-01")],
+        "CashAndCashEquivalentsAtCarryingValue": [
+            fact(10, None, f"2024-{month:02d}-01", "2024-12-31") for month in range(1, 7)],
+    }
+    install_sec(monkeypatch, payload(entries))
+    source = financials.get_sec_company_source("EXM", "2024-12-31")
+    assert "full year ended 2023-12-31" in source["text"] and "Revenue USD 100" in source["text"]
+    assert "full year ended 2024-" not in source["text"]
 
 
 def test_redirect_and_non_annual_or_invalid_values_never_become_evidence(monkeypatch):

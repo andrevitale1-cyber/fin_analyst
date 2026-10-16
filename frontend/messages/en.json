@@ -160,12 +160,12 @@
     "localePortuguese": "Português",
     "openReport": "Open report",
     "backToGallery": "All reports",
-    "companyHeroTitle": "Company research, clearly sourced",
+    "companyHeroTitle": "What company do you want to research?",
     "companyHeroDescription": "Search a company or choose a shortcut to prepare a long-form, source-backed company report.",
     "companySearchLabel": "Search for a company or ticker",
-    "companySearchPlaceholder": "Company name or ticker, such as Microsoft or MSFT",
+    "companySearchPlaceholder": "Search company research",
     "companySearchAction": "Explore company",
-    "popularCompanies": "Explore companies",
+    "popularCompanies": "Popular with investors",
     "companyGenerating": "Researching public sources and preparing the company report…",
     "invalidCompany": "Enter a valid company name or ticker and try again.",
     "companyReports": "Company reports",
@@ -268,6 +268,8 @@
     "sources": "Sources",
     "coverageDisclaimer": "Coverage supplied by the report: {coverage}. This reflects the report's stated coverage and does not guarantee that every company filing is included.",
     "companyScenarioNote": "Illustrative five-year scenarios use AI assumptions for EPS growth, P/E and discount rates. They are separate from sourced management guidance and analyst consensus.",
-    "numbersAtGlance": "Numbers at a glance"
+    "numbersAtGlance": "Numbers at a glance",
+    "companyHighlights": "Company highlights",
+    "refreshCompanyReport": "Update company research"
   }
 }

@@ -20,7 +20,7 @@ from company_research import collect_company_sources
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
-COMPANY_REPORT_VERSION = "company-v1"
+COMPANY_REPORT_VERSION = "company-v2"
 logger = logging.getLogger(__name__)
 
 
@@ -92,7 +92,7 @@ def canonical_period(year, quarter):
 
 def report_summary(report):
     return {**{key: report[key] for key in ("id", "company", "period", "locale", "kind", "created_at", "score", "is_public")},
-            **{key: report.get(key) for key in ("scope", "company_name", "as_of")}}
+            **{key: report.get(key) for key in ("scope", "company_name", "as_of", "report_version")}}
 
 
 def read_report(value):
@@ -237,7 +237,8 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
                 if body.locale == "pt" and not content["valuation"]["available"]:
                     content["valuation"]["reason"] = "Não há evidência suficiente de EPS anual ou TTM positivo e sua moeda para calcular os três cenários."
                 report = {**content, "id": str(uuid.uuid4()), "company": company, "period": "Company overview",
-                          "scope": "company", "as_of": evidence["as_of"], "locale": body.locale, "kind": "company",
+                          "scope": "company", "report_version": COMPANY_REPORT_VERSION,
+                          "as_of": evidence["as_of"], "locale": body.locale, "kind": "company",
                           "is_public": True, "created_at": datetime.now(timezone.utc).isoformat(),
                           "sources": [{field: source[field] for field in ("id", "title", "url")} for source in sources]}
                 cur.execute("""INSERT INTO full_reports (id,cache_key,company,period,locale,kind,is_public,content)

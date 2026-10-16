@@ -17,6 +17,12 @@ profitability, cash, debt, returns on capital; competitors and durable advantage
 management, execution, capital allocation and disclosed ownership; growth drivers and material risks;
 dated stock price/currency, market cap, valuation multiples and analyst targets/consensus where available;
 management guidance and sourced forward revenue/EPS consensus, clearly distinguished from reported figures.
+Prioritize exact financial numbers over broad prose: use investor-relations annual results for historical
+revenue, operating/net income, operating cash flow, capex and EPS; use the latest results for guidance;
+use a dated market-data source for price, market cap, P/E and analyst targets. Preserve source currency,
+scale and period beside each figure in compact tables, including segment/geography figures when disclosed.
+If a key figure is missing from a summary page, spend a remaining search/open operation on its original
+annual report or results release. Do not substitute a qualitative observation for an available number.
 Identify the exact date/period and currency of every number. Do not annualize a quarter or invent forecasts,
 targets, facts, sentiment or missing data. Explain conflicting sources. Do not reuse another site's investment thesis.
 Use at most four search/open operations and about 1,800 words. Cite at least three distinct relevant URLs,

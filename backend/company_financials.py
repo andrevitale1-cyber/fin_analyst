@@ -14,7 +14,7 @@ _TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 _FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
 _SYMBOL = re.compile(r"[A-Z]{1,5}(?:\.[A-Z])?\Z")
 _TAGS = {
-    "Revenue": ("RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet"),
+    "Revenue": ("RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet", "RevenueFromContractWithCustomerIncludingAssessedTax"),
     "Net income": ("NetIncomeLoss", "ProfitLoss"),
     "Operating cash flow": ("NetCashProvidedByUsedInOperatingActivities",),
     "Capital expenditures": ("PaymentsToAcquirePropertyPlantAndEquipment",),
@@ -132,7 +132,9 @@ def get_sec_company_source(symbol, as_of):
         payload = _get_json(_FACTS_URL.format(cik=cik))
         periods = _annual_facts(payload, as_of_date)
         first_year = as_of_date.year - 6
-        period_ends = sorted((end for end in periods if first_year <= int(end[:4]) <= as_of_date.year), reverse=True)[:5]
+        period_ends = sorted((end for end, period in periods.items()
+                              if first_year <= int(end[:4]) <= as_of_date.year
+                              and any(label not in _INSTANT for label, _ in period["values"])), reverse=True)[:5]
         history = []
         for end in period_ends:
             period = periods[end]
@@ -173,6 +175,8 @@ def get_sec_company_source(symbol, as_of):
             "url": _FACTS_URL.format(cik=cik),
             "text": "\n".join(lines),
             "basis": "primary",
+            "annual_financials": [{"period": end, "currency": currency, "values": values}
+                                  for end, _, currency, values in history],
         }
     except (requests.RequestException, ValueError, TypeError, KeyError, AttributeError):
         return None

@@ -160,12 +160,12 @@
     "localePortuguese": "Português",
     "openReport": "Abrir relatório",
     "backToGallery": "Todos os relatórios",
-    "companyHeroTitle": "Pesquise empresas com fontes claras",
+    "companyHeroTitle": "Qual empresa você quer conhecer melhor?",
     "companyHeroDescription": "Busque uma empresa ou escolha um atalho para preparar um relatório amplo com fontes verificáveis.",
     "companySearchLabel": "Buscar empresa ou ticker",
-    "companySearchPlaceholder": "Nome da empresa ou ticker, como Microsoft ou MSFT",
+    "companySearchPlaceholder": "Busque uma empresa ou ticker",
     "companySearchAction": "Explorar empresa",
-    "popularCompanies": "Explore empresas",
+    "popularCompanies": "Populares entre investidores",
     "companyGenerating": "Pesquisando fontes públicas e preparando o relatório da empresa…",
     "invalidCompany": "Informe um nome de empresa ou ticker válido e tente novamente.",
     "companyReports": "Relatórios de empresas",
@@ -268,6 +268,8 @@
     "sources": "Fontes",
     "coverageDisclaimer": "Cobertura informada pelo relatório: {coverage}. Isso reflete a cobertura declarada no relatório e não garante a inclusão de todos os documentos da empresa.",
     "companyScenarioNote": "Cenários ilustrativos de cinco anos usam premissas da IA para crescimento do lucro por ação, P/L e desconto. Eles são separados do guidance da gestão e do consenso de analistas citados.",
-    "numbersAtGlance": "Indicadores em resumo"
+    "numbersAtGlance": "Indicadores em resumo",
+    "companyHighlights": "Destaques da empresa",
+    "refreshCompanyReport": "Atualizar análise da empresa"
   }
 }

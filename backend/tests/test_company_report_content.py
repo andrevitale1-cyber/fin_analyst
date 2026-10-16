@@ -110,7 +110,7 @@ def test_references_and_canonical_order_are_validated():
         validate_company_report(raw, [source])
 
 
-def test_duplicate_or_incomplete_section_scorecard_and_signal_ids_reject():
+def test_duplicate_section_scorecard_and_signal_ids_reject():
     source = {"id": "S1", "basis": "primary", "text": "Full-year EPS was USD 2.50."}
     raw = valid_report()
     raw["sections"][0] = raw["sections"][1]
@@ -118,14 +118,75 @@ def test_duplicate_or_incomplete_section_scorecard_and_signal_ids_reject():
         validate_company_report(raw, [source])
 
     raw = valid_report()
-    raw["scorecard"].pop()
+    raw["scorecard"][0] = raw["scorecard"][1]
     with pytest.raises(ValueError, match="scorecard"):
         validate_company_report(raw, [source])
 
     raw = valid_report()
-    raw["signals"].pop()
-    with pytest.raises(ValueError, match="signals"):
+    raw["signals"][0] = raw["signals"][1]
+    with pytest.raises(ValueError, match="Signals"):
         validate_company_report(raw, [source])
+
+
+def test_supported_signal_and_scorecard_subsets_do_not_block_the_report():
+    raw = valid_report()
+    raw["signals"] = raw["signals"][:2]
+    raw["scorecard"] = raw["scorecard"][:3]
+    result = validate_company_report(raw, [{"id": "S1", "text": "Full-year EPS was USD 2.50."}])
+    assert len(result["signals"]) == 2
+    assert [item["score"] for item in result["scorecard"]] == [5, 4, 3]
+    assert result["score"] == 4
+
+
+def test_new_synthesis_requires_integer_scores_and_never_fabricates_missing_ratings():
+    score_schema = company_report_schema()["properties"]["scorecard"]["items"]["properties"]["score"]
+    assert score_schema == {"type": "integer", "minimum": 1, "maximum": 5}
+    raw = valid_report()
+    for item in raw["scorecard"]:
+        item["score"] = None
+    result = validate_company_report(raw, [{"id": "S1", "text": "A factual source."}])
+    assert result["score"] is None
+    assert all(item["score"] is None for item in result["scorecard"])
+    for invalid in (0, 6, 2.5, True, "4"):
+        raw["scorecard"][0]["score"] = invalid
+        with pytest.raises(ValueError):
+            validate_company_report(raw, [{"id": "S1", "text": "A factual source."}])
+
+
+def test_numeric_metrics_keep_exact_amount_currency_and_legacy_display_fallback():
+    raw = valid_report()
+    source = [{"id": "S1", "text": "Reported revenue USD 331839000000."}]
+    legacy = validate_company_report(raw, source)["metrics"][0]
+    assert legacy["value"] == "$10 billion" and legacy["numeric_value"] is None
+    raw["metrics"][0].update(value="US$ 331,84 bilhões", numeric_value=331839000000, currency="USD", unit="currency")
+    metric = validate_company_report(raw, source)["metrics"][0]
+    assert metric["numeric_value"] == 331839000000 and metric["currency"] == "USD"
+    assert metric["value"] == "US$ 331,84 bilhões"
+    for invalid in ({"numeric_value": float("inf")}, {"numeric_value": True}, {"currency": None},
+                    {"unit": None}, {"unit": "percent"}, {"numeric_value": None}):
+        candidate = valid_report()
+        candidate["metrics"][0].update(raw["metrics"][0], **invalid)
+        with pytest.raises(ValueError):
+            validate_company_report(candidate, source)
+
+
+def test_sec_units_are_recovered_only_for_known_annual_metrics_with_unique_period():
+    source = {"id": "F1", "basis": "primary", "text": "SEC annual facts.", "annual_financials": [
+        {"period": "2025-06-30", "currency": "USD", "values": {"Revenue": 331839000000}}]}
+    raw = valid_report()
+    raw["metrics"][0].update(label="Receita", value="331839000000", as_of="FY2025", source_id="F1")
+    sources = [{"id": "S1", "text": "Other supplied facts."}, source]
+    result = validate_company_report(raw, sources)["metrics"][0]
+    assert result["numeric_value"] == 331839000000
+    assert result["unit"] == "currency" and result["currency"] == "USD"
+    for as_of in ("TTM 2025", "Q4 2025", "4Q 2025", "3T2025", "2025Q3", "2025-03-31", "2024", "2024–2025"):
+        raw["metrics"][0]["as_of"] = as_of
+        assert validate_company_report(raw, sources)["metrics"][0]["numeric_value"] is None
+    raw["metrics"][0]["as_of"] = "FY2025"
+    raw["metrics"][0]["label"] = "Market cap"
+    assert validate_company_report(raw, sources)["metrics"][0]["numeric_value"] is None
+    raw["metrics"][0].update(label="Receita", source_id="S1")
+    assert validate_company_report(raw, sources)["metrics"][0]["numeric_value"] is None
 
 
 def test_score_is_server_mean_of_at_least_three_supported_ratings():
@@ -182,6 +243,17 @@ def test_prompt_covers_broad_dossier_without_inventing_source_data():
                    "ownership", "growth drivers", "risks", "analyst consensus", "never model estimates",
                    "Never annualize quarterly EPS", "bear/base/bull"):
         assert phrase.lower() in prompt.lower()
+
+
+def test_localized_prompt_keeps_editorial_coverage_scores_and_numeric_units_explicit():
+    for locale, phrases in (
+        ("en", ("one complete editorial sentence", "Never put source availability", "Every included scorecard factor",
+                "integer score from 1 to 5", "never fill it with a default score", "reader-facing label", "full base units")),
+        ("pt", ("frase editorial completa", "Não coloque disponibilidade de fontes", "nota inteira de 1 a 5",
+                "nunca preencha com nota padrão", "português brasileiro", "unidades básicas completas")),
+    ):
+        prompt = build_company_report_prompt("MSFT", "2026-10-15", locale, [])
+        assert all(phrase in prompt for phrase in phrases)
 
 
 def test_scenario_numeric_bounds_and_market_price_are_enforced():
