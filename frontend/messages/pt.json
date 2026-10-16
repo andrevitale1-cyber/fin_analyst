@@ -247,6 +247,7 @@
       "valuation": "Valuation"
     },
     "sectionLabel": "Seção do relatório",
+    "sourceCount": "{count, plural, one {# fonte} other {# fontes}}",
     "sectionSources": "Fontes desta seção",
     "sectionUnavailable": "Esta seção não foi incluída no relatório gerado.",
     "watchpoints": "Pontos de atenção",

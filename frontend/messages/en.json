@@ -247,6 +247,7 @@
       "valuation": "Valuation"
     },
     "sectionLabel": "Report section",
+    "sourceCount": "{count, plural, one {# source} other {# sources}}",
     "sectionSources": "Sources for this section",
     "sectionUnavailable": "This section was not included in the generated report.",
     "watchpoints": "Watchpoints",
