@@ -3,6 +3,20 @@ import { formatReportMoney } from "./reportNumbers";
 export type ReportBreakdown = { category: "segment" | "geography"; label: string; value: string; share: number | null; source_id: string; numeric_value?: number | null; currency?: string | null; period?: string | null; group_complete?: boolean };
 type History = { period: string; currency: string | null; revenue: number | null };
 
+export function selectSegmentBreakdowns(items: ReportBreakdown[]): ReportBreakdown[] {
+  const rows = items.filter(item => item.category === "segment");
+  // Saved reports can contain overlapping operating segments and product platforms.
+  const segments = rows.filter(item => !/\([^)]*\b(?:platform|plataforma)s?\b/i.test(item.label));
+  const selected = segments.length ? segments : rows;
+  const unique = new Map<string, ReportBreakdown>();
+  for (const item of selected) {
+    const key = `${item.label.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/&/g, " and ").replace(/[^\p{L}\p{N}]/gu, "")}|${item.period || ""}|${item.currency || ""}`;
+    const previous = unique.get(key);
+    if (!previous || (previous.numeric_value == null && item.numeric_value != null)) unique.set(key, item);
+  }
+  return [...unique.values()];
+}
+
 export function breakdownAmount(item: ReportBreakdown): { amount: number; currency: string } | null {
   if (item.numeric_value != null && Number.isFinite(item.numeric_value) && item.currency) return { amount: item.numeric_value, currency: item.currency };
   // Compatibility with saved monetary strings; never guess a currency from an issuer.

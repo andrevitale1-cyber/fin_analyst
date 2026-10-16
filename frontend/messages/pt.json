@@ -178,7 +178,21 @@
     "marketChange": "Variação do preço",
     "marketAsOf": "Dados de mercado em {date}",
     "qualityScore": "Nota de qualidade",
-    "companyContents": "Seções do relatório da empresa",
+    "companyContents": "O que você vai encontrar neste relatório",
+    "reportGuideSummary": "Explore a tese, os fundamentos, o valuation e os riscos em cerca de {minutes} min de leitura.",
+    "reportGuideDepth": "Análise detalhada",
+    "companySectionDescriptions": {
+      "thesis": "Argumento central e principais drivers",
+      "business": "Modelo de negócio e fontes de receita",
+      "moat": "Vantagens competitivas e sua durabilidade",
+      "financials": "Evolução de receita, margens e caixa",
+      "management": "Liderança, alocação de capital e alinhamento",
+      "outlook": "Projeções com fontes e alavancas de crescimento",
+      "valuation": "Cenários otimista, base e pessimista e múltiplos",
+      "risks": "Principais riscos para a tese",
+      "sentiment": "Expectativas do mercado e visão dos analistas",
+      "verdict": "Conclusão da IA e pontos decisivos"
+    },
     "companyNoSection": "Esta seção não possui conteúdo narrativo.",
     "companySections": {
       "thesis": "Tese de investimento",

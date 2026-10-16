@@ -178,7 +178,21 @@
     "marketChange": "Price change",
     "marketAsOf": "Market data as of {date}",
     "qualityScore": "Quality score",
-    "companyContents": "Company report sections",
+    "companyContents": "What you will find in this report",
+    "reportGuideSummary": "Explore the thesis, fundamentals, valuation and risks in about {minutes} min.",
+    "reportGuideDepth": "In-depth analysis",
+    "companySectionDescriptions": {
+      "thesis": "The central investment case and key drivers",
+      "business": "Business model and sources of revenue",
+      "moat": "Competitive advantages and their durability",
+      "financials": "Revenue, margins and cash flow over time",
+      "management": "Leadership, capital allocation and alignment",
+      "outlook": "Sourced forecasts and key growth drivers",
+      "valuation": "Bull, base and bear cases and valuation multiples",
+      "risks": "The main threats to the investment case",
+      "sentiment": "Market expectations and analyst positioning",
+      "verdict": "The AI’s conclusion and key takeaways"
+    },
     "companyNoSection": "No narrative was supplied for this section.",
     "companySections": {
       "thesis": "Investment thesis",
