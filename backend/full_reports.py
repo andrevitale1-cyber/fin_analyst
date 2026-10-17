@@ -3,7 +3,6 @@ from datetime import datetime, timezone, timedelta
 import hashlib
 import json
 import logging
-import os
 import re
 import uuid
 
@@ -12,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from typing import Literal
 
 from agents.auto_fetcher import AutoFetcher
-from openai_client import OpenAIClient, OpenAIError
+from openai_client import OpenAIClient, OpenAIError, model_for_task
 from report_auth import require_report_user
 from full_report_content import build_full_report_prompt, report_schema, validate_full_report, ReportValidationError
 from company_report_content import build_company_report_prompt, company_report_schema, validate_company_report
@@ -216,7 +215,7 @@ def calculated_company_valuation(content):
 def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_report_user)):
     company = canonical_company(body.company)
     as_of = datetime.now(timezone.utc).date().isoformat()
-    model = os.getenv("OPENAI_MODEL", "gpt-4.1")
+    model = model_for_task("full_report")
     key = company_cache_key(company, model, as_of, body.locale)
     conn = connection()
     try:
@@ -228,7 +227,7 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
             if existing:
                 report = stored_report(existing)
             else:
-                client = OpenAIClient()
+                client = OpenAIClient(task="full_report")
                 evidence = company_evidence(company, model, as_of, client)
                 sources = evidence["sources"]
                 prompt = build_company_report_prompt(company, evidence["as_of"], body.locale, sources)
@@ -360,7 +359,7 @@ def open_report(body: OpenReport, user_id: str = Depends(require_report_user)):
             if not text.strip():
                 raise HTTPException(422, "Esta análise não contém texto suficiente para um relatório completo.")
             sources = [{"id": "S1", "title": title, "url": url, "text": text[:180000], "basis": basis}]
-            client = OpenAIClient()
+            client = OpenAIClient(task="full_report")
             key = cache_key(company, year, quarter, body.locale, kind, sources, client.model,
                             private_user=user_id if visibility != "public" else None)
             result = generate_or_reuse(cur, key, user_id=user_id, analysis_id=body.analysis_id, company=company,

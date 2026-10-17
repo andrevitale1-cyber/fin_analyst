@@ -156,7 +156,7 @@ def test_open_report_route_retains_source_scope_and_never_returns_source_body(mo
     cur.fetchone.side_effect = [("Apple", "2026", "1T", json.dumps(original)), evidence, None]
     monkeypatch.setattr(reports, "connection", lambda: conn)
     ai = Mock(model="test-model", analyze_full_report=Mock(return_value=content()))
-    monkeypatch.setattr(reports, "OpenAIClient", lambda: ai)
+    monkeypatch.setattr(reports, "OpenAIClient", lambda **kwargs: ai)
     response = TestClient(app).post("/api/full-reports", json={"analysis_id": 1, "locale": "en"})
     assert response.status_code == 200, response.text
     result = response.json()
@@ -334,7 +334,7 @@ def test_generation_failure_is_logged_without_sensitive_content_and_rolls_back(m
     else:
         invalid = content(); invalid["coverage"] = "PRIVATE_GENERATED_TEXT" * 30
         ai.analyze_full_report.return_value = invalid
-    monkeypatch.setattr(reports, "OpenAIClient", lambda: ai)
+    monkeypatch.setattr(reports, "OpenAIClient", lambda **kwargs: ai)
     with pytest.raises(HTTPException) as error:
         reports.open_report(reports.OpenReport(analysis_id=7, locale=locale), "user_one")
     assert error.value.status_code == 502

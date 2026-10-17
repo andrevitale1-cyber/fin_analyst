@@ -203,6 +203,8 @@ def test_call_prompt_is_localized_and_places_verified_timestamps_inline():
 
 def test_auto_transcript_route_keeps_body_out_of_prompt_and_sends_text_once(api, monkeypatch):
     main, client = api
+    factory = Mock(wraps=OpenAIClient)
+    monkeypatch.setattr(main, "OpenAIClient", factory)
     conn = Mock()
     conn.cursor.return_value.fetchone.return_value = (17,)
     monkeypatch.setattr(main, "get_db_connection", lambda: conn)
@@ -223,6 +225,7 @@ def test_auto_transcript_route_keeps_body_out_of_prompt_and_sends_text_once(api,
     assert "Apple" in prompt and transcript not in prompt
     assert prompt == PromptBuilder().build_call_prompt("Apple", "1T/2026", locale="en")
     assert text == transcript
+    factory.assert_called_once_with(task="analysis")
 
 
 def test_search_error_is_returned_as_502_not_not_found(api, monkeypatch):

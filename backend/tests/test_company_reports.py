@@ -76,7 +76,8 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     evidence = Mock(return_value={"as_of": "2026-10-12", "sources": SOURCES})
     monkeypatch.setattr(reports, "company_evidence", evidence)
     ai = Mock(model="test-model", analyze_full_report=Mock(return_value=valid_report()))
-    monkeypatch.setattr(reports, "OpenAIClient", lambda: ai)
+    factory = Mock(return_value=ai)
+    monkeypatch.setattr(reports, "OpenAIClient", factory)
     result = reports.open_company_report(reports.OpenCompanyReport(company="META", locale="en"), "user_one")
     report = result["report"]
     assert report["scope"] == report["kind"] == "company"
@@ -87,6 +88,8 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     assert all("text" not in source for source in report["sources"])
     assert not any("historico" in call.args[0] or "analysis_documents" in call.args[0] for call in cur.execute.call_args_list)
     assert ai.analyze_full_report.call_args.kwargs == {"max_output_tokens": 11000, "timeout": 120}
+    factory.assert_called_once_with(task="full_report")
+    assert evidence.call_args.args[1] == reports.model_for_task("full_report")
     conn.commit.assert_called_once()
 
 
@@ -99,7 +102,7 @@ def test_company_generation_accepts_supported_subsets_without_retry_or_fake_cate
     raw["signals"] = raw["signals"][:2]
     raw["scorecard"] = raw["scorecard"][:3]
     ai = Mock(analyze_full_report=Mock(return_value=raw))
-    monkeypatch.setattr(reports, "OpenAIClient", lambda: ai)
+    monkeypatch.setattr(reports, "OpenAIClient", lambda **kwargs: ai)
     report = reports.open_company_report(reports.OpenCompanyReport(company="GOOGL"), "user_one")["report"]
     assert len(report["signals"]) == 2 and len(report["scorecard"]) == 3
     assert report["score"] == 4
@@ -159,7 +162,7 @@ def test_concurrent_company_requests_generate_and_research_once_across_users(mon
     monkeypatch.setattr(reports, "connection", Connection)
     collect = Mock(return_value=SOURCES); monkeypatch.setattr(reports, "collect_company_sources", collect)
     ai = Mock(analyze_full_report=Mock(side_effect=lambda *args, **kwargs: valid_report()))
-    monkeypatch.setattr(reports, "OpenAIClient", lambda: ai)
+    monkeypatch.setattr(reports, "OpenAIClient", lambda **kwargs: ai)
     barrier = threading.Barrier(2)
     def run(user):
         barrier.wait()
@@ -178,7 +181,7 @@ def test_invalid_company_synthesis_rolls_back_without_discarding_research(monkey
     evidence = Mock(return_value={"as_of": "2026-10-12", "sources": SOURCES})
     monkeypatch.setattr(reports, "company_evidence", evidence)
     ai = Mock(); ai.analyze_full_report.side_effect = OpenAIError("Failure", code="response_incomplete")
-    monkeypatch.setattr(reports, "OpenAIClient", lambda: ai)
+    monkeypatch.setattr(reports, "OpenAIClient", lambda **kwargs: ai)
     with pytest.raises(HTTPException) as exc:
         reports.open_company_report(reports.OpenCompanyReport(company="META"), "user_one")
     assert exc.value.status_code == 502 and evidence.call_count == 1

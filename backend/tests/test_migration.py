@@ -291,6 +291,8 @@ def test_missing_key(api, monkeypatch, route):
 
 def test_manual_auto_same_parser_and_saved_format(api, monkeypatch, openai_client):
     main, client = api
+    factory = Mock(wraps=OpenAIClient)
+    monkeypatch.setattr(main, "OpenAIClient", factory)
     conn = Mock()
     conn.cursor.return_value.fetchone.return_value = (7,)
     monkeypatch.setattr(main, "get_db_connection", lambda: conn)
@@ -308,6 +310,8 @@ def test_manual_auto_same_parser_and_saved_format(api, monkeypatch, openai_clien
     saved = json.loads(history_insert.args[1][3])
     assert set(saved) == {"metadata", "data", "analise_completa"}
     assert analyze.call_args.kwargs["pdf_text"] == "SEC earnings"
+    assert len(factory.call_args_list) == 2
+    assert all(call.kwargs == {"task": "analysis"} for call in factory.call_args_list)
 
 
 def test_auto_not_found_requests_manual_upload(api, monkeypatch, openai_client):

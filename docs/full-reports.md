@@ -64,3 +64,13 @@ The company reader at `/{locale}/dashboard/reports?company=MSFT` follows the pub
 The already-published MSFT report was inspected through the signed-in browser session: its 0.515/0.485 shares matched reported annual revenue, and its collected sources contained no analyst-consensus evidence. The new research flow adds a bounded, dated market lookup when necessary, without copying Clearthesis financial opinions or making up missing analyst data. Company reports no longer wait for a redundant library fetch; a secondary library request failure cannot mark an already opened report as failed. New generation and cache use `company-v3`; opening old saved IDs remains possible with an update action.
 
 The reference map topology and Lora font are documented in `frontend/public/report-assets/README.txt`; the font license is included. Offline/browser fixtures verify matching fractions, currencies, dates, reader controls, cache reuse and responsive layouts. They do not establish success of a newly paid research/generation request in production.
+
+## Automatic model routing
+
+New quarterly results and earnings-call analyses (PDF upload and automatic search) use `OPENAI_ANALYSIS_MODEL`, default `gpt-6-luna`. Complete company reports, their public-source research and legacy period-report expansions use `OPENAI_FULL_REPORT_MODEL`, default `gpt-6.1-sol`. The server selects the role; the browser cannot override it.
+
+`OPENAI_MODEL` remains the general client setting for unrelated document-search fallback and X drafts. An existing `OPENAI_MODEL=gpt-4.1` does not override the two task-specific settings. Empty task settings use their defaults. GPT-6 requests explicitly use low reasoning effort with the existing token limits, timeouts, structured-output validation and failure handling. There is no automatic switch to a more expensive model.
+
+Company evidence and generation cache keys use the same resolved full-report model as the actual request. Switching models keeps previous saved reports accessible and separates new generated content by model; cached reports remain shared between authorized users. Existing saved reports are not regenerated merely by opening their saved IDs.
+
+Routing and payload tests use mocked provider responses. They do not establish model availability for the production API project or financial-analysis quality; compare representative real results before drawing conclusions about quality or realized cost.

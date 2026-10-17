@@ -358,7 +358,7 @@ async def analyze_report(
         
         prompt = PromptBuilder().build_prompt(empresa, "[ARQUIVO PDF ANEXADO]", locale=locale, periodo=f"{trimestre}/{ano}")
         response_text = await asyncio.wait_for(
-            asyncio.to_thread(OpenAIClient().analyze_document, prompt, pdf_bytes=contents),
+            asyncio.to_thread(OpenAIClient(task="analysis").analyze_document, prompt, pdf_bytes=contents),
             timeout=180.0,
         )
 
@@ -442,7 +442,7 @@ async def analyze_report_auto(
     conn = None
     try:
         response_text = await asyncio.wait_for(
-            asyncio.to_thread(OpenAIClient().analyze_document, prompt,
+            asyncio.to_thread(OpenAIClient(task="analysis").analyze_document, prompt,
                               pdf_bytes=document.pdf_bytes, pdf_text=document.text),
             timeout=180.0,
         )
@@ -511,7 +511,7 @@ async def analyze_earnings_call_auto(
     prompt = PromptBuilder().build_call_prompt(company, f"{trimestre}/{ano}", locale=locale)
     try:
         response_text = await asyncio.wait_for(asyncio.to_thread(
-            OpenAIClient().analyze_transcript, prompt, document.text,
+            OpenAIClient(task="analysis").analyze_transcript, prompt, document.text,
         ), timeout=180.0)
         result = {"metadata": {"empresa": company, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call"}, "analise_completa": without_key_moments(response_text), "data": {}, "source": {"name": document.source, "url": document.url}}
         conn = get_db_connection()
@@ -562,8 +562,8 @@ async def analyze_earnings_call(
         prompt = PromptBuilder().build_call_prompt(empresa, f"{trimestre}/{ano}", locale=locale)
 
         response_text = await asyncio.wait_for(
-            (asyncio.to_thread(OpenAIClient().analyze_transcript, prompt, texto_transcricao)
-             if texto_transcricao else asyncio.to_thread(OpenAIClient().analyze_document, prompt, pdf_bytes=contents)),
+            (asyncio.to_thread(OpenAIClient(task="analysis").analyze_transcript, prompt, texto_transcricao)
+             if texto_transcricao else asyncio.to_thread(OpenAIClient(task="analysis").analyze_document, prompt, pdf_bytes=contents)),
             timeout=180.0,
         )
 
