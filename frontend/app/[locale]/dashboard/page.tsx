@@ -1,11 +1,12 @@
 "use client";
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser, UserButton } from "@clerk/nextjs";
+import { useAuth, useUser, UserButton } from "@clerk/nextjs";
 import { useTranslations, useLocale } from "next-intl";
 import { formatPeriod, splitBold } from "../../../lib/analysisText";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import CompanyLogo from "../../../components/CompanyLogo";
+import ConfirmDeleteDialog from "../../../components/ConfirmDeleteDialog";
 import {
   LayoutDashboard, History, UploadCloud, FileText, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Loader2,
@@ -137,6 +138,15 @@ export default function FinancialDashboard() {
   const locale = useLocale();
   const COLUMN_DEFINITIONS = getColumnDefinitions(t);
   const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
+  const deleteText = useTranslations("DeleteDialog");
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; company: string; detail: string; owner: string } | null>(null);
+  const [deletingHistory, setDeletingHistory] = useState(false);
+  const [deleteHistoryError, setDeleteHistoryError] = useState("");
+  const deleteSubject = useMemo(() => pendingDelete ? { company: pendingDelete.company, symbol: pendingDelete.company, detail: pendingDelete.detail } : null, [pendingDelete]);
+  const accountRef = useRef(user?.id);
+  accountRef.current = user?.id;
+  useEffect(() => { setPendingDelete(null); setDeletingHistory(false); setDeleteHistoryError(""); }, [user?.id]);
 
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
   const [loading, setLoading] = useState(false);
@@ -243,14 +253,35 @@ export default function FinancialDashboard() {
     } catch (error) { console.error("Erro tabela", error); }
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: number) => {
+  const handleDelete = (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
-    if (!confirm("Tem certeza que deseja excluir esta análise?")) return;
+    const item = historyList.find(item => item.id === id);
+    if (!item || !user) return;
+    setDeleteHistoryError("");
+    setPendingDelete({ id, company: item.empresa, detail: formatPeriod(item.periodo, locale), owner: user.id });
+  };
+
+  const confirmHistoryDelete = async () => {
+    if (!pendingDelete || deletingHistory || pendingDelete.owner !== user?.id) return;
+    const target = pendingDelete;
+    setDeletingHistory(true); setDeleteHistoryError("");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
     try {
-      await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
-      fetchHistory();
-      fetchTableData();
-    } catch (error) { alert("Erro ao excluir."); }
+      const token = await getToken();
+      if (!token) throw new Error("missing_token");
+      const response = await fetch(`${API_BASE}/api/history/${target.id}`, { method: 'DELETE', signal: controller.signal, headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error("delete_failed");
+      if (accountRef.current !== target.owner) return;
+      setHistoryList(items => items.filter(item => item.id !== target.id));
+      setPendingDelete(null);
+      void fetchTableData();
+    } catch {
+      if (accountRef.current === target.owner) setDeleteHistoryError(deleteText("error"));
+    } finally {
+      clearTimeout(timeout);
+      if (accountRef.current === target.owner) setDeletingHistory(false);
+    }
   };
 
   const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
@@ -599,7 +630,7 @@ export default function FinancialDashboard() {
                           <span className="text-purple-600 text-xs bg-purple-500/10 border border-purple-500/20 px-2 py-1 rounded-md font-semibold">CALL</span>
                         )}
                       </td>
-                      <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Excluir"><Trash2 size={16} /></button><button className="text-sm font-medium text-sky-700 hover:text-sky-700 transition-colors flex items-center gap-1">{t("historyView.details")} <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
+                      <td className="py-4 px-6 text-right"><div className="flex items-center justify-end gap-3"><button onClick={(e) => handleDelete(e, item.id)} className="flex h-11 w-11 items-center justify-center text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title={deleteText("confirm")} aria-label={`${deleteText("confirm")}: ${item.empresa}`}><Trash2 size={16} /></button><button className="text-sm font-medium text-sky-700 hover:text-sky-700 transition-colors flex items-center gap-1">{t("historyView.details")} <ChevronLeft className="w-4 h-4 rotate-180" /></button></div></td>
                     </tr>
                   ))}
                 </tbody>
@@ -774,6 +805,7 @@ export default function FinancialDashboard() {
           </div>
         )}
       </main>
+      <ConfirmDeleteDialog subject={pendingDelete?.owner === user?.id ? deleteSubject : null} kind="analysis" pending={deletingHistory} error={deleteHistoryError} onCancel={() => { if (!deletingHistory) setPendingDelete(null); }} onConfirm={() => void confirmHistoryDelete()} />
     </div>
   );
 }

@@ -1,8 +1,9 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, status, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, validator
 from passlib.context import CryptContext
 from openai_client import OpenAIClient, OpenAIError
+from report_auth import require_report_user
 import psycopg2
 import os
 import json
@@ -711,13 +712,18 @@ def get_history(user_id: str):
         conn.close()
 
 @app.delete("/api/history/{item_id}")
-def delete_history_item(item_id: int):
+def delete_history_item(item_id: int, user_id: str = Depends(require_report_user)):
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute("DELETE FROM historico WHERE id = %s", (item_id,))
+        cur.execute("DELETE FROM historico WHERE id=%s AND CAST(user_id AS TEXT)=%s RETURNING id", (item_id, user_id))
+        if not cur.fetchone():
+            raise HTTPException(404, "Análise não encontrada.")
         conn.commit()
         return {"message": "Deletado"}
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         cur.close()
         conn.close()

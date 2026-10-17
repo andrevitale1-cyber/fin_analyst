@@ -8,6 +8,7 @@ import { AlertCircle, ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, 
 import LanguageSwitcher from "./LanguageSwitcher";
 import CompanyReportReader from "./CompanyReportReader";
 import CompanyLogo from "./CompanyLogo";
+import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import ReportSources from "./ReportSources";
 import { reportCitationIds, stripReportCitations } from "../lib/reportCitations";
 import { splitBold } from "../lib/analysisText";
@@ -82,8 +83,10 @@ export default function FullReports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ReportSummary | null>(null);
   const [deleteError, setDeleteError] = useState("");
   const [deleteNotice, setDeleteNotice] = useState("");
+  const deleteSubject = useMemo(() => deleteTarget ? { company: deleteTarget.company_name || deleteTarget.company, symbol: deleteTarget.symbol || deleteTarget.company, detail: deleteTarget.period } : null, [deleteTarget]);
   const accountRef = useRef(userId);
   accountRef.current = userId;
   const [reused, setReused] = useState(false);
@@ -153,7 +156,7 @@ export default function FullReports() {
     requestRef.current = controller;
     setLoading(true);
     setError("");
-    setDeleteError(""); setDeleteNotice(""); setDeletingId(null);
+    setDeleteError(""); setDeleteNotice(""); setDeletingId(null); setDeleteTarget(null);
     setReport(null);
     setReportOwnerId(null);
     setReports([]);
@@ -251,7 +254,7 @@ export default function FullReports() {
   const publicPeriodReports = publicReports.filter(item => item.scope !== "company");
   const privateReports = filteredReports.filter(item => item.is_public !== true);
   const deletePrivateReport = async (item: ReportSummary) => {
-    if (item.is_public || deletingId || !userId || !window.confirm(t("deleteConfirm", { company: item.company_name || item.company }))) return;
+    if (item.is_public || deletingId || !userId) return;
     const owner = userId;
     setDeletingId(item.id); setDeleteError(""); setDeleteNotice("");
     try {
@@ -259,6 +262,7 @@ export default function FullReports() {
       if (!response.ok) throw new Error("delete_failed");
       if (accountRef.current !== owner) return;
       setReports(items => items.filter(report => report.id !== item.id));
+      setDeleteTarget(null);
       setDeleteNotice(t("deleteSuccess"));
     } catch {
       if (accountRef.current === owner) setDeleteError(t("deleteError"));
@@ -317,7 +321,7 @@ export default function FullReports() {
     <div className="flex w-full items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><CompanyLogo symbol={item.symbol || item.company} company={item.company_name || item.company} /><div className="min-w-0"><h3 className="truncate text-lg font-bold text-slate-900">{item.company_name || item.company}</h3><p className="mt-0.5 text-sm text-slate-500">{item.scope === "company" ? item.company : item.period}</p></div></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${isPublic ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{isPublic ? t("publicBadge") : t("privateBadge")}</span></div>
     <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-500"><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{item.scope === "company" ? t("companyOverview") : item.kind === "transcript" ? t("transcript") : t("report")}</span><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{item.locale === "pt" ? t("localePortuguese") : t("localeEnglish")}</span><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{formatDate(item.created_at)}</span></div>
     <span className="mt-auto inline-flex items-center gap-1 pr-12 pt-5 text-sm font-semibold text-sky-800">{t("openReport")}<ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></span>
-  </button>{!isPublic && <button type="button" onClick={() => deletePrivateReport(item)} disabled={deletingId !== null} aria-label={t("deleteReport", { company: item.company_name || item.company })} title={t("deleteReport", { company: item.company_name || item.company })} className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 disabled:opacity-40">{deletingId === item.id ? <Loader2 size={17} className="animate-spin" /> : <Trash2 size={17} />}</button>}</div>;
+  </button>{!isPublic && <button type="button" onClick={() => { setDeleteError(""); setDeleteTarget(item); }} disabled={deletingId !== null} aria-label={t("deleteReport", { company: item.company_name || item.company })} title={t("deleteReport", { company: item.company_name || item.company })} className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 disabled:opacity-40">{deletingId === item.id ? <Loader2 size={17} className="animate-spin" /> : <Trash2 size={17} />}</button>}</div>;
 
   return (
     <div className="min-h-screen bg-[#fafaf9] text-slate-900">
@@ -349,7 +353,7 @@ export default function FullReports() {
         </aside>}
 
         <main className="min-w-0">
-          {!visibleReport && deleteError && <p role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{deleteError}</p>}
+          {!visibleReport && !deleteTarget && deleteError && <p role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{deleteError}</p>}
           {!visibleReport && deleteNotice && <p role="status" className="mb-5 text-sm text-slate-600">{deleteNotice}</p>}
           {error && <div role="alert" className="mb-5 flex flex-wrap items-start gap-3 rounded-2xl border border-rose-200 bg-white p-5 text-rose-800 shadow-sm"><AlertCircle className="mt-0.5 shrink-0" size={19} /><div className="min-w-0 flex-1"><p className="font-semibold">{t("errorTitle")}</p><p className="mt-1 text-sm">{error}</p></div><button onClick={retry} className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold hover:bg-rose-100">{t("retry")}</button><button onClick={returnToGallery} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">{t("backToGallery")}</button></div>}
           {loading && !visibleReport ? <div className="flex min-h-[40vh] items-center justify-center rounded-3xl border border-slate-200 bg-white text-slate-500"><div className="flex items-center gap-3"><Loader2 className="animate-spin text-sky-700" />{target.type === "generate" ? t("generating") : target.type === "company" ? t("companyGenerating") : t("loading")}</div></div> : null}
@@ -389,6 +393,7 @@ export default function FullReports() {
           </article>}
         </main>
       </div>
+      <ConfirmDeleteDialog subject={libraryOwnerId === userId ? deleteSubject : null} kind="report" pending={deletingId !== null} error={deleteError} onCancel={() => { if (!deletingId) { setDeleteTarget(null); setDeleteError(""); } }} onConfirm={() => { if (deleteTarget) void deletePrivateReport(deleteTarget); }} />
     </div>
   );
 }

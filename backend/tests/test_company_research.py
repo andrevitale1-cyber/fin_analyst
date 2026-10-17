@@ -24,6 +24,7 @@ def test_market_gap_triggers_one_bounded_targeted_lookup_and_unique_citations(mo
     assert [source["id"] for source in sources] == ["S1", "S2", "S3", "S4"]
     assert "target USD 500" in sources[-1]["text"]
     assert client.research_company.call_count == 2
+    assert client.research_company.call_args_list[0].kwargs == {"timeout": 120}
     request = client.research_company.call_args
     assert request.kwargs == {"max_tool_calls": 2, "max_output_tokens": 2000, "timeout": 35}
     for phrase in ("independent market-data", "not only issuer", "exact observation dates", "Do not infer a consensus"):

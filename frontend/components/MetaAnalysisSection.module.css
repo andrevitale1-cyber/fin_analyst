@@ -23,13 +23,13 @@
 .thesisHeading { display: flex; gap: 10px; align-items: center; padding: 22px 28px 12px; font-size: 22px; font-weight: 700; }
 .thesisHeading svg { color: #3282ff; }
 .text { max-height: 370px; overflow-y: auto; padding: 12px 28px 20px; scrollbar-color: #bdc9dc #f4f6fa; scrollbar-width: thin; }
-.text p { margin-bottom: 22px; font-family: Georgia, 'Times New Roman', serif; font-size: 14px; line-height: 1.7; color: #56657c; }
+.text p { margin-bottom: 22px; font-size: 14px; line-height: 1.7; color: #56657c; }
 .text p:last-child { margin-bottom: 0; }
 .text strong { color: #152035; font-weight: 700; background: #edf3f1; box-decoration-break: clone; }
 .text:focus-visible { outline: 2px solid #3282ff; outline-offset: -3px; }
 .reportFooter { padding: 12px; text-align: center; border-top: 1px solid #e8edf4; background: #f8fafc; font-size: 11px; color: #687c96; }
 .copy { min-width: 0; color: white; }
-.copy h2 { font-family: Georgia, 'Times New Roman', serif; font-size: 46px; line-height: 1.15; letter-spacing: -.025em; }
+.copy h2 { font-size: 46px; line-height: 1.15; letter-spacing: -.025em; }
 .copy h2 span { color: #90bdff; }
 .copy > p { margin-top: 24px; font-size: 18px; line-height: 1.7; color: #c1c9df; }
 .eyebrow { display: block; margin-top: 36px; font-size: 12px; letter-spacing: .13em; font-weight: 700; color: #9a94ff; }

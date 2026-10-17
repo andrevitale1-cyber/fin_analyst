@@ -139,6 +139,18 @@
       "investmentThesis": "Investment Thesis"
     }
   },
+  "DeleteDialog": {
+    "title": "Confirm deletion",
+    "privateReport": "Private report",
+    "savedAnalysis": "Saved analysis",
+    "reportDescription": "This report will be removed from your library. The original analysis will stay in your history. This cannot be undone.",
+    "analysisDescription": "This analysis will be removed from your history and comparison table. This cannot be undone.",
+    "cancel": "Cancel",
+    "confirm": "Delete",
+    "deleting": "Deleting…",
+    "close": "Close confirmation",
+    "error": "We couldn't delete this analysis. Try again."
+  },
   "FullReports": {
     "requestTimeout": "The report is taking longer than expected. Try again; a completed version will be reused.",
     "authError": "Your session could not be verified. Please sign in again.",

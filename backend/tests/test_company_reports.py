@@ -110,6 +110,29 @@ def test_company_generation_accepts_supported_subsets_without_retry_or_fake_cate
     conn.commit.assert_called_once()
 
 
+@pytest.mark.parametrize("stage", ["research", "synthesis"])
+def test_company_timeout_reports_stage_without_retries_or_partial_reports(monkeypatch, caplog, stage):
+    conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
+    cur.fetchone.return_value = None
+    monkeypatch.setattr(reports, "connection", lambda: conn)
+    evidence = Mock(return_value={"as_of": "2026-10-17", "sources": SOURCES})
+    ai = Mock(analyze_full_report=Mock(return_value=valid_report()))
+    if stage == "research": evidence.side_effect = TimeoutError("PRIVATE_PROVIDER_TEXT")
+    else: ai.analyze_full_report.side_effect = TimeoutError("PRIVATE_PROVIDER_TEXT")
+    monkeypatch.setattr(reports, "company_evidence", evidence)
+    monkeypatch.setattr(reports, "OpenAIClient", lambda **kwargs: ai)
+    with pytest.raises(HTTPException) as error:
+        reports.open_company_report(reports.OpenCompanyReport(company="AMZN", locale="pt"), "user_one")
+    assert error.value.status_code == 504
+    assert "Tente novamente" in error.value.detail
+    assert f"stage={stage}" in caplog.text and "company=AMZN" in caplog.text
+    assert "PRIVATE_PROVIDER_TEXT" not in caplog.text
+    assert ai.analyze_full_report.call_count == (1 if stage == "synthesis" else 0)
+    assert evidence.call_count == 1
+    conn.rollback.assert_called_once(); conn.commit.assert_not_called()
+    assert not any("INSERT INTO full_reports" in call.args[0] for call in cur.execute.call_args_list)
+
+
 def test_research_is_committed_independently_and_cache_hit_never_repeats_search(monkeypatch):
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
     cur.fetchone.return_value = None

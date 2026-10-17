@@ -139,6 +139,18 @@
       "investmentThesis": "Tese de Investimento"
     }
   },
+  "DeleteDialog": {
+    "title": "Confirmar exclusão",
+    "privateReport": "Relatório privado",
+    "savedAnalysis": "Análise salva",
+    "reportDescription": "Este relatório será removido da sua biblioteca. A análise original continuará no histórico. Esta ação não pode ser desfeita.",
+    "analysisDescription": "Esta análise será removida do seu histórico e da tabela comparativa. Esta ação não pode ser desfeita.",
+    "cancel": "Cancelar",
+    "confirm": "Excluir",
+    "deleting": "Excluindo…",
+    "close": "Fechar confirmação",
+    "error": "Não foi possível excluir esta análise. Tente novamente."
+  },
   "FullReports": {
     "requestTimeout": "O relatório está demorando mais que o esperado. Tente novamente; uma versão já concluída será reaproveitada.",
     "authError": "Não foi possível validar sua sessão. Entre novamente.",

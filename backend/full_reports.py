@@ -116,7 +116,7 @@ class OpenCompanyReport(BaseModel):
     locale: Literal["en", "pt"] = "pt"
 
 
-def generation_failure(exc, locale, *, analysis_id=None, company=None):
+def generation_failure(exc, locale, *, analysis_id=None, company=None, stage=None):
     # Record diagnostic identifiers, never source text or Pydantic input values.
     validation = []
     if isinstance(exc, ValidationError):
@@ -127,9 +127,12 @@ def generation_failure(exc, locale, *, analysis_id=None, company=None):
     elif isinstance(exc, ReportValidationError):
         validation = [{"type": str(exc)}]
     if isinstance(exc, (OpenAIError, ValueError, TimeoutError)):
-        logger.warning("full_report_failed analysis_id=%s company=%s error_type=%s provider_status=%s provider_code=%s provider_param=%s request_id=%s validation=%s",
+        logger.warning("full_report_failed analysis_id=%s company=%s error_type=%s provider_status=%s provider_code=%s provider_param=%s request_id=%s validation=%s stage=%s model=%s",
                        analysis_id, company, type(exc).__name__, getattr(exc, "status_code", None),
-                       getattr(exc, "code", None), getattr(exc, "param", None), getattr(exc, "request_id", None), validation)
+                       getattr(exc, "code", None), getattr(exc, "param", None), getattr(exc, "request_id", None), validation, stage, model_for_task("full_report"))
+        if isinstance(exc, TimeoutError):
+            return HTTPException(504, "Researching this company took longer than expected. Please try again in a moment." if locale == "en" else
+                                 "A pesquisa desta empresa demorou mais que o esperado. Tente novamente em instantes.")
         if getattr(exc, "code", None) == "insufficient_company_sources":
             return HTTPException(422, "Not enough cited public information was found for this company. Check the ticker and try again." if locale == "en" else
                                  "Não foram encontradas fontes públicas citadas suficientes para esta companhia. Confira o ticker e tente novamente.")
@@ -219,9 +222,10 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
     model = model_for_task("full_report")
     key = company_cache_key(company, model, as_of, body.locale)
     conn = connection()
+    stage = "cache"
     try:
         with conn.cursor() as cur:
-            cur.execute("SET LOCAL lock_timeout = '260s'")
+            cur.execute("SET LOCAL lock_timeout = '300s'")
             cur.execute("SELECT pg_advisory_xact_lock(%s)", (int.from_bytes(bytes.fromhex(key)[:8], "big", signed=True),))
             cur.execute("SELECT content,is_public FROM full_reports WHERE cache_key=%s", (key,))
             existing = cur.fetchone()
@@ -229,10 +233,13 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
                 report = stored_report(existing)
             else:
                 client = OpenAIClient(task="full_report")
+                stage = "research"
                 evidence = company_evidence(company, model, as_of, client)
                 sources = evidence["sources"]
                 prompt = build_company_report_prompt(company, evidence["as_of"], body.locale, sources)
+                stage = "synthesis"
                 raw = client.analyze_full_report(prompt, company_report_schema(), max_output_tokens=11000, timeout=120)
+                stage = "validation"
                 content = calculated_company_valuation(validate_company_report(raw, sources))
                 if body.locale == "pt" and not content["valuation"]["available"]:
                     content["valuation"]["reason"] = "Não há evidência suficiente de EPS anual ou TTM positivo e sua moeda para calcular os três cenários."
@@ -253,7 +260,7 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
         raise
     except Exception as exc:
         conn.rollback()
-        raise generation_failure(exc, body.locale, company=company) from None
+        raise generation_failure(exc, body.locale, company=company, stage=stage) from None
     finally:
         conn.close()
 

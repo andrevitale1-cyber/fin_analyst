@@ -110,7 +110,8 @@ def cited_sources(response, *, minimum=3):
 def collect_company_sources(client, company, as_of):
     with ThreadPoolExecutor(max_workers=2) as pool:
         financials = pool.submit(get_sec_company_source, company, as_of)
-        sources = cited_sources(client.research_company(research_prompt(company, as_of)))
+        # Allow bounded web research to finish before synthesis, within the page's 330s budget.
+        sources = cited_sources(client.research_company(research_prompt(company, as_of), timeout=120))
         official = financials.result()
     if not has_market_evidence(sources):
         try:
