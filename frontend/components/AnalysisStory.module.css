@@ -23,6 +23,15 @@
 .solutionGlow { position: relative; z-index: -1; display: block; width: 100%; height: auto; margin-top: -96px; pointer-events: none; }
 @media (max-width: 991px) { .solution { padding-top: 96px; padding-bottom: 96px; } .solution h2 { font-size: 44px; } }
 @media (max-width: 743px), (hover: none) and (pointer: coarse) { .titlePanel h2 { letter-spacing: -1px; } }
+@media (min-width: 2000px) {
+  .story { --pad: 2.1vw; --gutter: .6vw; }
+  .titlePanel h2 { font-size: 3.2vw; letter-spacing: -.096vw; }
+  .solution { padding: 8vw 1.6vw 6.4vw; }
+  .solutionContent { max-width: 64vw; }
+  .solution h2 { font-size: 2.8vw; letter-spacing: -.05vw; }
+  .solution p { max-width: 23vw; margin: 1.2vw auto 2.4vw; font-size: .8vw; line-height: 1.5; }
+  .solutionButton { min-height: 2.5vw; padding: .7vw 1vw; font-size: .8vw; }
+}
 @media (max-width: 743px) {
   .solution { padding: 96px 16px 48px; }
   .solution h2 { font-size: 30px; letter-spacing: -.5px; }

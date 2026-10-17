@@ -50,7 +50,7 @@ export default function CallAnalysisSection({ locale }: { locale: string }) {
           <div className={reportStyles.company}><div className={reportStyles.logo}><img src="/benefits/company-logos/MSFT.webp" alt="" width={34} height={34} /></div><div><h3>Microsoft <span>MSFT</span></h3><p>2Q/2026 · Earnings Call</p></div></div>
         </header>
         <h4 className={reportStyles.thesisHeading}><FileText size={22} />{english ? "Call Analysis" : "Análise do call"}</h4>
-        <div className={reportStyles.text} role="region" tabIndex={0} aria-label={english ? "Read the full Microsoft call analysis" : "Leia a análise completa do call da Microsoft"}>
+        <div className={reportStyles.text} data-lenis-prevent role="region" tabIndex={0} aria-label={english ? "Read the full Microsoft call analysis" : "Leia a análise completa do call da Microsoft"}>
           {analysis.map(section => <div key={section.title}>
             <h5 className={styles.heading}>{section.title}</h5>
             {section.paragraphs.map(paragraph => <p key={paragraph}>{splitBold(paragraph).map((part, index) => part.bold ? <strong key={index}>{part.text}</strong> : part.text)}</p>)}

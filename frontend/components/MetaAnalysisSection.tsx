@@ -71,7 +71,7 @@ export default function MetaAnalysisSection({ locale }: { locale: string }) {
         </header>
         <div className={styles.metrics}>{metrics.map(({label, score, icon: Icon, color}) => <div className={styles.metric} key={label}><div className={styles.icon}><Icon size={19} style={{color}} /></div><div><span>{label}</span><strong style={{color: score === 3 ? "#ba7800" : "#00875d"}}>{score}<small>/5</small></strong></div></div>)}</div>
         <h4 className={styles.thesisHeading}><FileText size={22} />{english ? "Investment Thesis" : "Tese de investimento"}</h4>
-        <div className={styles.text} tabIndex={0} role="region" aria-label={english ? "Read the full Meta investment thesis" : "Leia a tese de investimento completa da Meta"}>
+        <div className={styles.text} data-lenis-prevent tabIndex={0} role="region" aria-label={english ? "Read the full Meta investment thesis" : "Leia a tese de investimento completa da Meta"}>
           {(english ? thesis : translatedThesis).map(({lead, body}) => <p key={lead}><strong>{lead}</strong><br />{body}</p>)}
           <p><strong>{english ? "AI Conclusion" : "Conclusão da IA"}:</strong> {english ? conclusion : translatedConclusion}</p>
         </div>
