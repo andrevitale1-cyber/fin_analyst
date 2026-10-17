@@ -7,6 +7,7 @@ import re
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from typing import Literal
 
@@ -91,7 +92,7 @@ def canonical_period(year, quarter):
 
 def report_summary(report):
     return {**{key: report[key] for key in ("id", "company", "period", "locale", "kind", "created_at", "score", "is_public")},
-            **{key: report.get(key) for key in ("scope", "company_name", "as_of", "report_version")}}
+            **{key: report.get(key) for key in ("scope", "company_name", "symbol", "as_of", "report_version")}}
 
 
 def read_report(value):
@@ -304,8 +305,42 @@ def list_reports(user_id: str = Depends(require_report_user)):
             cur.execute("""SELECT r.content,r.is_public FROM full_reports r
                 WHERE r.is_public OR EXISTS (
                     SELECT 1 FROM full_report_access a WHERE a.report_id=r.id AND a.user_id=%s
-                ) ORDER BY r.is_public DESC,r.created_at DESC LIMIT 200""", (user_id,))
-            return {"reports": [report_summary(stored_report(row)) for row in cur.fetchall()]}
+                ) ORDER BY r.is_public DESC,r.created_at DESC,r.id DESC LIMIT 200""", (user_id,))
+            items = []
+            microsoft_seen = False
+            for row in cur.fetchall():
+                report = stored_report(row)
+                microsoft = str(report.get("symbol") or report["company"]).strip().upper() in {
+                    "MSFT", "MICROSOFT", "MICROSOFT CORPORATION", "MICROSOFT CORPORATION (MSFT)"}
+                if report["is_public"] and microsoft:
+                    if microsoft_seen:
+                        continue
+                    microsoft_seen = True
+                items.append(report_summary(report))
+            return {"reports": items}
+    finally:
+        conn.close()
+
+
+@router.delete("/{report_id}", status_code=204)
+def delete_report(report_id: str, user_id: str = Depends(require_report_user)):
+    conn = connection()
+    try:
+        with conn.cursor() as cur:
+            # Lock the report before removing access so publication or shared access cannot race deletion.
+            cur.execute("""SELECT r.id FROM full_reports r WHERE r.id=%s AND NOT r.is_public
+                AND EXISTS (SELECT 1 FROM full_report_access a WHERE a.report_id=r.id AND a.user_id=%s)
+                FOR UPDATE""", (report_id, user_id))
+            if not cur.fetchone():
+                raise HTTPException(404, "Relatório privado não encontrado.")
+            cur.execute("DELETE FROM full_report_access WHERE report_id=%s AND user_id=%s", (report_id, user_id))
+            cur.execute("""DELETE FROM full_reports WHERE id=%s AND NOT is_public
+                AND NOT EXISTS (SELECT 1 FROM full_report_access WHERE report_id=%s)""", (report_id, report_id))
+        conn.commit()
+        return Response(status_code=204)
+    except Exception:
+        conn.rollback()
+        raise
     finally:
         conn.close()
 

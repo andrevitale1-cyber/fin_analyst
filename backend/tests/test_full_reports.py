@@ -191,16 +191,19 @@ def gallery_database(monkeypatch):
         db.execute("INSERT INTO full_reports VALUES (?,?,?,?)", (report_id, json.dumps(report), public, report["created_at"]))
     db.executemany("INSERT INTO full_report_access VALUES (?,?)", [
         ("user_one", "demo"), ("user_two", "demo"), ("user_one", "own"), ("user_two", "other")])
+    db.commit()
 
     class Connection:
         @contextmanager
         def cursor(self):
             class Cursor:
-                def execute(self, sql, params): self.cursor = db.execute(sql.replace("%s", "?"), params)
+                def execute(self, sql, params): self.cursor = db.execute(sql.replace("%s", "?").replace("FOR UPDATE", ""), params)
                 def fetchone(self): return self.cursor.fetchone()
                 def fetchall(self): return self.cursor.fetchall()
             yield Cursor()
         def close(self): pass
+        def commit(self): db.commit()
+        def rollback(self): db.rollback()
 
     monkeypatch.setattr(reports, "connection", Connection)
     monkeypatch.setattr(reports, "OpenAIClient", Mock(side_effect=AssertionError("Browsing must never generate")))
@@ -214,6 +217,63 @@ def test_gallery_includes_public_demos_and_only_own_private_reports_without_dupl
     assert [(r["id"], r["is_public"]) for r in result] == [("demo", True), ("own", False)]
     assert [r["id"] for r in reports.list_reports("user_new")["reports"]] == ["demo"]
     assert gallery_database.total_changes == before
+
+
+def test_gallery_shows_only_latest_public_microsoft_across_languages_and_keeps_saved_links(gallery_database):
+    db = gallery_database
+    for report_id, company, locale, date, public in [
+        ("ms-old", "Microsoft Corporation", "en", "2026-10-15", True),
+        ("ms-new", "MSFT", "pt", "2026-10-17", True),
+        ("ms-mid", "MSFT", "en", "2026-10-16", True),
+        ("ms-private", "MSFT", "en", "2026-10-18", False),
+    ]:
+        report = {**content(), "id": report_id, "company": company, "period": "Company overview", "scope": "company",
+                  "locale": locale, "kind": "company", "created_at": date}
+        db.execute("INSERT INTO full_reports VALUES (?,?,?,?)", (report_id, json.dumps(report), public, date))
+    db.execute("INSERT INTO full_report_access VALUES (?,?)", ("user_one", "ms-private"))
+    db.commit()
+    before = db.total_changes
+    assert {r["id"] for r in reports.list_reports("user_one")["reports"]} == {"demo", "own", "ms-new", "ms-private"}
+    assert reports.get_report("ms-old", "user_new")["report"]["id"] == "ms-old"
+    assert db.total_changes == before
+
+
+def test_owner_can_delete_private_report_without_removing_other_reports(gallery_database):
+    assert reports.delete_report("own", "user_one").status_code == 204
+    assert gallery_database.execute("SELECT id FROM full_reports WHERE id='own'").fetchone() is None
+    assert gallery_database.execute("SELECT * FROM full_report_access WHERE report_id='own'").fetchone() is None
+    assert {r["id"] for r in reports.list_reports("user_one")["reports"]} == {"demo"}
+    assert reports.get_report("other", "user_two")["report"]["id"] == "other"
+
+
+@pytest.mark.parametrize("report_id", ["demo", "other", "missing"])
+def test_deletion_rejects_public_other_users_and_unknown_reports(gallery_database, report_id):
+    before = gallery_database.total_changes
+    with pytest.raises(HTTPException) as error:
+        reports.delete_report(report_id, "user_one")
+    assert error.value.status_code == 404
+    assert gallery_database.total_changes == before
+    assert len(reports.list_reports("user_one")["reports"]) == 2
+
+
+def test_deleting_shared_private_access_preserves_other_users_copy(gallery_database):
+    gallery_database.execute("INSERT INTO full_report_access VALUES (?,?)", ("user_two", "own"))
+    gallery_database.commit()
+    reports.delete_report("own", "user_one")
+    assert reports.get_report("own", "user_two")["report"]["id"] == "own"
+    with pytest.raises(HTTPException): reports.get_report("own", "user_one")
+    reports.delete_report("own", "user_two")
+    assert gallery_database.execute("SELECT id FROM full_reports WHERE id='own'").fetchone() is None
+
+
+def test_deletion_rolls_back_on_database_failure(monkeypatch):
+    conn = MagicMock()
+    conn.cursor.return_value.__enter__.return_value.fetchone.return_value = ("own",)
+    conn.commit.side_effect = RuntimeError("database unavailable")
+    monkeypatch.setattr(reports, "connection", lambda: conn)
+    with pytest.raises(RuntimeError): reports.delete_report("own", "user_one")
+    conn.rollback.assert_called_once()
+    conn.close.assert_called_once()
 
 
 @pytest.mark.parametrize("report_id,user,allowed", [
@@ -276,6 +336,7 @@ def test_new_endpoints_require_authentication(monkeypatch):
         assert client.get(path).status_code == 401
     assert client.post("/api/full-reports", json={"analysis_id": 1, "locale": "en"}).status_code == 401
     assert client.post("/api/full-reports/company", json={"company": "META", "locale": "en"}).status_code == 401
+    assert client.delete("/api/full-reports/known-id").status_code == 401
 
 
 def test_structured_output_is_requested_and_truncated_response_rejected(monkeypatch):

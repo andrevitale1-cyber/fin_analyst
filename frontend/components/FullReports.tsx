@@ -4,9 +4,10 @@ import { useAuth, UserButton } from "@clerk/nextjs";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, ChevronRight, Loader2, Search } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, ChevronRight, Loader2, Search, Trash2 } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 import CompanyReportReader from "./CompanyReportReader";
+import CompanyLogo from "./CompanyLogo";
 import ReportSources from "./ReportSources";
 import { reportCitationIds, stripReportCitations } from "../lib/reportCitations";
 import { splitBold } from "../lib/analysisText";
@@ -54,20 +55,6 @@ function formatReportDate(value: string, locale: string) {
   }).format(parsed);
 }
 
-function companyLogoPath(symbol: string) {
-  if (["MU", "AMD", "NOW"].includes(symbol)) return `/report-logos/${symbol}.png`;
-  const asset = symbol === "GOOGL" ? "GOOG" : symbol;
-  return `/benefits/company-logos/${encodeURIComponent(asset)}.${symbol === "NOW" ? "png" : "webp"}`;
-}
-
-function CompanyLogo({ symbol, company, small = false }: { symbol?: string | null; company: string; small?: boolean }) {
-  const [failed, setFailed] = useState(false);
-  const safeSymbol = symbol && /^[A-Za-z0-9.-]+$/.test(symbol) ? symbol : null;
-  return safeSymbol && !failed
-    ? <img src={companyLogoPath(safeSymbol)} alt="" width={48} height={48} onError={() => setFailed(true)} className={small ? "h-[18px] w-[18px] object-contain" : "h-12 w-12 rounded-xl object-contain"} />
-    : <div aria-label={company} className={`flex items-center justify-center rounded-xl bg-sky-50 text-sky-800 ${small ? "h-[18px] w-[18px]" : "h-12 w-12"}`}><Building2 size={22} /></div>;
-}
-
 export default function FullReports() {
   const { getToken, userId, isLoaded } = useAuth();
   const locale = useLocale();
@@ -94,6 +81,11 @@ export default function FullReports() {
   }, []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleteNotice, setDeleteNotice] = useState("");
+  const accountRef = useRef(userId);
+  accountRef.current = userId;
   const [reused, setReused] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
   const [scenarioInputs, setScenarioInputs] = useState<Record<"bear" | "base" | "bull", ValuationInputs>>(() => Object.fromEntries(SCENARIOS.map(({ key, ...values }) => [key, values])) as Record<"bear" | "base" | "bull", ValuationInputs>);
@@ -161,6 +153,7 @@ export default function FullReports() {
     requestRef.current = controller;
     setLoading(true);
     setError("");
+    setDeleteError(""); setDeleteNotice(""); setDeletingId(null);
     setReport(null);
     setReportOwnerId(null);
     setReports([]);
@@ -257,6 +250,22 @@ export default function FullReports() {
   const publicCompanyReports = publicReports.filter(item => item.scope === "company");
   const publicPeriodReports = publicReports.filter(item => item.scope !== "company");
   const privateReports = filteredReports.filter(item => item.is_public !== true);
+  const deletePrivateReport = async (item: ReportSummary) => {
+    if (item.is_public || deletingId || !userId || !window.confirm(t("deleteConfirm", { company: item.company_name || item.company }))) return;
+    const owner = userId;
+    setDeletingId(item.id); setDeleteError(""); setDeleteNotice("");
+    try {
+      const response = await authorizedFetch(`/api/full-reports/${encodeURIComponent(item.id)}`, { method: "DELETE" }, 30_000);
+      if (!response.ok) throw new Error("delete_failed");
+      if (accountRef.current !== owner) return;
+      setReports(items => items.filter(report => report.id !== item.id));
+      setDeleteNotice(t("deleteSuccess"));
+    } catch {
+      if (accountRef.current === owner) setDeleteError(t("deleteError"));
+    } finally {
+      if (accountRef.current === owner) setDeletingId(null);
+    }
+  };
   const selectedSection = reportOwnerId === userId ? report?.sections.find(section => section.id === activeSection) : undefined;
   const formatDate = (value: string) => formatReportDate(value, locale);
   const selectSavedReport = (id: string) => {
@@ -304,11 +313,11 @@ export default function FullReports() {
   const formatScenarioValue = (value: number | null, currency: string | null) => value === null
     ? t("scenarioUnavailable")
     : `${currency ? `${currency} ` : ""}${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)}`;
-  const reportCard = (item: ReportSummary, isPublic: boolean) => <button key={item.id} onClick={() => selectSavedReport(item.id)} className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700">
+  const reportCard = (item: ReportSummary, isPublic: boolean) => <div key={item.id} className="relative h-full"><button onClick={() => selectSavedReport(item.id)} className="group flex h-full w-full flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-sky-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700">
     <div className="flex w-full items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><CompanyLogo symbol={item.symbol || item.company} company={item.company_name || item.company} /><div className="min-w-0"><h3 className="truncate text-lg font-bold text-slate-900">{item.company_name || item.company}</h3><p className="mt-0.5 text-sm text-slate-500">{item.scope === "company" ? item.company : item.period}</p></div></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${isPublic ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{isPublic ? t("publicBadge") : t("privateBadge")}</span></div>
     <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-500"><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{item.scope === "company" ? t("companyOverview") : item.kind === "transcript" ? t("transcript") : t("report")}</span><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{item.locale === "pt" ? t("localePortuguese") : t("localeEnglish")}</span><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{formatDate(item.created_at)}</span></div>
-    <span className="mt-auto inline-flex items-center gap-1 pt-5 text-sm font-semibold text-sky-800">{t("openReport")}<ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></span>
-  </button>;
+    <span className="mt-auto inline-flex items-center gap-1 pr-12 pt-5 text-sm font-semibold text-sky-800">{t("openReport")}<ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></span>
+  </button>{!isPublic && <button type="button" onClick={() => deletePrivateReport(item)} disabled={deletingId !== null} aria-label={t("deleteReport", { company: item.company_name || item.company })} title={t("deleteReport", { company: item.company_name || item.company })} className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 disabled:opacity-40">{deletingId === item.id ? <Loader2 size={17} className="animate-spin" /> : <Trash2 size={17} />}</button>}</div>;
 
   return (
     <div className="min-h-screen bg-[#fafaf9] text-slate-900">
@@ -340,6 +349,8 @@ export default function FullReports() {
         </aside>}
 
         <main className="min-w-0">
+          {!visibleReport && deleteError && <p role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{deleteError}</p>}
+          {!visibleReport && deleteNotice && <p role="status" className="mb-5 text-sm text-slate-600">{deleteNotice}</p>}
           {error && <div role="alert" className="mb-5 flex flex-wrap items-start gap-3 rounded-2xl border border-rose-200 bg-white p-5 text-rose-800 shadow-sm"><AlertCircle className="mt-0.5 shrink-0" size={19} /><div className="min-w-0 flex-1"><p className="font-semibold">{t("errorTitle")}</p><p className="mt-1 text-sm">{error}</p></div><button onClick={retry} className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold hover:bg-rose-100">{t("retry")}</button><button onClick={returnToGallery} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">{t("backToGallery")}</button></div>}
           {loading && !visibleReport ? <div className="flex min-h-[40vh] items-center justify-center rounded-3xl border border-slate-200 bg-white text-slate-500"><div className="flex items-center gap-3"><Loader2 className="animate-spin text-sky-700" />{target.type === "generate" ? t("generating") : target.type === "company" ? t("companyGenerating") : t("loading")}</div></div> : null}
           {!loading && !visibleReport && !error && <div className="space-y-10">
@@ -349,12 +360,12 @@ export default function FullReports() {
             {publicPeriodReports.length > 0 && <section><div className="mb-5"><h2 className="text-xl font-bold text-slate-900">{t("periodReports")}</h2><p className="mt-1 text-sm text-slate-500">{t("periodReportsDescription")}</p></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{publicPeriodReports.map(item => reportCard(item, true))}</div></section>}
             {privateReports.length > 0 && <section><div className="mb-4"><h2 className="text-xl font-bold text-slate-900">{t("yourPrivateReports")}</h2><p className="mt-1 text-sm text-slate-500">{t("privateDescription")}</p></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{privateReports.map(item => reportCard(item, false))}</div></section>}
           </div>}
-          {visibleReport?.scope === "company" && <CompanyReportReader report={visibleReport} locale={locale} t={t} logoPath={companyLogoPath} formatDate={formatDate} onBack={returnToGallery} onRefresh={() => generateCompany(visibleReport.company)} onDashboard={() => router.push(`/${locale}/dashboard?company=${encodeURIComponent(visibleReport.company)}`)} />}
+          {visibleReport?.scope === "company" && <CompanyReportReader report={visibleReport} locale={locale} t={t} formatDate={formatDate} onBack={returnToGallery} onRefresh={() => generateCompany(visibleReport.company)} onDashboard={() => router.push(`/${locale}/dashboard?company=${encodeURIComponent(visibleReport.company)}`)} />}
           {visibleReport && visibleReport.scope !== "company" && <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-6 pt-5 md:px-10"><button onClick={returnToGallery} className="mb-4 inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-50"><ArrowLeft size={16} />{t("backToGallery")}</button></div>
             <div className="border-b border-slate-100 bg-gradient-to-br from-white via-white to-sky-50/80 p-6 md:p-10">
               <div className="mb-5 flex flex-wrap items-center gap-2"><span className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-sky-800">{visibleReport.kind === "transcript" ? t("transcript") : t("report")}</span>{reused && <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">{t("reused")}</span>}</div>
-              <p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("reportEyebrow")}</p><h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 md:text-5xl">{visibleReport.company}</h1>
+              <p className="text-xs font-bold uppercase tracking-[.15em] text-sky-800">{t("reportEyebrow")}</p><div className="mt-3 flex items-center gap-3"><CompanyLogo symbol={visibleReport.symbol || visibleReport.company} company={visibleReport.company_name || visibleReport.company} /><h1 className="min-w-0 break-words text-3xl font-bold tracking-tight text-slate-950 md:text-5xl">{visibleReport.company}</h1></div>
               <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500"><span className="inline-flex items-center gap-2"><Building2 size={15} />{visibleReport.period}</span><span className="inline-flex items-center gap-2"><CalendarDays size={15} />{t("created", { date: formatDate(visibleReport.created_at) })}</span>{visibleReport.score !== null && <span className="font-semibold text-sky-800">{t("score", { score: visibleReport.score })}</span>}</div>
               <div className="mt-7 rounded-2xl border border-sky-100 bg-[#f3f9ff] p-5 md:p-6"><p className="mb-2 text-xs font-bold uppercase tracking-[.14em] text-sky-800">{t("thesisCallout")}</p><p className="text-lg font-medium leading-relaxed text-slate-800">{reportText(visibleReport.sections.find(section => section.id === "thesis")?.summary || visibleReport.sections.find(section => section.id === "thesis")?.paragraphs?.[0] || t("noThesis"))}</p></div>
             </div>

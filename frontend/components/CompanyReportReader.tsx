@@ -8,12 +8,13 @@ import { formatMetricValue, formatReportMoney, formatReportNumber } from "../lib
 import { breakdownAmount, breakdownValue, prepareBreakdowns, selectSegmentBreakdowns, type ReportBreakdown } from "../lib/reportBreakdowns";
 import worldMap from "../lib/reportWorldMap.json";
 import ReportSources from "./ReportSources";
+import CompanyLogo from "./CompanyLogo";
 import { reportCitationIds, stripReportCitations } from "../lib/reportCitations";
 
 const SECTIONS = ["thesis", "business", "financials", "moat", "management", "sentiment", "outlook", "risks", "valuation", "verdict"] as const;
 const COLORS = ["#2563eb", "#7c3aed", "#0891b2", "#059669", "#d97706", "#dc2626", "#94a3b8"];
 type Translate = (key: string, values?: Record<string, string | number>) => string;
-type Props = { report: FullReport; locale: string; t: Translate; onBack: () => void; onRefresh: () => void; onDashboard: () => void; logoPath: (symbol: string) => string; formatDate: (value: string) => string };
+type Props = { report: FullReport; locale: string; t: Translate; onBack: () => void; onRefresh: () => void; onDashboard: () => void; formatDate: (value: string) => string };
 
 function Dots({ score }: { score: number | null }) {
   return <span aria-hidden="true" className="flex gap-0.5">{[1, 2, 3, 4, 5].map(n => <span key={n} className={`h-1.5 w-1.5 rounded-full ${score !== null && n <= score ? "bg-emerald-600" : "bg-slate-200"}`} />)}</span>;
@@ -48,7 +49,7 @@ function regionMatches(country: { id: string; name: string }, item: ReportBreakd
   return (aliases[country.id] || [country.name.toLowerCase()]).some(alias => normalized.includes(alias));
 }
 
-export default function CompanyReportReader({ report, locale, t, onBack, onRefresh, onDashboard, logoPath, formatDate }: Props) {
+export default function CompanyReportReader({ report, locale, t, onBack, onRefresh, onDashboard, formatDate }: Props) {
   const [highlights, setHighlights] = useState(true);
   const [serif, setSerif] = useState(true);
   const [fontSize, setFontSize] = useState(14);
@@ -106,7 +107,7 @@ export default function CompanyReportReader({ report, locale, t, onBack, onRefre
     <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs"><button onClick={onBack} className="inline-flex items-center gap-2 rounded-lg px-2 py-2 font-semibold text-slate-600 hover:bg-slate-100"><ArrowLeft size={15} />{t("backToGallery")}</button>{report.report_version !== "company-v3" && <button onClick={onRefresh} className="rounded-lg bg-sky-50 px-3 py-2 font-semibold text-sky-800 hover:bg-sky-100">{t("refreshCompanyReport")}</button>}</div>
     <article className="report-paper overflow-hidden rounded-none sm:rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,.06),0_1px_2px_rgba(0,0,0,.04)]" data-highlights={highlights} style={{ "--report-font": serif ? "FinReportLora, Georgia, serif" : "Arial, sans-serif", "--report-font-size": `${fontSize}px` } as CSSProperties}>
       <header className="flex flex-wrap items-center justify-between gap-5 bg-[#101827] px-5 py-7 text-white sm:px-7">
-        <div className="flex min-w-0 flex-1 items-center gap-3"><img src={logoPath(report.company)} alt="" width={42} height={42} onError={event => { event.currentTarget.style.display = "none"; }} className="h-[42px] w-[42px] shrink-0 rounded-xl bg-white p-1 object-contain" /><div className="min-w-0"><h1 className="text-lg font-bold leading-6 tracking-tight">{name}{" "}<span className="ml-2 text-xs font-semibold text-slate-400">{report.company}</span></h1><div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">{market?.price != null && <strong>{money(market.price, market.currency)}</strong>}{market?.change_percent != null && <span className={`font-semibold ${market.change_percent >= 0 ? "text-emerald-400" : "text-rose-300"}`}>{market.change_percent > 0 ? "+" : ""}{number(market.change_percent)}%</span>}<span className="text-[11px] text-slate-300">{t("companyAsOf", { date: date(report.as_of || report.created_at) })}</span></div>{market?.source_id && <p className="mt-1 text-[10px] text-slate-400">{t("marketAsOf", { date: date(market.as_of) })}</p>}</div></div>
+        <div className="flex min-w-0 flex-1 items-center gap-3"><CompanyLogo symbol={report.symbol || report.company} company={name} className="h-[42px] w-[42px] rounded-xl bg-white p-1" /><div className="min-w-0"><h1 className="text-lg font-bold leading-6 tracking-tight">{name}{" "}<span className="ml-2 text-xs font-semibold text-slate-400">{report.company}</span></h1><div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">{market?.price != null && <strong>{money(market.price, market.currency)}</strong>}{market?.change_percent != null && <span className={`font-semibold ${market.change_percent >= 0 ? "text-emerald-400" : "text-rose-300"}`}>{market.change_percent > 0 ? "+" : ""}{number(market.change_percent)}%</span>}<span className="text-[11px] text-slate-300">{t("companyAsOf", { date: date(report.as_of || report.created_at) })}</span></div>{market?.source_id && <p className="mt-1 text-[10px] text-slate-400">{t("marketAsOf", { date: date(market.as_of) })}</p>}</div></div>
         {report.score !== null && <a href="#company-quality" className="border-l border-white/10 pl-5"><p className="text-[9px] font-bold uppercase tracking-[.1em] text-slate-400">{t("qualityScore")}</p><p className="my-1 text-[32px] font-extrabold leading-8 tracking-tight text-slate-300">{report.score}<span className="ml-0.5 text-xs font-medium">/5</span></p><Dots score={report.score} /></a>}
       </header>
       <div className="px-5 pb-12 pt-7 sm:px-10">

@@ -5,6 +5,7 @@ import { useUser, UserButton } from "@clerk/nextjs";
 import { useTranslations, useLocale } from "next-intl";
 import { formatPeriod, splitBold } from "../../../lib/analysisText";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
+import CompanyLogo from "../../../components/CompanyLogo";
 import {
   LayoutDashboard, History, UploadCloud, FileText, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Loader2,
@@ -719,9 +720,14 @@ export default function FinancialDashboard() {
             </div>
             
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-7 rounded-[2rem] border border-slate-200 bg-white/90 p-6 md:p-10 shadow-[0_24px_70px_rgba(38,57,94,0.10)]">
-              <div>
-                <h2 className="text-slate-500 uppercase tracking-widest text-xs font-bold mb-2">{t("result.analysisReport")}</h2>
-                <h1 className="text-4xl md:text-5xl font-bold text-slate-900 mb-2">{result.metadata?.empresa?.toUpperCase()}</h1>
+              <div className="min-w-0">
+                <div className="mb-3 flex items-center gap-3">
+                  <CompanyLogo symbol={result.metadata?.ticker || result.metadata?.symbol || result.metadata?.empresa} company={result.metadata?.empresa || result.metadata?.company || ""} />
+                  <div className="min-w-0">
+                    <h2 className="text-slate-500 uppercase tracking-widest text-xs font-bold mb-2">{t("result.analysisReport")}</h2>
+                    <h1 className="break-words text-3xl md:text-5xl font-bold text-slate-900">{(result.metadata?.empresa || result.metadata?.company)?.toUpperCase()}</h1>
+                  </div>
+                </div>
                 <p className={`text-xl font-medium ${result.metadata?.tipo === "Earnings Call" ? 'text-purple-600' : 'text-sky-700'}`}>
                   {result.metadata?.tipo === "Earnings Call" ? `Earnings Call · ${formatPeriod(result.metadata?.periodo, locale)}` : formatPeriod(result.metadata?.periodo, locale)}
                 </p>
