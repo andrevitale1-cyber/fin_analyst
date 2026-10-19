@@ -25,6 +25,7 @@ class SearchClient:
             "SANB11": "Santander Brasil",
             "PETR4": "Petrobras",
             "VALE3": "Vale",
+            "WEGE3": "WEG",
         }
         issuer = issuers.get(ticker.upper(), "")
         query = f"{ticker} {issuer} {trimestre} {ano} earnings release resultados trimestrais central de resultados PDF RI"
@@ -44,8 +45,8 @@ class SearchClient:
                 pass
         try:
             return OpenAIClient().search_pdf_links(query)
-        except (OpenAIError, TimeoutError):
-            return []
+        except (OpenAIError, TimeoutError) as exc:
+            raise SearchError("O serviço de busca de resultados está indisponível. Tente novamente em instantes ou envie o PDF oficial.") from exc
 
     def search_transcripts(self, company, year, quarter, allow_openai=False):
         if allow_openai:

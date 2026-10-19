@@ -64,7 +64,6 @@
 @media (max-width: 374px), (max-height: 700px) and (max-width: 743px) { .navigation { width: calc(100% - 40px); } .copy h1 { font-size: 34px; } .copy p { font-size: 17px; } .copy { gap: 18px; } }
 @media (max-height: 700px) and (min-width: 744px) { .inner { min-height: 540px; } }
 @media (prefers-reduced-motion: reduce) {
-  .scrollDown svg, .track { animation: none; }
-  .marquee { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
-  .track ul[aria-hidden="true"] { display: none; }
+  .scrollDown svg { animation: none; }
+  .track { animation-duration: 48s; }
 }

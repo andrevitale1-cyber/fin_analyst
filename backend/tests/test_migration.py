@@ -322,6 +322,15 @@ def test_auto_not_found_requests_manual_upload(api, monkeypatch, openai_client):
     assert "upload manual" in result.json()["detail"]
 
 
+def test_auto_search_outage_is_retryable_instead_of_report_not_found(api, monkeypatch, openai_client):
+    from agents.search_client import SearchError
+    _, client = api
+    monkeypatch.setattr(AutoFetcher, "fetch_result_pdf", Mock(side_effect=SearchError("PROVIDER_PRIVATE_DETAIL")))
+    result = client.post("/api/analyze-auto", data={"company": "Weg", "ano": "2026", "trimestre": "1T", "user_id": "test"})
+    assert result.status_code == 503
+    assert "temporariamente" in result.json()["detail"] and "PROVIDER_PRIVATE_DETAIL" not in result.text
+
+
 def test_report_invalid_chart_data():
     html = generate_report_html({"metadata": {"empresa": "AAPL", "periodo": "1T/2025"}, "analise_completa": ANALYSIS.split('```')[0], "data": {"chart_data": {"invalid": 1}}})
     assert 'const CD = [];' in html

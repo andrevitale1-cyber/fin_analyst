@@ -431,6 +431,9 @@ async def analyze_report_auto(
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from None
+    except SearchError:
+        raise HTTPException(status_code=503, detail="The report search service is temporarily unavailable. Please try again shortly or upload the official PDF." if locale == "en" else
+                            "O serviço de busca de resultados está temporariamente indisponível. Tente novamente em instantes ou envie o PDF oficial.") from None
     except (asyncio.TimeoutError, TimeoutError):
         raise HTTPException(status_code=504, detail="A busca demorou muito. Faça o upload manual do PDF.") from None
     if not document:

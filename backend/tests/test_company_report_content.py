@@ -268,6 +268,16 @@ def test_report_prompt_preserves_ten_sections_with_a_concise_writing_budget():
         assert "thesis, business, financials, moat, management, sentiment, outlook, risks, valuation, verdict" in prompt
 
 
+def test_company_report_ticker_requires_evidence_and_legacy_reports_remain_valid():
+    raw = valid_report()
+    sources = [{"id": "S1", "title": "Nike, Inc. (NKE)", "basis": "primary", "text": "Full-year EPS was USD 2.50."}]
+    assert validate_company_report(raw, sources)["symbol"] is None
+    raw["symbol"] = "NKE"
+    assert validate_company_report(raw, sources)["symbol"] == "NKE"
+    raw["symbol"] = "MADEUP"
+    assert validate_company_report(raw, sources)["symbol"] is None
+
+
 def test_scenario_numeric_bounds_and_market_price_are_enforced():
     raw = valid_report()
     raw["valuation"]["scenarios"][0]["growth_percent"] = 101

@@ -23,16 +23,17 @@ export default function TypingPreview({ children }: { children: ReactNode }) {
       const node = walker.currentNode as Text, text = node.data;
       nodes.push({ node, text, start: total }); total += text.length;
     }
+    const duration = Math.min(total, 700) * 24;
     const observer = new IntersectionObserver(entries => {
       cancelAnimationFrame(frame);
       if (!entries.some(entry => entry.intersectionRatio >= .2)) { setTyping(false); return; }
       if (reduce.matches || stopped) return;
       const started = performance.now();
       const tick = (now: number) => {
-        const cycle = (now - started) % 18000;
-        setTyping(cycle < 12000);
-        if (cycle < 12000) {
-          const count = Math.floor(total * cycle / 12000);
+        const cycle = (now - started) % (duration + 7000);
+        setTyping(cycle < duration);
+        if (cycle < duration) {
+          const count = Math.floor(cycle / 24);
           for (const { node, text, start } of nodes) node.data = text.slice(0, Math.max(0, count - start));
         }
         frame = requestAnimationFrame(tick);

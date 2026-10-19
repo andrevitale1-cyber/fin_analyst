@@ -3,6 +3,7 @@ import hashlib
 from dataclasses import asdict
 import json
 import ipaddress
+import logging
 import os
 from pathlib import Path
 import re
@@ -15,6 +16,8 @@ from bs4 import BeautifulSoup
 from agents.search_client import SearchClient, SearchError
 from agents.sec_fetcher import FetchedDocument, SECFetcher
 from openai_client import OpenAIClient, OpenAIError
+
+logger = logging.getLogger("uvicorn.error")
 
 
 class AutoFetcher:
@@ -40,11 +43,13 @@ class AutoFetcher:
     def resolve_ticker(self, ticker):
         """Accept common Brazilian symbols typed without their share-class suffix."""
         ticker = ticker.strip().upper()
+        ticker = re.sub(r"^([A-Z]{4}\d{1,2})\.SA$", r"\1", ticker)
         company_aliases = {
             "ITAU": "ITUB4", "ITAU UNIBANCO": "ITUB4", "ITAU UNIBANCO HOLDING": "ITUB4",
             "PETROBRAS": "PETR4", "PETROLEO BRASILEIRO": "PETR4", "VALE": "VALE3",
             "AMBEV": "ABEV3", "BRADESCO": "BBDC4", "BANCO DO BRASIL": "BBAS3",
             "ITAUSA": "ITSA4", "SANTANDER BRASIL": "SANB11", "WEG": "WEGE3",
+            "WEG S.A.": "WEGE3", "WEG S A": "WEGE3", "WEG SA": "WEGE3",
             "LOCALIZA": "RENT3", "LOJAS RENNER": "LREN3", "B3": "B3SA3",
             "APPLE": "AAPL", "MICROSOFT": "MSFT", "GOOGLE": "GOOGL", "ALPHABET": "GOOGL",
             "AMAZON": "AMZN", "META": "META", "FACEBOOK": "META", "NVIDIA": "NVDA", "TESLA": "TSLA",
@@ -305,6 +310,7 @@ class AutoFetcher:
                 soup = BeautifulSoup(response.text, "html.parser")
                 candidates = [{"title": a.get_text(" ", strip=True), "url": urljoin(response.url, a["href"])}
                               for a in soup.find_all("a", href=True)]
+                candidates = self._mziq_release_candidates(soup, year, quarter) + candidates
                 for candidate in self._candidates(candidates, year, quarter)[:12]:
                     document = self._download_release(candidate["url"], year, quarter)
                     if document:
@@ -324,6 +330,41 @@ class AutoFetcher:
             if document:
                 return document
         return None
+
+    def _mziq_release_candidates(self, soup, year, quarter):
+        scripts = "\n".join(script.get_text() for script in soup.find_all("script"))
+        company = re.search(r"\b(?:fmId|company_id)\s*=\s*['\"]([a-fA-F0-9-]{36})['\"]", scripts)
+        categories = re.findall(r"internal_name\s*:\s*['\"]([a-zA-Z0-9_]+)['\"]", scripts)
+        categories = list(dict.fromkeys(name for name in categories if re.search(r"release|earnings", name, re.I)))
+        if not company or not categories:
+            return []
+        company_id = company[1]
+        try:
+            response = requests.post(f"https://api.mziq.com/mzfilemanager/company/{company_id}/filter/categories/year/meta",
+                                     json={"year": year, "categories": categories[:6], "language": "pt_BR", "published": True}, timeout=12)
+            response.raise_for_status()
+            payload = response.json()
+            rows = payload.get("data", {}).get("document_metas", []) if isinstance(payload, dict) else []
+            if payload.get("success") is not True or not isinstance(rows, list):
+                return []
+            candidates = []
+            for row in rows[:100]:
+                if not isinstance(row, dict) or row.get("company_id") != company_id or row.get("internal_name") not in categories:
+                    continue
+                if str(row.get("file_year")) != str(year) or str(row.get("file_quarter")) != str(quarter) or row.get("is_published") is not True:
+                    continue
+                url = row.get("file_url") or row.get("permalink")
+                if not self._valid_url(url) or urlparse(url).hostname not in ("api.mziq.com", "filemanager-cdn.mziq.com"):
+                    continue
+                if company_id.lower() not in urlparse(url).path.lower().split("/"):
+                    continue
+                candidates.append({"title": str(row.get("file_title") or "Release de resultados"), "url": url,
+                                   "content": f"Release de resultados {quarter}T{year}"})
+            logger.info("release_catalog provider=mziq year=%s quarter=%s candidates=%d", year, quarter, len(candidates))
+            return candidates
+        except (requests.RequestException, ValueError, TypeError, AttributeError):
+            logger.warning("release_catalog_unavailable provider=mziq year=%s quarter=%s", year, quarter)
+            return []
 
     def _candidates(self, results, year, quarter):
         candidates = []
@@ -369,13 +410,16 @@ class AutoFetcher:
                 if "html" not in content_type.lower() and not response.text.lstrip().startswith(("<", "<!DOCTYPE")):
                     return None
                 soup = BeautifulSoup(response.text, "html.parser")
+                catalog = self._mziq_release_candidates(soup, year, quarter) if depth == 0 else []
                 for tag in soup(["script", "style", "nav", "footer"]):
                     tag.decompose()
                 if depth == 0:
-                    linked = [{"title": a.get_text(" ", strip=True), "url": urljoin(response.url, a["href"])}
-                              for a in soup.find_all("a", href=True)]
+                    linked = catalog + [
+                        {"title": a.get_text(" ", strip=True), "url": urljoin(response.url, a["href"])}
+                        for a in soup.find_all("a", href=True)]
                     for candidate in self._candidates(linked, year, quarter)[:8]:
-                        if urlparse(candidate["url"]).netloc == urlparse(response.url).netloc:
+                        if (urlparse(candidate["url"]).netloc == urlparse(response.url).netloc
+                                or urlparse(candidate["url"]).hostname in ("api.mziq.com", "filemanager-cdn.mziq.com")):
                             document = self._download_release(candidate["url"], year, quarter, depth=1)
                             if document:
                                 return document
