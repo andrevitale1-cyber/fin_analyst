@@ -3,6 +3,7 @@ import { Link } from "@/i18n/routing";
 import { splitBold } from "@/lib/analysisText";
 import reportStyles from "./MetaAnalysisSection.module.css";
 import styles from "./CallAnalysisSection.module.css";
+import TypingPreview from "./TypingPreview";
 
 // Original English analysis transcribed from the supplied report screenshots.
 const analysis = [
@@ -51,10 +52,10 @@ export default function CallAnalysisSection({ locale }: { locale: string }) {
         </header>
         <h4 className={reportStyles.thesisHeading}><FileText size={22} />{english ? "Call Analysis" : "Análise do call"}</h4>
         <div className={reportStyles.text} data-lenis-prevent role="region" tabIndex={0} aria-label={english ? "Read the full Microsoft call analysis" : "Leia a análise completa do call da Microsoft"}>
-          {analysis.map(section => <div key={section.title}>
+          <TypingPreview>{analysis.map(section => <div key={section.title}>
             <h5 className={styles.heading}>{section.title}</h5>
             {section.paragraphs.map(paragraph => <p key={paragraph}>{splitBold(paragraph).map((part, index) => part.bold ? <strong key={index}>{part.text}</strong> : part.text)}</p>)}
-          </div>)}
+          </div>)}</TypingPreview>
         </div>
         <div className={reportStyles.reportFooter}>{english ? "Scroll to explore the analysis" : "Role para explorar a análise"} ↓</div>
       </article>

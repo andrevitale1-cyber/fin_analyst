@@ -5,6 +5,7 @@ import json
 import logging
 import re
 import uuid
+from time import perf_counter
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
@@ -22,6 +23,7 @@ router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
 COMPANY_REPORT_VERSION = "company-v3"
 logger = logging.getLogger(__name__)
+timing_logger = logging.getLogger("uvicorn.error")
 
 
 def connection():
@@ -152,7 +154,8 @@ def canonical_company(company):
                "JPMORGAN": "JPM", "JOHNSON & JOHNSON": "JNJ", "ELI LILLY": "LLY",
                "WALMART": "WMT", "VISA": "V", "MASTERCARD": "MA", "COSTCO": "COST",
                "ORACLE": "ORCL", "EXXON MOBIL": "XOM", "CHEVRON": "CVX", "ABBVIE": "ABBV",
-               "BANK OF AMERICA": "BAC", "CATERPILLAR": "CAT", "LAM RESEARCH": "LRCX"}
+               "BANK OF AMERICA": "BAC", "CATERPILLAR": "CAT", "LAM RESEARCH": "LRCX",
+               "NIKE": "NKE", "NIKE INC": "NKE", "NIKE, INC.": "NKE"}
     symbol = aliases.get(symbol, symbol).removesuffix(".SA")
     if not re.fullmatch(r"[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,4})?", symbol):
         raise HTTPException(422, "Use a stock ticker or a recognized company name. / Informe o ticker ou um nome de empresa reconhecido.")
@@ -217,6 +220,8 @@ def calculated_company_valuation(content):
 
 @router.post("/company")
 def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_report_user)):
+    started = perf_counter()
+    timings = {}
     company = canonical_company(body.company)
     as_of = datetime.now(timezone.utc).date().isoformat()
     model = model_for_task("full_report")
@@ -229,16 +234,26 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
             cur.execute("SELECT pg_advisory_xact_lock(%s)", (int.from_bytes(bytes.fromhex(key)[:8], "big", signed=True),))
             cur.execute("SELECT content,is_public FROM full_reports WHERE cache_key=%s", (key,))
             existing = cur.fetchone()
+            if not existing and company == "NKE":
+                # Keep reports generated under the old NIKE identifier reusable.
+                legacy_key = company_cache_key("NIKE", model, as_of, body.locale)
+                cur.execute("SELECT content,is_public FROM full_reports WHERE cache_key=%s", (legacy_key,))
+                existing = cur.fetchone()
+            timings["cache_ms"] = round((perf_counter() - started) * 1000)
             if existing:
                 report = stored_report(existing)
             else:
                 client = OpenAIClient(task="full_report")
                 stage = "research"
+                step = perf_counter()
                 evidence = company_evidence(company, model, as_of, client)
+                timings["research_ms"] = round((perf_counter() - step) * 1000)
                 sources = evidence["sources"]
                 prompt = build_company_report_prompt(company, evidence["as_of"], body.locale, sources)
                 stage = "synthesis"
+                step = perf_counter()
                 raw = client.analyze_full_report(prompt, company_report_schema(), max_output_tokens=11000, timeout=120)
+                timings["synthesis_ms"] = round((perf_counter() - step) * 1000)
                 stage = "validation"
                 content = calculated_company_valuation(validate_company_report(raw, sources))
                 if body.locale == "pt" and not content["valuation"]["available"]:
@@ -254,6 +269,7 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
             cur.execute("""INSERT INTO full_report_access (user_id,report_id) VALUES (%s,%s)
                 ON CONFLICT (user_id,report_id) DO NOTHING""", (user_id, report["id"]))
         conn.commit()
+        stage = "complete"
         return {"report": report, "reused": bool(existing)}
     except HTTPException:
         conn.rollback()
@@ -263,6 +279,8 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
         raise generation_failure(exc, body.locale, company=company, stage=stage) from None
     finally:
         conn.close()
+        timing_logger.info("full_report_timing company=%s model=%s stage=%s total_ms=%d timings=%s",
+                    company, model, stage, round((perf_counter() - started) * 1000), timings)
 
 
 def generate_or_reuse(cur, key, *, user_id, analysis_id, company, period, locale, kind, sources, client, is_public=False):

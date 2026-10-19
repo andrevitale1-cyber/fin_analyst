@@ -1,0 +1,8 @@
+.preview { position: relative; }
+.animated { display: none; position: absolute; inset: 0 0 auto; pointer-events: none; }
+.preview[data-typing="true"] > .original { opacity: 0; }
+.preview[data-typing="true"] > .animated { display: block; }
+@media (prefers-reduced-motion: reduce) {
+  .preview[data-typing="true"] > .original { opacity: 1; }
+  .preview[data-typing="true"] > .animated { display: none; }
+}

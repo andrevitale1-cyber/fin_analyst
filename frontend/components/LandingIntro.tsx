@@ -5,7 +5,8 @@ import { useInView } from "framer-motion";
 import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowDown, BarChart3, BookOpen, Clock3, Files, History, Link2, MessageSquareText, Search, X } from "lucide-react";
+import { ArrowDown, BarChart3, Search, X } from "lucide-react";
+import MarqueeSymbol from "./MarqueeSymbol";
 import { Link } from "@/i18n/routing";
 import "lenis/dist/lenis.css";
 import styles from "./LandingIntro.module.css";
@@ -19,19 +20,19 @@ export default function LandingIntro({ locale }: { locale: string }) {
   const marqueeVisible = useInView(marquee);
   const close = () => setMenu(null);
   const highlights = english ? [
-    { title: "Less reading", description: "AI highlights what matters", icon: Clock3 },
-    { title: "More clarity", description: "Company reports, explained", icon: BookOpen },
-    { title: "Faster comparisons", description: "Key fundamentals side by side", icon: Files },
-    { title: "Research, saved", description: "History ready to revisit", icon: History },
-    { title: "Beyond the numbers", description: "Call insights and management tone", icon: MessageSquareText },
-    { title: "Check the source", description: "Links to official documents", icon: Link2 },
+    { title: "Less reading", description: "AI highlights what matters" },
+    { title: "More clarity", description: "Company reports, explained" },
+    { title: "Faster comparisons", description: "Key fundamentals side by side" },
+    { title: "Research, saved", description: "History ready to revisit" },
+    { title: "Beyond the numbers", description: "Call insights and management tone" },
+    { title: "Check the source", description: "Links to official documents" },
   ] : [
-    { title: "Menos leitura", description: "A IA destaca o que importa", icon: Clock3 },
-    { title: "Mais clareza", description: "Resultados explicados em contexto", icon: BookOpen },
-    { title: "Compare mais rápido", description: "Fundamentos lado a lado", icon: Files },
-    { title: "Pesquisa sempre à mão", description: "Histórico pronto para consultar", icon: History },
-    { title: "Além dos números", description: "Análise do call e do tom da gestão", icon: MessageSquareText },
-    { title: "Confira a fonte", description: "Links para documentos oficiais", icon: Link2 },
+    { title: "Menos leitura", description: "A IA destaca o que importa" },
+    { title: "Mais clareza", description: "Resultados explicados em contexto" },
+    { title: "Compare mais rápido", description: "Fundamentos lado a lado" },
+    { title: "Pesquisa sempre à mão", description: "Histórico pronto para consultar" },
+    { title: "Além dos números", description: "Análise do call e do tom da gestão" },
+    { title: "Confira a fonte", description: "Links para documentos oficiais" },
   ];
   const links = [
     { href: "#clients", text: english ? "Clients" : "Clientes" },
@@ -115,8 +116,8 @@ export default function LandingIntro({ locale }: { locale: string }) {
       <div ref={marquee} className={styles.marquee} data-visible={marqueeVisible} role="region" aria-label={english ? "What FinAnalyzer helps you do" : "Como o FinAnalyzer ajuda você"}>
         <div className={styles.track}>
           {[false, true].map(duplicate => <ul key={String(duplicate)} aria-hidden={duplicate || undefined}>
-            {highlights.map(({ title, description, icon: Icon }) => <li key={title}>
-              <span className={styles.marqueeIcon} aria-hidden="true"><Icon strokeWidth={1} /></span>
+            {highlights.map(({ title, description }, index) => <li key={title}>
+              <span className={styles.marqueeIcon} aria-hidden="true"><MarqueeSymbol index={index + 1} visible={marqueeVisible} /></span>
               <div><p>{title}</p><span>{description}</span></div>
             </li>)}
           </ul>)}

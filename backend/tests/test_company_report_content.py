@@ -261,6 +261,13 @@ def test_localized_prompt_keeps_editorial_coverage_scores_and_numeric_units_expl
         assert all(phrase in prompt for phrase in phrases)
 
 
+def test_report_prompt_preserves_ten_sections_with_a_concise_writing_budget():
+    for locale, budget in (("en", "1,000–1,400"), ("pt", "1.000–1.400")):
+        prompt = build_company_report_prompt("NKE", "2026-10-19", locale, [])
+        assert budget in prompt
+        assert "thesis, business, financials, moat, management, sentiment, outlook, risks, valuation, verdict" in prompt
+
+
 def test_scenario_numeric_bounds_and_market_price_are_enforced():
     raw = valid_report()
     raw["valuation"]["scenarios"][0]["growth_percent"] = 101

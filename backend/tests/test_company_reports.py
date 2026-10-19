@@ -23,6 +23,7 @@ SOURCES = [{"id": "S1", "title": "SEC annual facts", "url": "https://data.sec.go
 def test_company_cache_scopes_week_model_language_and_canonical_names():
     assert reports.canonical_company("Microsoft") == "MSFT"
     assert reports.canonical_company("Micron") == "MU"
+    assert reports.canonical_company("Nike") == reports.canonical_company("NIKE, Inc.") == reports.canonical_company("NKE") == "NKE"
     assert reports.canonical_company("GOOG") == reports.canonical_company("Alphabet") == "GOOGL"
     key = reports.company_cache_key("META", "model-a", "2026-10-12", "en")
     assert key == reports.company_cache_key("META", "model-a", "2026-10-18", "en")
@@ -55,6 +56,18 @@ def test_company_report_cache_hit_skips_research_and_ai_for_another_user(monkeyp
     conn.commit.assert_called_once()
 
 
+def test_nike_ticker_fix_reuses_a_ready_legacy_report_without_paid_generation(monkeypatch):
+    conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
+    report = {"id": "nike-ready", "scope": "company", "company": "NIKE"}
+    cur.fetchone.side_effect = [None, (report, True)]
+    monkeypatch.setattr(reports, "connection", lambda: conn)
+    monkeypatch.setattr(reports, "OpenAIClient", Mock(side_effect=AssertionError("Do not regenerate Nike")))
+    result = reports.open_company_report(reports.OpenCompanyReport(company="Nike", locale="en"), "another_user")
+    assert result["reused"] is True and result["report"]["id"] == "nike-ready"
+    assert cur.execute.call_args.args[1] == ("another_user", "nike-ready")
+    conn.commit.assert_called_once()
+
+
 def test_public_analysis_history_link_opens_general_company_report_after_owner_check(monkeypatch):
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
     cur.fetchone.side_effect = [("META", "2026", "1Q", {"metadata": {}}),
@@ -70,6 +83,8 @@ def test_public_analysis_history_link_opens_general_company_report_after_owner_c
 
 
 def test_general_company_report_uses_public_dossier_without_user_history(monkeypatch):
+    timing = Mock()
+    monkeypatch.setattr(reports.timing_logger, "info", timing)
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
     cur.fetchone.return_value = None
     monkeypatch.setattr(reports, "connection", lambda: conn)
@@ -91,6 +106,10 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     factory.assert_called_once_with(task="full_report")
     assert evidence.call_args.args[1] == reports.model_for_task("full_report")
     conn.commit.assert_called_once()
+    _, company, _, stage, duration, timings = timing.call_args.args
+    assert company == "META" and stage == "complete" and duration >= 0
+    assert set(timings) == {"cache_ms", "research_ms", "synthesis_ms"}
+    assert "Full-year EPS" not in str(timing.call_args)
 
 
 def test_company_generation_accepts_supported_subsets_without_retry_or_fake_categories(monkeypatch):
