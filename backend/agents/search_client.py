@@ -1,9 +1,11 @@
 import os
+import logging
 import requests
 from dotenv import load_dotenv
 from openai_client import OpenAIClient, OpenAIError
 
 load_dotenv()
+logger = logging.getLogger("uvicorn.error")
 
 class SearchError(RuntimeError):
     pass
@@ -26,6 +28,7 @@ class SearchClient:
             "PETR4": "Petrobras",
             "VALE3": "Vale",
             "WEGE3": "WEG",
+            "VIVA3": "Vivara",
         }
         issuer = issuers.get(ticker.upper(), "")
         query = f"{ticker} {issuer} {trimestre} {ano} earnings release resultados trimestrais central de resultados PDF RI"
@@ -40,11 +43,14 @@ class SearchClient:
                 response.raise_for_status()
                 results = response.json().get("results", [])
                 if results:
+                    logger.info("release_search issuer=%s year=%s quarter=%s provider=tavily candidates=%d", ticker, ano, trimestre, len(results))
                     return results
             except (requests.RequestException, ValueError):
                 pass
         try:
-            return OpenAIClient().search_pdf_links(query)
+            results = OpenAIClient().search_pdf_links(query)
+            logger.info("release_search issuer=%s year=%s quarter=%s provider=openai candidates=%d", ticker, ano, trimestre, len(results))
+            return results
         except (OpenAIError, TimeoutError) as exc:
             raise SearchError("O serviço de busca de resultados está indisponível. Tente novamente em instantes ou envie o PDF oficial.") from exc
 

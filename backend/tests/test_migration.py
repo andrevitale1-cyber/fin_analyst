@@ -117,7 +117,7 @@ def test_official_result_page_follows_quarter_pdf_link(monkeypatch):
     monkeypatch.setattr("requests.get", Mock(side_effect=[page, pdf]))
     monkeypatch.setattr(OpenAIClient, "extract_text", staticmethod(lambda _: "Resultados 1T25 Receita líquida"))
     document = fetcher._download_release(page.url, 2025, 1)
-    assert document and document.pdf_bytes == b"%PDF-test" and document.source == "B3/RI"
+    assert document and document.pdf_bytes == b"%PDF-test" and document.source == "RI"
 
 
 def test_prompt_and_parser_support_english_analysis_and_long_term_score(api):
@@ -189,7 +189,10 @@ def test_picker_rejects_unlisted_urls(tmp_path, monkeypatch, selected):
         {"title": "Resultados 1T25", "url": "https://example.com/b.pdf"},
     ])
     monkeypatch.setattr(OpenAIClient, "chat_text", Mock(return_value=json.dumps({"pdf_url": selected})))
+    fetcher._download_release = Mock(return_value=None)
     assert fetcher.fetch_result_pdf("PETR4", 2025, "1T") is None
+    assert all(call.args[0] in ("https://example.com/a.pdf", "https://example.com/b.pdf")
+               for call in fetcher._download_release.call_args_list)
 
 
 def test_pdf_content_period_verified(tmp_path, monkeypatch):
@@ -256,6 +259,15 @@ def test_openai_web_search_without_tavily(monkeypatch, openai_client):
     assert links[0]["url"].endswith("1T25.pdf")
     assert calls[0]["tools"] == [{"type": "web_search", "search_context_size": "low"}]
     assert calls[0]["tool_choice"] == "required"
+
+
+@pytest.mark.parametrize("response_text", ["Invalid JSON", "{}", "null"])
+def test_invalid_search_response_is_not_report_not_found(monkeypatch, openai_client, response_text):
+    from agents.search_client import SearchClient, SearchError
+    monkeypatch.delenv("TAVILY_API_KEY", raising=False)
+    transport(monkeypatch, lambda _: answer(response_text))
+    with pytest.raises(SearchError):
+        SearchClient().search_financial_reports("VIVA3", 2026, "1T")
 
 
 def test_search_rejects_local_urls():

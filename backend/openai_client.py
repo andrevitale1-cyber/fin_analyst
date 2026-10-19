@@ -109,9 +109,7 @@ class OpenAIClient:
                 raise ValueError
             return [item for item in links[:5 if document_type == "transcript" else 8] if isinstance(item, dict) and isinstance(item.get("url"), str)]
         except (ValueError, TypeError):
-            if document_type == "transcript":
-                raise OpenAIError("A pesquisa de transcrições retornou uma resposta inválida.") from None
-            return []
+            raise OpenAIError("A pesquisa web retornou uma resposta inválida.") from None
 
     def analyze_transcript(self, prompt, text):
         if not text.strip():

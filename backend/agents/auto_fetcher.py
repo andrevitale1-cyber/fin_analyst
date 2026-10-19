@@ -21,13 +21,15 @@ logger = logging.getLogger("uvicorn.error")
 
 
 class AutoFetcher:
+    # Query Vivara's verified catalogue without depending on the RI site's certificate chain.
+    mziq_catalogs = {"VIVA3": ("61a4df2d-a461-44d6-9128-da74058019db", "release-de-resultados")}
     transcript_issuers = {
         "AAPL": ("Apple",), "MSFT": ("Microsoft",), "GOOGL": ("Alphabet", "Google"),
         "AMZN": ("Amazon",), "META": ("Meta", "Facebook"), "NVDA": ("Nvidia",), "TSLA": ("Tesla",),
         "ITUB4": ("Itaú Unibanco", "Itaú"), "ITSA4": ("Itaúsa",), "BBAS3": ("Banco do Brasil",),
         "BBDC4": ("Bradesco",), "SANB11": ("Santander Brasil", "Santander"),
         "PETR4": ("Petrobras",), "VALE3": ("Vale",), "ABEV3": ("Ambev",), "WEGE3": ("WEG",),
-        "RENT3": ("Localiza",), "LREN3": ("Lojas Renner",), "B3SA3": ("B3",),
+        "RENT3": ("Localiza",), "LREN3": ("Lojas Renner",), "B3SA3": ("B3",), "VIVA3": ("Vivara",),
     }
     def __init__(self, cache_dir=None):
         base_dir = Path(__file__).resolve().parent.parent
@@ -50,6 +52,8 @@ class AutoFetcher:
             "AMBEV": "ABEV3", "BRADESCO": "BBDC4", "BANCO DO BRASIL": "BBAS3",
             "ITAUSA": "ITSA4", "SANTANDER BRASIL": "SANB11", "WEG": "WEGE3",
             "WEG S.A.": "WEGE3", "WEG S A": "WEGE3", "WEG SA": "WEGE3",
+            "VIVARA": "VIVA3", "VIVARA S.A.": "VIVA3", "VIVARA S A": "VIVA3",
+            "VIVARA PARTICIPACOES": "VIVA3", "VIVARA PARTICIPACOES S.A.": "VIVA3", "VIVARA PARTICIPACOES S A": "VIVA3",
             "LOCALIZA": "RENT3", "LOJAS RENNER": "LREN3", "B3": "B3SA3",
             "APPLE": "AAPL", "MICROSOFT": "MSFT", "GOOGLE": "GOOGL", "ALPHABET": "GOOGL",
             "AMAZON": "AMZN", "META": "META", "FACEBOOK": "META", "NVIDIA": "NVDA", "TESLA": "TSLA",
@@ -109,12 +113,14 @@ class AutoFetcher:
         if not match or not re.fullmatch(r"\d{4}", str(ano)) or not 1900 <= int(ano) <= 2100:
             raise ValueError("Ano ou trimestre inválido. Use ano com quatro dígitos e trimestre de 1T a 4T.")
         year, quarter = int(ano), int(match.group(1) or match.group(2))
+        logger.info("release_lookup issuer=%s year=%s quarter=%s", ticker, year, quarter)
         cache_path = self.cache_dir / f"{ticker}-{year}-{quarter}.json"
         try:
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
             cached["pdf_bytes"] = base64.b64decode(cached["pdf_bytes"], validate=True)
             document = FetchedDocument(**cached)
             if document.pdf_bytes.startswith(b"%PDF-") or document.text.strip():
+                logger.info("release_lookup issuer=%s year=%s quarter=%s source=cache outcome=found", ticker, year, quarter)
                 return document
         except (OSError, ValueError, TypeError, KeyError):
             pass
@@ -300,6 +306,12 @@ class AutoFetcher:
         return None
 
     def _fetch_b3(self, ticker, year, quarter):
+        catalog = self.mziq_catalogs.get(ticker)
+        if catalog:
+            company_id, category = catalog
+            for candidate in self._mziq_catalog_candidates(company_id, [category], year, quarter):
+                if document := self._download_release(candidate["url"], year, quarter):
+                    return document
         ir_url = self.ir_urls.get(ticker)
         if ir_url and self._valid_url(ir_url):
             try:
@@ -310,7 +322,7 @@ class AutoFetcher:
                 soup = BeautifulSoup(response.text, "html.parser")
                 candidates = [{"title": a.get_text(" ", strip=True), "url": urljoin(response.url, a["href"])}
                               for a in soup.find_all("a", href=True)]
-                candidates = self._mziq_release_candidates(soup, year, quarter) + candidates
+                candidates = ([] if catalog else self._mziq_release_candidates(soup, year, quarter)) + candidates
                 for candidate in self._candidates(candidates, year, quarter)[:12]:
                     document = self._download_release(candidate["url"], year, quarter)
                     if document:
@@ -334,11 +346,13 @@ class AutoFetcher:
     def _mziq_release_candidates(self, soup, year, quarter):
         scripts = "\n".join(script.get_text() for script in soup.find_all("script"))
         company = re.search(r"\b(?:fmId|company_id)\s*=\s*['\"]([a-fA-F0-9-]{36})['\"]", scripts)
-        categories = re.findall(r"internal_name\s*:\s*['\"]([a-zA-Z0-9_]+)['\"]", scripts)
+        categories = re.findall(r"internal_name\s*:\s*['\"]([a-zA-Z0-9_-]+)['\"]", scripts)
         categories = list(dict.fromkeys(name for name in categories if re.search(r"release|earnings", name, re.I)))
         if not company or not categories:
             return []
-        company_id = company[1]
+        return self._mziq_catalog_candidates(company[1], categories, year, quarter)
+
+    def _mziq_catalog_candidates(self, company_id, categories, year, quarter):
         try:
             response = requests.post(f"https://api.mziq.com/mzfilemanager/company/{company_id}/filter/categories/year/meta",
                                      json={"year": year, "categories": categories[:6], "language": "pt_BR", "published": True}, timeout=12)
@@ -425,11 +439,17 @@ class AutoFetcher:
                                 return document
                 text = soup.get_text("\n", strip=True)
                 pdf_bytes = b""
-            if not self._period_matches(text[:4000], year, quarter):
+            # PDF cover typography can extract "1 T 2 6" before comparative figures in footnotes.
+            period_text = re.sub(r"(?<![A-Z0-9])([1-4])\s+([TQ])", r"\1\2", text[:4000].upper())
+            period_text = re.sub(r"(?<![A-Z0-9])([1-4][TQ])\s*((?:\d\s+){1,3}\d)(?!\d)",
+                                 lambda match: match[1] + re.sub(r"\s+", "", match[2]), period_text)
+            if not self._period_matches(period_text, year, quarter):
+                logger.info("release_document_rejected year=%s quarter=%s reason=period_not_found", year, quarter)
                 return None
-            periods = re.findall(r"(?<![A-Z0-9])(?:[1-4][TQ]|[TQ][1-4])[\s_./-]*(?:20\d{2}|\d{2})(?!\d)", text[:4000].upper())
+            periods = re.findall(r"(?<![A-Z0-9])(?:[1-4][TQ]|[TQ][1-4])[\s_./-]*(?:20\d{2}|\d{2})(?!\d)", period_text)
             if periods and not self._period_matches(periods[0], year, quarter):
+                logger.info("release_document_rejected year=%s quarter=%s reason=cover_period_mismatch found=%s", year, quarter, periods[0])
                 return None
-            return FetchedDocument(response.url, "B3/RI", pdf_bytes=pdf_bytes, text="" if pdf_bytes else text[:180000])
+            return FetchedDocument(response.url, "RI", pdf_bytes=pdf_bytes, text="" if pdf_bytes else text[:180000])
         except (requests.RequestException, OpenAIError):
             return None
