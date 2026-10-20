@@ -223,3 +223,13 @@ def test_targeted_repair_preserves_unaffected_fields_and_rejects_unrequested_cha
     client.analyze_full_report.return_value["market"] = report["market"]
     with pytest.raises(ReportValidationError, match="unexpected fields"):
         repair_report(client, "META", "2026-10-20", "en", report, issues, validate_dossier(facts(), SOURCES), SOURCES)
+
+
+def test_audit_budget_allows_reasoning_and_structured_findings():
+    from agents.report_verifier import verify_report
+    client = Mock()
+    client.analyze_full_report.return_value = {"passed": True, "issues": []}
+    report = complete_report()
+    from agents.report_valuation import calculate_valuation
+    verify_report(client, calculate_valuation(report), validate_dossier(facts(), SOURCES), SOURCES, "2026-10-20")
+    assert client.analyze_full_report.call_args.kwargs["max_output_tokens"] == 4000

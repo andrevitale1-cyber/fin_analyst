@@ -95,7 +95,8 @@ Model growth/P/E/discount assumptions are allowed ONLY when explicitly identifie
 AI moat/quality scores and interpretations are allowed when reasoned from cited evidence; they are not external ratings.
 Do not flag a transparent assumption or a supported AI judgment merely because it is not a quoted fact.
 Return passed=true ONLY if there are no material unsupported claims or inconsistencies. Otherwise passed=false
-and list blocking issues with the exact field/section and relevant existing source IDs. Never fabricate a citation.
+and list only material blocking issues with the exact field/section and relevant existing source IDs.
+Keep each reason concise, at most two sentences. Never fabricate a citation.
 For overlapping quarterly/full-report fields, verify comparable periods, causal explanations, organic versus
 acquired growth, recurring versus nonrecurring effects, cash/dilution and prospective versus recognized figures.
 Apply the shared methodology to supported content only; never require a metric the sources do not disclose
@@ -106,7 +107,7 @@ FACT DOSSIER:\n{json.dumps(dossier, ensure_ascii=False)}
 ORIGINAL SOURCE CONTEXT:\n{json.dumps(contexts, ensure_ascii=False)}
 OFFICIAL DATA:\n{json.dumps([s for s in sources if s.get('annual_financials')], ensure_ascii=False)}"""
     result = Review.model_validate(client.analyze_full_report(prompt, Review.model_json_schema(),
-                                  max_output_tokens=1700, timeout=timeout)).model_dump()
+                                  max_output_tokens=4000, timeout=timeout)).model_dump()
     source_ids = {s["id"] for s in sources}
     if any(not set(issue["source_ids"]).issubset(source_ids) for issue in result["issues"]):
         raise ReportValidationError("Reviewer referenced an unknown source")
