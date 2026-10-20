@@ -18,6 +18,7 @@ from report_auth import require_report_user
 from full_report_content import build_full_report_prompt, report_schema, validate_full_report, ReportValidationError
 from company_report_content import build_company_report_prompt, company_report_schema, validate_company_report
 from company_research import collect_company_sources
+from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
@@ -53,16 +54,6 @@ def create_tables(cur):
         analysis_id INTEGER REFERENCES historico(id) ON DELETE SET NULL,
         PRIMARY KEY (user_id, report_id)
     )""")
-    # Only migrate reports whose retained public document matches the report's cited source.
-    # Uploads and older analyses with no original evidence must stay private.
-    cur.execute("""UPDATE full_reports AS r SET is_public=TRUE
-        WHERE NOT r.is_public AND EXISTS (
-            SELECT 1 FROM full_report_access a
-            JOIN analysis_documents d ON d.analysis_id=a.analysis_id
-            WHERE a.report_id=r.id AND d.visibility='public'
-            AND LENGTH(TRIM(d.source_text))>0 AND d.source_url IS NOT NULL
-            AND r.content->'sources'->0->>'url'=d.source_url
-        )""")
 
 
 def save_analysis_document(cur, analysis_id, *, visibility, title, url=None, text="", pdf_bytes=b""):
@@ -226,11 +217,12 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
     started = perf_counter()
     timings = {}
     company = canonical_company(body.company)
-    as_of = datetime.now(timezone.utc).date().isoformat()
+    as_of = datetime.now(TIMEZONE).date().isoformat()
     model = model_for_task("full_report")
     key = company_cache_key(company, model, as_of, body.locale)
     conn = connection()
     stage = "cache"
+    ticket = None
     try:
         with conn.cursor() as cur:
             cur.execute("SET LOCAL lock_timeout = '300s'")
@@ -245,7 +237,12 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
             timings["cache_ms"] = round((perf_counter() - started) * 1000)
             if existing:
                 report = stored_report(existing)
+                if not report["is_public"]:
+                    cur.execute("SELECT 1 FROM full_report_access WHERE user_id=%s AND report_id=%s", (str(user_id), report["id"]))
+                    if not cur.fetchone():
+                        ticket = reserve_usage(user_id, "full_report", body.locale)
             else:
+                ticket = reserve_usage(user_id, "full_report", body.locale)
                 client = OpenAIClient(task="full_report")
                 stage = "research"
                 step = perf_counter()
@@ -264,21 +261,24 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
                 report = {**content, "id": str(uuid.uuid4()), "company": company, "symbol": company, "period": "Company overview",
                           "scope": "company", "report_version": COMPANY_REPORT_VERSION,
                           "as_of": evidence["as_of"], "locale": body.locale, "kind": "company",
-                          "is_public": True, "created_at": datetime.now(timezone.utc).isoformat(),
+                          "is_public": False, "created_at": datetime.now(timezone.utc).isoformat(),
                           "sources": [{field: source[field] for field in ("id", "title", "url")} for source in sources]}
                 cur.execute("""INSERT INTO full_reports (id,cache_key,company,period,locale,kind,is_public,content)
                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb)""",
-                    (report["id"], key, company, report["period"], body.locale, "company", True, json.dumps(report)))
+                    (report["id"], key, company, report["period"], body.locale, "company", False, json.dumps(report)))
             cur.execute("""INSERT INTO full_report_access (user_id,report_id) VALUES (%s,%s)
                 ON CONFLICT (user_id,report_id) DO NOTHING""", (user_id, report["id"]))
+            complete_usage(cur, ticket)
         conn.commit()
         stage = "complete"
         return {"report": report, "reused": bool(existing)}
     except HTTPException:
         conn.rollback()
+        cancel_usage(ticket)
         raise
     except Exception as exc:
         conn.rollback()
+        cancel_usage(ticket)
         raise generation_failure(exc, body.locale, company=company, stage=stage) from None
     finally:
         conn.close()

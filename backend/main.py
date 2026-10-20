@@ -44,6 +44,7 @@ from agents.auto_fetcher import AutoFetcher
 from agents.search_client import SearchError
 from agents.prompt_builder import PromptBuilder
 from agents.x_bot_router import router as x_bot_router
+from account_limits import analysis_access, complete_usage, access_snapshot, create_tables as create_usage_tables
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
@@ -138,6 +139,7 @@ def init_db():
         ''')
 
         create_full_report_tables(cur)
+        create_usage_tables(cur)
         conn.commit()
         print("[DB] Banco de dados inicializado com sucesso!")
     except Exception as e:
@@ -152,6 +154,8 @@ def init_db():
             except: pass
 
 init_db()
+from curated_reports_job import start_if_enabled
+start_if_enabled()
 
 # --- AUXILIARES ---
 def extract_text_from_pdf_bytes(file_bytes, max_pages=30):
@@ -294,50 +298,10 @@ def register_trial(user_id: str = Form(...)):
         conn.close()
 
 @app.get("/api/check-access")
-def check_access(user_id: str, is_premium: bool = False):
-    """
-    Verifica se o usuário tem acesso à plataforma.
-    Retorna: status (trial_active | trial_expired | premium), days_left, trial_start, trial_end
-    """
-    if is_premium:
-        return {"status": "premium", "days_left": None, "has_access": True}
-    
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute("SELECT trial_start FROM trial_users WHERE user_id = %s", (str(user_id),))
-        row = cur.fetchone()
-        
-        if not row:
-            # Usuário nunca registrou trial — registra agora
-            cur.execute(
-                "INSERT INTO trial_users (user_id, trial_start) VALUES (%s, NOW()) ON CONFLICT (user_id) DO NOTHING",
-                (str(user_id),)
-            )
-            conn.commit()
-            cur.execute("SELECT trial_start FROM trial_users WHERE user_id = %s", (str(user_id),))
-            row = cur.fetchone()
-        
-        from datetime import datetime, timezone, timedelta
-        trial_start = row[0]
-        now = datetime.now(timezone.utc)
-        trial_end = trial_start.replace(tzinfo=timezone.utc) + timedelta(days=TRIAL_DAYS)
-        days_left = max(0, (trial_end - now).days)
-        is_active = now < trial_end
-        
-        return {
-            "status": "trial_active" if is_active else "trial_expired",
-            "has_access": is_active,
-            "days_left": days_left,
-            "trial_start": trial_start.isoformat(),
-            "trial_end": trial_end.isoformat()
-        }
-    except Exception as e:
-        print(f"Erro ao verificar acesso: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cur.close()
-        conn.close()
+def check_access(user_id: str, is_premium: bool = False, user: str = Depends(require_report_user)):
+    if user_id != user:
+        raise HTTPException(403, "A conta informada não corresponde à sessão.")
+    return access_snapshot(user)
 
 @app.post("/api/analyze")
 async def analyze_report(
@@ -346,7 +310,8 @@ async def analyze_report(
     ano: str = Form(...),
     trimestre: str = Form(...),
     user_id: str = Form(...),
-    locale: str = Form(default="pt")
+    locale: str = Form(default="pt"),
+    usage_ticket: str | None = Depends(analysis_access),
 ):
     print(f"🔄 [PASSO 1] Iniciando Análise de Relatório (PDF) para User {user_id}: {empresa}")
     
@@ -386,6 +351,7 @@ async def analyze_report(
         inserted_id = cur.fetchone()[0]
         objeto_final["id"] = inserted_id
         save_analysis_document(cur, inserted_id, visibility="private", title="Uploaded earnings release", pdf_bytes=contents)
+        complete_usage(cur, usage_ticket)
         
         conn.commit()
         cur.close()
@@ -412,7 +378,8 @@ async def analyze_report_auto(
     ano: str = Form(...),
     trimestre: str = Form(...),
     user_id: str = Form(...),
-    locale: str = Form(default="pt")
+    locale: str = Form(default="pt"),
+    usage_ticket: str | None = Depends(analysis_access),
 ):
     ticker = (company or ticker).strip()
     if not ticker:
@@ -470,6 +437,7 @@ async def analyze_report_auto(
         objeto_final["id"] = inserted_id
         save_analysis_document(cur, inserted_id, visibility="public", title=document.source, url=document.url,
                                text=document.text, pdf_bytes=document.pdf_bytes)
+        complete_usage(cur, usage_ticket)
         conn.commit()
         cur.close()
         
@@ -495,6 +463,7 @@ async def analyze_earnings_call_auto(
     trimestre: str = Form(...),
     user_id: str = Form(...),
     locale: str = Form(default="pt"),
+    usage_ticket: str | None = Depends(analysis_access),
 ):
     if not os.getenv("OPENAI_API_KEY", "").strip():
         raise HTTPException(status_code=500, detail="Chave OPENAI_API_KEY não encontrada")
@@ -526,6 +495,7 @@ async def analyze_earnings_call_auto(
             cur.execute("INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s) RETURNING id", (company, ano, trimestre, json.dumps(saved_result), str(user_id)))
             result["id"] = cur.fetchone()[0]
             save_analysis_document(cur, result["id"], visibility="public", title=document.source, url=document.url, text=document.text)
+            complete_usage(cur, usage_ticket)
             conn.commit()
             cur.close()
         finally:
@@ -547,7 +517,8 @@ async def analyze_earnings_call(
     ano: str = Form(...),
     trimestre: str = Form(...),
     user_id: str = Form(...),
-    locale: str = Form(default="pt")
+    locale: str = Form(default="pt"),
+    usage_ticket: str | None = Depends(analysis_access),
 ):
     print(f"🎙️ [PASSO 1] Iniciando análise de Call para {empresa} ({trimestre}/{ano})")
     
@@ -591,6 +562,7 @@ async def analyze_earnings_call(
         inserted_id = cur.fetchone()[0]
         objeto_final["id"] = inserted_id
         save_analysis_document(cur, inserted_id, visibility="private", title="Uploaded call transcript", text=texto_transcricao)
+        complete_usage(cur, usage_ticket)
         
         conn.commit()
         cur.close()

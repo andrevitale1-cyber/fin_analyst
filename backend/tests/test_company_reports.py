@@ -16,6 +16,12 @@ from openai_client import OpenAIClient, OpenAIError
 from test_company_report_content import valid_report
 
 
+@pytest.fixture(autouse=True)
+def isolate_usage_service(monkeypatch):
+    monkeypatch.setattr(reports, "reserve_usage", lambda *args: None)
+    monkeypatch.setattr(reports, "cancel_usage", lambda *args: None)
+
+
 SOURCES = [{"id": "S1", "title": "SEC annual facts", "url": "https://data.sec.gov/example",
             "text": "Full-year EPS was USD 2.50.", "basis": "primary"}]
 
@@ -104,7 +110,7 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     report = result["report"]
     assert report["scope"] == report["kind"] == "company"
     assert report["symbol"] == "META"
-    assert report["as_of"] == "2026-10-12" and report["is_public"] is True
+    assert report["as_of"] == "2026-10-12" and report["is_public"] is False
     assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v3"
     assert report["score"] == 4 and len(report["sections"]) == 10
     assert report["valuation"]["fair_value"] > 0

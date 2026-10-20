@@ -161,6 +161,7 @@ export default function FinancialDashboard() {
 
   // --- TRIAL STATE ---
   const [trialState, setTrialState] = useState<{ userId: string; status: 'pending' | 'active' | 'expired' | 'unavailable'; daysLeft: number | null }>({ userId: '', status: 'pending', daysLeft: null });
+  const [dailyRemaining, setDailyRemaining] = useState<{ analysis: number | null; full: number | null }>({ analysis: null, full: null });
   const [accessRetry, setAccessRetry] = useState(0);
 
   const [result, setResult] = useState<any>(null);
@@ -199,17 +200,16 @@ export default function FinancialDashboard() {
     if (!isLoaded || !user?.id) return;
     const userId = user.id;
     setShowUpgradeModal(false);
-    if (isPremium) {
-      setTrialState({ userId, status: 'active', daysLeft: null });
-      return;
-    }
 
     // Verifica o trial no backend
     const controller = new AbortController();
     let active = true;
     const timeout = setTimeout(() => controller.abort(), 20_000);
     setTrialState({ userId, status: 'pending', daysLeft: null });
-    fetch(`${API_BASE}/api/check-access?user_id=${userId}&is_premium=false`, { signal: controller.signal })
+    getToken().then(token => {
+      if (!token) throw new Error('Authentication unavailable');
+      return fetch(`${API_BASE}/api/check-access?user_id=${userId}`, { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } });
+    })
       .then(response => {
         if (!response.ok) throw new Error('Access check failed');
         return response.json();
@@ -219,14 +219,14 @@ export default function FinancialDashboard() {
         if (typeof data.has_access !== 'boolean') throw new Error('Invalid access response');
         const status = data.has_access ? 'active' : 'expired';
         setTrialState({ userId, status, daysLeft: typeof data.days_left === 'number' ? data.days_left : null });
-        if (status === 'expired') setShowUpgradeModal(true);
+        setDailyRemaining({ analysis: data.analysis_remaining ?? null, full: data.full_report_remaining ?? null });
       })
       .catch(() => {
         if (active) setTrialState({ userId, status: 'unavailable', daysLeft: null });
       })
       .finally(() => clearTimeout(timeout));
     return () => { active = false; clearTimeout(timeout); controller.abort(); };
-  }, [isLoaded, user?.id, isPremium, accessRetry]);
+  }, [isLoaded, user?.id, isPremium, accessRetry, getToken]);
 
   const formatarData = (dataString: string) => {
     if (!dataString) return "-";
@@ -331,7 +331,9 @@ export default function FinancialDashboard() {
         formData.append("file", file!);
       }
 
-      const response = await fetch(urlBackend, { method: "POST", body: formData });
+      const token = await getToken();
+      if (!token) throw new Error(t("newAnalysis.genericError"));
+      const response = await fetch(urlBackend, { method: "POST", body: formData, headers: { Authorization: `Bearer ${token}` } });
 
       if (response.status === 403) { setLoading(false); setShowUpgradeModal(true); return; }
       if (!response.ok) {
@@ -351,6 +353,7 @@ export default function FinancialDashboard() {
       setCurrentView('result');
       fetchHistory();
       fetchTableData();
+      setAccessRetry(value => value + 1);
     } catch (error: any) {
       console.error(error);
       setAnalysisError(error.message || t("newAnalysis.genericError"));
@@ -475,41 +478,11 @@ export default function FinancialDashboard() {
 
         {!isPremium && !isSidebarCollapsed && accessStatus === 'active' && (
           <div className="mt-auto mb-6 px-2">
-            {/* Banner de trial */}
-            <div className={`border p-4 rounded-xl mb-4 space-y-3 ${
-              isTrialExpired
-                ? 'bg-red-500/10 border-red-500/30'
-                : trialDaysLeft !== null && trialDaysLeft <= 2
-                  ? 'bg-amber-500/10 border-amber-500/30'
-                  : 'bg-[#161b22] border-gray-800'
-            }`}>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  {isTrialExpired ? t("trial.trialExpired") : t("trial.trialActive")}
-                </span>
-                {!isTrialExpired && (
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                )}
-              </div>
-              {!isTrialExpired && trialDaysLeft !== null && (
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-gray-400">{t("trial.endsIn")}</span>
-                    <span className={`font-bold ${trialDaysLeft <= 2 ? 'text-amber-400' : 'text-white'}`}>
-                      {trialDaysLeft} {trialDaysLeft === 1 ? t("trial.dayLeft") : t("trial.daysLeft")}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full transition-all duration-500 ${trialDaysLeft <= 2 ? 'bg-amber-500' : 'bg-emerald-500'}`}
-                      style={{ width: `${Math.min((trialDaysLeft / 7) * 100, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-              {isTrialExpired && (
-                <p className="text-xs text-red-300">{t("trial.trialExpiredDesc")}</p>
-              )}
+            <div className="mb-4 space-y-2 rounded-xl border border-gray-800 bg-[#161b22] p-4 text-xs text-gray-400">
+              <p className="font-bold uppercase text-white">Free</p>
+              <p>{locale === 'en' ? `${dailyRemaining.analysis ?? '—'} of 3 quarterly/call analyses left today` : `${dailyRemaining.analysis ?? '—'} de 3 análises trimestrais/calls restantes hoje`}</p>
+              <p>{locale === 'en' ? `${dailyRemaining.full ?? '—'} full report left today` : `${dailyRemaining.full ?? '—'} relatório completo restante hoje`}</p>
+              <p>{locale === 'en' ? 'Limits reset at midnight (São Paulo).' : 'Os limites renovam à meia-noite (São Paulo).'}</p>
             </div>
             <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
               <Zap size={14} className="text-yellow-300 fill-yellow-300" /> {t("sidebar.goPremium")}

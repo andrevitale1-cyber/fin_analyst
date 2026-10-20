@@ -10,18 +10,18 @@ export default function PricingSection({ locale }: { locale: string }) {
   const [yearly, setYearly] = useState(false);
   const trialFeatures = english
     ? [
-        ["Unlimited AI analyses", "Understand key results without reading every page."],
-        ["Compare companies", "Review differences to support your decisions."],
-        ["Analyze earnings calls", "Bring call insights into your research."],
-        ["Full report library", "Keep detailed research organized and easy to revisit."],
-        ["No credit card required", "Explore full access before choosing a plan."],
+        ["3 quarterly or call analyses per day", "Choose automatic search or upload your document."],
+        ["1 private full report per day", "Research a company and keep the report in your library."],
+        ["Public report gallery", "Read the available public company reports."],
+        ["Your saved analyses", "Revisit your own research without using a new daily allowance."],
+        ["No credit card required", "Start with the Free plan. Limits renew daily."],
       ]
     : [
-        ["Análises de IA ilimitadas", "Entenda os principais resultados sem ler cada página."],
-        ["Compare empresas", "Veja diferenças para apoiar suas decisões."],
-        ["Analise earnings calls", "Inclua os insights das calls na sua pesquisa."],
-        ["Biblioteca de relatórios", "Mantenha sua pesquisa organizada e fácil de consultar."],
-        ["Sem cartão de crédito", "Explore o acesso completo antes de escolher um plano."],
+        ["3 análises trimestrais ou de calls por dia", "Escolha busca automática ou envie seu documento."],
+        ["1 relatório completo privado por dia", "Pesquise uma empresa e guarde o relatório na sua biblioteca."],
+        ["Galeria de relatórios públicos", "Leia os relatórios públicos de empresas disponíveis."],
+        ["Suas análises salvas", "Consulte sua pesquisa sem consumir uma nova análise diária."],
+        ["Sem cartão de crédito", "Comece no Free. Os limites renovam diariamente."],
       ];
   const premiumFeatures = english
     ? [
@@ -50,21 +50,21 @@ export default function PricingSection({ locale }: { locale: string }) {
           <button type="button" aria-pressed={!yearly} onClick={() => setYearly(false)}>{english ? "Monthly" : "Mensal"}</button>
           <button type="button" aria-pressed={yearly} onClick={() => setYearly(true)}>{english ? "Yearly" : "Anual"}</button>
         </div>
-        <p className={styles.saving}>{yearly ? (english ? "2 months free with yearly billing" : "2 meses grátis no plano anual") : (english ? "Start with a 7-day free trial" : "Comece com 7 dias grátis")}</p>
+        <p className={styles.saving}>{yearly ? (english ? "2 months free with yearly billing" : "2 meses grátis no plano anual") : (english ? "Start with the Free plan" : "Comece com o plano Free")}</p>
       </header>
       <div className={styles.plans}>
-        {[{ name: english ? "Free Trial" : "Trial gratuito", description: english ? "Try the full workflow for 7 days, with no credit card." : "Experimente o fluxo completo por 7 dias, sem cartão de crédito.", features: trialFeatures, premium: false }, { name: "Premium", description: english ? "Analyze faster. Keep your research within reach." : "Analise com agilidade. Tenha sua pesquisa sempre à mão.", features: premiumFeatures, premium: true }].map(plan => <article key={plan.name} className={`${styles.card} ${plan.premium ? styles.premium : ""}`} aria-label={plan.name}>
+        {[{ name: "Free", description: english ? "Public reports, 3 analyses and 1 private full report per day." : "Relatórios públicos, 3 análises e 1 full report privado por dia.", features: trialFeatures, premium: false }, { name: "Premium", description: english ? "Analyze faster. Keep your research within reach." : "Analise com agilidade. Tenha sua pesquisa sempre à mão.", features: premiumFeatures, premium: true }].map(plan => <article key={plan.name} className={`${styles.card} ${plan.premium ? styles.premium : ""}`} aria-label={plan.name}>
           {plan.premium && <span className={styles.badge}>{english ? "Full access" : "Acesso completo"}</span>}
           <div className={styles.heading}>
             <h3>{plan.premium ? <Sparkles size={20} aria-hidden="true" /> : <Zap size={20} aria-hidden="true" />}{plan.name}</h3>
             <p className={styles.description}>{plan.description}</p>
-            <p className={styles.price}><strong>{plan.premium ? (yearly ? "R$ 290" : "R$ 29") : "R$ 0"}</strong><span>{plan.premium ? (yearly ? (english ? "/ year" : "/ ano") : (english ? "/ month" : "/ mês")) : (english ? "/ 7 days" : "/ 7 dias")}</span></p>
+            <p className={styles.price}><strong>{plan.premium ? (yearly ? "R$ 290" : "R$ 29") : "R$ 0"}</strong><span>{plan.premium ? (yearly ? (english ? "/ year" : "/ ano") : (english ? "/ month" : "/ mês")) : (english ? "/ free" : "/ grátis")}</span></p>
           </div>
-          <Link href="/dashboard" className={styles.action}><span>{english ? "Start free trial" : "Começar grátis"}</span><ChevronRight size={16} aria-hidden="true" /></Link>
+          <Link href="/dashboard" className={styles.action}><span>{english ? "Start free" : "Começar grátis"}</span><ChevronRight size={16} aria-hidden="true" /></Link>
           <ul className={styles.features}>
             {plan.features.map(([title, detail]) => <li key={title}><span><strong>{title}</strong><small>{detail}</small></span><CheckCheck size={20} aria-label={english ? "Included" : "Incluído"} /></li>)}
           </ul>
-          <p className={styles.note}>{plan.premium ? (english ? `After the trial: ${yearly ? "R$ 290/year" : "R$ 29/month"}. Cancel anytime.` : `Após o trial: ${yearly ? "R$ 290/ano" : "R$ 29/mês"}. Cancele quando quiser.`) : (english ? "Full access. No credit card required." : "Acesso completo. Sem cartão de crédito.")}</p>
+          <p className={styles.note}>{plan.premium ? (english ? `Premium: ${yearly ? "R$ 290/year" : "R$ 29/month"}. Cancel anytime.` : `Premium: ${yearly ? "R$ 290/ano" : "R$ 29/mês"}. Cancele quando quiser.`) : (english ? "Daily limits renew at midnight (São Paulo). No credit card required." : "Limites diários renovam à meia-noite (São Paulo). Sem cartão de crédito.")}</p>
         </article>)}
       </div>
     </div>

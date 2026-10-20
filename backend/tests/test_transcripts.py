@@ -22,7 +22,11 @@ def api(monkeypatch):
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
     main = importlib.import_module("main")
     from fastapi.testclient import TestClient
-    return main, TestClient(main.app)
+    main.app.dependency_overrides[main.analysis_access] = lambda: None
+    try:
+        yield main, TestClient(main.app)
+    finally:
+        main.app.dependency_overrides.pop(main.analysis_access, None)
 
 
 def html_response(url, text):

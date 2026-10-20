@@ -22,6 +22,12 @@ import report_auth
 from openai_client import OpenAIClient, OpenAIError
 
 
+@pytest.fixture(autouse=True)
+def isolate_usage_service(monkeypatch):
+    monkeypatch.setattr(reports, "reserve_usage", lambda *args: None)
+    monkeypatch.setattr(reports, "cancel_usage", lambda *args: None)
+
+
 SOURCES = [{"id": "S1", "title": "Official release", "url": "https://www.sec.gov/release", "text": "Revenue grew.", "basis": "primary"}]
 
 
@@ -302,25 +308,10 @@ def test_retained_public_source_promotes_cached_report_without_regeneration():
     assert any(call.args == ("UPDATE full_reports SET is_public=TRUE WHERE id=%s", ("existing",)) for call in cur.execute.call_args_list)
 
 
-def test_existing_reports_are_published_only_with_matching_retained_public_evidence():
-    cur = Mock(); reports.create_tables(cur)
-    migration = next(call.args[0] for call in cur.execute.call_args_list if "UPDATE full_reports AS r" in call.args[0])
-    with sqlite3.connect(":memory:") as db:
-        db.executescript("""CREATE TABLE full_reports (id TEXT, content TEXT, is_public BOOLEAN DEFAULT FALSE);
-            CREATE TABLE full_report_access (report_id TEXT, analysis_id INTEGER);
-            CREATE TABLE analysis_documents (analysis_id INTEGER, visibility TEXT, source_text TEXT, source_url TEXT);""")
-        for index, (visibility, text, url) in enumerate([
-            ("public", "Retained release", "https://example.com/source"),
-            ("private", "Private upload", "https://example.com/source"),
-            ("public", "   ", "https://example.com/source"),
-            ("public", "Other document", "https://example.com/different"),
-            ("public", "Missing citation", None),
-        ]):
-            db.execute("INSERT INTO full_reports (id,content) VALUES (?,?)", (str(index), json.dumps({"sources": [{"url": "https://example.com/source"}]})))
-            db.execute("INSERT INTO full_report_access VALUES (?,?)", (str(index), index))
-            db.execute("INSERT INTO analysis_documents VALUES (?,?,?,?)", (index, visibility, text, url))
-        db.execute(migration)
-        assert db.execute("SELECT id FROM full_reports WHERE is_public").fetchall() == [("0",)]
+def test_schema_creation_never_automatically_publishes_private_reports():
+    cur = Mock()
+    reports.create_tables(cur)
+    assert not any("SET is_public=TRUE" in call.args[0] for call in cur.execute.call_args_list)
 
 
 def test_new_endpoints_require_authentication(monkeypatch):

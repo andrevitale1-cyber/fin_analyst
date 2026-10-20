@@ -14,7 +14,7 @@
     "average": "Média",
     "lastQuarter": "Último Tri",
     "features": {
-      "analysisPerWeek": "5 Análises por semana",
+      "analysisPerWeek": "3 análises por dia",
       "summaryReport": "Relatório Resumido na Tela",
       "communitySupport": "Suporte Comunitário",
       "downloadFullReport": "Biblioteca de Relatórios Completos da IA",
@@ -25,9 +25,9 @@
       "serverPriority": "Prioridade no Servidor"
     },
     "upgrade": {
-      "basicPlan": "Trial Gratuito",
-      "basicDesc": "Seu período de avaliação gratuita.",
-      "continueBasic": "Continuar no Trial",
+      "basicPlan": "Gratuito",
+      "basicDesc": "3 análises trimestrais/calls e 1 relatório completo privado por dia.",
+      "continueBasic": "Continuar no Free",
       "recommended": "Recomendado",
       "proDesc": "Desbloqueie todo o poder da IA.",
       "monthly": "Mensal",
@@ -37,9 +37,9 @@
     "trial": {
       "daysLeft": "dias restantes no trial",
       "dayLeft": "dia restante no trial",
-      "trialActive": "Trial Gratuito Ativo",
-      "trialExpired": "Trial Expirado",
-      "trialExpiredDesc": "Seu período de avaliação gratuita de 7 dias terminou. Assine o FinAnalyzer Pro para continuar analisando.",
+      "trialActive": "Plano Free",
+      "trialExpired": "Limite diário atingido",
+      "trialExpiredDesc": "Você usou suas análises diárias do Free. Tente amanhã ou assine o Premium.",
       "upgradeNow": "Assinar Agora",
       "trialBannerText": "Você está no período de trial gratuito.",
       "endsIn": "Termina em",

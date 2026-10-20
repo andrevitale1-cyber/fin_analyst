@@ -14,7 +14,7 @@
     "average": "Average",
     "lastQuarter": "Last Quarter",
     "features": {
-      "analysisPerWeek": "5 Analyses per week",
+      "analysisPerWeek": "3 analyses per day",
       "summaryReport": "Summary Report on Screen",
       "communitySupport": "Community Support",
       "downloadFullReport": "Full AI Report Library",
@@ -25,9 +25,9 @@
       "serverPriority": "Server Priority"
     },
     "upgrade": {
-      "basicPlan": "Free Trial",
-      "basicDesc": "Your free evaluation period.",
-      "continueBasic": "Continue Trial",
+      "basicPlan": "Free",
+      "basicDesc": "3 quarterly/call analyses and 1 private full report per day.",
+      "continueBasic": "Continue Free",
       "recommended": "Recommended",
       "proDesc": "Unlock the full power of AI.",
       "monthly": "Monthly",
@@ -37,9 +37,9 @@
     "trial": {
       "daysLeft": "days left in trial",
       "dayLeft": "day left in trial",
-      "trialActive": "Free Trial Active",
-      "trialExpired": "Trial Expired",
-      "trialExpiredDesc": "Your 7-day free trial has ended. Subscribe to FinAnalyzer Pro to continue analyzing.",
+      "trialActive": "Free plan",
+      "trialExpired": "Daily limit reached",
+      "trialExpiredDesc": "You have used your daily Free analyses. Try again tomorrow or upgrade to Premium.",
       "upgradeNow": "Subscribe Now",
       "trialBannerText": "You are in the free trial period.",
       "endsIn": "Ends in",

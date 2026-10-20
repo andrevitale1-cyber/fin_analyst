@@ -7,6 +7,7 @@ const intlMiddleware = createMiddleware(routing);
 const isProtectedRoute = createRouteMatcher(['/(en|pt)/dashboard(.*)', '/(en|pt)/profile(.*)']);
 
 export default clerkMiddleware(async (auth, req) => {
+  if (req.nextUrl.pathname.startsWith('/api/')) return;
   if (isProtectedRoute(req)) {
     // 1. Pegamos o objeto de autenticação
     const authObject = await auth();
