@@ -142,32 +142,29 @@ def test_owner_check_precedes_source_and_shared_cache(monkeypatch):
     conn.rollback.assert_called_once()
 
 
-@pytest.mark.parametrize("evidence", [
-    ("private", "Uploaded document", None, "Private source revenue grew."),
-    None,
-])
-def test_open_report_route_retains_source_scope_and_never_returns_source_body(monkeypatch, evidence):
+@pytest.mark.parametrize("company", ["Apple", "WEGE3", "NIKE"])
+def test_history_full_report_uses_company_scope_without_loading_private_or_quarterly_evidence(monkeypatch, company):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
     app = FastAPI(); app.include_router(reports.router)
     app.dependency_overrides[report_auth.require_report_user] = lambda: "user_one"
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
-    original = {"metadata": {}, "analise_completa": "Prior saved analysis."}
-    cur.fetchone.side_effect = [("Apple", "2026", "1T", json.dumps(original)), evidence, None]
+    cur.fetchone.return_value = (company,)
     monkeypatch.setattr(reports, "connection", lambda: conn)
-    ai = Mock(model="test-model", analyze_full_report=Mock(return_value=content()))
-    monkeypatch.setattr(reports, "OpenAIClient", lambda **kwargs: ai)
+    company_report = Mock(return_value={"report": {"company": reports.canonical_company(company), "scope": "company"}, "reused": True})
+    monkeypatch.setattr(reports, "open_company_report", company_report)
+    monkeypatch.setattr(reports, "generate_or_reuse", Mock(side_effect=AssertionError("No quarterly expansion")))
     response = TestClient(app).post("/api/full-reports", json={"analysis_id": 1, "locale": "en"})
     assert response.status_code == 200, response.text
     result = response.json()
-    assert result["reused"] is False and result["report"]["company"] == "AAPL"
-    assert result["report"]["period"] == "1Q/2026" and result["report"]["score"] is None
-    assert result["report"]["is_public"] is bool(evidence and evidence[0] == "public")
-    assert all("text" not in source for source in result["report"]["sources"])
-    if evidence is None: assert "original document was not retained" in result["report"]["coverage"]
-    elif evidence[0] == "private": assert "uploaded" in result["report"]["coverage"]
-    else: assert "Source document" in result["report"]["coverage"]
-    conn.commit.assert_called_once()
+    assert result["reused"] is True and result["report"]["scope"] == "company"
+    assert result["report"]["company"] == reports.canonical_company(company)
+    body, user = company_report.call_args.args
+    assert body.company == company and body.locale == "en" and user == "user_one"
+    cur.execute.assert_called_once()
+    assert "SELECT empresa FROM historico" in cur.execute.call_args.args[0]
+    assert cur.execute.call_args.args[1] == (1, "user_one")
+    conn.close.assert_called_once()
 
 
 def test_private_report_detail_requires_user_link(monkeypatch):
@@ -383,26 +380,27 @@ def test_full_report_provider_failures_have_distinct_codes_without_retries(monke
 
 @pytest.mark.parametrize("locale", ["en", "pt"])
 @pytest.mark.parametrize("failure", ["provider", "validation"])
-def test_generation_failure_is_logged_without_sensitive_content_and_rolls_back(monkeypatch, caplog, locale, failure):
+def test_company_generation_failure_is_logged_without_sensitive_content_and_rolls_back(monkeypatch, caplog, locale, failure):
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
-    cur.fetchone.side_effect = [("META", "2026", "1Q", {"metadata": {}}),
-                              ("private", "Uploaded release", None, "PRIVATE_SOURCE_TEXT"), None]
+    cur.fetchone.return_value = None
     monkeypatch.setattr(reports, "connection", lambda: conn)
+    monkeypatch.setattr(reports, "company_evidence", lambda *args: {"as_of": "2026-10-19", "sources": SOURCES})
     ai = Mock(model="test-model")
     if failure == "provider":
         ai.analyze_full_report.side_effect = OpenAIError("PRIVATE_EXCEPTION_TEXT", status_code=400,
                                                        code="invalid_json_schema", request_id="req_123")
     else:
-        invalid = content(); invalid["coverage"] = "PRIVATE_GENERATED_TEXT" * 30
+        from test_company_report_content import valid_report
+        invalid = valid_report(); invalid["coverage"] = "PRIVATE_GENERATED_TEXT" * 30
         ai.analyze_full_report.return_value = invalid
     monkeypatch.setattr(reports, "OpenAIClient", lambda **kwargs: ai)
     with pytest.raises(HTTPException) as error:
-        reports.open_report(reports.OpenReport(analysis_id=7, locale=locale), "user_one")
+        reports.open_company_report(reports.OpenCompanyReport(company="META", locale=locale), "user_one")
     assert error.value.status_code == 502
     assert ("We could not generate" in error.value.detail) == (locale == "en")
     conn.rollback.assert_called_once(); conn.commit.assert_not_called()
     assert not any("INSERT INTO full_reports" in call.args[0] for call in cur.execute.call_args_list)
-    assert "full_report_failed analysis_id=7" in caplog.text
+    assert "full_report_failed analysis_id=None company=META" in caplog.text
     assert "invalid_json_schema" in caplog.text if failure == "provider" else "string_too_long" in caplog.text
     assert not any(value in caplog.text for value in ("PRIVATE_SOURCE_TEXT", "PRIVATE_EXCEPTION_TEXT", "PRIVATE_GENERATED_TEXT"))
 

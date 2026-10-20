@@ -178,6 +178,20 @@ def extract_text_from_pdf_bytes(file_bytes, max_pages=30):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro ao extrair texto do PDF: {str(e)}")
     
+def quarterly_thesis(text):
+    prefix = r"^[ \t]*(?:#{1,6}[ \t]*)?\*{0,2}"
+    section = r"(?:Se[cç][aã]o|Section)[ \t]*"
+    match = re.search(
+        rf"{prefix}{section}5[ \t]*[:–-][^\n]*\n(.*?)(?={prefix}{section}[67]\b|{prefix}(?:Nota\s+Geral|Overall\s+Score)\b|^```|\Z)",
+        text or "", re.DOTALL | re.IGNORECASE | re.MULTILINE,
+    )
+    if match and match[1].strip():
+        return match[1].strip()
+    prose = re.sub(r"```[\s\S]*?```", "", text or "").strip()
+    intro = re.split(rf"{prefix}{section}1\b", prose, maxsplit=1, flags=re.IGNORECASE | re.MULTILINE)[0].strip()
+    return intro or prose
+
+
 def parse_results(text):
     def get_note(pattern, txt):
         match = re.search(pattern, txt, re.DOTALL | re.IGNORECASE)
@@ -222,26 +236,13 @@ def parse_results(text):
             return cleaned
         except: return []
 
-    # Captura a Conclusão/Tese de Investimento (Seção 5)
-    conclusao_match = re.search(
-        r'^\*{0,2}(?:Seção|Section)\s*5\s*:[^\n]*\n(.*?)(?=^\*{0,2}(?:Seção|Section)\s*6\b|^\*{0,2}(?:Nota\s+Geral|Overall\s+Score)\b|\Z)',
-        text, re.DOTALL | re.IGNORECASE | re.MULTILINE,
-    )
-    conclusao = conclusao_match.group(1).strip() if conclusao_match else "Análise concluída. Ver detalhes no relatório."
-
-    # Se a conclusão capturada for muito curta ou falhar, tenta pegar o parágrafo inicial
-    if len(conclusao) < 10:
-        intro_match = re.match(r'^(.*?)(?=(?:Seção|Section) 1)', text, re.DOTALL | re.IGNORECASE)
-        if intro_match:
-            conclusao = intro_match.group(1).strip()
-
     return {
         "receita_nota": get_note(r'(?:Nota Seção 1|Section Score 1):\s*([1-5])\s*/\s*5', text),
         "rentabilidade_nota": get_note(r'(?:Nota Seção 2|Section Score 2):\s*([1-5])\s*/\s*5', text),
         "divida_nota": get_note(r'(?:Nota Seção 3|Section Score 3):\s*([1-5])\s*/\s*5', text),
         "lucro_nota": get_note(r'(?:Nota Seção 4|Section Score 4):\s*([1-5])\s*/\s*5', text),
         "nota_geral": get_note(r'(?:Nota Geral|Overall Score):\s*([1-5])\s*/\s*5', text),
-        "tese_investimento": conclusao.strip(),
+        "tese_investimento": quarterly_thesis(text),
         "chart_data": get_chart_data(text),
     }
 
@@ -695,7 +696,11 @@ def get_history(user_id: str):
                 conteudo = json.loads(row[5])
                 if conteudo.get("metadata", {}).get("tipo") == "Earnings Call":
                     conteudo["analise_completa"] = without_key_moments(conteudo.get("analise_completa", ""))
-                data_content = conteudo.get('data', {})
+                data_content = conteudo.setdefault('data', {})
+                if (conteudo.get("metadata", {}).get("tipo") != "Earnings Call"
+                        and data_content.get("tese_investimento", "").strip() in (
+                            "", "Análise concluída. Ver detalhes no relatório.", "Ver análise completa no texto.")):
+                    data_content["tese_investimento"] = quarterly_thesis(conteudo.get("analise_completa", ""))
                 nota_raw = data_content.get("nota_geral", 0)
                 try: nota = float(str(nota_raw).replace(',', '.'))
                 except: nota = 0.0

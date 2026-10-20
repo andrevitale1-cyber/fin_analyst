@@ -180,7 +180,7 @@ export default function FullReports() {
             pending = (async () => {
               const response = await authorizedFetch("/api/full-reports", {
                 method: "POST", body: JSON.stringify({ analysis_id: Number(target.analysisId), locale }),
-              });
+              }, 330_000);
               return readJson<{ report: FullReport; reused: boolean }>(response);
             })();
             generationRef.current.set(key, pending);

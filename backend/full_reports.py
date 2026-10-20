@@ -103,7 +103,10 @@ def read_report(value):
 
 def stored_report(row):
     # Visibility comes exclusively from the database, never generated text or client input.
-    return {**read_report(row[0]), "is_public": bool(row[1])}
+    report = {**read_report(row[0]), "is_public": bool(row[1])}
+    if report.get("scope") == "company":
+        report["symbol"] = report["company"]
+    return report
 
 
 class OpenReport(BaseModel):
@@ -258,7 +261,7 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
                 content = calculated_company_valuation(validate_company_report(raw, sources))
                 if body.locale == "pt" and not content["valuation"]["available"]:
                     content["valuation"]["reason"] = "Não há evidência suficiente de EPS anual ou TTM positivo e sua moeda para calcular os três cenários."
-                report = {**content, "id": str(uuid.uuid4()), "company": company, "period": "Company overview",
+                report = {**content, "id": str(uuid.uuid4()), "company": company, "symbol": company, "period": "Company overview",
                           "scope": "company", "report_version": COMPANY_REPORT_VERSION,
                           "as_of": evidence["as_of"], "locale": body.locale, "kind": "company",
                           "is_public": True, "created_at": datetime.now(timezone.utc).isoformat(),
@@ -392,41 +395,12 @@ def open_report(body: OpenReport, user_id: str = Depends(require_report_user)):
     conn = connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("""SELECT empresa,ano,trimestre,resultado_json FROM historico
+            cur.execute("""SELECT empresa FROM historico
                 WHERE id=%s AND CAST(user_id AS TEXT)=%s""", (body.analysis_id, user_id))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(404, "Análise não encontrada.")
-            company, year, quarter, stored = row
-            year, quarter = canonical_period(year, quarter)
-            original = read_report(stored)
-            kind = "transcript" if original.get("metadata", {}).get("tipo") == "Earnings Call" else "report"
-            company = AutoFetcher().resolve_ticker(company)
-            cur.execute("SELECT visibility,source_title,source_url,source_text FROM analysis_documents WHERE analysis_id=%s", (body.analysis_id,))
-            evidence = cur.fetchone()
-            if evidence and evidence[0] == "public" and evidence[3].strip():
-                # History links also open the company dossier; private uploads retain their private expansion.
-                conn.rollback()
-                return open_company_report(OpenCompanyReport(company=company, locale=body.locale), user_id)
-            if evidence and evidence[3].strip():
-                visibility, title, url, text = evidence
-                basis = "primary" if visibility == "public" else "uploaded"
-            else:
-                # shortcut: legacy analyses have no retained document; their expansion stays private and identifies this limited source.
-                visibility, title, url = "private", ("Saved AI analysis (original document unavailable)" if body.locale == "en" else "Análise de IA salva (documento original indisponível)"), None
-                text = original.get("analise_completa", "")
-                basis = "saved_analysis"
-            if not text.strip():
-                raise HTTPException(422, "Esta análise não contém texto suficiente para um relatório completo.")
-            sources = [{"id": "S1", "title": title, "url": url, "text": text[:180000], "basis": basis}]
-            client = OpenAIClient(task="full_report")
-            key = cache_key(company, year, quarter, body.locale, kind, sources, client.model,
-                            private_user=user_id if visibility != "public" else None)
-            result = generate_or_reuse(cur, key, user_id=user_id, analysis_id=body.analysis_id, company=company,
-                                      period=f"{quarter}Q/{year}", locale=body.locale, kind=kind, sources=sources,
-                                      client=client, is_public=visibility == "public")
-        conn.commit()
-        return result
+            company = row[0]
     except HTTPException:
         conn.rollback()
         raise
@@ -435,3 +409,5 @@ def open_report(body: OpenReport, user_id: str = Depends(require_report_user)):
         raise generation_failure(exc, body.locale, analysis_id=body.analysis_id) from None
     finally:
         conn.close()
+    # Match the Full Reports tab; private documents and the selected quarter never enter the public dossier.
+    return open_company_report(OpenCompanyReport(company=company, locale=body.locale), user_id)

@@ -44,7 +44,7 @@ def has_market_evidence(sources):
 
 def research_prompt(company, as_of):
     return f"""Research the publicly listed company identified by {company}, as of {as_of}.
-Verify the issuer and listing; do not substitute a similarly named company. Use current public sources,
+Verify the issuer and listing; do not substitute a similarly named company. Research the company as a whole across multiple fiscal years; a recent quarterly release is supporting evidence, never the entire scope. Use current public sources,
 prioritizing its investor relations, annual filings and latest results, plus reputable financial/news sources.
 Gather a compact evidence dossier, not an investment recommendation. SEC annual financial history is collected separately when available; prioritize the latest segment/geography revenue table, customers, management, competitors and current market figures in the web-search budget. Retain historical series if found, but do not spend all searches repeating annual totals. Report segment and geography amounts, common period, currency and shares in percentage points (51.5 means 51.5%, not 0.515); identify whether each breakdown is complete. Cover:
 business model, customers, revenue by segment and geography; 3–5 full fiscal years of revenue,

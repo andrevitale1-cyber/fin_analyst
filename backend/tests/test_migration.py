@@ -153,6 +153,31 @@ Overall Score: 4/5
     assert sections[1]["nota"] == 5
 
 
+@pytest.mark.parametrize("prefix", ["", "## ", "### ", "## **"])
+@pytest.mark.parametrize("language", ["Section", "Seção"])
+def test_quarterly_thesis_accepts_markdown_headings_without_scores_or_chart_json(api, prefix, language):
+    main, _ = api
+    suffix = "**" if prefix.endswith("**") else ""
+    thesis = "**Cash conversion improved.** Growth supports the business.\n\n**AI Conclusion:** A balanced quarter."
+    analysis = f"Introduction.\n\n{prefix}{language} 5: Conclusion{suffix}\n\n{thesis}\n\n{prefix}{language} 6: Rating{suffix}\nOverall Score: 4/5\n## Section 7: Charts\n```json\n[]\n```"
+    assert main.parse_results(analysis)["tese_investimento"] == thesis
+
+
+def test_history_recovers_quarterly_thesis_from_saved_analysis_without_regeneration(api, monkeypatch):
+    main, client = api
+    original = {"metadata": {"empresa": "WEGE3", "periodo": "2T/2026"},
+                "data": {"nota_geral": 4, "tese_investimento": "Análise concluída. Ver detalhes no relatório."},
+                "analise_completa": "Introduction.\n## Section 5: Strategic Conclusion\n**High ROIC supports resilience.**\n## Section 6: Rating\nOverall Score: 4/5"}
+    conn = Mock(); conn.cursor.return_value.fetchall.return_value = [(216, "WEGE3", "2026", "2T", "2026-10-19", json.dumps(original))]
+    monkeypatch.setattr(main, "get_db_connection", lambda: conn)
+    monkeypatch.setattr(main, "OpenAIClient", Mock(side_effect=AssertionError("No paid regeneration")))
+    result = client.get("/api/history", params={"user_id": "test"})
+    assert result.status_code == 200
+    assert result.json()[0]["conteudo"]["data"]["tese_investimento"] == "**High ROIC supports resilience.**"
+    assert result.json()[0]["conteudo"]["data"]["nota_geral"] == 4
+    conn.commit.assert_not_called()
+
+
 def test_unmapped_petr4_wrong_quarter_rejected(tmp_path, monkeypatch):
     fetcher = AutoFetcher(tmp_path)
     fetcher.ir_urls = {}

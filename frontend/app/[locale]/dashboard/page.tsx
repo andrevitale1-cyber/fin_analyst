@@ -740,9 +740,8 @@ export default function FinancialDashboard() {
               
               <button onClick={() => {
                 if (!result?.id) return;
-                const hasPublicSource = typeof result.source?.url === "string" && /^https?:\/\//i.test(result.source.url);
-                const company = result.metadata?.empresa || result.metadata?.company || "";
-                router.push(hasPublicSource && company
+                const company = result.metadata?.ticker || result.metadata?.symbol || result.metadata?.empresa || result.metadata?.company || "";
+                router.push(company
                   ? `/${locale}/dashboard/reports?company=${encodeURIComponent(String(company))}`
                   : `/${locale}/dashboard/reports?analysisId=${encodeURIComponent(String(result.id))}`);
               }} disabled={!result?.id} className="w-full md:w-auto justify-center px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all bg-sky-600 hover:bg-sky-700 text-white disabled:opacity-50">

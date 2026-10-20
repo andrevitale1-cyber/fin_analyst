@@ -68,18 +68,25 @@ def test_nike_ticker_fix_reuses_a_ready_legacy_report_without_paid_generation(mo
     conn.commit.assert_called_once()
 
 
-def test_public_analysis_history_link_opens_general_company_report_after_owner_check(monkeypatch):
+def test_history_link_reuses_the_same_general_report_as_the_full_reports_tab(monkeypatch):
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
-    cur.fetchone.side_effect = [("META", "2026", "1Q", {"metadata": {}}),
-                              ("public", "Release", "https://example.com/meta", "Public release text")]
+    ready = {"id": "weg-company", "company": "WEGE3", "scope": "company"}
+    cur.fetchone.side_effect = [("WEGE3",), (ready, True), (ready, True)]
     monkeypatch.setattr(reports, "connection", lambda: conn)
-    company_report = Mock(return_value={"report": {"scope": "company"}, "reused": True})
-    monkeypatch.setattr(reports, "open_company_report", company_report)
-    result = reports.open_report(reports.OpenReport(analysis_id=7, locale="en"), "user_one")
-    assert result["report"]["scope"] == "company"
-    body, user = company_report.call_args.args
-    assert body.company == "META" and body.locale == "en" and user == "user_one"
+    monkeypatch.setattr(reports, "OpenAIClient", Mock(side_effect=AssertionError("Do not regenerate a ready company report")))
+    history = reports.open_report(reports.OpenReport(analysis_id=7, locale="en"), "user_one")
+    direct = reports.open_company_report(reports.OpenCompanyReport(company="WEGE3", locale="en"), "user_two")
+    assert history == direct and history["reused"] is True
+    assert history["report"]["scope"] == "company" and history["report"]["symbol"] == "WEGE3"
     assert cur.execute.call_args_list[0].args[1] == (7, "user_one")
+    access = [call.args[1] for call in cur.execute.call_args_list if "INSERT INTO full_report_access" in call.args[0]]
+    assert access == [("user_one", "weg-company"), ("user_two", "weg-company")]
+
+
+def test_saved_company_report_uses_canonical_identity_instead_of_exchange_code():
+    original = {"id": "weg", "scope": "company", "company": "WEGE3", "symbol": "BVMF"}
+    assert reports.stored_report((original, True))["symbol"] == "WEGE3"
+    assert original["symbol"] == "BVMF"
 
 
 def test_general_company_report_uses_public_dossier_without_user_history(monkeypatch):
@@ -96,6 +103,7 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     result = reports.open_company_report(reports.OpenCompanyReport(company="META", locale="en"), "user_one")
     report = result["report"]
     assert report["scope"] == report["kind"] == "company"
+    assert report["symbol"] == "META"
     assert report["as_of"] == "2026-10-12" and report["is_public"] is True
     assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v3"
     assert report["score"] == 4 and len(report["sections"]) == 10
