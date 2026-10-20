@@ -273,8 +273,6 @@ export default function FullReports() {
   const selectedSection = reportOwnerId === userId ? report?.sections.find(section => section.id === activeSection) : undefined;
   const formatDate = (value: string) => formatReportDate(value, locale);
   const selectSavedReport = (id: string) => {
-    const saved = visibleReports.find(item => item.id === id);
-    if (saved?.scope === "company" && saved.report_version !== "company-v4") { generateCompany(saved.company); return; }
     setTarget({ type: "saved", reportId: id });
     setReused(false);
     router.replace(`/${locale}/dashboard/reports?reportId=${encodeURIComponent(id)}`);
