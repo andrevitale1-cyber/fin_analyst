@@ -294,7 +294,7 @@ export default function FullReports() {
   const choosePopularCompany = (company: string) => {
     const normalized = company.trim().toLocaleUpperCase();
     const cached = visibleReports.find(item => item.scope === "company" && item.locale === locale && (item.company.toLocaleUpperCase() === normalized || item.company_name?.toLocaleUpperCase() === normalized));
-    if (cached?.report_version === "company-v5") { selectSavedReport(cached.id); return; }
+    if (cached?.report_version === "company-v6") { selectSavedReport(cached.id); return; }
     generateCompany(company);
   };
   const submitCompanySearch = (event: FormEvent) => {

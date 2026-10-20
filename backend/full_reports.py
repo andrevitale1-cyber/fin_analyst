@@ -25,7 +25,8 @@ from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
-COMPANY_REPORT_VERSION = "company-v5"
+COMPANY_REPORT_VERSION = "company-v6"
+RESEARCH_VERSION = "company-v5"  # Prompt-only changes reuse the previously collected public documents.
 logger = logging.getLogger(__name__)
 timing_logger = logging.getLogger("uvicorn.error")
 
@@ -159,15 +160,15 @@ def canonical_company(company):
     return symbol
 
 
-def company_cache_key(company, model, as_of, locale=None):
+def company_cache_key(company, model, as_of, locale=None, *, version=None):
     year, week, _ = datetime.fromisoformat(as_of).isocalendar()
-    payload = [COMPANY_REPORT_VERSION, company, model, year, week, locale]
+    payload = [version or COMPANY_REPORT_VERSION, company, model, year, week, locale]
     return hashlib.sha256(json.dumps(payload).encode()).hexdigest()
 
 
 def company_evidence(company, model, as_of, client):
     # A separate committed transaction keeps paid research reusable even if synthesis fails.
-    key = company_cache_key(company, model, as_of)
+    key = company_cache_key(company, model, as_of, version=RESEARCH_VERSION)
     conn = connection()
     try:
         with conn.cursor() as cur:
@@ -203,7 +204,7 @@ def company_evidence(company, model, as_of, client):
 
 def company_facts(company, model, evidence, client, *, deadline):
     # Shared across languages/users; failed writing/audits never require another paid extraction.
-    payload = ["facts-v1", company, model, evidence]
+    payload = ["facts-v2", company, model, evidence]
     key = hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     conn = connection()
     try:

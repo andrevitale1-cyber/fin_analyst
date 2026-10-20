@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from company_report_content import COMPANY_SECTION_IDS
 from full_report_content import ReportValidationError
+from agents.prompt_builder import PromptBuilder
 
 
 class Fact(BaseModel):
@@ -77,6 +78,10 @@ Do not turn a quarter into a full year, ADR EPS into ordinary-share EPS, or USD 
 No recommendations or assumptions. Null means unavailable. Section IDs: {', '.join(COMPANY_SECTION_IDS)}.
 Official annual_financials are preserved separately in code; do not waste output repeating every year.
 List material missing evidence in gaps. Return only the required structured dossier.
+For the shared methodology below, extract the supporting inputs only: do not write analysis, assign scores,
+or generate the quarterly output structure. Prioritize comparable figures, segment contributions, margins,
+cash conversion, debt, dilution, nonrecurring effects and sourced forward indicators when disclosed.
+METHODOLOGY:\n{PromptBuilder().company_field_rules(company)}
 SOURCES:\n{json.dumps(evidence, ensure_ascii=False)}"""
     return validate_dossier(client.analyze_full_report(prompt, FactDossier.model_json_schema(),
                           max_output_tokens=3600, timeout=timeout), sources)

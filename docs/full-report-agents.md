@@ -19,7 +19,13 @@ Os agentes são módulos Python executados pelo serviço atual do Render. Não e
 - O orçamento da rota é de 315 segundos. Cada chamada tem seu próprio limite; o fluxo não inicia novas etapas quando o orçamento acaba.
 - Os relatórios novos permanecem privados. Reaproveitar processamento não expõe a biblioteca privada de outro usuário. Ler um relatório salvo não regenera o conteúdo nem consome cota.
 - Relatórios existentes permanecem acessíveis; uma atualização exige ação explícita do usuário.
-- A versão nova é `company-v5`, com metadados internos de etapas e verificação. Logs não incluem o conteúdo dos documentos, tokens de sessão ou mensagens sensíveis do provedor.
+- A versão nova é `company-v6`, com metadados internos de etapas e verificação. Logs não incluem o conteúdo dos documentos, tokens de sessão ou mensagens sensíveis do provedor.
+
+## Metodologia compartilhada com a análise trimestral
+
+`PromptBuilder.company_field_rules()` reutiliza os blocos ativos de qualidade, instruções de receita/margens/capital/lucro, regras setoriais, padrão editorial e régua qualitativa de notas da análise trimestral. Extração, redação e auditoria dos full reports usam essa mesma base. A adaptação preserva a análise da companhia ao longo de vários períodos, os campos JSON, os fatores atuais da nota da companhia e o agente próprio de valuation; não importa a estrutura numerada nem a fórmula de nota geral do trimestre.
+
+Alterações apenas nessa metodologia invalidam o relatório e o dossiê, mas reutilizam a pesquisa pública já coletada. Abrir um relatório salvo continua apenas lendo a versão existente.
 
 ## Validação
 

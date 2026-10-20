@@ -10,7 +10,7 @@ from agents.report_verifier import verify_report
 from company_report_content import apply_official_financials, validate_company_report
 
 
-PIPELINE_VERSION = "company-agents-v1"
+PIPELINE_VERSION = "company-agents-v2"
 logger = logging.getLogger("uvicorn.error")
 
 
@@ -38,7 +38,7 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
     writing_ms = round((perf_counter() - started) * 1000)
     logger.info("report_agents company=%s stage=sections_and_valuation elapsed_ms=%d", company, writing_ms)
     reviewed = perf_counter()
-    review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, 40))
+    review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, 40), company=company, locale=locale)
     verification_ms = round((perf_counter() - reviewed) * 1000)
     logger.info("report_agents company=%s stage=verification passed=true elapsed_ms=%d", company, verification_ms)
     content["pipeline"] = {"version": PIPELINE_VERSION, "agents": ["facts", "sections", "valuation", "verification"],

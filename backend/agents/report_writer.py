@@ -2,6 +2,7 @@
 import json
 
 from company_report_content import company_report_schema
+from agents.prompt_builder import PromptBuilder
 
 
 SECTION_BRIEFS = {
@@ -43,6 +44,7 @@ Scores are reasoned AI quality assessments from 1–5, with cited support; never
 Analyst consensus and market data require dated independent sources; their as_of fields must be exact YYYY-MM-DD
 observation dates. Projections require management guidance
 or analyst consensus; do not invent model forecasts. Distinguish source facts, calculated values and AI judgments.
+SHARED ANALYSIS RULES:\n{PromptBuilder().company_field_rules(company, locale)}
 SECTION PROMPTS:\n{json.dumps(briefs)}
 FACT DOSSIER:\n{json.dumps(dossier, ensure_ascii=False)}
 OFFICIAL ANNUAL FINANCIALS:\n{json.dumps([s for s in sources if s.get('annual_financials')], ensure_ascii=False)}"""
