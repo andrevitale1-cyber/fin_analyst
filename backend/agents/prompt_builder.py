@@ -81,8 +81,7 @@ Use exatamente estas quatro seções, nesta ordem:
         score_labels = [f"Section Score {i}: X/5" for i in range(1, 5)] if english else [f"Nota Seção {i}: X/5" for i in range(1, 5)]
         overall_label = "Overall Score: X/5" if english else "Nota Geral: X/5"
         classification_label = "Quarter Classification: Excellent, Good, Fair, Poor, or Very Poor" if english else "Classificação do Trimestre: Excelente, Bom, Regular, Ruim ou Muito Ruim"
-        section_rule = "Use the exact section and score labels shown in the required structure below." if english else "MANTENHA AS ETIQUETAS 'Seção 1:', 'Seção 2:', 'Seção 3:', 'Seção 4:', 'Seção 5:', 'Seção 6:' e 'Seção 7:' EXATAMENTE ASSIM."
-        chart_heading = "Section 7: Structured Data for Charts (MANDATORY)" if english else "Seção 7: Dados Estruturados para Gráficos (OBRIGATÓRIO)"
+        section_rule = "Use the exact section and score labels shown in the required structure below." if english else "MANTENHA AS ETIQUETAS 'Seção 1:', 'Seção 2:', 'Seção 3:', 'Seção 4:', 'Seção 5:' e 'Seção 6:' EXATAMENTE ASSIM."
         data_heading = "DATA FOR ANALYSIS:" if english else "DADOS PARA ANÁLISE:"
         number_style = ('Use the source currency and units as reported, with up to two decimal places (e.g., "$11.87 billion", "a 13.1% increase", "a 0.6 percentage-point expansion"). Do not convert currencies.'
                         if english else 'Escreva valores por extenso com até duas casas decimais, como "R$ 11,87 bilhões", "aumento de 13,1%" e "expansão de 0,6 p.p.". Não use LaTeX.')
@@ -96,11 +95,11 @@ Período solicitado: {periodo or 'identifique no documento'}.
 REGRAS CRÍTICAS:
 1. USE APENAS OS DADOS FORNECIDOS ABAIXO. Se os dados forem insuficientes, diga 'Dados insuficientes' em vez de inventar números ou empresas.
 2. NUNCA USE 'Empresa Fictícia S.A.' ou dados de exemplo.
-3. {section_rule} Always return the structured chart data in the required JSON code block.
+3. {section_rule}
 4. Confirme o período do documento antes de analisar. Se divergir do período solicitado, destaque a divergência; não misture trimestres nem apresente dados de outro período como se fossem do solicitado.
 5. Diferencie fatos divulgados, cálculos derivados e interpretação. Para cada número relevante, informe período, unidade e, quando identificável, página ou tabela de origem. Nunca invente uma referência.
 
-FILTROS DE QUALIDADE:
+FILTROS DE QUALIDADE (METODOLOGIA BYHOLDER):
 - Foco em alocação de capital e geração de valor.
 - Analise SBC (Stock Based Compensation) e vantagens competitivas quando houver evidência no documento.
 - Em cada seção 1 a 4, desenvolva a análise em parágrafos: dado atual e comparação com período equivalente do ano anterior ou trimestre anterior quando disponíveis; principais causas da mudança; consequência para qualidade do resultado e risco. Calcule variações apenas com bases comparáveis e mostre a conta ou os valores usados.
@@ -157,28 +156,6 @@ Escreva uma conclusão editorial no padrão de uma nota de resultados fundamenta
 {section_labels[5]}
 {overall_label}
 {classification_label} (corresponding to the final score)
-
-**{chart_heading}**
-Retorne um ÚNICO bloco JSON no final, com a lista abaixo, sem HTML ou Chart.js.
-Extraia os últimos quatro trimestres disponíveis, ou o máximo que houver. Inclua apenas períodos presentes no documento; NUNCA invente trimestres.
-segmentos deve conter objetos de segmentos de negócio com nome e valor de receita em unidade consistente; despesas_var, nome e var_pct. Use a mesma unidade monetária em todos os trimestres, quando possível. Não use países/regiões como segmentos. composicao_receita, se preenchida, deve repetir apenas a composição por negócios.
-Se não houver série histórica, retorne [].
-```json
-[
-  {{
-    "name": "3T25",
-    "receita": 0,
-    "lucro": 0,
-    "divida": 0,
-    "ebitda": 0,
-    "margemBruta": 0,
-    "margemLiquida": 0,
-    "segmentos": [],
-    "composicao_receita": {{}},
-    "despesas_var": []
-  }}
-]
-```
 
 {data_heading}
 Se houver um documento anexado, use-o como fonte primária. Caso contrário, use o texto abaixo:

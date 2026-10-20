@@ -397,3 +397,13 @@ def test_bot_generates_drafts_even_with_write_credentials(monkeypatch, tmp_path)
     assert result["draft_only"] and result["replies_processed"] == 1
     agent.client.create_tweet.assert_not_called()
     agent.record_reply_history.assert_not_called()
+
+
+@pytest.mark.parametrize("locale,heading,overall", [("pt","Seção 6: Nota Final","Nota Geral: X/5"),("en","Section 6: Final Rating","Overall Score: X/5")])
+def test_quarterly_prompt_experiment_preserves_ratings_without_chart_section(locale,heading,overall):
+    from agents.prompt_builder import PromptBuilder
+    prompt=PromptBuilder().build_prompt("WEGE3","Supplied release",locale=locale,periodo="1T/2026")
+    assert heading in prompt and overall in prompt
+    assert "Seção 7" not in prompt and "Section 7" not in prompt and "```json" not in prompt
+    assert "40%" in prompt and "25%" in prompt and "20%" in prompt and "15%" in prompt
+    assert "Supplied release" in prompt
