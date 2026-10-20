@@ -40,7 +40,7 @@ def test_cached_brazilian_research_is_enriched_without_repeating_paid_web_search
     monkeypatch.setattr(reports, "collect_issuer_annual_sources", collect)
     monkeypatch.setattr(reports, "collect_company_sources", Mock(side_effect=AssertionError("Reuse web dossier")))
     result = reports.company_evidence("VIVA3", "model", "2026-10-20", Mock())
-    assert result["sources"][0]["id"] == "IR2025" and result["issuer_documents_version"] == 1
+    assert result["sources"][0]["id"] == "IR2025" and result["issuer_documents_version"] == 2
     reports.company_evidence("VIVA3", "model", "2026-10-20", Mock())
     collect.assert_called_once_with("VIVA3", "2026-10-20")
 

@@ -96,6 +96,8 @@ No recommendations or assumptions. Null means unavailable. Section IDs: {', '.jo
 Only when a source actually has annual_financials, its totals are preserved separately in code.
 Otherwise prioritize three full fiscal years of revenue and net income, latest annual EPS, currency/scale,
 and at least four distinct numeric financial/market metrics before narrative facts. Copy table cells exactly.
+Prefer original primary annual statements over secondary tables for identical periods and accounting bases.
+Do not retain a conflicting secondary value as the company's reported result; distinguish adjusted/comparable figures.
 Balance coverage across the narrative sources: prioritize business/segment mix, moat, management changes,
 capital allocation, risks, guidance and independent dated market consensus. Do not let a long transcript
 crowd out shorter sources. Preserve numeric segment tables and distinct observation dates when available.

@@ -194,10 +194,11 @@ def company_evidence(company, model, as_of, client):
                     raise
                 cur.execute("""INSERT INTO company_research_cache (cache_key,content) VALUES (%s,%s::jsonb)
                     ON CONFLICT (cache_key) DO UPDATE SET content=EXCLUDED.content,created_at=NOW()""", (key, json.dumps(evidence)))
-            if company in AutoFetcher.mziq_catalogs and not evidence.get("issuer_documents_version"):
-                if not any(s.get("id", "").startswith("IR") for s in evidence["sources"]):
-                    evidence["sources"] = collect_issuer_annual_sources(company, as_of) + evidence["sources"]
-                evidence["issuer_documents_version"] = 1
+            if company in AutoFetcher.mziq_catalogs and evidence.get("issuer_documents_version") != 2:
+                annuals = collect_issuer_annual_sources(company, as_of)
+                ids = {s["id"] for s in annuals}
+                evidence["sources"] = annuals + [s for s in evidence["sources"] if s["id"] not in ids]
+                evidence["issuer_documents_version"] = 2
                 cur.execute("UPDATE company_research_cache SET content=%s::jsonb WHERE cache_key=%s", (json.dumps(evidence), key))
         conn.commit()
         return evidence

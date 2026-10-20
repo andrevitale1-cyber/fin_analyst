@@ -38,6 +38,8 @@ with a short **bold key insight**. Cite factual assertions using source_ids, not
 Use complete sentences, no HTML, no scripts and no filler about missing information. Never invent figures,
 ratings, consensus, biographies, comparisons, quotations or forecasts. Label AI judgments explicitly.
 All numbers retain period, currency and scale. Numeric monetary JSON values use full currency units;
+When secondary notes conflict with original statements, use the primary figure for the same accounting basis;
+do not combine reported/adjusted earnings or present a secondary number as primary-verified.
 EPS is per underlying share. Do not mix fiscal/calendar years, ADR/ordinary shares, currencies or periods.
 Financial history contains 3–5 full years when available, never quarters/TTM. Highlight metrics must have
 numeric_value, unit, date/period and source_id. Segment/geography shares are percentage points (51.5, not .515).

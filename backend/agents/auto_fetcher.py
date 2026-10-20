@@ -473,6 +473,10 @@ class AutoFetcher:
                 logger.info("release_document_rejected year=%s quarter=%s reason=period_not_found", year, quarter)
                 return None
             periods = re.findall(r"(?<![A-Z0-9])(?:[1-4][TQ]|[TQ][1-4])[\s_./-]*(?:20\d{2}|\d{2})(?!\d)", period_text)
+            # A release header identifies its own period; opening highlight cards may cite last year's quarter first.
+            headers = re.findall(r"(?<![A-Z0-9])((?:[1-4][TQ]|[TQ][1-4])[\s_./-]*(?:20\d{2}|\d{2}))[ \t]*[|·][ \t]*(?:RELEASE|RESULTADOS)", period_text)
+            if headers:
+                periods = headers
             if periods and not self._period_matches(periods[0], year, quarter):
                 logger.info("release_document_rejected year=%s quarter=%s reason=cover_period_mismatch found=%s", year, quarter, periods[0])
                 return None

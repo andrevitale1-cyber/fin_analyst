@@ -133,3 +133,11 @@ def test_comparison_period_does_not_override_spaced_release_cover(monkeypatch, c
     monkeypatch.setattr(requests, "get", Mock(return_value=Mock(url=VIVARA_PDF, content=b"%PDF-wrong-period")))
     monkeypatch.setattr(OpenAIClient, "extract_text", staticmethod(lambda _: f"VIVARA RESULTADOS {cover}\nComparativo 1T26"))
     assert AutoFetcher()._download_release(VIVARA_PDF, 2026, 1) is None
+
+
+@pytest.mark.parametrize("header, accepted", [("4T25", True), ("4T24", False)])
+def test_release_header_takes_precedence_over_highlight_comparison(monkeypatch, header, accepted):
+    monkeypatch.setattr(requests, "get", Mock(return_value=Mock(url=VIVARA_PDF, content=b"%PDF-annual")))
+    text = f"RESULTADOS 2025\nReceita +17,5% vs. 4T24\nVIVARA {header} | RELEASE DE RESULTADOS\nResultados 4T25."
+    monkeypatch.setattr(OpenAIClient, "extract_text", staticmethod(lambda _: text))
+    assert (AutoFetcher()._download_release(VIVARA_PDF, 2025, 4) is not None) is accepted

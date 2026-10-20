@@ -59,7 +59,7 @@ def curate():
 
 def start_if_enabled():
     if os.getenv("VALIDATE_VIVARA_REPORT_20261020") == "1":
-        Thread(target=validate_apple_report, kwargs={"company": "VIVA3", "task": "report-agents-VIVA3-20261020-2"},
+        Thread(target=validate_apple_report, kwargs={"company": "VIVA3", "task": "report-agents-VIVA3-20261020-3"},
                name="validate-vivara-report", daemon=True).start()
     if os.getenv("VALIDATE_EQUIBLES_20261020") == "1":
         Thread(target=validate_equibles_releases, name="validate-equibles-releases", daemon=True).start()
