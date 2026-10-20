@@ -151,3 +151,16 @@ def test_fact_extraction_omits_editorial_grading_and_bounds_long_transcripts():
     assert "CALL OPENING" in prompt and "Q&A END" in prompt
     assert "x" * 20000 not in prompt and "40/25/20/15" not in prompt
     assert api.call_args.kwargs["max_output_tokens"] == 2800
+
+
+def test_extraction_discards_bad_fact_without_weakening_remaining_evidence():
+    raw = facts()
+    invalid = copy.deepcopy(raw["facts"][0])
+    invalid["numeric_value"] = 250
+    raw["facts"].append(invalid)
+    dossier = validate_dossier(raw, SOURCES, drop_invalid=True)
+    assert len(dossier["facts"]) == 3
+    assert [f["id"] for f in dossier["facts"]] == ["E1", "E2", "E3"]
+    raw["facts"] = [invalid] * 3
+    with pytest.raises(ReportValidationError, match="Insufficient"):
+        validate_dossier(raw, SOURCES, drop_invalid=True)
