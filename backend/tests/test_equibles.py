@@ -57,11 +57,13 @@ def test_invalid_or_wrong_issuer_response_is_rejected(monkeypatch, payload):
 
 def test_success_skips_web_lookup_and_reuses_existing_release_cache(monkeypatch, tmp_path):
     fetcher = AutoFetcher(tmp_path)
+    fetcher.mziq_catalogs = {}
+    fetcher.ir_urls.pop("VIVA3", None)
     lookup = Mock(return_value=[{"title": "Vivara resultados 2T26", "url": "https://ri.vivara.com.br/release.pdf"}])
     fetcher.equibles_client.release_candidates = lookup
     download = Mock(return_value=FetchedDocument("https://ri.vivara.com.br/release.pdf", "RI", text="Vivara resultados 2T26 Receita líquida e lucro líquido."))
     monkeypatch.setattr(fetcher, "_download_release", download)
-    fallback = Mock(side_effect=AssertionError("No paid web search")); monkeypatch.setattr(fetcher, "_fetch_b3", fallback)
+    fallback = Mock(side_effect=AssertionError("No paid web search")); fetcher.search_client.search_financial_reports = fallback
     first = fetcher.fetch_result_pdf("Vivara", "2026", "2T")
     assert first.source == "Equibles / RI"
     assert fetcher.fetch_result_pdf("VIVA3", "2026", "Q2") == first
@@ -78,6 +80,18 @@ def test_wrong_period_and_company_keep_original_fallback(monkeypatch, tmp_path):
     monkeypatch.setattr(fetcher, "_download_release", download)
     correct = FetchedDocument("https://ri.vivara.com.br/correct.pdf", "RI", text="Vivara 2T26")
     fallback = Mock(return_value=correct); monkeypatch.setattr(fetcher, "_fetch_b3", fallback)
-    assert fetcher.fetch_result_pdf("VIVA3", "2026", "2T") == correct
+    assert fetcher._fetch_equibles("VIVA3", 2026, 2) is None
     assert download.call_count == 1
+    assert fetcher.fetch_result_pdf("VIVA3", "2026", "2T") == correct
     fallback.assert_called_once_with("VIVA3", 2026, 2)
+
+
+def test_direct_issuer_catalogue_skips_equibles_and_paid_search(monkeypatch, tmp_path):
+    fetcher = AutoFetcher(tmp_path)
+    correct = FetchedDocument("https://api.mziq.com/release.pdf", "RI", text="Vivara resultados 2T26")
+    monkeypatch.setattr(fetcher, "_mziq_catalog_candidates", lambda *a: [{"url": correct.url}])
+    monkeypatch.setattr(fetcher, "_download_release", lambda *a, **kw: correct)
+    vendor = Mock(side_effect=AssertionError("Do not query an unnecessary vendor"))
+    fetcher.equibles_client.release_candidates = vendor
+    assert fetcher.fetch_result_pdf("Vivara", 2026, "2T") == correct
+    vendor.assert_not_called()

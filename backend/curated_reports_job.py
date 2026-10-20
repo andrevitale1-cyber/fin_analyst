@@ -143,7 +143,7 @@ def validate_equibles_releases():
     from agents.auto_fetcher import AutoFetcher
     conn = connection()
     conn.autocommit = True
-    task = "equibles-releases-20261020-1"
+    task = "vivara-direct-releases-20261020-1"
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT pg_try_advisory_lock(hashtext(%s))", (task,))
@@ -157,10 +157,15 @@ def validate_equibles_releases():
             cur.execute("INSERT INTO maintenance_tasks(id,state) VALUES (%s,'running')", (task,))
             fetcher = AutoFetcher()
             results = []
-            for company in ("VIVA3", "AAPL"):
-                document = fetcher._fetch_equibles(company, 2026, 2)
-                results.append({"company": company, "year": 2026, "quarter": 2,
-                                "provider_status": fetcher.equibles_client.last_status,
+            from time import perf_counter
+            # Validate the direct RI path, without invoking any search/analysis model.
+            fetcher.search_client.search_financial_reports = lambda *a: []
+            for quarter in (1, 2):
+                started = perf_counter()
+                document = fetcher.fetch_result_pdf("VIVA3", 2026, str(quarter))
+                results.append({"company": "VIVA3", "year": 2026, "quarter": quarter,
+                                "elapsed_ms": round((perf_counter() - started) * 1000),
+                                "source": document.source if document else None,
                                 "document_found": document is not None,
                                 "source_url": document.url if document else None})
             cur.execute("UPDATE maintenance_tasks SET state='completed',diagnostics=%s::jsonb,updated_at=NOW() WHERE id=%s",

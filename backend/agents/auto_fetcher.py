@@ -127,12 +127,12 @@ class AutoFetcher:
                 return document
         except (OSError, ValueError, TypeError, KeyError):
             pass
-        document = self._fetch_equibles(ticker, year, quarter)
-        if not document:
-            if re.fullmatch(r"[A-Z]{1,5}", ticker):
-                document = SECFetcher().fetch(ticker, year, quarter)
-            else:
-                document = self._fetch_b3(ticker, year, quarter)
+        if re.fullmatch(r"[A-Z]{1,5}", ticker):
+            document = SECFetcher().fetch(ticker, year, quarter)
+            if not document:
+                document = self._fetch_equibles(ticker, year, quarter)
+        else:
+            document = self._fetch_b3(ticker, year, quarter)
         if document:
             try:
                 self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -352,6 +352,9 @@ class AutoFetcher:
                         return document
             except requests.RequestException:
                 pass
+        # Direct issuer catalogues are faster than an unsupported vendor or a paid web search.
+        if document := self._fetch_equibles(ticker, year, quarter):
+            return document
         results = self.search_client.search_financial_reports(ticker, year, f"{quarter}T")
         candidates = self._candidates(results, year, quarter)
         for candidate in candidates[:12]:
