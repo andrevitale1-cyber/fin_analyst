@@ -13,6 +13,8 @@ _HEADERS = {"User-Agent": "FinAnalyzer contact@finanalyser.com.br", "Accept": "a
 _TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 _FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
 _SYMBOL = re.compile(r"[A-Z]{1,5}(?:\.[A-Z])?\Z")
+_ALIASES = {"NIKE": "NKE", "PETR4": "PBR", "PETR3": "PBR"}
+_KNOWN_CIKS = {"NKE": 320187, "PBR": 1119639}
 _TAGS = {
     "Revenue": ("RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet", "RevenueFromContractWithCustomerIncludingAssessedTax"),
     "Net income": ("NetIncomeLoss", "ProfitLoss"),
@@ -24,6 +26,17 @@ _TAGS = {
     "Cash and cash equivalents": ("CashAndCashEquivalentsAtCarryingValue",),
     "Current long-term debt": ("LongTermDebtCurrent",),
     "Noncurrent long-term debt": ("LongTermDebtNoncurrent",),
+}
+_IFRS_TAGS = {
+    "Revenue": ("Revenue",),
+    "Net income": ("ProfitLossAttributableToOwnersOfParent", "ProfitLoss"),
+    "Operating cash flow": ("CashFlowsFromUsedInOperatingActivities",),
+    "Capital expenditures": ("PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+        "PurchaseOfPropertyPlantAndEquipmentIntangibleAssetsOtherThanGoodwillInvestmentPropertyAndOtherNoncurrentAssets"),
+    "Diluted EPS": ("DilutedEarningsLossPerShare",),
+    "Operating income": ("ProfitLossFromOperatingActivities",),
+    "Gross profit": ("GrossProfit",),
+    "Cash and cash equivalents": ("CashAndCashEquivalents",),
 }
 _INSTANT = {"Cash and cash equivalents", "Current long-term debt", "Noncurrent long-term debt"}
 _MARGINS = {"Operating margin (calculated)": "Operating income", "Gross margin (calculated)": "Gross profit",
@@ -63,10 +76,15 @@ def _number(value):
 
 
 def _annual_facts(payload, as_of):
-    facts = payload.get("facts", {}).get("us-gaap", {})
+    taxonomies = payload.get("facts", {})
+    facts = dict(taxonomies.get("us-gaap", {}))
+    for label, tags in _IFRS_TAGS.items():
+        for tag in tags:
+            if tag in taxonomies.get("ifrs-full", {}):
+                facts["ifrs:" + tag] = taxonomies["ifrs-full"][tag]
     periods = {}
     for label, tags in _TAGS.items():
-        for tag in tags:
+        for tag in (*tags, *("ifrs:" + tag for tag in _IFRS_TAGS.get(label, ()))):
             concept = facts.get(tag, {})
             units = concept.get("units", {}) if isinstance(concept, dict) else {}
             for unit, entries in units.items():
@@ -122,14 +140,14 @@ def get_sec_company_source(symbol, as_of):
         if not isinstance(symbol, str):
             return None
         symbol = symbol.strip().upper()
+        symbol = _ALIASES.get(symbol, symbol)
         if not _SYMBOL.fullmatch(symbol):
             return None
         as_of_date = date.fromisoformat(as_of)
-        try:
+        cik = _KNOWN_CIKS.get(symbol)
+        if not cik:
             index = _ticker_index()
-        except (requests.RequestException, ValueError, TypeError, KeyError):
-            return None
-        cik = index.get(symbol) or (index.get("GOOGL") if symbol == "GOOG" else None)
+            cik = index.get(symbol) or (index.get("GOOGL") if symbol == "GOOG" else None)
         if not cik:
             return None
         payload = _get_json(_FACTS_URL.format(cik=cik))
@@ -172,6 +190,8 @@ def get_sec_company_source(symbol, as_of):
             lines.append(f"SEC companyfacts for {legal_name.strip()} ({symbol}); annual facts reported in {history[0][2]}.")
         else:
             lines.append(f"SEC companyfacts for {symbol}; annual facts reported in {history[0][2]}.")
+        if payload.get("facts", {}).get("ifrs-full"):
+            lines.append("IFRS capital expenditures may include the reported combined purchases of property, plant, equipment, intangible and other noncurrent assets. Calculated free cash flow is operating cash flow minus those purchases; do not describe it as issuer-defined FCF. EPS is per underlying ordinary share in the reported currency, not per ADR; never compare it to another listing currency or ADR price without verified conversion and depositary ratio.")
         for end, filed, currency, values in history:
             metrics = "; ".join(
                 f"{label} {'percent' if label in _MARGINS else currency + '/shares' if label == 'Diluted EPS' else currency} {_format(value)}"

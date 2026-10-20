@@ -274,7 +274,7 @@ export default function FullReports() {
   const formatDate = (value: string) => formatReportDate(value, locale);
   const selectSavedReport = (id: string) => {
     const saved = visibleReports.find(item => item.id === id);
-    if (saved?.scope === "company" && saved.report_version !== "company-v3") { generateCompany(saved.company); return; }
+    if (saved?.scope === "company" && saved.report_version !== "company-v4") { generateCompany(saved.company); return; }
     setTarget({ type: "saved", reportId: id });
     setReused(false);
     router.replace(`/${locale}/dashboard/reports?reportId=${encodeURIComponent(id)}`);
@@ -296,7 +296,7 @@ export default function FullReports() {
   const choosePopularCompany = (company: string) => {
     const normalized = company.trim().toLocaleUpperCase();
     const cached = visibleReports.find(item => item.scope === "company" && item.locale === locale && (item.company.toLocaleUpperCase() === normalized || item.company_name?.toLocaleUpperCase() === normalized));
-    if (cached?.report_version === "company-v3") { selectSavedReport(cached.id); return; }
+    if (cached?.report_version === "company-v4") { selectSavedReport(cached.id); return; }
     generateCompany(company);
   };
   const submitCompanySearch = (event: FormEvent) => {

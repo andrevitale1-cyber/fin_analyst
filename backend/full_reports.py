@@ -16,13 +16,13 @@ from agents.auto_fetcher import AutoFetcher
 from openai_client import OpenAIClient, OpenAIError, model_for_task
 from report_auth import require_report_user
 from full_report_content import build_full_report_prompt, report_schema, validate_full_report, ReportValidationError
-from company_report_content import build_company_report_prompt, company_report_schema, validate_company_report
+from company_report_content import build_company_report_prompt, company_report_schema, validate_company_report, apply_official_financials, ensure_company_completeness
 from company_research import collect_company_sources
 from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
-COMPANY_REPORT_VERSION = "company-v3"
+COMPANY_REPORT_VERSION = "company-v4"
 logger = logging.getLogger(__name__)
 timing_logger = logging.getLogger("uvicorn.error")
 
@@ -255,7 +255,16 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
                 raw = client.analyze_full_report(prompt, company_report_schema(), max_output_tokens=11000, timeout=120)
                 timings["synthesis_ms"] = round((perf_counter() - step) * 1000)
                 stage = "validation"
-                content = calculated_company_valuation(validate_company_report(raw, sources))
+                content = calculated_company_valuation(validate_company_report(apply_official_financials(raw, sources), sources))
+                try:
+                    ensure_company_completeness(content, sources)
+                except ReportValidationError:
+                    # One synthesis repair reuses paid research; never publish a thin dossier.
+                    repair = prompt + "\nQUALITY REPAIR: Include at least three annual revenue/net-income periods and four numeric metrics. Use F1 official annual EPS and its exact currency for bear/base/bull assumptions when positive. Do not omit available official data or invent missing data."
+                    raw = client.analyze_full_report(repair, company_report_schema(), max_output_tokens=11000,
+                        timeout=max(10, min(75, int(300 - (perf_counter() - started)))))
+                    content = calculated_company_valuation(validate_company_report(apply_official_financials(raw, sources), sources))
+                    ensure_company_completeness(content, sources)
                 if body.locale == "pt" and not content["valuation"]["available"]:
                     content["valuation"]["reason"] = "Não há evidência suficiente de EPS anual ou TTM positivo e sua moeda para calcular os três cenários."
                 report = {**content, "id": str(uuid.uuid4()), "company": company, "symbol": company, "period": "Company overview",

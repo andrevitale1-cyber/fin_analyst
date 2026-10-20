@@ -356,3 +356,30 @@ def test_analyst_consensus_rejects_uncited_undated_inconsistent_values(invalid):
                                 "as_of": "2026-10-15", "source_ids": ["S1"], **invalid}
     with pytest.raises(ValueError):
         validate_company_report(raw, [{"id": "S1", "text": "Dated market consensus."}])
+
+
+def complete_report():
+    report = valid_report()
+    report["financial_history"] = [{**report["financial_history"][0], "period": str(year)} for year in (2023, 2024, 2025)]
+    report["metrics"] = [{**report["metrics"][0], "label": label, "numeric_value": 10.0, "unit": "currency", "currency": "USD"} for label in ("Revenue", "Net income", "Operating cash flow", "Gross margin")]
+    return report
+
+
+def test_official_numbers_survive_sparse_synthesis_and_do_not_mutate_model_output():
+    from company_report_content import apply_official_financials, ensure_company_completeness
+    raw=valid_report()
+    source={"id":"F1","basis":"primary","annual_financials":[{"period":str(year)+"-12-31","currency":"USD","values":{
+        "Revenue":100+year,"Net income":10,"Operating cash flow":20,"Free cash flow (calculated)":15}} for year in (2022,2023,2024)]}
+    merged=apply_official_financials(raw,[source])
+    ensure_company_completeness(merged)
+    assert len(merged["financial_history"])==3 and len(merged["metrics"])==4
+    assert merged["financial_history"][0]["revenue"]==2124
+    assert len(raw["financial_history"])==1
+
+
+def test_thin_financial_report_cannot_be_published_as_complete():
+    from company_report_content import ensure_company_completeness
+    from full_report_content import ReportValidationError
+    with pytest.raises(ReportValidationError):ensure_company_completeness(valid_report())
+    report=complete_report();report["valuation"]["available"]=False
+    with pytest.raises(ReportValidationError):ensure_company_completeness(report,[{"id":"F1","basis":"primary","annual_financials":[{"period":"2025","values":{"Diluted EPS":2.5}}]}])

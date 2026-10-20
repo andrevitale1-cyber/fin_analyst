@@ -17,7 +17,7 @@ import account_limits as limits
 import full_reports as reports
 from report_auth import SessionUser, require_report_user
 from openai_client import OpenAIError
-from test_company_report_content import valid_report
+from test_company_report_content import complete_report as valid_report
 
 
 @pytest.fixture

@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import full_reports as reports
 import company_research as research
 from openai_client import OpenAIClient, OpenAIError
-from test_company_report_content import valid_report
+from test_company_report_content import complete_report as valid_report
 
 
 @pytest.fixture(autouse=True)
@@ -111,7 +111,7 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     assert report["scope"] == report["kind"] == "company"
     assert report["symbol"] == "META"
     assert report["as_of"] == "2026-10-12" and report["is_public"] is False
-    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v3"
+    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v4"
     assert report["score"] == 4 and len(report["sections"]) == 10
     assert report["valuation"]["fair_value"] > 0
     assert all("text" not in source for source in report["sources"])

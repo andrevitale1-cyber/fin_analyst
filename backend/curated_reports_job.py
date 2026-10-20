@@ -58,5 +58,43 @@ def curate():
 
 
 def start_if_enabled():
+    if os.getenv("REPAIR_REPORT_COVERAGE_20261019") == "1":
+        Thread(target=repair_reports, name="repair-report-coverage", daemon=True).start()
     if os.getenv("CURATE_PUBLIC_REPORTS_20261019") == "1":
         Thread(target=curate, name="curated-public-reports", daemon=True).start()
+
+
+def repair_reports():
+    """Replace the two user-reported incomplete demos only after validated regeneration."""
+    from full_reports import connection, open_company_report, OpenCompanyReport
+    for target, company, locale in (
+        ("4d25c3c1-3e7d-4685-b9c1-13a2a2495192", "NKE", "en"),
+        ("d1173bb0-25b4-409c-a5a1-544cdad232c7", "PETR4", "pt"),
+    ):
+        conn = connection()
+        conn.autocommit = True
+        job = "repair-financial-coverage-20261019:" + target
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT pg_try_advisory_lock(hashtext(%s))", (job,))
+                if not cur.fetchone()[0]:
+                    continue
+                cur.execute("CREATE TABLE IF NOT EXISTS maintenance_tasks (id TEXT PRIMARY KEY, state TEXT NOT NULL, report_id TEXT, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())")
+                cur.execute("SELECT state FROM maintenance_tasks WHERE id=%s", (job,))
+                previous = cur.fetchone()
+                if previous and previous[0] == "completed":
+                    continue
+                cur.execute("INSERT INTO maintenance_tasks(id,state) VALUES (%s,'running') ON CONFLICT(id) DO UPDATE SET state='running',updated_at=NOW()", (job,))
+                result = open_company_report(OpenCompanyReport(company=company, locale=locale), SessionUser("public-demo-curator", plan="premium"))
+                report = {**result["report"], "id": target, "is_public": True}
+                cur.execute("UPDATE full_reports SET content=%s::jsonb WHERE id=%s AND is_public", (json.dumps(report), target))
+                if cur.rowcount != 1:
+                    raise ValueError("Expected public report was not found")
+                cur.execute("UPDATE maintenance_tasks SET state='completed',report_id=%s,updated_at=NOW() WHERE id=%s", (target, job))
+                logger.info("report_coverage_repair completed company=%s report_id=%s", company, target)
+        except Exception as exc:
+            logger.error("report_coverage_repair failed company=%s error_type=%s", company, type(exc).__name__)
+            with conn.cursor() as cur:
+                cur.execute("UPDATE maintenance_tasks SET state='failed',updated_at=NOW() WHERE id=%s", (job,))
+        finally:
+            conn.close()

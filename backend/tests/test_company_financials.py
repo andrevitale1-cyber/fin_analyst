@@ -211,3 +211,31 @@ def test_revenue_cagr_omits_invalid_baselines_losses_and_currency_changes(monkey
     source = financials.get_sec_company_source("EXM", "2024-12-31")
     assert not any("revenue_cagr" in row for row in source["annual_financials"])
     assert "Revenue CAGR" not in source["text"]
+
+
+@pytest.mark.parametrize("symbol,cik", [("NIKE",320187),("NKE",320187),("PETR4",1119639)])
+def test_known_issuer_resolution_does_not_depend_on_ticker_index(monkeypatch,symbol,cik):
+    data = payload({"Revenue": [fact(100,"2023-01-01","2023-12-31","2024-03-01",form="20-F")]})
+    data["facts"]["ifrs-full"] = data["facts"].pop("us-gaap")
+    seen=[]
+    def fetch(url):
+        seen.append(url)
+        return data
+    monkeypatch.setattr(financials,"_get_json",fetch)
+    source=financials.get_sec_company_source(symbol,"2024-12-31")
+    assert seen == [financials._FACTS_URL.format(cik=cik)]
+    assert source["annual_financials"][0]["values"]["Revenue"] == 100
+
+
+def test_ifrs_cash_flow_and_eps_keep_reported_currency_and_full_year(monkeypatch):
+    data=payload({tag:[fact(value,"2023-01-01","2023-12-31","2024-03-01",form="20-F",unit=unit)] for tag,value,unit in [
+        ("Revenue",100,"USD"),("ProfitLossAttributableToOwnersOfParent",12,"USD"),
+        ("CashFlowsFromUsedInOperatingActivities",30,"USD"),
+        ("PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",10,"USD"),
+        ("DilutedEarningsLossPerShare",0.5,"USD/shares")]})
+    data["facts"]["ifrs-full"]=data["facts"].pop("us-gaap")
+    monkeypatch.setattr(financials,"_get_json",lambda url:data)
+    source=financials.get_sec_company_source("PETR4","2024-12-31")
+    row=source["annual_financials"][0]
+    assert row["currency"]=="USD" and row["values"]["Free cash flow (calculated)"]==20
+    assert row["values"]["Diluted EPS"]==0.5

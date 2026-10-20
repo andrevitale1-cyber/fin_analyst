@@ -41,3 +41,17 @@ def test_curation_requires_explicit_server_enablement(monkeypatch):
     thread = Mock(); monkeypatch.setattr(job, "Thread", thread)
     job.start_if_enabled()
     thread.assert_not_called()
+
+
+def test_repairs_keep_public_ids_and_only_replace_after_successful_generation(monkeypatch):
+    conn=MagicMock();cur=conn.cursor.return_value.__enter__.return_value
+    cur.fetchone.side_effect=[(True,),None,(True,),None];cur.rowcount=1
+    monkeypatch.setattr(reports,"connection",lambda:conn)
+    generate=Mock(side_effect=[{"report":{"id":"new-private","is_public":False}},RuntimeError("unavailable")])
+    monkeypatch.setattr(reports,"open_company_report",generate)
+    job.repair_reports()
+    updates=[c for c in cur.execute.call_args_list if "UPDATE full_reports SET content" in c.args[0]]
+    assert len(updates)==1
+    saved=json.loads(updates[0].args[1][0])
+    assert saved["id"]=="4d25c3c1-3e7d-4685-b9c1-13a2a2495192" and saved["is_public"]
+    assert "AND is_public" in updates[0].args[0]

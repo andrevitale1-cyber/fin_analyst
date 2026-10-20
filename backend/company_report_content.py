@@ -397,6 +397,47 @@ def _validate_analyst_consensus(consensus):
     return consensus
 
 
+def apply_official_financials(raw, sources):
+    """Keep reported annual figures independent of what synthesis happens to repeat."""
+    import copy
+    result = copy.deepcopy(raw)
+    official = next((s for s in sources if s.get("id") == "F1" and s.get("basis") == "primary"), None)
+    if not official:
+        return result
+    rows = [r for r in official.get("annual_financials", []) if r["values"].get("Revenue") is not None]
+    if not rows:
+        return result
+    rows = sorted(rows, key=lambda r: r["period"], reverse=True)[:5]
+    result["financial_history"] = [{"period": r["period"], "currency": r["currency"],
+        "revenue": r["values"].get("Revenue"), "net_income": r["values"].get("Net income"),
+        "free_cash_flow": r["values"].get("Free cash flow (calculated)"), "source_id": "F1"} for r in rows]
+    latest = rows[0]
+    labels = ("Revenue", "Net income", "Operating cash flow", "Free cash flow (calculated)",
+              "Operating margin (calculated)", "Gross margin (calculated)", "Diluted EPS")
+    metrics = []
+    for label in labels:
+        value = latest["values"].get(label)
+        if value is None:
+            continue
+        unit = "percent" if "margin" in label else "currency_per_share" if label == "Diluted EPS" else "currency"
+        metrics.append({"label": label, "value": str(value), "numeric_value": float(value),
+            "currency": None if unit == "percent" else latest["currency"], "unit": unit,
+            "group": "scale" if label == "Revenue" else "performance", "as_of": latest["period"], "source_id": "F1"})
+    result["metrics"] = (metrics + [m for m in result.get("metrics", []) if
+        m.get("source_id") != "F1" and SEC_METRIC_LABELS.get(m["label"].casefold(), m["label"]) not in labels])[:LIMITS["metrics"]]
+    return result
+
+
+def ensure_company_completeness(report, sources=()):
+    years = {r["period"] for r in report["financial_history"] if r["revenue"] is not None and r["net_income"] is not None}
+    if len(years) < 3 or len({m["label"].casefold() for m in report["metrics"] if m.get("numeric_value") is not None}) < 4:
+        raise ReportValidationError("Insufficient financial coverage: require three annual revenue/profit periods and four metrics")
+    official = next((s for s in sources if s.get("id") == "F1" and s.get("basis") == "primary"), None)
+    annual = sorted(official.get("annual_financials", []), key=lambda r: r["period"], reverse=True) if official else []
+    if annual and annual[0]["values"].get("Diluted EPS", 0) > 0 and not report["valuation"]["available"]:
+        raise ReportValidationError("Positive official annual EPS exists: valuation requires all three explicit assumption scenarios")
+
+
 def validate_company_report(raw: dict, sources: list) -> dict:
     result = CompanyReport.model_validate(raw).model_dump()
     if result["symbol"] and not any(re.search(r"(?<![A-Z0-9])" + re.escape(result["symbol"]) + r"(?![A-Z0-9])",
