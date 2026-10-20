@@ -45,6 +45,12 @@ class AgentClient:
         if "passed" in properties:
             return {"passed": not self.reject, "issues": [{"target": "thesis", "reason": "Unsupported claim", "source_ids": ["S1"]}] if self.reject else []}
         report = complete_report()
+        if prompt.startswith("AGENT 2 — repair"):
+            result = {key: report[key] for key in properties}
+            if "sections" in result:
+                allowed = properties["sections"]["items"]["properties"]["id"]["enum"]
+                result["sections"] = [section for section in result["sections"] if section["id"] in allowed]
+            return result
         section = next(s for s in report["sections"] if s["id"] == "valuation")
         if "section" in properties:
             return {"section": section, "valuation": report["valuation"]}
@@ -118,7 +124,7 @@ def test_real_pipeline_is_required_before_database_insert_and_preserves_privacy(
         report = reports.open_company_report(reports.OpenCompanyReport(company="META"), "user_one")["report"]
         assert report["is_public"] is False and report["pipeline"]["verification"]["passed"]
         assert any("INSERT INTO full_reports " in c.args[0] for c in cur.execute.call_args_list)
-    assert len(client.calls) == (7 if rejected else 4)
+    assert len(client.calls) == (6 if rejected else 4)
 
 
 def test_fact_cache_survives_later_failures_and_revalidates_quotes(monkeypatch):
@@ -180,4 +186,40 @@ def test_independent_audit_repairs_once_and_requires_second_approval():
     client.analyze_full_report = analyze
     report = generate_report(client, "META", "2026-10-19", "en", SOURCES, validate_dossier(facts(), SOURCES), deadline=perf_counter() + 300)
     assert len(reviews) == 2 and report["pipeline"]["verification"]["passed"]
-    assert "Remove unsupported claim" in reviews[-1]
+    repairs = [call for call in client.calls if call[0].startswith("AGENT 2 — repair")]
+    assert len(repairs) == 1
+    assert repairs[0][1]["properties"]["sections"]["items"]["properties"]["id"]["enum"] == ["thesis"]
+    assert len([call for call in client.calls if call[0].startswith("AGENT 3")]) == 1
+
+
+@pytest.mark.parametrize("locale, phrase", [("en", "Calculated base fair value"), ("pt", "Valor-base calculado")])
+def test_valuation_narrative_uses_actual_python_outputs(locale, phrase):
+    from agents.report_valuation import calculate_valuation
+    report = complete_report()
+    section = next(s for s in report["sections"] if s["id"] == "valuation")
+    section["summary"] = "No prices or fair value have been calculated."
+    section["paragraphs"] = ["No scenarios populated."]
+    result = calculate_valuation(report, locale)
+    updated = next(s for s in result["sections"] if s["id"] == "valuation")
+    assert phrase in updated["paragraphs"][0]
+    assert "No prices" not in json.dumps(updated) and len(updated["bullets"]) == 3
+    expected = f"{result['valuation']['fair_value']:,.2f}"
+    if locale == "pt":
+        expected = expected.replace(",", "_").replace(".", ",").replace("_", ".")
+    assert expected in updated["paragraphs"][0]
+
+
+def test_targeted_repair_preserves_unaffected_fields_and_rejects_unrequested_changes():
+    from agents.report_writer import repair_report
+    report = complete_report()
+    issues = [{"target": "sections[id=thesis].summary", "reason": "Unsupported", "source_ids": ["S1"]}]
+    corrected = copy.deepcopy(report["sections"][0]); corrected["summary"] = "Corrected supported summary."
+    client = Mock()
+    client.analyze_full_report.return_value = {"sections": [corrected]}
+    result = repair_report(client, "META", "2026-10-20", "en", report, issues, validate_dossier(facts(), SOURCES), SOURCES)
+    assert result["valuation"] == report["valuation"] and result["financial_history"] == report["financial_history"]
+    assert result["sections"][1:] == report["sections"][1:]
+    assert "Corrected" in result["sections"][0]["summary"] and report["sections"][0] != corrected
+    client.analyze_full_report.return_value["market"] = report["market"]
+    with pytest.raises(ReportValidationError, match="unexpected fields"):
+        repair_report(client, "META", "2026-10-20", "en", report, issues, validate_dossier(facts(), SOURCES), SOURCES)

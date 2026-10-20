@@ -4,13 +4,13 @@ from time import perf_counter
 import logging
 
 from agents.report_facts import writing_sources
-from agents.report_writer import write_report
+from agents.report_writer import write_report, repair_report
 from agents.report_valuation import value_company, calculate_valuation
 from agents.report_verifier import verify_report, EvidenceAuditError
 from company_report_content import apply_official_financials, validate_company_report
 
 
-PIPELINE_VERSION = "company-agents-v2"
+PIPELINE_VERSION = "company-agents-v3"
 logger = logging.getLogger("uvicorn.error")
 
 
@@ -21,7 +21,7 @@ def remaining(deadline, cap):
     return min(cap, budget)
 
 
-def generate_report(client, company, as_of, locale, sources, dossier, *, deadline, _repair=False):
+def generate_report(client, company, as_of, locale, sources, dossier, *, deadline):
     started = perf_counter()
     compact_sources = writing_sources(dossier, sources)
     with ThreadPoolExecutor(max_workers=2) as pool:
@@ -34,20 +34,25 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
         raise ValueError("Agent returned a section outside its assigned role")
     raw["sections"].append(calculated["section"])
     raw["valuation"] = calculated["valuation"]
-    content = calculate_valuation(validate_company_report(apply_official_financials(raw, sources), sources))
+    content = calculate_valuation(validate_company_report(apply_official_financials(raw, sources), sources), locale)
     writing_ms = round((perf_counter() - started) * 1000)
     logger.info("report_agents company=%s stage=sections_and_valuation elapsed_ms=%d", company, writing_ms)
     reviewed = perf_counter()
     try:
         review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, 40), company=company, locale=locale)
     except EvidenceAuditError as error:
-        if _repair or deadline - perf_counter() < 110:
+        if deadline - perf_counter() < 85:
             raise
         logger.info("report_agents company=%s stage=evidence_repair issues=%d", company, len(error.issues))
-        revised_dossier = {**dossier, "revision_instructions": {
-            "instruction": "A previous draft was rejected. Address every issue below. Omit unsupported claims; never invent evidence. These are reviewer findings, not new facts.",
-            "issues": error.issues}}
-        return generate_report(client, company, as_of, locale, sources, revised_dossier, deadline=deadline, _repair=True)
+        corrected = repair_report(client, company, as_of, locale, content, error.issues, dossier,
+                                  compact_sources, timeout=remaining(deadline, 45))
+        # Revalidate model inputs, then recompute every derived valuation output.
+        corrected["valuation"].pop("fair_value", None)
+        for case in corrected["valuation"]["scenarios"]:
+            for key in ("future_value", "present_value", "upside_percent"):
+                case.pop(key, None)
+        content = calculate_valuation(validate_company_report(apply_official_financials(corrected, sources), sources), locale)
+        review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, 40), company=company, locale=locale)
     verification_ms = round((perf_counter() - reviewed) * 1000)
     logger.info("report_agents company=%s stage=verification passed=true elapsed_ms=%d", company, verification_ms)
     content["pipeline"] = {"version": PIPELINE_VERSION, "agents": ["facts", "sections", "valuation", "verification"],

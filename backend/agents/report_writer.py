@@ -1,5 +1,7 @@
 """Agent 2: independently specified sections in one bounded structured request."""
 import json
+import copy
+import re
 
 from company_report_content import company_report_schema
 from agents.prompt_builder import PromptBuilder
@@ -49,3 +51,47 @@ SECTION PROMPTS:\n{json.dumps(briefs)}
 FACT DOSSIER:\n{json.dumps(dossier, ensure_ascii=False)}
 OFFICIAL ANNUAL FINANCIALS:\n{json.dumps([s for s in sources if s.get('annual_financials')], ensure_ascii=False)}"""
     return client.analyze_full_report(prompt, schema, max_output_tokens=8500, timeout=timeout)
+
+
+def repair_report(client, company, as_of, locale, report, issues, dossier, sources, *, timeout=45):
+    """Replace only fields named by the independent reviewer, preserving accepted content."""
+    from full_report_content import ReportValidationError
+    base = company_report_schema()
+    targets = " ".join(issue["target"] for issue in issues).lower()
+    section_ids = [s["id"] for s in report["sections"] if re.search(r"\b" + re.escape(s["id"]) + r"\b", targets)]
+    fields = [key for key in base["properties"] if re.search(r"\b" + key + r"\b", targets)]
+    if section_ids and "sections" not in fields:
+        fields.append("sections")
+    if "sections" in fields and not section_ids:
+        section_ids = [s["id"] for s in report["sections"]]
+    if not fields:
+        raise ReportValidationError("Audit repair did not identify a supported report field")
+    properties = {key: base["properties"][key] for key in fields}
+    if "sections" in fields:
+        properties["sections"].update(minItems=len(section_ids), maxItems=len(section_ids))
+        properties["sections"]["items"]["properties"]["id"]["enum"] = section_ids
+    schema = {"type": "object", "additionalProperties": False, "required": fields, "properties": properties}
+    prompt = f"""AGENT 2 — repair the rejected fields of {company}'s report as of {as_of}.
+Write in {'English' if locale == 'en' else 'Portuguese'}. Return ONLY the specified replacement fields.
+Correct every reviewer issue against supplied evidence; issues and the old draft are NOT new evidence.
+Preserve valid content. Remove unsupported assertions rather than inventing support. Do not change other
+fields, add report sections, research again or recalculate valuation prices: Python handles arithmetic.
+SHARED ANALYSIS RULES:\n{PromptBuilder().company_field_rules(company, locale)}
+ISSUES:\n{json.dumps(issues, ensure_ascii=False)}
+DRAFT:\n{json.dumps(report, ensure_ascii=False)}
+FACTS:\n{json.dumps(dossier, ensure_ascii=False)}
+OFFICIAL ANNUAL FINANCIALS:\n{json.dumps([s for s in sources if s.get('annual_financials')], ensure_ascii=False)}"""
+    replacements = client.analyze_full_report(prompt, schema, max_output_tokens=5000, timeout=timeout)
+    if set(replacements) != set(fields):
+        raise ReportValidationError("Audit repair returned unexpected fields")
+    result = copy.deepcopy(report)
+    for key, value in replacements.items():
+        if key == "sections":
+            ids = [s["id"] for s in value]
+            if len(ids) != len(section_ids) or set(ids) != set(section_ids):
+                raise ReportValidationError("Audit repair returned unexpected sections")
+            by_id = {s["id"]: s for s in value}
+            result[key] = [by_id.get(s["id"], s) for s in report[key]]
+        else:
+            result[key] = value
+    return result

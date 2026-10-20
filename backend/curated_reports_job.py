@@ -71,7 +71,7 @@ def validate_apple_report():
     from full_reports import connection, open_company_report, OpenCompanyReport
     conn = connection()
     conn.autocommit = True
-    task = "report-agents-AAPL-20261020-4"
+    task = "report-agents-AAPL-20261020-5"
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT pg_try_advisory_lock(hashtext(%s))", (task,))
