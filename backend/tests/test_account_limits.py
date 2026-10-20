@@ -160,6 +160,9 @@ def test_all_real_generation_endpoints_require_auth_and_premium_query_flag_is_ig
 
 @pytest.fixture
 def company_ai(monkeypatch):
+    from test_company_report_content import stub_pipeline
+    monkeypatch.setattr(reports, "company_facts", lambda *a, **kw: {})
+    monkeypatch.setattr(reports, "generate_report", stub_pipeline)
     sources = [{"id": "S1", "title": "Annual results", "url": "https://example.com/annual", "text": "Annual EPS USD 2.50.", "basis": "primary"}]
     monkeypatch.setattr(reports, "company_evidence", lambda *args: {"as_of": "2026-10-19", "sources": sources})
     ai = Mock(analyze_full_report=Mock(return_value=valid_report()))

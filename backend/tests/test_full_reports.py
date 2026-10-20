@@ -24,6 +24,9 @@ from openai_client import OpenAIClient, OpenAIError
 
 @pytest.fixture(autouse=True)
 def isolate_usage_service(monkeypatch):
+    from test_company_report_content import stub_pipeline
+    monkeypatch.setattr(reports, "company_facts", lambda *a, **kw: {})
+    monkeypatch.setattr(reports, "generate_report", stub_pipeline)
     monkeypatch.setattr(reports, "reserve_usage", lambda *args: None)
     monkeypatch.setattr(reports, "cancel_usage", lambda *args: None)
 

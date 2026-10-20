@@ -18,8 +18,13 @@ from test_company_report_content import complete_report as valid_report
 
 @pytest.fixture(autouse=True)
 def isolate_usage_service(monkeypatch):
+    from test_company_report_content import stub_pipeline
+    monkeypatch.setattr(reports, "company_facts", lambda *a, **kw: {})
+    monkeypatch.setattr(reports, "generate_report", stub_pipeline)
     monkeypatch.setattr(reports, "reserve_usage", lambda *args: None)
     monkeypatch.setattr(reports, "cancel_usage", lambda *args: None)
+    monkeypatch.setattr(research, "collect_transcript_sources", lambda *a: [])
+    monkeypatch.setattr(research, "hydrate_company_documents", lambda company, sources: sources)
 
 
 SOURCES = [{"id": "S1", "title": "SEC annual facts", "url": "https://data.sec.gov/example",
@@ -111,7 +116,7 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     assert report["scope"] == report["kind"] == "company"
     assert report["symbol"] == "META"
     assert report["as_of"] == "2026-10-12" and report["is_public"] is False
-    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v4"
+    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v5"
     assert report["score"] == 4 and len(report["sections"]) == 10
     assert report["valuation"]["fair_value"] > 0
     assert all("text" not in source for source in report["sources"])
@@ -122,7 +127,7 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     conn.commit.assert_called_once()
     _, company, _, stage, duration, timings = timing.call_args.args
     assert company == "META" and stage == "complete" and duration >= 0
-    assert set(timings) == {"cache_ms", "research_ms", "synthesis_ms"}
+    assert set(timings) == {"cache_ms", "research_ms", "extraction_ms", "synthesis_ms"}
     assert "Full-year EPS" not in str(timing.call_args)
 
 
@@ -245,14 +250,14 @@ def test_invalid_company_synthesis_rolls_back_without_discarding_research(monkey
     conn.rollback.assert_called_once(); conn.commit.assert_not_called()
 
 
-def test_scenario_values_are_calculated_not_model_supplied_and_require_same_quote_currency():
+def test_scenario_values_are_calculated_without_assuming_adr_or_share_equivalence():
     content = reports.validate_company_report(valid_report(), SOURCES)
     content["market"].update(price=40, currency="USD", as_of="2026-10-12", source_id="S1")
     result = reports.calculated_company_valuation(content)
     base = next(s for s in result["valuation"]["scenarios"] if s["case"] == "base")
     assert base["future_value"] == round(2.5 * 1.1 ** 5 * 20, 2)
     assert result["valuation"]["fair_value"] == round(2.5 * 1.1 ** 5 * 20 / 1.15 ** 5, 2)
-    assert base["upside_percent"] is not None
+    assert base["upside_percent"] is None
     content["market"]["currency"] = "BRL"
     assert all(s["upside_percent"] is None for s in reports.calculated_company_valuation(content)["valuation"]["scenarios"])
 

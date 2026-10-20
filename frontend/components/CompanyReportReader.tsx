@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, useState } from "react";
 import { ArrowLeft, ArrowRight, BarChart3, Building2, ChevronRight, CircleDot, Clock3, Highlighter, Shield, Sparkles, Star, Tag, TrendingUp, UserRound, Users } from "lucide-react";
 import type { FullReport } from "./FullReports";
 import { splitBold } from "../lib/analysisText";
@@ -8,6 +8,7 @@ import { formatMetricValue, formatReportMoney, formatReportNumber } from "../lib
 import { breakdownAmount, breakdownValue, prepareBreakdowns, selectSegmentBreakdowns, type ReportBreakdown } from "../lib/reportBreakdowns";
 import worldMap from "../lib/reportWorldMap.json";
 import ReportSources from "./ReportSources";
+import FinancialChart from "./ReportFinancialChart";
 import CompanyLogo from "./CompanyLogo";
 import { reportCitationIds, stripReportCitations } from "../lib/reportCitations";
 
@@ -18,29 +19,6 @@ type Props = { report: FullReport; locale: string; t: Translate; onBack: () => v
 
 function Dots({ score }: { score: number | null }) {
   return <span aria-hidden="true" className="flex gap-0.5">{[1, 2, 3, 4, 5].map(n => <span key={n} className={`h-1.5 w-1.5 rounded-full ${score !== null && n <= score ? "bg-emerald-600" : "bg-slate-200"}`} />)}</span>;
-}
-
-function FinancialChart({ rows, field, title, locale }: { rows: NonNullable<FullReport["financial_history"]>; field: "revenue" | "net_income" | "free_cash_flow"; title: string; locale: string }) {
-  const chartRef = useRef<HTMLDivElement>(null);
-  const [chartWidth, setChartWidth] = useState(600);
-  useEffect(() => {
-    if (!chartRef.current) return;
-    const observer = new ResizeObserver(entries => setChartWidth(Math.max(280, entries[0].contentRect.width)));
-    observer.observe(chartRef.current);
-    return () => observer.disconnect();
-  }, []);
-  const values = rows.filter(row => row[field] !== null);
-  if (!values.length || new Set(values.map(row => row.currency)).size !== 1) return null;
-  const min = Math.min(0, ...values.map(row => row[field]!));
-  const max = Math.max(0, ...values.map(row => row[field]!));
-  const range = max - min || 1;
-  const y = (value: number) => 180 - (value - min) / range * 130;
-  const width = (chartWidth - 60) / rows.length;
-  return <div className="mt-5 rounded-xl bg-[#f8faf9] p-4 sm:p-6"><h3 className="flex items-center justify-between gap-3 text-sm font-semibold text-slate-700">{title}<span className="text-[10px] font-medium text-slate-400">{values[0].currency}</span></h3><div ref={chartRef}><svg role="img" aria-label={title} viewBox={`0 0 ${chartWidth} 220`} className="mt-3 w-full"><title>{values.map(row => `${row.period}: ${formatReportMoney(row[field], row.currency, locale)}`).join("; ")}</title>{[0, 0.5, 1].map(tick => <line key={tick} x1="25" x2={chartWidth - 25} y1={50 + tick * 130} y2={50 + tick * 130} stroke="#e2e8f0" strokeDasharray="2 4" />)}{rows.map((row, index) => {
-    const value = row[field];
-    const x = 30 + index * width;
-    return <g key={row.period}><title>{`${row.period}: ${formatReportMoney(value, row.currency, locale)}`}</title>{value !== null && <rect x={x + width * .22} y={Math.min(y(value), y(0))} width={width * .56} height={Math.max(1, Math.abs(y(value) - y(0)))} rx="3" fill={value < 0 ? "#be4555" : "#29476a"} />}<text x={x + width / 2} y={value !== null ? Math.max(24, y(value) - 8) : 170} textAnchor="middle" fill="#334155" fontSize="11" fontWeight="600">{formatReportMoney(value, null, locale)}</text><text x={x + width / 2} y="205" textAnchor="middle" fill="#64748b" fontSize="11">{row.period.match(/\d{4}/)?.[0] || row.period}</text></g>;
-  })}</svg></div></div>;
 }
 
 function regionMatches(country: { id: string; name: string }, item: ReportBreakdown) {
@@ -104,7 +82,7 @@ export default function CompanyReportReader({ report, locale, t, onBack, onRefre
 
   return <div className="relative mx-auto max-w-[720px] pb-16">
     <style>{`@font-face{font-family:FinReportLora;src:url('/report-assets/lora-latin.woff2') format('woff2');font-weight:400 700;font-style:normal;font-display:swap}.report-paper .report-prose{font-family:var(--report-font);font-size:var(--report-font-size);line-height:1.7;letter-spacing:-.005em;color:#0f172a}.report-paper .report-prose strong{font-weight:700}.report-paper[data-highlights=true] .report-prose strong{background:rgba(22,163,74,.082);border-radius:3px;padding:0 2px}`}</style>
-    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs"><button onClick={onBack} className="inline-flex items-center gap-2 rounded-lg px-2 py-2 font-semibold text-slate-600 hover:bg-slate-100"><ArrowLeft size={15} />{t("backToGallery")}</button>{report.report_version !== "company-v4" && <button onClick={onRefresh} className="rounded-lg bg-sky-50 px-3 py-2 font-semibold text-sky-800 hover:bg-sky-100">{t("refreshCompanyReport")}</button>}</div>
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs"><button onClick={onBack} className="inline-flex items-center gap-2 rounded-lg px-2 py-2 font-semibold text-slate-600 hover:bg-slate-100"><ArrowLeft size={15} />{t("backToGallery")}</button>{report.report_version !== "company-v5" && <button onClick={onRefresh} className="rounded-lg bg-sky-50 px-3 py-2 font-semibold text-sky-800 hover:bg-sky-100">{t("refreshCompanyReport")}</button>}</div>
     <article className="report-paper overflow-hidden rounded-none sm:rounded-2xl bg-white shadow-[0_1px_3px_rgba(0,0,0,.06),0_1px_2px_rgba(0,0,0,.04)]" data-highlights={highlights} style={{ "--report-font": serif ? "FinReportLora, Georgia, serif" : "Arial, sans-serif", "--report-font-size": `${fontSize}px` } as CSSProperties}>
       <header className="flex flex-wrap items-center justify-between gap-5 bg-[#101827] px-5 py-7 text-white sm:px-7">
         <div className="flex min-w-0 flex-1 items-center gap-3"><CompanyLogo symbol={report.symbol || report.company} company={name} className="h-[42px] w-[42px] rounded-xl bg-white p-1" /><div className="min-w-0"><h1 className="text-lg font-bold leading-6 tracking-tight">{name}{" "}<span className="ml-2 text-xs font-semibold text-slate-400">{report.company}</span></h1><div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">{market?.price != null && <strong>{money(market.price, market.currency)}</strong>}{market?.change_percent != null && <span className={`font-semibold ${market.change_percent >= 0 ? "text-emerald-400" : "text-rose-300"}`}>{market.change_percent > 0 ? "+" : ""}{number(market.change_percent)}%</span>}<span className="text-[11px] text-slate-300">{t("companyAsOf", { date: date(report.as_of || report.created_at) })}</span></div>{market?.source_id && <p className="mt-1 text-[10px] text-slate-400">{t("marketAsOf", { date: date(market.as_of) })}</p>}</div></div>

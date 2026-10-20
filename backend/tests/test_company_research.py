@@ -10,6 +10,12 @@ from openai_client import OpenAIError
 from test_company_reports import cited_response
 
 
+@pytest.fixture(autouse=True)
+def isolate_document_collection(monkeypatch):
+    monkeypatch.setattr(research,"collect_transcript_sources",lambda *a:[])
+    monkeypatch.setattr(research,"hydrate_company_documents",lambda company,sources:sources)
+
+
 def market_response(url="https://stockanalysis.com/stocks/msft/forecast/"):
     text = "As of 2026-10-15, analyst consensus rating Buy; mean price target USD 500 from 30 analysts [1]."
     return {"status": "completed", "output": [{"content": [{"type": "output_text", "text": text,

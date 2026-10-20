@@ -16,13 +16,16 @@ from agents.auto_fetcher import AutoFetcher
 from openai_client import OpenAIClient, OpenAIError, model_for_task
 from report_auth import require_report_user
 from full_report_content import build_full_report_prompt, report_schema, validate_full_report, ReportValidationError
-from company_report_content import build_company_report_prompt, company_report_schema, validate_company_report, apply_official_financials, ensure_company_completeness
+from company_report_content import company_report_schema, validate_company_report
+from agents.report_facts import extract_facts, validate_dossier
+from agents.report_pipeline import generate_report, remaining
+from agents.report_valuation import calculate_valuation as calculated_company_valuation
 from company_research import collect_company_sources
 from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
-COMPANY_REPORT_VERSION = "company-v4"
+COMPANY_REPORT_VERSION = "company-v5"
 logger = logging.getLogger(__name__)
 timing_logger = logging.getLogger("uvicorn.error")
 
@@ -198,18 +201,32 @@ def company_evidence(company, model, as_of, client):
         conn.close()
 
 
-def calculated_company_valuation(content):
-    valuation, market = content["valuation"], content["market"]
-    valuation["fair_value"] = None
-    for scenario in valuation["scenarios"]:
-        future = valuation["base_eps"] * (1 + scenario["growth_percent"] / 100) ** 5 * scenario["pe_multiple"]
-        present = future / (1 + scenario["discount_percent"] / 100) ** 5
-        scenario.update(future_value=round(future, 2), present_value=round(present, 2), upside_percent=None)
-        if market["price"] and market["currency"] == valuation["currency"]:
-            scenario["upside_percent"] = round((future / market["price"] - 1) * 100, 2)
-        if scenario["case"] == "base":
-            valuation["fair_value"] = round(present, 2)
-    return content
+def company_facts(company, model, evidence, client, *, deadline):
+    # Shared across languages/users; failed writing/audits never require another paid extraction.
+    payload = ["facts-v1", company, model, evidence]
+    key = hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    conn = connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SET LOCAL lock_timeout = '45s'")
+            cur.execute("SELECT pg_advisory_xact_lock(%s)", (int.from_bytes(bytes.fromhex(key)[:8], "big", signed=True),))
+            cur.execute("SELECT content FROM company_research_cache WHERE cache_key=%s", (key,))
+            cached = cur.fetchone()
+            if cached:
+                # Cached IDs are assigned again after matching evidence quotes to current source content.
+                raw = read_report(cached[0])
+                raw = {**raw, "facts": [{k: v for k, v in fact.items() if k != "id"} for fact in raw["facts"]]}
+                dossier = validate_dossier(raw, evidence["sources"])
+            else:
+                dossier = extract_facts(client, company, evidence["as_of"], evidence["sources"], timeout=remaining(deadline, 40))
+                cur.execute("INSERT INTO company_research_cache(cache_key,content) VALUES (%s,%s::jsonb)", (key, json.dumps(dossier)))
+        conn.commit()
+        return dossier
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 @router.post("/company")
@@ -249,22 +266,16 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
                 evidence = company_evidence(company, model, as_of, client)
                 timings["research_ms"] = round((perf_counter() - step) * 1000)
                 sources = evidence["sources"]
-                prompt = build_company_report_prompt(company, evidence["as_of"], body.locale, sources)
+                stage = "extraction"
+                step = perf_counter()
+                dossier = company_facts(company, model, evidence, client, deadline=started + 315)
+                timings["extraction_ms"] = round((perf_counter() - step) * 1000)
                 stage = "synthesis"
                 step = perf_counter()
-                raw = client.analyze_full_report(prompt, company_report_schema(), max_output_tokens=11000, timeout=120)
+                content = generate_report(client, company, evidence["as_of"], body.locale, sources, dossier,
+                                          deadline=started + 315)
                 timings["synthesis_ms"] = round((perf_counter() - step) * 1000)
                 stage = "validation"
-                content = calculated_company_valuation(validate_company_report(apply_official_financials(raw, sources), sources))
-                try:
-                    ensure_company_completeness(content, sources)
-                except ReportValidationError:
-                    # One synthesis repair reuses paid research; never publish a thin dossier.
-                    repair = prompt + "\nQUALITY REPAIR: Include at least three annual revenue/net-income periods and four numeric metrics. Use F1 official annual EPS and its exact currency for bear/base/bull assumptions when positive. Do not omit available official data or invent missing data."
-                    raw = client.analyze_full_report(repair, company_report_schema(), max_output_tokens=11000,
-                        timeout=max(10, min(75, int(300 - (perf_counter() - started)))))
-                    content = calculated_company_valuation(validate_company_report(apply_official_financials(raw, sources), sources))
-                    ensure_company_completeness(content, sources)
                 if body.locale == "pt" and not content["valuation"]["available"]:
                     content["valuation"]["reason"] = "Não há evidência suficiente de EPS anual ou TTM positivo e sua moeda para calcular os três cenários."
                 report = {**content, "id": str(uuid.uuid4()), "company": company, "symbol": company, "period": "Company overview",

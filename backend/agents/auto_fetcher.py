@@ -24,6 +24,7 @@ class AutoFetcher:
     # Query Vivara's verified catalogue without depending on the RI site's certificate chain.
     mziq_catalogs = {"VIVA3": ("61a4df2d-a461-44d6-9128-da74058019db", "release-de-resultados")}
     transcript_issuers = {
+        "NKE": ("NIKE",),
         "AAPL": ("Apple",), "MSFT": ("Microsoft",), "GOOGL": ("Alphabet", "Google"),
         "AMZN": ("Amazon",), "META": ("Meta", "Facebook"), "NVDA": ("Nvidia",), "TSLA": ("Tesla",),
         "ITUB4": ("Itaú Unibanco", "Itaú"), "ITSA4": ("Itaúsa",), "BBAS3": ("Banco do Brasil",),

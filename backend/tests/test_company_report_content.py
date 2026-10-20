@@ -383,3 +383,10 @@ def test_thin_financial_report_cannot_be_published_as_complete():
     with pytest.raises(ReportValidationError):ensure_company_completeness(valid_report())
     report=complete_report();report["valuation"]["available"]=False
     with pytest.raises(ReportValidationError):ensure_company_completeness(report,[{"id":"F1","basis":"primary","annual_financials":[{"period":"2025","values":{"Diluted EPS":2.5}}]}])
+
+
+def stub_pipeline(client, company, as_of, locale, sources, dossier, *, deadline):
+    # Route/quota unit tests isolate the pipeline; its real stages have dedicated contract tests.
+    import full_reports as reports
+    raw=client.analyze_full_report("Pipeline stub", reports.company_report_schema(), max_output_tokens=11000, timeout=120)
+    return reports.calculated_company_valuation(reports.validate_company_report(raw,sources))
