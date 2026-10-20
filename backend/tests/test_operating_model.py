@@ -47,6 +47,14 @@ def test_python_projects_and_cross_checks_without_treating_assumptions_as_consen
     assert projection["basis"] == "ai_assumption"
     assert projection["revenue"] == pytest.approx(1000 * 1.05 * 1.05)
     assert 0 < projection["discount_years"] < 1
+    assert projection["dcf_period_fraction"] == pytest.approx(72 / 365)
+    forecasts = result["cases"][1]["projections"]
+    discount = assumptions()["scenarios"][1]["discount_percent"] / 100
+    terminal_ev = forecasts[-1]["fcff"] * 1.02 / (discount - .02)
+    enterprise = sum(r["fcff"] * r["dcf_period_fraction"] / (1 + discount) ** r["discount_years"] for r in forecasts)
+    enterprise += terminal_ev / (1 + discount) ** forecasts[-1]["discount_years"]
+    dcf = next(m for m in result["cases"][1]["methods"] if m["method"] == "dcf")
+    assert dcf["present_value"] == pytest.approx(round((enterprise - 100) / 50, 2))
     assert projection["ebitda"] == pytest.approx(projection["operating_income"] + projection["depreciation"])
     normalized = next(m for m in result["cases"][1]["methods"] if m["method"] == "normalized_pe")
     assert normalized["present_value"] == pytest.approx((2 + 1.5 - 2 + 1.2 + 1) / 5 * 15)
@@ -107,3 +115,20 @@ def test_new_pipeline_uses_the_model_and_independent_audit_without_an_extra_valu
     assert len(report["financial_history"]) == 5
     assert len(client.calls) == 2
     assert not report["valuation"]["available"]  # The separate typed model owns these valuations.
+    assert report["valuation"]["method"] == "Audited operating model"
+
+
+def test_normalized_earnings_narrative_matches_its_formula_and_shows_cross_checks():
+    from agents.report_model import model_valuation_section
+    from agents.report_valuation import calculate_valuation
+    raw = assumptions(); raw["primary_method"] = "normalized_pe"
+    model = calculate_model(baseline_from_sources([official_source()]), raw, {"F1"})
+    content = model_valuation_section(model, "en")
+    section = content.pop("section")
+    content["sections"] = [section]
+    calculate_valuation(content, "en")
+    assert "including losses" in section["paragraphs"][0]
+    assert "not discounted terminal earnings" in section["paragraphs"][0]
+    assert "different bases" in " ".join(section["paragraphs"])
+    assert len(section["bullets"]) == 3 and all("normalized_pe" in b and "pe:" in b for b in section["bullets"])
+    assert content["valuation"]["method"] == "Audited operating model"

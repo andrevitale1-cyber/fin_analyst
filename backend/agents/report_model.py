@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from full_report_content import ReportValidationError
 
-VERSION = "operating-model-v1"
+VERSION = "operating-model-v2"
 
 
 class ScenarioAssumptions(BaseModel):
@@ -131,8 +131,13 @@ def calculate_model(baseline, assumptions, source_ids):
             ended = date.fromisoformat(baseline["period"])
             projected_year = ended.year + offset
             projected_end = date(projected_year, ended.month, min(ended.day, calendar.monthrange(projected_year, ended.month)[1]))
-            time_years = max(0, (projected_end - date.fromisoformat(baseline["valuation_date"])).days / 365.25)
+            valuation_date = date.fromisoformat(baseline["valuation_date"])
+            time_years = max(0, (projected_end - valuation_date).days / 365.25)
+            previous_end = date(projected_year - 1, ended.month, min(ended.day, calendar.monthrange(projected_year - 1, ended.month)[1]))
+            # Forecast tables contain full fiscal years; DCF values only cash still ahead.
+            dcf_fraction = min(1, max(0, (projected_end - valuation_date).days / (projected_end - previous_end).days))
             forecasts.append({"period": f"FY{projected_year}", "period_end": projected_end.isoformat(), "discount_years": time_years,
+                              "dcf_period_fraction": dcf_fraction,
                               "basis": "ai_assumption", "currency": currency,
                               "revenue": revenue, "net_income": net_income, "eps": net_income / shares if shares else None,
                               "operating_income": ebit, "ebitda": ebit + depreciation, "capex": capex, "depreciation": depreciation,
@@ -155,7 +160,7 @@ def calculate_model(baseline, assumptions, source_ids):
                         (future_ev - baseline["net_debt"]) / shares)
                 if "Operating income" in values and last["fcff"] > 0 and last["discount_years"] > 0:
                     terminal_ev = last["fcff"] * (1 + perpetual) / (discount - perpetual)
-                    enterprise = sum(r["fcff"] / (1 + discount) ** r["discount_years"] for r in forecasts if r["discount_years"] > 0) + terminal_ev / (1 + discount) ** last["discount_years"]
+                    enterprise = sum(r["fcff"] * r["dcf_period_fraction"] / (1 + discount) ** r["discount_years"] for r in forecasts if r["discount_years"] > 0) + terminal_ev / (1 + discount) ** last["discount_years"]
                     add("dcf", (enterprise - baseline["net_debt"]) / shares)
             if assumptions["profile"] == "financial" and values.get("Book equity", 0) > 0:
                 add("price_to_book", values["Book equity"] / shares * case["price_to_book"])
@@ -170,7 +175,7 @@ def calculate_model(baseline, assumptions, source_ids):
             raise ReportValidationError("Bear/base/bull valuation ordering is inconsistent")
     return {"version": VERSION, "available": bool(selected), "baseline": baseline, "assumptions": assumptions,
             "selected_method": selected, "cases": results, "cross_check_methods": sorted(common - {selected}),
-            "simplifications": ["constant_share_count", "constant_net_debt", "linear_margin_transition", "five_fiscal_periods_after_baseline", "fractional_discount_from_research_date"],
+            "simplifications": ["constant_share_count", "constant_net_debt", "linear_margin_transition", "five_fiscal_periods_after_baseline", "fractional_discount_from_research_date", "pro_rata_remaining_fiscal_cashflow"],
             "fair_value": next((m["present_value"] for c in results if c["case"] == "base" for m in c["methods"] if m["method"] == selected), None)}
 
 
@@ -196,12 +201,27 @@ def model_valuation_section(model, locale):
     pt = locale == "pt"
     currency = model["baseline"]["currency"]
     value = model["fair_value"]
+    method = model["selected_method"]
+    descriptions = {
+        "normalized_pe": ("Média do EPS anual de todo o histórico disponível, incluindo prejuízos, multiplicada pelo P/L normalizado de cada cenário. Esse método usa lucro histórico normalizado e não desconto de um lucro terminal.", "Average annual EPS across the entire available history, including losses, multiplied by each scenario's normalized P/E. This method uses normalized historical earnings, not discounted terminal earnings."),
+        "pe": ("EPS projetado no último exercício multiplicado pelo P/L terminal, descontado pelo custo de capital próprio.", "Final projected fiscal-year EPS multiplied by terminal P/E, discounted at the cost of equity."),
+        "dcf": ("FCFF futuro e perpetuidade descontados pelo WACC, menos dívida líquida, divididos pelas ações diluídas. O exercício em curso usa apenas a parcela futura proporcional do caixa.", "Future FCFF and terminal value discounted at WACC, less net debt, divided by diluted shares. The current fiscal year includes only its remaining pro-rata cash flow."),
+        "ev_ebitda": ("EBITDA terminal multiplicado pelo EV/EBITDA e descontado pelo WACC; a dívida líquida é subtraída antes da divisão pelas ações.", "Terminal EBITDA multiplied by EV/EBITDA and discounted at WACC; net debt is subtracted before dividing by shares."),
+        "price_to_book": ("Patrimônio líquido por ação multiplicado pelo múltiplo preço/patrimônio de cada cenário.", "Book equity per share multiplied by each scenario's price-to-book assumption."),
+    }
+    methodology = descriptions.get(method, ("", ""))[0 if pt else 1]
+    checks = []
+    for case in model["cases"]:
+        values = "; ".join(f"{m['method']}: {currency} {m['present_value']:,.2f}" for m in case["methods"])
+        checks.append(f"{case['case'].title()}: {values}.")
+    comparison = ("Métodos baseados em lucro normalizado histórico refletem o ciclo já realizado; P/L terminal, EV/EBITDA e DCF incorporam as hipóteses futuras de crescimento, margens e reinvestimento. Divergências refletem essas bases diferentes, não consenso entre métodos."
+                  if pt else "Historical normalized-earnings methods reflect the realized cycle; terminal P/E, EV/EBITDA and DCF incorporate the forward growth, margin and reinvestment assumptions. Divergences reflect these different bases, not agreement between methods.")
     ids = list(dict.fromkeys([model["baseline"]["source_id"], *(s for c in model["cases"] for s in c["assumptions"]["source_ids"])]))[:12]
     section = {"id": "valuation", "title": "Valuation", "summary": f"{'Valor estimado no cenário-base' if pt else 'Estimated base-case value'}: {currency} {value:,.2f}." if value is not None else ("Valuation condicionado aos dados financeiros verificados." if pt else "Valuation is conditional on verified financial inputs."),
-               "paragraphs": [model["assumptions"]["rationale"],
+               "paragraphs": [methodology, model["assumptions"]["rationale"],
                     ("**Premissas da IA.** As projeções são estimativas condicionais, distintas de guidance e consenso. Quantidade de ações e dívida líquida são mantidas constantes."
                      if pt else "**AI assumptions.** These conditional model projections are distinct from guidance and consensus. Share count and net debt are held constant."),
-                    model["assumptions"]["counterthesis"]], "bullets": [], "source_ids": ids}
+                    comparison, model["assumptions"]["counterthesis"]], "bullets": checks, "source_ids": ids}
     valuation = {"available": False, "base_eps": None, "currency": None, "source_id": None,
                  "reason": "Valuation uses the separate audited operating model.", "method": "Audited operating model", "scenarios": []}
     return {"section": section, "valuation": valuation}

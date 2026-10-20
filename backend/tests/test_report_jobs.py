@@ -81,3 +81,24 @@ def test_claim_is_locked_and_reclaims_only_interrupted_jobs(monkeypatch):
     sql = " ".join(c.args[0] for c in cur.execute.call_args_list)
     assert "FOR UPDATE SKIP LOCKED" in sql and "90 seconds" in sql and "attempts<2" in sql
     conn.commit.assert_called_once()
+
+
+def test_expired_allowance_cannot_start_paid_generation(monkeypatch):
+    _, cur = database(monkeypatch, [None, None, ("owner",)])
+    monkeypatch.setattr(jobs, "Thread", Mock())
+    generate = Mock(side_effect=AssertionError("Expired reservation must stop before model calls"))
+    monkeypatch.setattr(jobs, "open_company_report", generate)
+    cancel = Mock(); monkeypatch.setattr(jobs, "cancel_usage", cancel)
+    jobs.process(("job", "user_one", "MU", "en", "expired", "owner"))
+    generate.assert_not_called()
+    assert "reservation expired" in str(cur.execute.call_args_list)
+    cancel.assert_called_once_with("expired")
+
+
+def test_old_worker_does_not_cancel_a_reclaimed_jobs_reservation(monkeypatch):
+    _, cur = database(monkeypatch, [(1,), ("new-owner",)])
+    monkeypatch.setattr(jobs, "Thread", Mock())
+    monkeypatch.setattr(jobs, "open_company_report", Mock(side_effect=RuntimeError("old lease")))
+    cancel = Mock(); monkeypatch.setattr(jobs, "cancel_usage", cancel)
+    jobs.process(("job", "user_one", "MU", "en", "ticket", "old-owner"))
+    cancel.assert_not_called()

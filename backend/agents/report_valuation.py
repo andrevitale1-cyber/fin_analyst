@@ -33,7 +33,8 @@ PRIMARY EVIDENCE:\n{json.dumps([s for s in sources if s.get('basis') == 'primary
 
 def calculate_valuation(content, locale=None):
     valuation = content["valuation"]
-    valuation["method"] = VALUATION_METHODS.get(locale or content.get("locale"), VALUATION_METHODS["en"])
+    if valuation["available"]:
+        valuation["method"] = VALUATION_METHODS.get(locale or content.get("locale"), VALUATION_METHODS["en"])
     valuation["fair_value"] = None
     for scenario in valuation["scenarios"]:
         future = valuation["base_eps"] * (1 + scenario["growth_percent"] / 100) ** 5 * scenario["pe_multiple"]

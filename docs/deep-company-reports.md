@@ -1,6 +1,6 @@
 # Company research pipeline
 
-The company-v8 report keeps the quarterly methodology but adds company-wide research, a typed operating model and independent validation. Quarterly/call prompts, daily entitlements and default private visibility are unchanged.
+The company-v9 report keeps the quarterly methodology but adds company-wide research, a typed operating model and independent validation. Quarterly/call prompts, daily entitlements and default private visibility are unchanged.
 
 ## Flow
 
@@ -9,7 +9,7 @@ The company-v8 report keeps the quarterly methodology but adds company-wide rese
 3. SEC companyfacts or CVM DFP provides five annual periods. CVM filters the registered issuer, consolidated statements, submission date, version, full-year duration and share class. EPS retains per-share units even if statements are in thousands. Comparative restatements replace older values. Provenance records the archive, filing date and version for each raw financial cell.
 4. The analysis model extracts 32–40 supported facts. Original financial tables remain available to writing and audit.
 5. Agent 3 proposes three sets of explicit AI operating assumptions. Python computes the two revenue drivers, margin transitions, EBIT, EBITDA, income, EPS, capex, working-capital investment and FCFF for five fiscal periods. Reported actuals, guidance/consensus and AI estimates remain separate.
-6. Supported methods include projected P/E, historical normalized P/E, FCFF DCF, EV/EBITDA and P/B for financial firms. WACC discounts enterprise values; cost of equity discounts P/E scenarios. Discounting respects the research date and fiscal period ends. Net debt bridges enterprise and equity values. Missing debt is not treated as zero. Historical EPS normalization includes losses.
+6. Supported methods include projected P/E, historical normalized P/E, FCFF DCF, EV/EBITDA and P/B for financial firms. WACC discounts enterprise values; cost of equity discounts P/E scenarios. Discounting respects the research date and fiscal period ends; the remaining part of the current fiscal year uses pro-rata cash flow. Net debt bridges enterprise and equity values. Missing debt is not treated as zero. Historical EPS normalization includes losses.
 7. A code verifier rebuilds the complete model from the original primary inputs. An independent model reviews claims, source support, units, periods, conviction, assumptions and narrative consistency. A bounded repair only changes flagged fields. Incomplete/unapproved reports never enter the library.
 8. The reader shows synchronized bear/base/bull projections, Chart.js revenue charts, valuations by method, assumptions and source popovers. Values from different methods may disagree; they are not forced into an artificial consensus.
 
@@ -42,7 +42,7 @@ Models remain controlled by `OPENAI_ANALYSIS_MODEL` and `OPENAI_FULL_REPORT_MODE
 
 Offline checks cover CVM unit/share-class/date/version filtering, calculations, mutation rejection, missing-data behavior, financial-sector method selection, private access, quota reservation/release, job recovery, selective checkpoints and telemetry.
 
-The opt-in `VALIDATE_DEEP_REPORTS_20261020=1` runs one private MU and VIVA3 pilot per version, requiring five years, three scenarios, an additional valuation method and an approved audit. It never publishes the pilots or consumes an end user's allowance. Diagnostics are in `maintenance_tasks` under `deep-report-pilot-v1:*` and `report_runs`.
+The opt-in `VALIDATE_DEEP_REPORTS_20261020=1` runs one private MU and VIVA3 pilot per version, requiring five years, three scenarios, an additional valuation method and an approved audit. It never publishes the pilots or consumes an end user's allowance. Diagnostics are in `maintenance_tasks` under `deep-report-pilot-v2:*` and `report_runs`.
 
 References:
 - https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS/

@@ -28,7 +28,7 @@ from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
-COMPANY_REPORT_VERSION = "company-v8"
+COMPANY_REPORT_VERSION = "company-v9"
 RESEARCH_VERSION = "company-v7"
 logger = logging.getLogger(__name__)
 timing_logger = logging.getLogger("uvicorn.error")

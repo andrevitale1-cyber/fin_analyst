@@ -111,7 +111,7 @@ def validate_deep_reports():
     """Two private pilot reports; one paid attempt per company and pipeline version."""
     from full_reports import connection, open_company_report, OpenCompanyReport
     for company in ("MU", "VIVA3"):
-        task = "deep-report-pilot-v1:" + company
+        task = "deep-report-pilot-v2:" + company
         conn = connection()
         conn.autocommit = True
         try:
@@ -135,6 +135,12 @@ def validate_deep_reports():
                 diagnostics = {"sections": len(report["sections"]), "years": len(report["financial_history"]),
                                "sources": len(report["sources"]), "selected_method": model["selected_method"],
                                "cross_checks": model["cross_check_methods"], "reused": result["reused"]}
+                from time import perf_counter
+                warmed = perf_counter()
+                repeated = open_company_report(OpenCompanyReport(company=company, locale="en"), SessionUser("public-demo-curator", plan="premium"))
+                if not repeated["reused"] or repeated["report"]["id"] != report["id"]:
+                    raise ValueError("Ready report was not reused")
+                diagnostics.update(warm_reused=True, warm_ms=round((perf_counter() - warmed) * 1000))
                 cur.execute("UPDATE maintenance_tasks SET state='completed',report_id=%s,diagnostics=%s::jsonb,updated_at=NOW() WHERE id=%s", (report["id"], json.dumps(diagnostics), task))
         except Exception as exc:
             cause = exc.__context__ or exc
