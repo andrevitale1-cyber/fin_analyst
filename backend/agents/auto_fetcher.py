@@ -14,6 +14,7 @@ from urllib.parse import unquote, urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 from agents.search_client import SearchClient, SearchError
+from agents.equibles_client import EquiblesClient
 from agents.sec_fetcher import FetchedDocument, SECFetcher
 from openai_client import OpenAIClient, OpenAIError
 
@@ -40,6 +41,7 @@ class AutoFetcher:
             for ticker, url in self.ir_urls.items()
         ]
         self.search_client = SearchClient()
+        self.equibles_client = EquiblesClient()
         self.cache_dir = Path(cache_dir or os.getenv("REPORT_CACHE_DIR", str(Path(tempfile.gettempdir()) / "finanalyzer-releases")))
         self._transcript_download_failed = False
 
@@ -125,10 +127,12 @@ class AutoFetcher:
                 return document
         except (OSError, ValueError, TypeError, KeyError):
             pass
-        if re.fullmatch(r"[A-Z]{1,5}", ticker):
-            document = SECFetcher().fetch(ticker, year, quarter)
-        else:
-            document = self._fetch_b3(ticker, year, quarter)
+        document = self._fetch_equibles(ticker, year, quarter)
+        if not document:
+            if re.fullmatch(r"[A-Z]{1,5}", ticker):
+                document = SECFetcher().fetch(ticker, year, quarter)
+            else:
+                document = self._fetch_b3(ticker, year, quarter)
         if document:
             try:
                 self.cache_dir.mkdir(parents=True, exist_ok=True)
@@ -140,6 +144,24 @@ class AutoFetcher:
             except OSError:
                 pass
         return document
+
+    def _fetch_equibles(self, ticker, year, quarter):
+        candidates = self._candidates(self.equibles_client.release_candidates(ticker), year, quarter)
+        candidates = [c for c in candidates if not self._transcript_period(c["title"] + " " + c["url"])
+                      or self._period_matches(c["title"] + " " + c["url"], year, quarter)]
+        for candidate in candidates[:2]:
+            document = self._download_release(candidate["url"], year, quarter, depth=1, timeout=8)
+            if not document:
+                continue
+            try:
+                text = document.text or OpenAIClient.extract_text(document.pdf_bytes)
+            except OpenAIError:
+                continue
+            if not self._transcript_company_matches(text[:4000], ticker):
+                continue
+            logger.info("release_lookup issuer=%s year=%s quarter=%s source=equibles outcome=found", ticker, year, quarter)
+            return FetchedDocument(document.url, "Equibles / RI", pdf_bytes=document.pdf_bytes, text=document.text)
+        return None
 
     def fetch_transcript(self, company, ano, trimestre):
         match = re.fullmatch(r"(?:([1-4])[TQ]?|[TQ]([1-4]))", str(trimestre).upper())
@@ -409,11 +431,11 @@ class AutoFetcher:
             )
         return sorted(candidates, key=rank)
 
-    def _download_release(self, url, year, quarter, depth=0):
+    def _download_release(self, url, year, quarter, depth=0, *, timeout=30):
         if not self._valid_url(url):
             return None
         try:
-            response = requests.get(url, timeout=30)
+            response = requests.get(url, timeout=timeout)
             response.raise_for_status()
             if not self._valid_url(response.url):
                 return None
@@ -435,7 +457,7 @@ class AutoFetcher:
                     for candidate in self._candidates(linked, year, quarter)[:8]:
                         if (urlparse(candidate["url"]).netloc == urlparse(response.url).netloc
                                 or urlparse(candidate["url"]).hostname in ("api.mziq.com", "filemanager-cdn.mziq.com")):
-                            document = self._download_release(candidate["url"], year, quarter, depth=1)
+                            document = self._download_release(candidate["url"], year, quarter, depth=1, timeout=timeout)
                             if document:
                                 return document
                 text = soup.get_text("\n", strip=True)

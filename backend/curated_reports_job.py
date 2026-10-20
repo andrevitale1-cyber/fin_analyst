@@ -58,6 +58,8 @@ def curate():
 
 
 def start_if_enabled():
+    if os.getenv("VALIDATE_EQUIBLES_20261020") == "1":
+        Thread(target=validate_equibles_releases, name="validate-equibles-releases", daemon=True).start()
     if os.getenv("VALIDATE_APPLE_REPORT_20261020") == "1":
         Thread(target=validate_apple_report, name="validate-apple-report", daemon=True).start()
     if os.getenv("REPAIR_REPORT_COVERAGE_20261019") == "1":
@@ -133,3 +135,40 @@ def repair_reports():
                 cur.execute("UPDATE maintenance_tasks SET state='failed',updated_at=NOW() WHERE id=%s", (job,))
         finally:
             conn.close()
+
+
+def validate_equibles_releases():
+    """One-time document lookup only: no model calls, user quota or saved analysis."""
+    from full_reports import connection
+    from agents.auto_fetcher import AutoFetcher
+    conn = connection()
+    conn.autocommit = True
+    task = "equibles-releases-20261020-1"
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT pg_try_advisory_lock(hashtext(%s))", (task,))
+            if not cur.fetchone()[0]:
+                return
+            cur.execute("CREATE TABLE IF NOT EXISTS maintenance_tasks (id TEXT PRIMARY KEY, state TEXT NOT NULL, report_id TEXT, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())")
+            cur.execute("ALTER TABLE maintenance_tasks ADD COLUMN IF NOT EXISTS diagnostics JSONB")
+            cur.execute("SELECT state FROM maintenance_tasks WHERE id=%s", (task,))
+            if cur.fetchone():
+                return
+            cur.execute("INSERT INTO maintenance_tasks(id,state) VALUES (%s,'running')", (task,))
+            fetcher = AutoFetcher()
+            results = []
+            for company in ("VIVA3", "AAPL"):
+                document = fetcher._fetch_equibles(company, 2026, 2)
+                results.append({"company": company, "year": 2026, "quarter": 2,
+                                "provider_status": fetcher.equibles_client.last_status,
+                                "document_found": document is not None,
+                                "source_url": document.url if document else None})
+            cur.execute("UPDATE maintenance_tasks SET state='completed',diagnostics=%s::jsonb,updated_at=NOW() WHERE id=%s",
+                        (json.dumps(results), task))
+            logger.info("equibles_validation completed documents=%d", sum(r["document_found"] for r in results))
+    except Exception as exc:
+        logger.error("equibles_validation failed error_type=%s", type(exc).__name__)
+        with conn.cursor() as cur:
+            cur.execute("UPDATE maintenance_tasks SET state='failed',updated_at=NOW() WHERE id=%s", (task,))
+    finally:
+        conn.close()
