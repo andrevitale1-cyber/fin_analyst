@@ -32,7 +32,7 @@ def write_report(client, company, as_of, locale, dossier, sources, *, timeout=95
     prompt = f"""AGENT 2 — write the company-wide research report for {company}, as of {as_of}.
 Write in {'English' if locale == 'en' else 'Portuguese'} using only the supplied cited facts and official financials.
 Return exactly the nine individually specified sections and supporting structured data. Valuation is handled
-by a separate agent: do not produce that section or scenario assumptions here. Use 850–1,200 words total.
+by a separate agent: do not produce that section or scenario assumptions here. Use 1,200–1,600 words total.
 Each section: concise summary, 1–2 focused paragraphs and at most 3 nonrepeating bullets. Start paragraphs
 with a short **bold key insight**. Cite factual assertions using source_ids, not invented source IDs or URLs.
 Use complete sentences, no HTML, no scripts and no filler about missing information. Never invent figures,
@@ -48,6 +48,11 @@ Scores are reasoned AI quality assessments from 1–5, with cited support; never
 Analyst consensus and market data require dated independent sources; their as_of fields must be exact YYYY-MM-DD
 observation dates. Projections require management guidance
 or analyst consensus; do not invent model forecasts. Distinguish source facts, calculated values and AI judgments.
+When the dossier supplies investment_model, its projections are explicitly conditional AI assumptions.
+You may explain those in outlook/thesis/verdict with that label and their stated source_id, but do not put
+them in the sourced projections array or describe them as guidance or consensus. Follow the model's single
+conviction level and selected valuation method throughout. Explain disagreements between cross-check methods.
+Cover the priced-in expectations, counterthesis, catalysts and measurable conditions that invalidate the thesis.
 SHARED ANALYSIS RULES:\n{PromptBuilder().company_field_rules(company, locale)}
 SECTION PROMPTS:\n{json.dumps(briefs)}
 FACT DOSSIER:\n{json.dumps(dossier, ensure_ascii=False)}

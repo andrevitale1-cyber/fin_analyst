@@ -152,6 +152,9 @@
     "error": "Não foi possível excluir esta análise. Tente novamente."
   },
   "FullReports": {
+    "generationError": "Não foi possível concluir o relatório. Tente novamente.",
+    "backgroundNotice": "A pesquisa continua em segundo plano. Você pode sair desta página e voltar pelo mesmo link.",
+    "jobStages": {"queued": "Seu relatório está na fila", "research": "Buscando e conferindo as fontes", "extraction": "Organizando as evidências financeiras", "model": "Calculando projeções e cenários de valuation", "writing": "Preparando a tese de investimento", "verification": "Conferindo números e consistência", "repair": "Revisando os pontos sinalizados", "complete": "Seu relatório está pronto"},
     "requestTimeout": "O relatório está demorando mais que o esperado. Tente novamente; uma versão já concluída será reaproveitada.",
     "authError": "Não foi possível validar sua sessão. Entre novamente.",
     "requestError": "Não foi possível concluir a solicitação ({status}).",

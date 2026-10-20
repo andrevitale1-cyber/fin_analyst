@@ -152,6 +152,9 @@
     "error": "We couldn't delete this analysis. Try again."
   },
   "FullReports": {
+    "generationError": "We could not finish this report. Please try again.",
+    "backgroundNotice": "Your research continues in the background. You can leave this page and return using this same link.",
+    "jobStages": {"queued": "Your report is in the queue", "research": "Collecting and checking sources", "extraction": "Organizing verified financial evidence", "model": "Building projections and valuation scenarios", "writing": "Writing the investment thesis", "verification": "Checking figures and consistency", "repair": "Reviewing flagged sections", "complete": "Your report is ready"},
     "requestTimeout": "The report is taking longer than expected. Try again; a completed version will be reused.",
     "authError": "Your session could not be verified. Please sign in again.",
     "requestError": "The request could not be completed ({status}).",

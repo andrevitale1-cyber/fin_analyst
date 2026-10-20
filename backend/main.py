@@ -10,6 +10,7 @@ import json
 import re
 import io
 import asyncio
+from contextlib import asynccontextmanager
 import stripe
 from pypdf import PdfReader
 from dotenv import load_dotenv
@@ -45,14 +46,25 @@ from agents.search_client import SearchError
 from agents.prompt_builder import PromptBuilder
 from agents.x_bot_router import router as x_bot_router
 from account_limits import analysis_access, complete_usage, access_snapshot, create_tables as create_usage_tables
+from report_jobs import router as report_jobs_router, create_tables as create_job_tables, start_worker, stop as stop_report_worker
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
 # --- CONFIGURAÇÕES GERAIS ---
-app = FastAPI(title="API Analisador Financeiro")
+@asynccontextmanager
+async def lifespan(app):
+    start_worker()
+    try:
+        yield
+    finally:
+        stop_report_worker.set()
+
+
+app = FastAPI(title="API Analisador Financeiro", lifespan=lifespan)
 
 app.include_router(report_router)
 app.include_router(full_reports_router)
+app.include_router(report_jobs_router)
 app.include_router(x_bot_router)
 
 # --- CONFIGURAÇÃO DO CORS ---
@@ -140,6 +152,7 @@ def init_db():
 
         create_full_report_tables(cur)
         create_usage_tables(cur)
+        create_job_tables(cur)
         conn.commit()
         print("[DB] Banco de dados inicializado com sucesso!")
     except Exception as e:
@@ -156,6 +169,7 @@ def init_db():
 init_db()
 from curated_reports_job import start_if_enabled
 start_if_enabled()
+
 
 # --- AUXILIARES ---
 def extract_text_from_pdf_bytes(file_bytes, max_pages=30):

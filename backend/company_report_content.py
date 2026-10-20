@@ -435,7 +435,7 @@ def ensure_company_completeness(report, sources=()):
         raise ReportValidationError(f"Insufficient financial coverage: require three annual revenue/profit periods and four metrics; periods={sorted(years)}, numeric_metrics={metrics}")
     official = next((s for s in sources if s.get("id") == "F1" and s.get("basis") == "primary"), None)
     annual = sorted(official.get("annual_financials", []), key=lambda r: r["period"], reverse=True) if official else []
-    if annual and annual[0]["values"].get("Diluted EPS", 0) > 0 and not report["valuation"]["available"]:
+    if annual and annual[0]["values"].get("Diluted EPS", 0) > 0 and not report["valuation"]["available"] and not report.get("investment_model", {}).get("available"):
         raise ReportValidationError("Positive official annual EPS exists: valuation requires all three explicit assumption scenarios")
 
 

@@ -18,6 +18,10 @@ _KNOWN_CIKS = {"NKE": 320187, "PBR": 1119639}
 _TAGS = {
     "Revenue": ("RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet", "RevenueFromContractWithCustomerIncludingAssessedTax"),
     "Net income": ("NetIncomeLoss", "ProfitLoss"),
+    "Net income attributable to parent": ("NetIncomeLossAvailableToCommonStockholdersBasic", "NetIncomeLoss"),
+    "Diluted shares": ("WeightedAverageNumberOfDilutedSharesOutstanding",),
+    "Depreciation and amortization": ("DepreciationDepletionAndAmortization", "DepreciationDepletionAndAmortizationPropertyPlantAndEquipment"),
+    "Book equity": ("StockholdersEquity",),
     "Operating cash flow": ("NetCashProvidedByUsedInOperatingActivities",),
     "Capital expenditures": ("PaymentsToAcquirePropertyPlantAndEquipment",),
     "Diluted EPS": ("EarningsPerShareDiluted",),
@@ -38,7 +42,7 @@ _IFRS_TAGS = {
     "Gross profit": ("GrossProfit",),
     "Cash and cash equivalents": ("CashAndCashEquivalents",),
 }
-_INSTANT = {"Cash and cash equivalents", "Current long-term debt", "Noncurrent long-term debt"}
+_INSTANT = {"Cash and cash equivalents", "Current long-term debt", "Noncurrent long-term debt", "Book equity"}
 _MARGINS = {"Operating margin (calculated)": "Operating income", "Gross margin (calculated)": "Gross profit",
             "Free cash flow margin (calculated)": "Free cash flow (calculated)"}
 
@@ -124,7 +128,7 @@ def _currency(period):
 
 def _metric(period, label, currency):
     values = period["values"]
-    units = (currency, f"{currency}/shares", f"{currency}-per-shares", f"{currency} / shares")
+    units = ("shares",) if label == "Diluted shares" else (currency, f"{currency}/shares", f"{currency}-per-shares", f"{currency} / shares")
     candidates = [values[(label, unit)] for unit in units if (label, unit) in values]
     return candidates[0] if candidates else None
 
@@ -194,7 +198,7 @@ def get_sec_company_source(symbol, as_of):
             lines.append("IFRS capital expenditures may include the reported combined purchases of property, plant, equipment, intangible and other noncurrent assets. Calculated free cash flow is operating cash flow minus those purchases; do not describe it as issuer-defined FCF. EPS is per underlying ordinary share in the reported currency, not per ADR; never compare it to another listing currency or ADR price without verified conversion and depositary ratio.")
         for end, filed, currency, values in history:
             metrics = "; ".join(
-                f"{label} {'percent' if label in _MARGINS else currency + '/shares' if label == 'Diluted EPS' else currency} {_format(value)}"
+                f"{label} {'percent' if label in _MARGINS else 'shares' if label == 'Diluted shares' else currency + '/shares' if label == 'Diluted EPS' else currency} {_format(value)}"
                 for label, value in values.items()
             )
             lines.append(f"For the full year ended {end}, filed {filed}: {metrics}.")

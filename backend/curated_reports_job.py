@@ -58,6 +58,8 @@ def curate():
 
 
 def start_if_enabled():
+    if os.getenv("VALIDATE_DEEP_REPORTS_20261020") == "1":
+        Thread(target=validate_deep_reports, name="validate-deep-reports", daemon=True).start()
     if os.getenv("VALIDATE_VIVARA_REPORT_20261020") == "1":
         Thread(target=validate_apple_report, kwargs={"company": "VIVA3", "task": "report-agents-VIVA3-20261020-4"},
                name="validate-vivara-report", daemon=True).start()
@@ -103,6 +105,49 @@ def validate_apple_report(company="AAPL", task="report-agents-AAPL-20261020-6"):
                         (json.dumps(diagnostics), task))
     finally:
         conn.close()
+
+
+def validate_deep_reports():
+    """Two private pilot reports; one paid attempt per company and pipeline version."""
+    from full_reports import connection, open_company_report, OpenCompanyReport
+    for company in ("MU", "VIVA3"):
+        task = "deep-report-pilot-v1:" + company
+        conn = connection()
+        conn.autocommit = True
+        try:
+            with conn.cursor() as cur:
+                cur.execute("SELECT pg_try_advisory_lock(hashtext(%s))", (task,))
+                if not cur.fetchone()[0]:
+                    continue
+                cur.execute("CREATE TABLE IF NOT EXISTS maintenance_tasks (id TEXT PRIMARY KEY,state TEXT NOT NULL,report_id TEXT,diagnostics JSONB,updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())")
+                cur.execute("ALTER TABLE maintenance_tasks ADD COLUMN IF NOT EXISTS diagnostics JSONB")
+                cur.execute("SELECT state FROM maintenance_tasks WHERE id=%s", (task,))
+                if cur.fetchone():
+                    continue
+                cur.execute("INSERT INTO maintenance_tasks(id,state) VALUES (%s,'running')", (task,))
+                result = open_company_report(OpenCompanyReport(company=company, locale="en"), SessionUser("public-demo-curator", plan="premium"))
+                report = result["report"]
+                model = report.get("investment_model", {})
+                if not (model.get("available") and len(model.get("cases", [])) == 3 and model.get("cross_check_methods")
+                        and len(report.get("financial_history", [])) >= 5 and not report["is_public"]
+                        and report.get("pipeline", {}).get("verification", {}).get("passed")):
+                    raise ValueError("Pilot coverage requirements not met")
+                diagnostics = {"sections": len(report["sections"]), "years": len(report["financial_history"]),
+                               "sources": len(report["sources"]), "selected_method": model["selected_method"],
+                               "cross_checks": model["cross_check_methods"], "reused": result["reused"]}
+                cur.execute("UPDATE maintenance_tasks SET state='completed',report_id=%s,diagnostics=%s::jsonb,updated_at=NOW() WHERE id=%s", (report["id"], json.dumps(diagnostics), task))
+        except Exception as exc:
+            cause = exc.__context__ or exc
+            diagnostics = {"error_type": type(cause).__name__}
+            while cause:
+                if hasattr(cause, "issues"):
+                    diagnostics["audit_issues"] = cause.issues
+                cause = cause.__context__
+            with conn.cursor() as cur:
+                cur.execute("UPDATE maintenance_tasks SET state='failed',diagnostics=%s::jsonb,updated_at=NOW() WHERE id=%s", (json.dumps(diagnostics), task))
+            logger.warning("deep_report_pilot_failed company=%s error_type=%s", company, type(exc).__name__)
+        finally:
+            conn.close()
 
 
 def repair_reports():

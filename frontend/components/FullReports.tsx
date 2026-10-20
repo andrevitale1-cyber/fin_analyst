@@ -39,9 +39,10 @@ export type FullReport = {
   market?: { price: number | null; change_percent: number | null; currency: string | null; as_of: string | null; source_id: string | null };
   watchpoints: string[]; sources: { id: string; title: string; url: string | null }[];
   valuation: { available: boolean; base_eps: number | null; currency: string | null; source_id: string | null; reason: string; method?: string | null; fair_value?: number | null; scenarios?: { case: "bear" | "base" | "bull"; growth_percent: number; pe_multiple: number; discount_percent: number; rationale: string; future_value: number | null; present_value: number | null; upside_percent: number | null }[] };
+  investment_model?: import("../lib/investmentModel").InvestmentModel;
 };
 type ReportSummary = Pick<FullReport, "id" | "company" | "company_name" | "symbol" | "period" | "scope" | "as_of" | "locale" | "kind" | "created_at" | "report_version" | "score" | "is_public">;
-type RouteTarget = { type: "library" } | { type: "generate"; analysisId: string } | { type: "company"; company: string } | { type: "saved"; reportId: string };
+type RouteTarget = { type: "library" } | { type: "generate"; analysisId: string } | { type: "company"; company: string } | { type: "saved"; reportId: string } | { type: "job"; jobId: string; company: string };
 const SCENARIOS: { key: "bear" | "base" | "bull"; growthPercent: number; peMultiple: number; discountPercent: number }[] = [
   { key: "bear", growthPercent: 0, peMultiple: 12, discountPercent: 12 },
   { key: "base", growthPercent: 10, peMultiple: 15, discountPercent: 10 },
@@ -81,6 +82,7 @@ export default function FullReports() {
     return () => document.removeEventListener("keydown", focusSearch);
   }, []);
   const [loading, setLoading] = useState(true);
+  const [jobStage, setJobStage] = useState("queued");
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ReportSummary | null>(null);
@@ -93,7 +95,6 @@ export default function FullReports() {
   const [retryCount, setRetryCount] = useState(0);
   const [scenarioInputs, setScenarioInputs] = useState<Record<"bear" | "base" | "bull", ValuationInputs>>(() => Object.fromEntries(SCENARIOS.map(({ key, ...values }) => [key, values])) as Record<"bear" | "base" | "bull", ValuationInputs>);
   const requestRef = useRef<AbortController | null>(null);
-  const generationRef = useRef(new Map<string, Promise<{ report: FullReport; reused: boolean }>>());
   const sequenceRef = useRef(0);
 
   useEffect(() => {
@@ -101,8 +102,9 @@ export default function FullReports() {
     const analysisId = params.get("analysisId") || "";
     const reportId = params.get("reportId") || "";
     const company = params.get("company")?.trim() || "";
+    const jobId = params.get("jobId") || "";
     setQuery(company);
-    setTarget(company ? { type: "company", company } : analysisId ? { type: "generate", analysisId } : reportId ? { type: "saved", reportId } : { type: "library" });
+    setTarget(jobId ? { type: "job", jobId, company } : company ? { type: "company", company } : analysisId ? { type: "generate", analysisId } : reportId ? { type: "saved", reportId } : { type: "library" });
     setRouteReady(true);
   }, []);
 
@@ -148,6 +150,35 @@ export default function FullReports() {
     return readJson<{ report: FullReport }>(response);
   }, [authorizedFetch, readJson]);
 
+  const awaitJob = useCallback(async (jobId: string, signal: AbortSignal) => {
+    type JobResult = { state: string; stage?: string; detail?: string; report?: FullReport; reused?: boolean };
+    for (;;) {
+      const response = await authorizedFetch(`/api/report-jobs/${encodeURIComponent(jobId)}`, { signal }, 30_000);
+      const job = await readJson<JobResult>(response);
+      if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+      setJobStage(job.stage || "queued");
+      if (job.state === "completed" && job.report) return { report: job.report, reused: Boolean(job.reused) };
+      if (job.state === "failed") throw new Error(job.detail || t("generationError"));
+      await new Promise<void>((resolve, reject) => {
+        const abort = () => { clearTimeout(timer); reject(new DOMException("Aborted", "AbortError")); };
+        const timer = setTimeout(() => { signal.removeEventListener("abort", abort); resolve(); }, 2500);
+        signal.addEventListener("abort", abort, { once: true });
+        if (signal.aborted) abort();
+      });
+    }
+  }, [authorizedFetch, readJson, t]);
+
+  const requestJob = useCallback(async (body: {company?: string; analysis_id?: number; locale: string}, signal: AbortSignal) => {
+    const response = await authorizedFetch("/api/report-jobs", { method: "POST", body: JSON.stringify(body), signal }, 30_000);
+    const result = await readJson<{ job_id?: string; company: string; report?: FullReport; reused?: boolean }>(response);
+    if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+    if (result.report) return { report: result.report, reused: Boolean(result.reused) };
+    if (!result.job_id) throw new Error(t("generationError"));
+    const params = new URLSearchParams({company: result.company, jobId: result.job_id});
+    window.history.replaceState(null, "", `${window.location.pathname}?${params}`);
+    return awaitJob(result.job_id, signal);
+  }, [authorizedFetch, readJson, awaitJob, t]);
+
   useEffect(() => {
     if (!routeReady || !isLoaded || !userId) return;
     const sequence = ++sequenceRef.current;
@@ -155,6 +186,7 @@ export default function FullReports() {
     requestRef.current?.abort();
     requestRef.current = controller;
     setLoading(true);
+    setJobStage("queued");
     setError("");
     setDeleteError(""); setDeleteNotice(""); setDeletingId(null); setDeleteTarget(null);
     setReport(null);
@@ -174,19 +206,7 @@ export default function FullReports() {
       try {
         if (target.type === "generate") {
           if (!/^\d+$/.test(target.analysisId)) throw new Error(t("invalidAnalysis"));
-          const key = `${userId}:${target.analysisId}:${locale}`;
-          let pending = generationRef.current.get(key);
-          if (!pending) {
-            pending = (async () => {
-              const response = await authorizedFetch("/api/full-reports", {
-                method: "POST", body: JSON.stringify({ analysis_id: Number(target.analysisId), locale }),
-              }, 330_000);
-              return readJson<{ report: FullReport; reused: boolean }>(response);
-            })();
-            generationRef.current.set(key, pending);
-            pending.catch(() => generationRef.current.delete(key));
-          }
-          const result = await pending;
+          const result = await requestJob({ analysis_id: Number(target.analysisId), locale }, controller.signal);
           if (sequence !== sequenceRef.current) return;
           setReport(result.report);
           setReportOwnerId(userId);
@@ -195,19 +215,11 @@ export default function FullReports() {
         } else if (target.type === "company") {
           const company = target.company.trim();
           if (!company || company.length > 100 || /[\u0000-\u001f]/.test(company)) throw new Error(t("invalidCompany"));
-          const key = `${userId}:${company.toLocaleLowerCase()}:${locale}`;
-          let pending = generationRef.current.get(key);
-          if (!pending) {
-            pending = (async () => {
-              const response = await authorizedFetch("/api/full-reports/company", {
-                method: "POST", body: JSON.stringify({ company, locale }),
-              }, 330_000);
-              return readJson<{ report: FullReport; reused: boolean }>(response);
-            })();
-            generationRef.current.set(key, pending);
-            pending.catch(() => generationRef.current.delete(key));
-          }
-          const result = await pending;
+          const result = await requestJob({ company, locale }, controller.signal);
+          if (sequence !== sequenceRef.current) return;
+          setReport(result.report); setReportOwnerId(userId); setReused(result.reused);
+        } else if (target.type === "job") {
+          const result = await awaitJob(target.jobId, controller.signal);
           if (sequence !== sequenceRef.current) return;
           setReport(result.report); setReportOwnerId(userId); setReused(result.reused);
         } else if (target.type === "saved") {
@@ -226,7 +238,7 @@ export default function FullReports() {
     };
     void run();
     return () => controller.abort();
-  }, [routeReady, target, authorizedFetch, isLoaded, loadLibrary, locale, openReport, readJson, retryCount, t, userId]);
+  }, [routeReady, target, authorizedFetch, isLoaded, loadLibrary, locale, openReport, readJson, retryCount, t, userId, requestJob, awaitJob]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -238,8 +250,10 @@ export default function FullReports() {
   }, [isLoaded, userId]);
 
   const retry = () => {
-    if (target.type === "generate") generationRef.current.delete(`${userId}:${target.analysisId}:${locale}`);
-    if (target.type === "company") generationRef.current.delete(`${userId}:${target.company.toLocaleLowerCase()}:${locale}`);
+    if (target.type === "job") {
+      window.history.replaceState(null, "", `${window.location.pathname}?company=${encodeURIComponent(target.company)}`);
+      setTarget({ type: "company", company: target.company });
+    }
     setError(""); setLoading(true); setRetryCount(value => value + 1);
   };
 
@@ -355,7 +369,7 @@ export default function FullReports() {
           {!visibleReport && !deleteTarget && deleteError && <p role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{deleteError}</p>}
           {!visibleReport && deleteNotice && <p role="status" className="mb-5 text-sm text-slate-600">{deleteNotice}</p>}
           {error && <div role="alert" className="mb-5 flex flex-wrap items-start gap-3 rounded-2xl border border-rose-200 bg-white p-5 text-rose-800 shadow-sm"><AlertCircle className="mt-0.5 shrink-0" size={19} /><div className="min-w-0 flex-1"><p className="font-semibold">{t("errorTitle")}</p><p className="mt-1 text-sm">{error}</p></div><button onClick={retry} className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold hover:bg-rose-100">{t("retry")}</button><button onClick={returnToGallery} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">{t("backToGallery")}</button></div>}
-          {loading && !visibleReport ? <div className="flex min-h-[40vh] items-center justify-center rounded-3xl border border-slate-200 bg-white text-slate-500"><div className="flex items-center gap-3"><Loader2 className="animate-spin text-sky-700" />{target.type === "generate" ? t("generating") : target.type === "company" ? t("companyGenerating") : t("loading")}</div></div> : null}
+          {loading && !visibleReport ? <div role="status" aria-live="polite" className="flex min-h-[40vh] items-center justify-center rounded-3xl border border-slate-200 bg-white p-6 text-slate-500"><div className="w-full max-w-md text-center"><Loader2 className="mx-auto mb-4 animate-spin text-sky-700" /><p className="font-semibold text-slate-800">{t(`jobStages.${jobStage}`)}</p><p className="mt-3 text-sm leading-6">{t("backgroundNotice")}</p><ol className="mt-6 grid grid-cols-3 gap-2 text-[11px]">{["research", "model", "verification"].map(stage => <li key={stage} className={`rounded-xl border p-3 ${jobStage === stage ? "border-sky-300 bg-sky-50 text-sky-800" : "border-slate-100"}`}>{t(`jobStages.${stage}`)}</li>)}</ol></div></div> : null}
           {!loading && !visibleReport && !error && <div className="space-y-10">
             <section><div className="mb-5"><h2 className="text-xl font-bold text-slate-900">{t("companyReports")}</h2><p className="mt-1 text-sm text-slate-500">{t("companyReportsDescription")}</p></div>
               {publicCompanyReports.length > 0 ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{publicCompanyReports.map(item => reportCard(item, true))}</div> : <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm leading-relaxed text-slate-600">{query ? t("noMatches") : t("publicEmpty")}</div>}

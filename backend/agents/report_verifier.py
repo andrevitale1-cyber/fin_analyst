@@ -9,6 +9,7 @@ from company_report_content import ensure_company_completeness
 from full_report_content import ReportValidationError
 from agents.report_facts import normalized, writing_sources
 from agents.prompt_builder import PromptBuilder
+from agents.report_model import verify_model
 
 
 class EvidenceAuditError(ReportValidationError):
@@ -32,6 +33,8 @@ class Review(BaseModel):
 
 
 def check_consistency(report, sources, as_of):
+    if report.get("investment_model"):
+        verify_model(report["investment_model"], sources)
     ensure_company_completeness(report, sources)
     seen = set()
     for row in report["financial_history"]:
@@ -92,6 +95,11 @@ ADR/ordinary-share confusion, overlapping segment classifications, stale observa
 facts confused with guidance, analyst targets confused with model outputs and conclusions that contradict facts.
 Verify the financial history and numeric metrics match official financial evidence when supplied.
 Model growth/P/E/discount assumptions are allowed ONLY when explicitly identified as assumptions, not as facts.
+An investment_model, when present, contains independently recalculated AI forecasts and sector-specific
+valuation methods. These are allowed model assumptions, not claims of guidance or consensus. Different
+methods may disagree: require explanation, not manufactured agreement. Check that the narrative uses the
+same selected method, baseline, dates, conviction and scenario direction as that model. Do not require EPS
+for a valid FCFF/EV-based method with other verified inputs. Reported fiscal history must remain factual.
 AI moat/quality scores and interpretations are allowed when reasoned from cited evidence; they are not external ratings.
 Do not flag a transparent assumption or a supported AI judgment merely because it is not a quoted fact.
 Return passed=true ONLY if there are no material unsupported claims or inconsistencies. Otherwise passed=false

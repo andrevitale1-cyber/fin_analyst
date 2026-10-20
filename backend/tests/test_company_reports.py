@@ -133,18 +133,18 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     assert report["scope"] == report["kind"] == "company"
     assert report["symbol"] == "META"
     assert report["as_of"] == "2026-10-12" and report["is_public"] is False
-    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v7"
+    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v8"
     assert report["score"] == 4 and len(report["sections"]) == 10
     assert report["valuation"]["fair_value"] > 0
     assert all("text" not in source for source in report["sources"])
     assert not any("historico" in call.args[0] or "analysis_documents" in call.args[0] for call in cur.execute.call_args_list)
     assert ai.analyze_full_report.call_args.kwargs == {"max_output_tokens": 11000, "timeout": 120}
-    assert [call.kwargs for call in factory.call_args_list] == [{"task": "full_report"}, {"task": "analysis"}]
-    assert evidence.call_args.args[1] == reports.model_for_task("full_report")
+    assert [call.kwargs for call in factory.call_args_list] == [{"task": "full_report"}, {"task": "analysis"}, {"task": "analysis"}]
+    assert evidence.call_args.args[1] == reports.model_for_task("analysis")
     conn.commit.assert_called_once()
     _, company, _, stage, duration, timings = timing.call_args.args
     assert company == "META" and stage == "complete" and duration >= 0
-    assert set(timings) == {"cache_ms", "research_ms", "extraction_ms", "synthesis_ms"}
+    assert set(timings) == {"cache_ms", "research_ms", "extraction_ms", "model_ms", "synthesis_ms"}
     assert "Full-year EPS" not in str(timing.call_args)
 
 

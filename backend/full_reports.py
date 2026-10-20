@@ -19,15 +19,17 @@ from full_report_content import build_full_report_prompt, report_schema, validat
 from company_report_content import company_report_schema, validate_company_report
 from agents.report_facts import extract_facts, validate_dossier
 from agents.report_pipeline import generate_report, remaining
+from agents.report_model import baseline_from_sources, model_assumptions, calculate_model, VERSION as MODEL_VERSION
 from agents.report_valuation import calculate_valuation as calculated_company_valuation, VALUATION_METHODS
-from company_research import collect_company_sources
+from company_research import collect_deep_company_sources as collect_company_sources, evidence_manifest
+from report_runtime import checkpoint, progress, record_run
 from agents.company_documents import collect_issuer_annual_sources
 from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
-COMPANY_REPORT_VERSION = "company-v7"
-RESEARCH_VERSION = "company-v6"  # Prompt-only changes reuse the previously collected public documents.
+COMPANY_REPORT_VERSION = "company-v8"
+RESEARCH_VERSION = "company-v7"
 logger = logging.getLogger(__name__)
 timing_logger = logging.getLogger("uvicorn.error")
 
@@ -38,6 +40,9 @@ def connection():
 
 
 def create_tables(cur):
+    cur.execute("""CREATE TABLE IF NOT EXISTS report_runs (
+        id TEXT PRIMARY KEY,company TEXT NOT NULL,model TEXT NOT NULL,stage TEXT NOT NULL,
+        elapsed_ms INTEGER NOT NULL,error_type TEXT,diagnostics JSONB NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())""")
     cur.execute("""CREATE TABLE IF NOT EXISTS analysis_documents (
         analysis_id INTEGER PRIMARY KEY REFERENCES historico(id) ON DELETE CASCADE,
         visibility TEXT NOT NULL CHECK (visibility IN ('public','private')),
@@ -157,7 +162,7 @@ def canonical_company(company):
                "ORACLE": "ORCL", "EXXON MOBIL": "XOM", "CHEVRON": "CVX", "ABBVIE": "ABBV",
                "BANK OF AMERICA": "BAC", "CATERPILLAR": "CAT", "LAM RESEARCH": "LRCX",
                "NIKE": "NKE", "NIKE INC": "NKE", "NIKE, INC.": "NKE"}
-    symbol = aliases.get(symbol, symbol).removesuffix(".SA")
+    symbol = AutoFetcher().resolve_ticker(aliases.get(symbol, symbol).removesuffix(".SA"))
     if not re.fullmatch(r"[A-Z][A-Z0-9]{0,9}(?:[.-][A-Z0-9]{1,4})?", symbol):
         raise HTTPException(422, "Use a stock ticker or a recognized company name. / Informe o ticker ou um nome de empresa reconhecido.")
     return symbol
@@ -185,7 +190,8 @@ def company_evidence(company, model, as_of, client):
                     raise OpenAIError("Recent company research did not find sufficient evidence.", code=evidence["error"])
             if not existing or evidence.get("error"):
                 try:
-                    evidence = {"as_of": as_of, "sources": collect_company_sources(client, company, as_of)}
+                    sources = collect_company_sources(client, company, as_of)
+                    evidence = {"as_of": as_of, "sources": sources, "coverage": evidence_manifest(sources), "issuer_documents_version": 2}
                 except OpenAIError as exc:
                     if exc.code not in ("insufficient_company_sources", "research_incomplete"):
                         raise
@@ -213,7 +219,7 @@ def company_evidence(company, model, as_of, client):
 
 def company_facts(company, model, evidence, client, *, deadline):
     # Shared across languages/users; failed writing/audits never require another paid extraction.
-    payload = ["facts-v5", company, model, evidence]
+    payload = ["facts-v6", company, model, evidence]
     key = hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     conn = connection()
     try:
@@ -239,6 +245,23 @@ def company_facts(company, model, evidence, client, *, deadline):
         conn.close()
 
 
+def company_model(company, client, evidence, dossier, locale, *, deadline):
+    baseline = baseline_from_sources(evidence["sources"])
+    if baseline is None:
+        return None
+    identity = [MODEL_VERSION, company, evidence["as_of"], locale, client.model, baseline, dossier]
+    raw = checkpoint("operating-assumptions", identity,
+                     lambda: model_assumptions(client, company, evidence["as_of"], locale, dossier, baseline, timeout=remaining(deadline, 90)))
+    result = calculate_model(baseline, raw, {s["id"] for s in evidence["sources"]})
+    return result if result["available"] else None
+
+
+def reserve_report_usage(user, locale):
+    from report_jobs import reserved_ticket
+    reserved = reserved_ticket.get()
+    return reserved["ticket"] if reserved is not None else reserve_usage(user, "full_report", locale)
+
+
 @router.post("/company")
 def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_report_user)):
     started = perf_counter()
@@ -250,9 +273,12 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
     conn = connection()
     stage = "cache"
     ticket = None
+    client = facts_client = research_client = None
+    error_type = None
+    deadline = started + 720
     try:
         with conn.cursor() as cur:
-            cur.execute("SET LOCAL lock_timeout = '300s'")
+            cur.execute("SET LOCAL lock_timeout = '720s'")
             cur.execute("SELECT pg_advisory_xact_lock(%s)", (int.from_bytes(bytes.fromhex(key)[:8], "big", signed=True),))
             cur.execute("SELECT content,is_public FROM full_reports WHERE cache_key=%s", (key,))
             existing = cur.fetchone()
@@ -267,34 +293,42 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
                 if not report["is_public"]:
                     cur.execute("SELECT 1 FROM full_report_access WHERE user_id=%s AND report_id=%s", (str(user_id), report["id"]))
                     if not cur.fetchone():
-                        ticket = reserve_usage(user_id, "full_report", body.locale)
+                        ticket = reserve_report_usage(user_id, body.locale)
             else:
-                ticket = reserve_usage(user_id, "full_report", body.locale)
+                ticket = reserve_report_usage(user_id, body.locale)
                 client = OpenAIClient(task="full_report")
+                research_client = OpenAIClient(task="analysis")
                 stage = "research"
                 step = perf_counter()
-                evidence = company_evidence(company, model, as_of, client)
+                evidence = company_evidence(company, model_for_task("analysis"), as_of, research_client)
                 timings["research_ms"] = round((perf_counter() - step) * 1000)
                 sources = evidence["sources"]
                 stage = "extraction"
+                progress(stage)
                 step = perf_counter()
                 facts_client = OpenAIClient(task="analysis")
-                dossier = company_facts(company, model_for_task("analysis"), evidence, facts_client, deadline=started + 315)
+                dossier = company_facts(company, model_for_task("analysis"), evidence, facts_client, deadline=deadline)
                 timings["extraction_ms"] = round((perf_counter() - step) * 1000)
+                stage = "model"
+                progress(stage)
+                step = perf_counter()
+                investment_model = company_model(company, client, evidence, dossier, body.locale, deadline=deadline)
+                timings["model_ms"] = round((perf_counter() - step) * 1000)
                 stage = "synthesis"
                 step = perf_counter()
                 content = generate_report(client, company, evidence["as_of"], body.locale, sources, dossier,
-                                          deadline=started + 315)
+                                          deadline=deadline, investment_model=investment_model)
                 if "pipeline" in content:
                     content["pipeline"]["facts_model"] = model_for_task("analysis")
                 timings["synthesis_ms"] = round((perf_counter() - step) * 1000)
                 stage = "validation"
-                if body.locale == "pt" and not content["valuation"]["available"]:
+                if body.locale == "pt" and not content["valuation"]["available"] and not content.get("investment_model", {}).get("available"):
                     content["valuation"]["reason"] = "Não há evidência suficiente de EPS anual ou TTM positivo e sua moeda para calcular os três cenários."
                 report = {**content, "id": str(uuid.uuid4()), "company": company, "symbol": company, "period": "Company overview",
                           "scope": "company", "report_version": COMPANY_REPORT_VERSION,
                           "as_of": evidence["as_of"], "locale": body.locale, "kind": "company",
                           "is_public": False, "created_at": datetime.now(timezone.utc).isoformat(),
+                          "evidence_coverage": evidence.get("coverage", {}),
                           "sources": [{field: source[field] for field in ("id", "title", "url")} for source in sources]}
                 cur.execute("""INSERT INTO full_reports (id,cache_key,company,period,locale,kind,is_public,content)
                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb)""",
@@ -306,16 +340,20 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
         stage = "complete"
         return {"report": report, "reused": bool(existing)}
     except HTTPException:
+        error_type = "HTTPException"
         conn.rollback()
         cancel_usage(ticket)
         raise
     except Exception as exc:
+        error_type = type(exc).__name__
         conn.rollback()
         cancel_usage(ticket)
         raise generation_failure(exc, body.locale, company=company, stage=stage,
                                  model=model_for_task("analysis") if stage == "extraction" else model) from None
     finally:
         conn.close()
+        record_run(company, model, stage, round((perf_counter() - started) * 1000), timings,
+                   [client, facts_client, research_client], error_type)
         timing_logger.info("full_report_timing company=%s model=%s stage=%s total_ms=%d timings=%s",
                     company, model, stage, round((perf_counter() - started) * 1000), timings)
 

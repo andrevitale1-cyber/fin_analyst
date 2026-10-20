@@ -2,6 +2,8 @@
 import io
 import os
 import re
+from time import perf_counter
+from report_runtime import usage_record
 
 import httpx
 from pypdf import PdfReader
@@ -29,16 +31,26 @@ class OpenAIClient:
     def __init__(self, *, task="general"):
         self.api_key = os.getenv("OPENAI_API_KEY", "").strip()
         self.model = model_for_task(task)
+        self.usage_calls = []
 
     def _model_options(self):
         # GPT-6 defaults to medium reasoning; keep these bounded analysis flows at low.
         return {"reasoning": {"effort": "low"}} if self.model.startswith("gpt-6") else {}
 
     def _request(self, client, path, **kwargs):
+        started = perf_counter()
         try:
             response = client.post(path, **kwargs)
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            payload = kwargs.get("json", {})
+            prompt = payload.get("input", "")
+            if isinstance(prompt, list):
+                prompt = str((prompt[0].get("content") or [{}])[0].get("text", "")) if prompt else ""
+            stage = "research" if payload.get("tools") else re.match(r"AGENT [1-4]", str(prompt))
+            stage = stage.group(0) if hasattr(stage, "group") else stage or "analysis"
+            self.usage_calls.append(usage_record(result, self.model, round((perf_counter() - started) * 1000), stage))
+            return result
         except httpx.HTTPStatusError as exc:
             code = exc.response.status_code
             try:

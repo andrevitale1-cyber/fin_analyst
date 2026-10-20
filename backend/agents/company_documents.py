@@ -45,6 +45,7 @@ def collect_issuer_annual_sources(company, as_of):
 def hydrate_company_documents(company, sources):
     catalog = json.loads((Path(__file__).resolve().parents[1] / "data/ir_map.json").read_text(encoding="utf-8"))
     issuer_host = urlsplit(catalog.get(company, "")).hostname
+    tenant = AutoFetcher.mziq_catalogs.get(company, (None,))[0]
     official = next((s for s in sources if s.get("id") == "F1"), {})
     cik = re.search(r"CIK0*(\d+)\.json", official.get("url", ""))
     candidates = []
@@ -58,7 +59,7 @@ def hydrate_company_documents(company, sources):
         transcript = bool(re.search(r"transcript|transcri[cç][aã]o", source.get("title", "") + " " + parsed.path, re.I))
         kind = "transcript" if transcript else "filing"
         trusted_sec = host in ("www.sec.gov", "sec.gov") and cik and f"/data/{int(cik[1])}/" in parsed.path
-        trusted_issuer = issuer_host and host == issuer_host
+        trusted_issuer = (issuer_host and host == issuer_host) or (tenant and host in ("api.mziq.com", "filemanager-cdn.mziq.com") and tenant in parsed.path.split("/"))
         trusted_transcript = transcript and host in ("stockanalysis.com", "www.stockanalysis.com")
         if (kind in kinds or parsed.scheme != "https" or not (trusted_sec or trusted_issuer or trusted_transcript)
                 or source.get("id") == "F1" or not AutoFetcher._valid_url(url)):
