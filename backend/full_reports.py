@@ -218,7 +218,7 @@ def company_facts(company, model, evidence, client, *, deadline):
                 raw = {**raw, "facts": [{k: v for k, v in fact.items() if k != "id"} for fact in raw["facts"]]}
                 dossier = validate_dossier(raw, evidence["sources"])
             else:
-                dossier = extract_facts(client, company, evidence["as_of"], evidence["sources"], timeout=remaining(deadline, 40))
+                dossier = extract_facts(client, company, evidence["as_of"], evidence["sources"], timeout=remaining(deadline, 60))
                 cur.execute("INSERT INTO company_research_cache(cache_key,content) VALUES (%s,%s::jsonb)", (key, json.dumps(dossier)))
         conn.commit()
         return dossier
