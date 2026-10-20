@@ -102,3 +102,24 @@ def test_old_worker_does_not_cancel_a_reclaimed_jobs_reservation(monkeypatch):
     cancel = Mock(); monkeypatch.setattr(jobs, "cancel_usage", cancel)
     jobs.process(("job", "user_one", "MU", "en", "ticket", "old-owner"))
     cancel.assert_not_called()
+
+
+def test_exhausted_leases_are_committed_when_no_queued_job_remains(monkeypatch):
+    conn, cur = database(monkeypatch, [None])
+    cur.fetchall.return_value = [("expired",)]
+    cancel = Mock(); monkeypatch.setattr(jobs, "cancel_usage", cancel)
+    assert jobs.claim() is None
+    conn.commit.assert_called_once()
+    cancel.assert_called_once_with("expired")
+
+
+def test_generation_defers_reserved_ticket_cleanup_to_the_current_job_owner(monkeypatch):
+    cancel = Mock(); monkeypatch.setattr(reports, "cancel_usage", cancel)
+    token = jobs.reserved_ticket.set({"ticket": "reserved"})
+    try:
+        reports.cancel_report_usage("reserved")
+    finally:
+        jobs.reserved_ticket.reset(token)
+    cancel.assert_not_called()
+    reports.cancel_report_usage("synchronous")
+    cancel.assert_called_once_with("synchronous")

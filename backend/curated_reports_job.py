@@ -111,7 +111,7 @@ def validate_deep_reports():
     """Two private pilot reports; one paid attempt per company and pipeline version."""
     from full_reports import connection, open_company_report, OpenCompanyReport
     for company in ("MU", "VIVA3"):
-        task = "deep-report-pilot-v3:" + company
+        task = "deep-report-pilot-v4:" + company
         conn = connection()
         conn.autocommit = True
         try:

@@ -123,6 +123,7 @@ def claim():
                 ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1""")
             row = cur.fetchone()
             if not row:
+                conn.commit()  # Commit exhausted leases even when there is no next job.
                 return None
             owner = str(uuid.uuid4())
             cur.execute("UPDATE report_jobs SET state='running',stage='research',owner=%s,attempts=attempts+1,updated_at=NOW() WHERE id=%s", (owner, row[0]))

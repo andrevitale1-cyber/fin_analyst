@@ -28,7 +28,7 @@ from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
-COMPANY_REPORT_VERSION = "company-v10"
+COMPANY_REPORT_VERSION = "company-v11"
 RESEARCH_VERSION = "company-v7"
 logger = logging.getLogger(__name__)
 timing_logger = logging.getLogger("uvicorn.error")
@@ -209,7 +209,8 @@ def company_evidence(company, model, as_of, client):
                 evidence["issuer_documents_version"] = 2
                 cur.execute("UPDATE company_research_cache SET content=%s::jsonb WHERE cache_key=%s", (json.dumps(evidence), key))
             if evidence.get("coverage", {}).get("has_market_consensus") is False and not evidence.get("market_recovery_version"):
-                extra = recover_market_sources(client, company, as_of)
+                snapshot_date = evidence["as_of"]
+                extra = recover_market_sources(client, company, snapshot_date)
                 by_url = {s["url"]: s for s in evidence["sources"]}
                 for source in extra:
                     if source["url"] in by_url:
@@ -217,7 +218,7 @@ def company_evidence(company, model, as_of, client):
                         if existing_source.get("basis") != "primary":
                             existing_source["text"] = (source["text"] + "\n\n" + existing_source["text"])[:24000]
                     else:
-                        source = {**source, "id": f"M{len(by_url) + 1}", "retrieved_at": as_of}
+                        source = {**source, "id": f"M{len(by_url) + 1}", "retrieved_at": snapshot_date}
                         evidence["sources"].append(source)
                         by_url[source["url"]] = source
                 evidence["coverage"] = evidence_manifest(evidence["sources"])
@@ -275,6 +276,13 @@ def reserve_report_usage(user, locale):
     from report_jobs import reserved_ticket
     reserved = reserved_ticket.get()
     return reserved["ticket"] if reserved is not None else reserve_usage(user, "full_report", locale)
+
+
+def cancel_report_usage(ticket):
+    from report_jobs import reserved_ticket
+    # The job owner handles cleanup. A replaced worker must not cancel its successor's lease.
+    if reserved_ticket.get() is None:
+        cancel_usage(ticket)
 
 
 @router.post("/company")
@@ -357,12 +365,12 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
     except HTTPException:
         error_type = "HTTPException"
         conn.rollback()
-        cancel_usage(ticket)
+        cancel_report_usage(ticket)
         raise
     except Exception as exc:
         error_type = type(exc).__name__
         conn.rollback()
-        cancel_usage(ticket)
+        cancel_report_usage(ticket)
         raise generation_failure(exc, body.locale, company=company, stage=stage,
                                  model=model_for_task("analysis") if stage == "extraction" else model) from None
     finally:

@@ -132,3 +132,12 @@ def test_normalized_earnings_narrative_matches_its_formula_and_shows_cross_check
     assert "different bases" in " ".join(section["paragraphs"])
     assert len(section["bullets"]) == 3 and all("normalized_pe" in b and "pe:" in b for b in section["bullets"])
     assert content["valuation"]["method"] == "Audited operating model"
+
+
+def test_model_copy_keeps_complete_sentences_and_short_driver_labels():
+    raw = assumptions()
+    raw["rationale"] = "Complete supported conditional assumptions. This trailing fragment was cut"
+    raw["capacity_driver"] = "Productive stores, including detailed explanation that does not belong in the label"
+    result = calculate_model(baseline_from_sources([official_source()]), raw, {"F1"})
+    assert result["assumptions"]["rationale"] == "Complete supported conditional assumptions."
+    assert result["assumptions"]["capacity_driver"] == "Productive stores"

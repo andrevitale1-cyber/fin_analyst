@@ -12,7 +12,7 @@ from report_runtime import checkpoint, progress
 from agents.report_model import model_context, model_valuation_section, verify_model
 
 
-PIPELINE_VERSION = "company-agents-v3"
+PIPELINE_VERSION = "company-agents-v4"
 logger = logging.getLogger("uvicorn.error")
 
 
@@ -29,7 +29,7 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
     progress("writing")
     if investment_model is not None:
         context = {**dossier, "investment_model": model_context(investment_model)}
-        raw = checkpoint("writer", [company, as_of, locale, client.model, context, compact_sources],
+        raw = checkpoint("writer", [PIPELINE_VERSION, company, as_of, locale, client.model, context, compact_sources],
                          lambda: write_report(client, company, as_of, locale, context, compact_sources, timeout=remaining(deadline, 130)))
         calculated = model_valuation_section(investment_model, locale)
     else:
