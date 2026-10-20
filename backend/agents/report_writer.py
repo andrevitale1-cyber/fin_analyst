@@ -84,6 +84,8 @@ def repair_report(client, company, as_of, locale, report, issues, dossier, sourc
     prompt = f"""AGENT 2 — repair the rejected fields of {company}'s report as of {as_of}.
 Write in {'English' if locale == 'en' else 'Portuguese'}. Return ONLY the specified replacement fields.
 Correct every reviewer issue against supplied evidence; issues and the old draft are NOT new evidence.
+Original source context outranks first-pass extracted statements. Correct percentage denominators and
+reported/adjusted/comparable accounting bases explicitly; do not repeat an extraction error from the old draft.
 Preserve valid content. Remove unsupported assertions rather than inventing support. Do not change other
 fields, add report sections, research again or recalculate valuation prices: Python handles arithmetic.
 SHARED ANALYSIS RULES:\n{PromptBuilder().company_field_rules(company, locale)}

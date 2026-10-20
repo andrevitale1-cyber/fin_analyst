@@ -235,7 +235,7 @@ def company_evidence(company, model, as_of, client):
 
 def company_facts(company, model, evidence, client, *, deadline):
     # Shared across languages/users; failed writing/audits never require another paid extraction.
-    payload = ["facts-v6", company, model, evidence]
+    payload = ["facts-v7", company, model, evidence]
     key = hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     conn = connection()
     try:

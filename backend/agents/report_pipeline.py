@@ -3,7 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from time import perf_counter
 import logging
 
-from agents.report_facts import writing_sources
+from agents.report_facts import writing_sources, repair_fact_dossier
 from agents.report_writer import write_report, repair_report
 from agents.report_valuation import value_company, calculate_valuation
 from agents.report_verifier import verify_report, EvidenceAuditError
@@ -54,10 +54,13 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
     try:
         review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, 40), company=company, locale=locale)
     except EvidenceAuditError as error:
-        if deadline - perf_counter() < 115:
+        if deadline - perf_counter() < 165:
             raise
         logger.info("report_agents company=%s stage=evidence_repair issues=%d", company, len(error.issues))
         progress("repair")
+        dossier = checkpoint("audited-facts-repair-v1", [company, as_of, client.model, dossier, error.issues, compact_sources],
+            lambda: repair_fact_dossier(client, dossier, error.issues, sources, timeout=remaining(deadline, 45)))
+        compact_sources = writing_sources(dossier, sources)
         repair_context = {**dossier, "investment_model": model_context(investment_model)} if investment_model is not None else dossier
         corrected = repair_report(client, company, as_of, locale, content, error.issues, repair_context,
                                   compact_sources, timeout=remaining(deadline, 75))

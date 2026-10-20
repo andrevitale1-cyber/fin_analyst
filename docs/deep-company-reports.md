@@ -10,7 +10,7 @@ The company-v11 report keeps the quarterly methodology but adds company-wide res
 4. The analysis model extracts 32–40 supported facts. Original financial tables remain available to writing and audit.
 5. Agent 3 proposes three sets of explicit AI operating assumptions. Python computes the two revenue drivers, margin transitions, EBIT, EBITDA, income, EPS, capex, working-capital investment and FCFF for five fiscal periods. Reported actuals, guidance/consensus and AI estimates remain separate.
 6. Supported methods include projected P/E, historical normalized P/E, FCFF DCF, EV/EBITDA and P/B for financial firms. WACC discounts enterprise values; cost of equity discounts P/E scenarios. Discounting respects the research date and fiscal period ends; the remaining part of the current fiscal year uses pro-rata cash flow. Net debt bridges enterprise and equity values. Missing debt is not treated as zero. Historical EPS normalization includes losses.
-7. A code verifier rebuilds the complete model from the original primary inputs. An independent model reviews claims, source support, units, periods, conviction, assumptions and narrative consistency. A bounded repair only changes flagged fields. Incomplete/unapproved reports never enter the library.
+7. A code verifier rebuilds the complete model from the original primary inputs. An independent model reviews claims, source support, units, periods, conviction, assumptions and narrative consistency. A bounded repair corrects the evidence dossier against original surrounding context before replacing flagged report fields. This prevents an inaccurate extracted denominator or accounting basis from contaminating the repair again. Incomplete/unapproved reports never enter the library.
 8. The reader shows synchronized bear/base/bull projections, Chart.js revenue charts, valuations by method, assumptions and source popovers. Values from different methods may disagree; they are not forced into an artificial consensus.
 
 ## Reliability and access
@@ -47,3 +47,10 @@ The opt-in `VALIDATE_DEEP_REPORTS_20261020=1` runs one private MU and VIVA3 pilo
 References:
 - https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS/
 - https://developers.openai.com/api/docs/guides/token-counting
+
+### Live validation status — October 20, 2026
+
+- MU passed the company-v10 live pilot: ten sections, five years, three scenarios, normalized earnings plus a terminal P/E cross-check. The run took 151,008 ms with some upstream research reused, 88,211 input tokens and 10,895 output tokens. Reopening the ready report took 422 ms end-to-end in the server pilot and made zero generation calls. These are observed runs, not promised cold-generation latency.
+- VIVA3 passed an earlier company-v8 pilot with five annual periods and three scenarios. A subsequent company-v10 audit rejected a sales-versus-production denominator and the accounting basis of an adjusted-margin comparison. The evidence-repair step and context/denominator tests now address that failure; the last revision still needs a live rerun.
+- The company-v11 pilots received provider HTTP 429 / `credit_balance_exhausted` before writing. No company-v11 report was saved. Automatic pilot execution has been disabled (`VALIDATE_DEEP_REPORTS_20261020=0`) to avoid repeated calls. Replenished provider credit is required for the final live validation; no billing settings were changed.
+- Local verification: 338 backend tests passed; frontend production build and TypeScript checks passed. Monetary estimates remain unknown because verified model rates were not configured.

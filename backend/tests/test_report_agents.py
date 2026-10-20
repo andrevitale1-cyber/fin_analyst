@@ -158,7 +158,7 @@ def test_real_pipeline_is_required_before_database_insert_and_preserves_privacy(
         report = reports.open_company_report(reports.OpenCompanyReport(company="META"), "user_one")["report"]
         assert report["is_public"] is False and report["pipeline"]["verification"]["passed"]
         assert any("INSERT INTO full_reports " in c.args[0] for c in cur.execute.call_args_list)
-    assert len(client.calls) == (6 if rejected else 4)
+    assert len(client.calls) == (7 if rejected else 4)
 
 
 def test_fact_cache_survives_later_failures_and_revalidates_quotes(monkeypatch):
@@ -224,6 +224,24 @@ def test_independent_audit_repairs_once_and_requires_second_approval():
     assert len(repairs) == 1
     assert repairs[0][1]["properties"]["sections"]["items"]["properties"]["id"]["enum"] == ["thesis"]
     assert len([call for call in client.calls if call[0].startswith("AGENT 3")]) == 1
+
+
+def test_fact_repair_receives_original_denominator_and_replaces_bad_interpretation():
+    from agents.report_facts import repair_fact_dossier
+    original = "A relevância em vendas dos produtos de fabricação própria considera a produção em Manaus (86,2% Vivara; 58,3% Life)."
+    sources = copy.deepcopy(SOURCES)
+    sources[0]["text"] += "\n" + original
+    raw = facts()
+    raw["facts"][0].update(statement="Manaus represents 86.2% of production.", quote="produção em Manaus (86,2% Vivara; 58,3% Life).",
+                           numeric_value=86.2, unit="percent of production", currency=None)
+    dossier = validate_dossier(raw, sources)
+    corrected = copy.deepcopy(raw)
+    corrected["facts"][0].update(statement="Own-manufactured products represent 86.2% of Vivara sales.", quote=original, unit="percent of sales")
+    client = Mock(analyze_full_report=Mock(return_value=corrected))
+    result = repair_fact_dossier(client, dossier, [{"target": "moat", "reason": "Wrong denominator", "source_ids": ["S1"]}], sources)
+    assert original in client.analyze_full_report.call_args.args[0]
+    assert result["facts"][0]["unit"] == "percent of sales"
+    assert result["facts"][0]["quote"] == original
 
 
 @pytest.mark.parametrize("locale, phrase", [("en", "Calculated base fair value"), ("pt", "Valor-base calculado")])
