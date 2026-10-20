@@ -431,7 +431,8 @@ def apply_official_financials(raw, sources):
 def ensure_company_completeness(report, sources=()):
     years = {r["period"] for r in report["financial_history"] if r["revenue"] is not None and r["net_income"] is not None}
     if len(years) < 3 or len({m["label"].casefold() for m in report["metrics"] if m.get("numeric_value") is not None}) < 4:
-        raise ReportValidationError("Insufficient financial coverage: require three annual revenue/profit periods and four metrics")
+        metrics = sum(m.get("numeric_value") is not None for m in report["metrics"])
+        raise ReportValidationError(f"Insufficient financial coverage: require three annual revenue/profit periods and four metrics; periods={sorted(years)}, numeric_metrics={metrics}")
     official = next((s for s in sources if s.get("id") == "F1" and s.get("basis") == "primary"), None)
     annual = sorted(official.get("annual_financials", []), key=lambda r: r["period"], reverse=True) if official else []
     if annual and annual[0]["values"].get("Diluted EPS", 0) > 0 and not report["valuation"]["available"]:

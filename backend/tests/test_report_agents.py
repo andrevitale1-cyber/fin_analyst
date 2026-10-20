@@ -38,6 +38,9 @@ def test_annual_tables_survive_extraction_budget_without_inventing_facts():
     compact = writing_sources({"facts": []}, sources)
     assert [s["id"] for s in compact] == ["S1", "IR2025"]
     assert compact[0]["text"] == table
+    primary = {"id": "IR2024", "text": "x" * 21000 + "ANNUAL INCOME TABLE" + "x" * 10000,
+               "basis": "primary", "document_type": "filing"}
+    assert "ANNUAL INCOME TABLE" in writing_sources({"facts": []}, [primary])[0]["text"]
 
 
 def test_original_financial_tables_reach_writer_repair_and_independent_review():
