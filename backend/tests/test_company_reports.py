@@ -112,6 +112,9 @@ def test_saved_company_report_uses_canonical_identity_instead_of_exchange_code()
     original = {"id": "weg", "scope": "company", "company": "WEGE3", "symbol": "BVMF"}
     assert reports.stored_report((original, True))["symbol"] == "WEGE3"
     assert original["symbol"] == "BVMF"
+    original["valuation"] = {"method": "Incomplete generated method..."}
+    assert reports.stored_report((original, False))["valuation"]["method"].endswith("present value.")
+    assert original["valuation"]["method"] == "Incomplete generated method..."
 
 
 def test_general_company_report_uses_public_dossier_without_user_history(monkeypatch):

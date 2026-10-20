@@ -19,7 +19,7 @@ from full_report_content import build_full_report_prompt, report_schema, validat
 from company_report_content import company_report_schema, validate_company_report
 from agents.report_facts import extract_facts, validate_dossier
 from agents.report_pipeline import generate_report, remaining
-from agents.report_valuation import calculate_valuation as calculated_company_valuation
+from agents.report_valuation import calculate_valuation as calculated_company_valuation, VALUATION_METHODS
 from company_research import collect_company_sources
 from agents.company_documents import collect_issuer_annual_sources
 from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
@@ -102,6 +102,8 @@ def stored_report(row):
     report = {**read_report(row[0]), "is_public": bool(row[1])}
     if report.get("scope") == "company":
         report["symbol"] = report["company"]
+        if report.get("valuation"):
+            report["valuation"] = {**report["valuation"], "method": VALUATION_METHODS.get(report.get("locale"), VALUATION_METHODS["en"])}
     return report
 
 
