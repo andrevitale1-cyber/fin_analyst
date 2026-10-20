@@ -1,6 +1,7 @@
 """Bounded document hydration from verified issuer/SEC hosts; never fetch arbitrary model URLs."""
 import json
 import re
+from datetime import date
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -12,6 +13,35 @@ from agents.auto_fetcher import AutoFetcher
 from openai_client import OpenAIClient, OpenAIError
 
 
+def collect_issuer_annual_sources(company, as_of):
+    """Use verified issuer catalogues for annual comparisons, independently of web summaries."""
+    fetcher = AutoFetcher()
+    ticker = fetcher.resolve_ticker(company)
+    catalog = fetcher.mziq_catalogs.get(ticker)
+    if not catalog:
+        return []
+    cutoff = date.fromisoformat(as_of)
+
+    def fetch(year):
+        for candidate in fetcher._mziq_catalog_candidates(catalog[0], [catalog[1]], year, 4)[:1]:
+            document = fetcher._download_release(candidate["url"], year, 4, depth=1, timeout=10)
+            if not document:
+                continue
+            text = document.text or OpenAIClient.extract_text(document.pdf_bytes)
+            if not fetcher._transcript_company_matches(text[:4000], ticker):
+                continue
+            # Retain opening annual comparisons and the closing financial statements.
+            bounded = text if len(text) <= 32000 else text[:16000] + "\n[... excerpt omitted ...]\n" + text[-16000:]
+            return {"id": f"IR{year}", "title": f"{ticker} annual results {year}", "url": document.url,
+                    "text": bounded, "basis": "primary", "document_type": "filing"}
+        return None
+
+    # Before the annual reporting deadline use only completed years with published comparatives.
+    latest = cutoff.year - (1 if cutoff.month >= 4 else 2)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        return [source for source in pool.map(fetch, (latest, latest - 1)) if source]
+
+
 def hydrate_company_documents(company, sources):
     catalog = json.loads((Path(__file__).resolve().parents[1] / "data/ir_map.json").read_text(encoding="utf-8"))
     issuer_host = urlsplit(catalog.get(company, "")).hostname
@@ -20,6 +50,8 @@ def hydrate_company_documents(company, sources):
     candidates = []
     kinds = set()
     for source in sources:
+        if source.get("basis") == "primary":
+            continue
         url = source.get("url", "")
         parsed = urlsplit(url)
         host = parsed.hostname

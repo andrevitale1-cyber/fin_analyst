@@ -21,6 +21,7 @@ from agents.report_facts import extract_facts, validate_dossier
 from agents.report_pipeline import generate_report, remaining
 from agents.report_valuation import calculate_valuation as calculated_company_valuation
 from company_research import collect_company_sources
+from agents.company_documents import collect_issuer_annual_sources
 from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
@@ -193,6 +194,11 @@ def company_evidence(company, model, as_of, client):
                     raise
                 cur.execute("""INSERT INTO company_research_cache (cache_key,content) VALUES (%s,%s::jsonb)
                     ON CONFLICT (cache_key) DO UPDATE SET content=EXCLUDED.content,created_at=NOW()""", (key, json.dumps(evidence)))
+            if company in AutoFetcher.mziq_catalogs and not evidence.get("issuer_documents_version"):
+                if not any(s.get("id", "").startswith("IR") for s in evidence["sources"]):
+                    evidence["sources"] = collect_issuer_annual_sources(company, as_of) + evidence["sources"]
+                evidence["issuer_documents_version"] = 1
+                cur.execute("UPDATE company_research_cache SET content=%s::jsonb WHERE cache_key=%s", (json.dumps(evidence), key))
         conn.commit()
         return evidence
     except Exception:
@@ -204,7 +210,7 @@ def company_evidence(company, model, as_of, client):
 
 def company_facts(company, model, evidence, client, *, deadline):
     # Shared across languages/users; failed writing/audits never require another paid extraction.
-    payload = ["facts-v3", company, model, evidence]
+    payload = ["facts-v4", company, model, evidence]
     key = hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     conn = connection()
     try:

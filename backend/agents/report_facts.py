@@ -93,7 +93,9 @@ Preserve period, stated numeric value, unit/scale, currency and fact-versus-guid
 The numeric_value must exactly match a numeral in the quote: 416 billion means 416, never 416000000000.
 Do not turn a quarter into a full year, ADR EPS into ordinary-share EPS, or USD into BRL.
 No recommendations or assumptions. Null means unavailable. Section IDs: {', '.join(COMPANY_SECTION_IDS)}.
-Official annual_financials are preserved separately in code; do not repeat their totals in this dossier.
+Only when a source actually has annual_financials, its totals are preserved separately in code.
+Otherwise prioritize three full fiscal years of revenue and net income, latest annual EPS, currency/scale,
+and at least four distinct numeric financial/market metrics before narrative facts. Copy table cells exactly.
 Balance coverage across the narrative sources: prioritize business/segment mix, moat, management changes,
 capital allocation, risks, guidance and independent dated market consensus. Do not let a long transcript
 crowd out shorter sources. Preserve numeric segment tables and distinct observation dates when available.
@@ -117,4 +119,16 @@ def writing_sources(dossier, sources):
             result.append(source)
         elif facts:
             result.append({**source, "text": json.dumps(facts, ensure_ascii=False)})
+        if not source.get("annual_financials"):
+            # Financial tables must survive extraction even when the compact fact budget omits their rows.
+            tables = [block for block in source["text"].split("\n\n") if "|" in block
+                      and re.search(r"revenue|receita|net income|lucro", block, re.I)
+                      and len(set(re.findall(r"\b20\d{2}\b", block))) >= 3]
+            raw = source["text"] if source.get("basis") == "primary" and source.get("document_type") == "filing" else "\n\n".join(tables)
+            if raw:
+                excerpt = raw if len(raw) <= 18000 else raw[:9000] + "\n[... excerpt omitted ...]\n" + raw[-9000:]
+                if facts:
+                    result[-1]["text"] += "\n\nORIGINAL FINANCIAL EVIDENCE:\n" + excerpt
+                else:
+                    result.append({**source, "text": excerpt})
     return result

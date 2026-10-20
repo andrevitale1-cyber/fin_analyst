@@ -9,7 +9,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from agents.report_facts import validate_dossier, extract_facts
+from agents.report_facts import validate_dossier, extract_facts, writing_sources
 from agents.report_pipeline import generate_report
 from agents.report_verifier import check_consistency
 from company_research import collect_transcript_sources
@@ -28,6 +28,16 @@ def facts():
                        "sections": ["financials", "valuation", "thesis"]}
                       for quote, amount in [("Annual EPS USD 2.50.", 2.5), ("Revenue was USD 10 billion in FY2025.", None),
                                             ("Operating cash flow was positive in FY2025.", None)]], "gaps": []}
+
+
+def test_annual_tables_survive_extraction_budget_without_inventing_facts():
+    table = "| Year | Revenue | Net income |\n|2023|100|10|\n|2024|120|12|\n|2025|150|15|"
+    sources = [{"id": "S1", "text": table, "basis": "web_research"},
+               {"id": "IR2025", "text": "Original Vivara annual financial statements", "basis": "primary", "document_type": "filing"},
+               {"id": "S2", "text": "Unrelated prose", "basis": "web_research"}]
+    compact = writing_sources({"facts": []}, sources)
+    assert [s["id"] for s in compact] == ["S1", "IR2025"]
+    assert compact[0]["text"] == table
 
 
 class AgentClient:

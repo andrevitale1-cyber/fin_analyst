@@ -31,6 +31,20 @@ SOURCES = [{"id": "S1", "title": "SEC annual facts", "url": "https://data.sec.go
             "text": "Full-year EPS was USD 2.50.", "basis": "primary"}]
 
 
+def test_cached_brazilian_research_is_enriched_without_repeating_paid_web_search(monkeypatch):
+    conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
+    evidence = {"as_of": "2026-10-20", "sources": SOURCES}
+    cur.fetchone.return_value = (evidence,)
+    monkeypatch.setattr(reports, "connection", lambda: conn)
+    collect = Mock(return_value=[{"id": "IR2025", "basis": "primary", "text": "Verified annual comparisons"}])
+    monkeypatch.setattr(reports, "collect_issuer_annual_sources", collect)
+    monkeypatch.setattr(reports, "collect_company_sources", Mock(side_effect=AssertionError("Reuse web dossier")))
+    result = reports.company_evidence("VIVA3", "model", "2026-10-20", Mock())
+    assert result["sources"][0]["id"] == "IR2025" and result["issuer_documents_version"] == 1
+    reports.company_evidence("VIVA3", "model", "2026-10-20", Mock())
+    collect.assert_called_once_with("VIVA3", "2026-10-20")
+
+
 def test_company_cache_scopes_week_model_language_and_canonical_names():
     assert reports.canonical_company("Microsoft") == "MSFT"
     assert reports.canonical_company("Micron") == "MU"

@@ -52,3 +52,27 @@ def test_matching_sec_filing_with_filename_title_is_not_skipped(monkeypatch):
     report = documents.hydrate_company_documents("NKE", [F1, source])
     get.assert_called_once()
     assert report[1]["basis"] == "primary"
+
+
+def test_annual_issuer_collection_uses_verified_catalogue_and_preserves_comparatives(monkeypatch):
+    from agents.sec_fetcher import FetchedDocument
+    catalog = Mock(return_value=[{"url": "https://api.mziq.com/verified.pdf"}])
+    download = Mock(return_value=FetchedDocument("https://api.mziq.com/verified.pdf", "RI", text="Vivara 4T25 Receita 2025 2024"))
+    monkeypatch.setattr(documents.AutoFetcher, "_mziq_catalog_candidates", catalog)
+    monkeypatch.setattr(documents.AutoFetcher, "_download_release", download)
+    sources = documents.collect_issuer_annual_sources("VIVA3", "2026-10-20")
+    assert {s["id"] for s in sources} == {"IR2025", "IR2024"}
+    assert all(s["basis"] == "primary" and "2024" in s["text"] for s in sources)
+    assert {call.args[2:] for call in catalog.call_args_list} == {(2025, 4), (2024, 4)}
+    assert all(call.kwargs["timeout"] == 10 for call in download.call_args_list)
+    download.return_value = FetchedDocument("https://api.mziq.com/verified.pdf", "RI", text="Other company results")
+    assert documents.collect_issuer_annual_sources("VIVA3", "2026-10-20") == []
+
+
+def test_verified_primary_documents_are_not_downloaded_again(monkeypatch):
+    get = Mock(side_effect=AssertionError("Already fetched"))
+    monkeypatch.setattr(documents.requests, "get", get)
+    source = {"id": "IR2025", "basis": "primary", "document_type": "filing", "text": "Annual evidence",
+              "title": "Vivara annual results", "url": "https://ri.vivara.com.br/results"}
+    assert documents.hydrate_company_documents("VIVA3", [source])[0] == source
+    get.assert_not_called()

@@ -6,7 +6,7 @@ from time import perf_counter
 from urllib.parse import urlsplit
 
 from company_financials import get_sec_company_source
-from agents.company_documents import hydrate_company_documents
+from agents.company_documents import hydrate_company_documents, collect_issuer_annual_sources
 from openai_client import OpenAIError
 
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ def research_prompt(company, as_of):
     return f"""Research the publicly listed company identified by {company}, as of {as_of}.
 Verify the issuer and listing; do not substitute a similarly named company. Research the company as a whole across multiple fiscal years; a recent quarterly release is supporting evidence, never the entire scope. Use current public sources,
 prioritizing its investor relations, annual filings and latest results, plus reputable financial/news sources.
-Gather a compact evidence dossier, not an investment recommendation. SEC annual financial history is collected separately when available; prioritize the latest segment/geography revenue table, customers, management, competitors and current market figures in the web-search budget. Retain historical series if found, but do not spend all searches repeating annual totals. Report segment and geography amounts, common period, currency and shares in percentage points (51.5 means 51.5%, not 0.515); identify whether each breakdown is complete. Cover:
+Gather a compact evidence dossier, not an investment recommendation. For US/SEC issuers annual history is collected separately when available. For B3 issuers do NOT assume SEC coverage: prioritize a compact three-year annual revenue/net-income/EPS table from original annual results, including currency and scale. Then gather the latest segment/geography revenue table, customers, management, competitors and current market figures. Report segment and geography amounts, common period, currency and shares in percentage points (51.5 means 51.5%, not 0.515); identify whether each breakdown is complete. Cover:
 business model, customers, revenue by segment and geography; 3–5 full fiscal years of revenue,
 net income and free cash flow (reported currency and units), annual/TTM diluted EPS and period;
 profitability, cash, debt, returns on capital; competitors and durable advantages;
@@ -121,14 +121,16 @@ def cited_sources(response, *, minimum=3):
 
 def collect_company_sources(client, company, as_of):
     started = perf_counter()
-    with ThreadPoolExecutor(max_workers=3) as pool:
+    with ThreadPoolExecutor(max_workers=4) as pool:
         financials = pool.submit(get_sec_company_source, company, as_of)
+        issuer_annuals = pool.submit(collect_issuer_annual_sources, company, as_of)
         transcript = pool.submit(collect_transcript_sources, client, company, as_of)
         # Allow bounded web research to finish before synthesis, within the page's 330s budget.
         sources = cited_sources(client.research_company(research_prompt(company, as_of), timeout=120))
         web_ms = round((perf_counter() - started) * 1000)
         official = financials.result()
         call_sources = transcript.result()
+        annual_sources = issuer_annuals.result()
     base_ms = round((perf_counter() - started) * 1000)
     if not has_market_evidence(sources):
         try:
@@ -155,7 +157,7 @@ def collect_company_sources(client, company, as_of):
             call_source["id"] = f"S{len(sources) + 1}"
             sources.append(call_source)
             by_url[call_source["url"]] = call_source
-    return hydrate_company_documents(company, ([official] if official else []) + sources)
+    return hydrate_company_documents(company, ([official] if official else []) + annual_sources + sources)
 
 
 def collect_transcript_sources(client, company, as_of):
