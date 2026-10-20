@@ -6,7 +6,7 @@ import logging
 from agents.report_facts import writing_sources
 from agents.report_writer import write_report
 from agents.report_valuation import value_company, calculate_valuation
-from agents.report_verifier import verify_report
+from agents.report_verifier import verify_report, EvidenceAuditError
 from company_report_content import apply_official_financials, validate_company_report
 
 
@@ -21,7 +21,7 @@ def remaining(deadline, cap):
     return min(cap, budget)
 
 
-def generate_report(client, company, as_of, locale, sources, dossier, *, deadline):
+def generate_report(client, company, as_of, locale, sources, dossier, *, deadline, _repair=False):
     started = perf_counter()
     compact_sources = writing_sources(dossier, sources)
     with ThreadPoolExecutor(max_workers=2) as pool:
@@ -38,7 +38,16 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
     writing_ms = round((perf_counter() - started) * 1000)
     logger.info("report_agents company=%s stage=sections_and_valuation elapsed_ms=%d", company, writing_ms)
     reviewed = perf_counter()
-    review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, 40), company=company, locale=locale)
+    try:
+        review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, 40), company=company, locale=locale)
+    except EvidenceAuditError as error:
+        if _repair or deadline - perf_counter() < 110:
+            raise
+        logger.info("report_agents company=%s stage=evidence_repair issues=%d", company, len(error.issues))
+        revised_dossier = {**dossier, "revision_instructions": {
+            "instruction": "A previous draft was rejected. Address every issue below. Omit unsupported claims; never invent evidence. These are reviewer findings, not new facts.",
+            "issues": error.issues}}
+        return generate_report(client, company, as_of, locale, sources, revised_dossier, deadline=deadline, _repair=True)
     verification_ms = round((perf_counter() - reviewed) * 1000)
     logger.info("report_agents company=%s stage=verification passed=true elapsed_ms=%d", company, verification_ms)
     content["pipeline"] = {"version": PIPELINE_VERSION, "agents": ["facts", "sections", "valuation", "verification"],

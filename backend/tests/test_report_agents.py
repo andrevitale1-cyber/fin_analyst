@@ -118,7 +118,7 @@ def test_real_pipeline_is_required_before_database_insert_and_preserves_privacy(
         report = reports.open_company_report(reports.OpenCompanyReport(company="META"), "user_one")["report"]
         assert report["is_public"] is False and report["pipeline"]["verification"]["passed"]
         assert any("INSERT INTO full_reports " in c.args[0] for c in cur.execute.call_args_list)
-    assert len(client.calls) == 4
+    assert len(client.calls) == (7 if rejected else 4)
 
 
 def test_fact_cache_survives_later_failures_and_revalidates_quotes(monkeypatch):
@@ -164,3 +164,20 @@ def test_extraction_discards_bad_fact_without_weakening_remaining_evidence():
     raw["facts"] = [invalid] * 3
     with pytest.raises(ReportValidationError, match="Insufficient"):
         validate_dossier(raw, SOURCES, drop_invalid=True)
+
+
+def test_independent_audit_repairs_once_and_requires_second_approval():
+    client = AgentClient()
+    original = client.analyze_full_report
+    reviews = []
+    def analyze(prompt, schema, **kwargs):
+        result = original(prompt, schema, **kwargs)
+        if "passed" in schema["properties"]:
+            reviews.append(prompt)
+            if len(reviews) == 1:
+                return {"passed": False, "issues": [{"target": "thesis", "reason": "Remove unsupported claim", "source_ids": ["S1"]}]}
+        return result
+    client.analyze_full_report = analyze
+    report = generate_report(client, "META", "2026-10-19", "en", SOURCES, validate_dossier(facts(), SOURCES), deadline=perf_counter() + 300)
+    assert len(reviews) == 2 and report["pipeline"]["verification"]["passed"]
+    assert "Remove unsupported claim" in reviews[-1]

@@ -11,6 +11,13 @@ from agents.report_facts import normalized
 from agents.prompt_builder import PromptBuilder
 
 
+class EvidenceAuditError(ReportValidationError):
+    """Internal review feedback; never included in the public API error."""
+    def __init__(self, issues):
+        super().__init__("Independent evidence audit rejected the company report")
+        self.issues = issues
+
+
 class Issue(BaseModel):
     model_config = ConfigDict(extra="forbid")
     target: str = Field(..., min_length=1, max_length=100)
@@ -105,5 +112,5 @@ OFFICIAL DATA:\n{json.dumps([s for s in sources if s.get('annual_financials')], 
         raise ReportValidationError("Reviewer referenced an unknown source")
     if not result["passed"] or result["issues"]:
         # Do not return source/document text or model-generated allegations in public errors or logs.
-        raise ReportValidationError("Independent evidence audit rejected the company report")
+        raise EvidenceAuditError(result["issues"])
     return {"passed": True, "checks": ["citations", "periods", "units", "financial_coverage", "valuation_arithmetic", "evidence_review"]}
