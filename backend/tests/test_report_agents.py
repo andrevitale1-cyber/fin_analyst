@@ -138,3 +138,16 @@ def test_transcript_search_is_bounded_and_absence_never_invents_call_content():
     client = Mock(); client.research_company.return_value = {"status": "completed", "output": []}
     assert collect_transcript_sources(client, "META", "2026-10-19") == []
     assert client.research_company.call_args.kwargs == {"max_tool_calls": 1, "max_output_tokens": 900, "timeout": 25}
+
+
+def test_fact_extraction_omits_editorial_grading_and_bounds_long_transcripts():
+    client = AgentClient()
+    api = Mock(side_effect=client.analyze_full_report)
+    client.analyze_full_report = api
+    sources = [*SOURCES, {"id": "T1", "basis": "transcript", "title": "Apple earnings call", "url": "https://example.com/call",
+                         "text": "CALL OPENING " + "x" * 30000 + " Q&A END"}]
+    extract_facts(client, "AAPL", "2026-10-20", sources)
+    prompt = api.call_args.args[0]
+    assert "CALL OPENING" in prompt and "Q&A END" in prompt
+    assert "x" * 20000 not in prompt and "40/25/20/15" not in prompt
+    assert api.call_args.kwargs["max_output_tokens"] == 2800

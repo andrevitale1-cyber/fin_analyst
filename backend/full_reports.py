@@ -116,7 +116,7 @@ class OpenCompanyReport(BaseModel):
     locale: Literal["en", "pt"] = "pt"
 
 
-def generation_failure(exc, locale, *, analysis_id=None, company=None, stage=None):
+def generation_failure(exc, locale, *, analysis_id=None, company=None, stage=None, model=None):
     # Record diagnostic identifiers, never source text or Pydantic input values.
     validation = []
     if isinstance(exc, ValidationError):
@@ -129,7 +129,7 @@ def generation_failure(exc, locale, *, analysis_id=None, company=None, stage=Non
     if isinstance(exc, (OpenAIError, ValueError, TimeoutError)):
         logger.warning("full_report_failed analysis_id=%s company=%s error_type=%s provider_status=%s provider_code=%s provider_param=%s request_id=%s validation=%s stage=%s model=%s",
                        analysis_id, company, type(exc).__name__, getattr(exc, "status_code", None),
-                       getattr(exc, "code", None), getattr(exc, "param", None), getattr(exc, "request_id", None), validation, stage, model_for_task("full_report"))
+                       getattr(exc, "code", None), getattr(exc, "param", None), getattr(exc, "request_id", None), validation, stage, model or model_for_task("full_report"))
         if isinstance(exc, TimeoutError):
             return HTTPException(504, "Researching this company took longer than expected. Please try again in a moment." if locale == "en" else
                                  "A pesquisa desta empresa demorou mais que o esperado. Tente novamente em instantes.")
@@ -269,12 +269,15 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
                 sources = evidence["sources"]
                 stage = "extraction"
                 step = perf_counter()
-                dossier = company_facts(company, model, evidence, client, deadline=started + 315)
+                facts_client = OpenAIClient(task="analysis")
+                dossier = company_facts(company, model_for_task("analysis"), evidence, facts_client, deadline=started + 315)
                 timings["extraction_ms"] = round((perf_counter() - step) * 1000)
                 stage = "synthesis"
                 step = perf_counter()
                 content = generate_report(client, company, evidence["as_of"], body.locale, sources, dossier,
                                           deadline=started + 315)
+                if "pipeline" in content:
+                    content["pipeline"]["facts_model"] = model_for_task("analysis")
                 timings["synthesis_ms"] = round((perf_counter() - step) * 1000)
                 stage = "validation"
                 if body.locale == "pt" and not content["valuation"]["available"]:
@@ -300,7 +303,8 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
     except Exception as exc:
         conn.rollback()
         cancel_usage(ticket)
-        raise generation_failure(exc, body.locale, company=company, stage=stage) from None
+        raise generation_failure(exc, body.locale, company=company, stage=stage,
+                                 model=model_for_task("analysis") if stage == "extraction" else model) from None
     finally:
         conn.close()
         timing_logger.info("full_report_timing company=%s model=%s stage=%s total_ms=%d timings=%s",

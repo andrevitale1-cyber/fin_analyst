@@ -47,6 +47,10 @@ def test_extraction_writing_and_audit_share_methodology_while_valuation_stays_sp
         if prompt.startswith("AGENT 3"):
             assert "SHARED QUARTERLY ANALYSIS METHODOLOGY" not in prompt
             assert "bear/base/bull" in prompt
+        elif prompt.startswith("AGENT 1"):
+            assert "shared quarterly/full-report fields" in prompt
+            assert "Backlog" in prompt and "assign scores" in prompt
+            assert "QUALITATIVE CATEGORY RATING SCALE" not in prompt
         else:
             assert "SHARED QUARTERLY ANALYSIS METHODOLOGY" in prompt
             assert "Backlog" in prompt and "não reduza a nota apenas pela existência de M&A" in prompt

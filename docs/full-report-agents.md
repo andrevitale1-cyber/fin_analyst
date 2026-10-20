@@ -13,7 +13,7 @@ Os agentes são módulos Python executados pelo serviço atual do Render. Não e
 
 ## Cache, custo e privacidade
 
-- O modelo segue `OPENAI_FULL_REPORT_MODEL`, preservando a configuração dinâmica existente.
+- A extração de fatos usa `OPENAI_ANALYSIS_MODEL` (Luna por padrão); redação, valuation e auditoria seguem `OPENAI_FULL_REPORT_MODEL` (Sol por padrão). O cache do dossiê identifica o modelo efetivamente usado.
 - Uma geração nova usa quatro chamadas estruturadas: extração, redação, valuation e auditoria, além da coleta limitada. Redação e valuation rodam em paralelo. Não há pesquisa independente por seção nem repetição automática de gerações rejeitadas.
 - Pesquisa, dossiê e relatório têm cache compartilhado de dados públicos. O dossiê usa a versão da extração, modelo e conteúdo das fontes na chave; pode ser reaproveitado entre idiomas e após falhas posteriores.
 - O orçamento da rota é de 315 segundos. Cada chamada tem seu próprio limite; o fluxo não inicia novas etapas quando o orçamento acaba.

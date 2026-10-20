@@ -122,7 +122,7 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     assert all("text" not in source for source in report["sources"])
     assert not any("historico" in call.args[0] or "analysis_documents" in call.args[0] for call in cur.execute.call_args_list)
     assert ai.analyze_full_report.call_args.kwargs == {"max_output_tokens": 11000, "timeout": 120}
-    factory.assert_called_once_with(task="full_report")
+    assert [call.kwargs for call in factory.call_args_list] == [{"task": "full_report"}, {"task": "analysis"}]
     assert evidence.call_args.args[1] == reports.model_for_task("full_report")
     conn.commit.assert_called_once()
     _, company, _, stage, duration, timings = timing.call_args.args

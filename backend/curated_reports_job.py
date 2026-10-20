@@ -58,10 +58,39 @@ def curate():
 
 
 def start_if_enabled():
+    if os.getenv("VALIDATE_APPLE_REPORT_20261020") == "1":
+        Thread(target=validate_apple_report, name="validate-apple-report", daemon=True).start()
     if os.getenv("REPAIR_REPORT_COVERAGE_20261019") == "1":
         Thread(target=repair_reports, name="repair-report-coverage", daemon=True).start()
     if os.getenv("CURATE_PUBLIC_REPORTS_20261019") == "1":
         Thread(target=curate, name="curated-public-reports", daemon=True).start()
+
+
+def validate_apple_report():
+    """One private, metered-cost validation of the user-reported failure; never publish it."""
+    from full_reports import connection, open_company_report, OpenCompanyReport
+    conn = connection()
+    conn.autocommit = True
+    task = "report-agents-AAPL-20261020-1"
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT pg_try_advisory_lock(hashtext(%s))", (task,))
+            if not cur.fetchone()[0]:
+                return
+            cur.execute("CREATE TABLE IF NOT EXISTS maintenance_tasks (id TEXT PRIMARY KEY, state TEXT NOT NULL, report_id TEXT, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())")
+            cur.execute("SELECT state FROM maintenance_tasks WHERE id=%s", (task,))
+            if cur.fetchone():
+                return  # One attempt only, including failures; restarting must not repeat paid calls.
+            cur.execute("INSERT INTO maintenance_tasks(id,state) VALUES (%s,'running')", (task,))
+            result = open_company_report(OpenCompanyReport(company="AAPL", locale="en"), SessionUser("public-demo-curator", plan="premium"))
+            cur.execute("UPDATE maintenance_tasks SET state='completed',report_id=%s,updated_at=NOW() WHERE id=%s", (result["report"]["id"], task))
+            logger.info("apple_report_validation completed report_id=%s", result["report"]["id"])
+    except Exception as exc:
+        logger.error("apple_report_validation failed error_type=%s", type(exc).__name__)
+        with conn.cursor() as cur:
+            cur.execute("UPDATE maintenance_tasks SET state='failed',updated_at=NOW() WHERE id=%s", (task,))
+    finally:
+        conn.close()
 
 
 def repair_reports():

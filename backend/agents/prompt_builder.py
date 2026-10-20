@@ -98,6 +98,17 @@ Use exatamente estas quatro seções, nesta ordem:
 
         return sector_rules
 
+    def company_extraction_rules(self, ticker):
+        fields = "\n".join(f"{key}: {value}" for key, value in QUARTERLY_FIELDS.items())
+        return f"""Collect the source inputs needed for these shared quarterly/full-report fields:
+{fields}
+SECTOR: {self.get_sector(ticker)}
+{self.sector_rules(ticker)}
+Extract only disclosed facts, comparisons and source quotes. Do not write paragraphs, assess quality,
+assign scores, apply weighting formulas or produce editorial tables. Preserve reported versus guidance,
+organic versus acquired growth, recurring versus nonrecurring effects, cash costs and dilution.
+If a metric is not disclosed, record a concise gap rather than inventing it."""
+
     def company_field_rules(self, ticker, locale="pt"):
         quality = QUALITY_RULES.replace("Em cada seção 1 a 4", "Nos campos de receita, margens, capital/risco e lucro")
         quality = quality.replace("evidências do release", "evidências dos documentos fornecidos")

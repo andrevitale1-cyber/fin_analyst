@@ -55,3 +55,18 @@ def test_repairs_keep_public_ids_and_only_replace_after_successful_generation(mo
     saved=json.loads(updates[0].args[1][0])
     assert saved["id"]=="4d25c3c1-3e7d-4685-b9c1-13a2a2495192" and saved["is_public"]
     assert "AND is_public" in updates[0].args[0]
+
+
+def test_apple_validation_runs_once_without_publishing_or_repeating_failed_paid_calls(monkeypatch):
+    conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
+    cur.fetchone.side_effect = [(True,), None]
+    monkeypatch.setattr(reports, "connection", lambda: conn)
+    generation = Mock(return_value={"report": {"id": "private-apple", "is_public": False}})
+    monkeypatch.setattr(reports, "open_company_report", generation)
+    job.validate_apple_report()
+    assert generation.call_args.args[0].company == "AAPL"
+    assert any("state='completed'" in call.args[0] for call in cur.execute.call_args_list)
+    assert not any("UPDATE full_reports" in call.args[0] or "INSERT INTO full_reports" in call.args[0] for call in cur.execute.call_args_list)
+    cur.fetchone.side_effect = [(True,), ("failed",)]
+    job.validate_apple_report()
+    generation.assert_called_once()
