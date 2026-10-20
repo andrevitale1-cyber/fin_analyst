@@ -70,3 +70,21 @@ def test_apple_validation_runs_once_without_publishing_or_repeating_failed_paid_
     cur.fetchone.side_effect = [(True,), ("failed",)]
     job.validate_apple_report()
     generation.assert_called_once()
+
+
+def test_apple_validation_keeps_audit_diagnostics_internal(monkeypatch):
+    from agents.report_verifier import EvidenceAuditError
+    from fastapi import HTTPException
+    conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
+    cur.fetchone.side_effect = [(True,), None]
+    monkeypatch.setattr(reports, "connection", lambda: conn)
+    issues = [{"target": "management", "reason": "Outdated role", "source_ids": ["S1"]}]
+    def fail(*args):
+        try:
+            raise EvidenceAuditError(issues)
+        except EvidenceAuditError:
+            raise HTTPException(502, "Generic public error") from None
+    monkeypatch.setattr(reports, "open_company_report", fail)
+    job.validate_apple_report()
+    failed = next(c for c in cur.execute.call_args_list if "diagnostics=%s" in c.args[0])
+    assert json.loads(failed.args[1][0])["audit_issues"] == issues

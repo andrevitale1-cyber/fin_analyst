@@ -150,7 +150,7 @@ def test_fact_extraction_omits_editorial_grading_and_bounds_long_transcripts():
     prompt = api.call_args.args[0]
     assert "CALL OPENING" in prompt and "Q&A END" in prompt
     assert "x" * 20000 not in prompt and "40/25/20/15" not in prompt
-    assert api.call_args.kwargs["max_output_tokens"] == 2800
+    assert api.call_args.kwargs["max_output_tokens"] == 3600
 
 
 def test_extraction_discards_bad_fact_without_weakening_remaining_evidence():

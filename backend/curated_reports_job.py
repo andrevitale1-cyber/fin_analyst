@@ -71,13 +71,14 @@ def validate_apple_report():
     from full_reports import connection, open_company_report, OpenCompanyReport
     conn = connection()
     conn.autocommit = True
-    task = "report-agents-AAPL-20261020-3"
+    task = "report-agents-AAPL-20261020-4"
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT pg_try_advisory_lock(hashtext(%s))", (task,))
             if not cur.fetchone()[0]:
                 return
             cur.execute("CREATE TABLE IF NOT EXISTS maintenance_tasks (id TEXT PRIMARY KEY, state TEXT NOT NULL, report_id TEXT, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())")
+            cur.execute("ALTER TABLE maintenance_tasks ADD COLUMN IF NOT EXISTS diagnostics JSONB")
             cur.execute("SELECT state FROM maintenance_tasks WHERE id=%s", (task,))
             if cur.fetchone():
                 return  # One attempt only, including failures; restarting must not repeat paid calls.
@@ -88,7 +89,12 @@ def validate_apple_report():
     except Exception as exc:
         logger.error("apple_report_validation failed error_type=%s", type(exc).__name__)
         with conn.cursor() as cur:
-            cur.execute("UPDATE maintenance_tasks SET state='failed',updated_at=NOW() WHERE id=%s", (task,))
+            cause = exc.__context__
+            diagnostics = {"error_type": type(cause or exc).__name__}
+            if cause is not None and hasattr(cause, "issues"):
+                diagnostics["audit_issues"] = cause.issues
+            cur.execute("UPDATE maintenance_tasks SET state='failed',diagnostics=%s::jsonb,updated_at=NOW() WHERE id=%s",
+                        (json.dumps(diagnostics), task))
     finally:
         conn.close()
 

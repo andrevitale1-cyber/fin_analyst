@@ -25,8 +25,8 @@ from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
-COMPANY_REPORT_VERSION = "company-v6"
-RESEARCH_VERSION = "company-v5"  # Prompt-only changes reuse the previously collected public documents.
+COMPANY_REPORT_VERSION = "company-v7"
+RESEARCH_VERSION = "company-v6"  # Prompt-only changes reuse the previously collected public documents.
 logger = logging.getLogger(__name__)
 timing_logger = logging.getLogger("uvicorn.error")
 
@@ -204,7 +204,7 @@ def company_evidence(company, model, as_of, client):
 
 def company_facts(company, model, evidence, client, *, deadline):
     # Shared across languages/users; failed writing/audits never require another paid extraction.
-    payload = ["facts-v2", company, model, evidence]
+    payload = ["facts-v3", company, model, evidence]
     key = hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     conn = connection()
     try:

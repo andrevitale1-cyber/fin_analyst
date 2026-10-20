@@ -31,7 +31,7 @@ def hydrate_company_documents(company, sources):
         if (kind in kinds or parsed.scheme != "https" or not (trusted_sec or trusted_issuer or trusted_transcript)
                 or source.get("id") == "F1" or not AutoFetcher._valid_url(url)):
             continue
-        if not transcript and not re.search(r"10-k|20-f|annual|anual|10-q|earnings|result", source.get("title", ""), re.I):
+        if not transcript and not trusted_sec and not re.search(r"10-k|20-f|annual|anual|10-q|earnings|result", source.get("title", ""), re.I):
             continue
         candidates.append((source, kind, bool(trusted_sec or trusted_issuer)))
         kinds.add(kind)

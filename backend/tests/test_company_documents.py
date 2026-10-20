@@ -44,3 +44,11 @@ def test_redirects_and_oversized_documents_preserve_research_without_fetching_th
         result = documents.hydrate_company_documents("NKE", [F1, source])
         assert result[1]["text"] == "research note" and result[1]["basis"] == "web_research"
         get.assert_called_once()
+
+
+def test_matching_sec_filing_with_filename_title_is_not_skipped(monkeypatch):
+    get = install_response(monkeypatch)
+    source = {"id": "S1", "title": "nke-20260531", "url": "https://www.sec.gov/Archives/edgar/data/320187/nke-20260531.htm", "text": "notes", "basis": "web_research"}
+    report = documents.hydrate_company_documents("NKE", [F1, source])
+    get.assert_called_once()
+    assert report[1]["basis"] == "primary"

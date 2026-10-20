@@ -70,3 +70,15 @@ def test_official_filings_and_missing_or_undated_consensus_do_not_replace_market
                   {"text": "No analyst consensus available as of 2026-10-15; USD 500 revenue."},
                   {"text": "Consensus rating Buy, analyst target USD 500, observation date unavailable."}):
         assert not research.has_market_evidence([{**source, **patch}])
+
+
+@pytest.mark.parametrize("prefix", ["Sources:", "Evidence:", "Market source:"])
+def test_citation_attribution_retains_its_preceding_table_without_unrelated_prose(prefix):
+    unrelated = "UNSUPPORTED assertion without citation."
+    table = "| Segment | Revenue |\n|---|---|\n| Services | USD 100 billion |"
+    text = unrelated + "\n\n## Segment mix\n\n" + table + "\n\n" + prefix + " Annual results [1]."
+    response = {"status": "completed", "output": [{"content": [{"type": "output_text", "text": text,
+        "annotations": [{"type": "url_citation", "url": "https://issuer.example/results", "title": "Annual results",
+                         "start_index": text.index("[1]"), "end_index": len(text)}]}]}]}
+    source = research.cited_sources(response, minimum=1)[0]
+    assert table in source["text"] and unrelated not in source["text"]
