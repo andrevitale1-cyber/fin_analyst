@@ -21,14 +21,14 @@ from agents.report_facts import extract_facts, validate_dossier
 from agents.report_pipeline import generate_report, remaining
 from agents.report_model import baseline_from_sources, model_assumptions, calculate_model, VERSION as MODEL_VERSION
 from agents.report_valuation import calculate_valuation as calculated_company_valuation, VALUATION_METHODS
-from company_research import collect_deep_company_sources as collect_company_sources, evidence_manifest
+from company_research import collect_deep_company_sources as collect_company_sources, evidence_manifest, recover_market_sources
 from report_runtime import checkpoint, progress, record_run
 from agents.company_documents import collect_issuer_annual_sources
 from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
 router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
 PROMPT_VERSION = "thesis-v1"
-COMPANY_REPORT_VERSION = "company-v9"
+COMPANY_REPORT_VERSION = "company-v10"
 RESEARCH_VERSION = "company-v7"
 logger = logging.getLogger(__name__)
 timing_logger = logging.getLogger("uvicorn.error")
@@ -207,6 +207,21 @@ def company_evidence(company, model, as_of, client):
                 ids = {s["id"] for s in annuals}
                 evidence["sources"] = annuals + [s for s in evidence["sources"] if s["id"] not in ids]
                 evidence["issuer_documents_version"] = 2
+                cur.execute("UPDATE company_research_cache SET content=%s::jsonb WHERE cache_key=%s", (json.dumps(evidence), key))
+            if evidence.get("coverage", {}).get("has_market_consensus") is False and not evidence.get("market_recovery_version"):
+                extra = recover_market_sources(client, company, as_of)
+                by_url = {s["url"]: s for s in evidence["sources"]}
+                for source in extra:
+                    if source["url"] in by_url:
+                        existing_source = by_url[source["url"]]
+                        if existing_source.get("basis") != "primary":
+                            existing_source["text"] = (source["text"] + "\n\n" + existing_source["text"])[:24000]
+                    else:
+                        source = {**source, "id": f"M{len(by_url) + 1}", "retrieved_at": as_of}
+                        evidence["sources"].append(source)
+                        by_url[source["url"]] = source
+                evidence["coverage"] = evidence_manifest(evidence["sources"])
+                evidence["market_recovery_version"] = 1
                 cur.execute("UPDATE company_research_cache SET content=%s::jsonb WHERE cache_key=%s", (json.dumps(evidence), key))
         conn.commit()
         return evidence

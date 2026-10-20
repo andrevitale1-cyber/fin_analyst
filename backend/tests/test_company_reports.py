@@ -23,6 +23,7 @@ def isolate_usage_service(monkeypatch):
     monkeypatch.setattr(reports, "generate_report", stub_pipeline)
     monkeypatch.setattr(reports, "reserve_usage", lambda *args: None)
     monkeypatch.setattr(reports, "cancel_usage", lambda *args: None)
+    monkeypatch.setattr(reports, "recover_market_sources", lambda *args: [])
     monkeypatch.setattr(research, "collect_transcript_sources", lambda *a: [])
     monkeypatch.setattr(research, "hydrate_company_documents", lambda company, sources: sources)
 
@@ -133,7 +134,7 @@ def test_general_company_report_uses_public_dossier_without_user_history(monkeyp
     assert report["scope"] == report["kind"] == "company"
     assert report["symbol"] == "META"
     assert report["as_of"] == "2026-10-12" and report["is_public"] is False
-    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v9"
+    assert report["report_version"] == reports.report_summary(report)["report_version"] == "company-v10"
     assert report["score"] == 4 and len(report["sections"]) == 10
     assert report["valuation"]["fair_value"] > 0
     assert all("text" not in source for source in report["sources"])
@@ -199,6 +200,25 @@ def test_research_is_committed_independently_and_cache_hit_never_repeats_search(
     second = reports.company_evidence("META", "model", "2026-10-13", Mock())
     assert second == first and collect.call_count == 1
     assert conn.commit.call_count == 2
+
+
+def test_market_recovery_enriches_cached_evidence_once_without_changing_original_financials(monkeypatch):
+    conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
+    evidence = {"as_of": "2026-10-20", "sources": [dict(SOURCES[0])], "coverage": {"has_market_consensus": False}}
+    cur.fetchone.return_value = (evidence,)
+    monkeypatch.setattr(reports, "connection", lambda: conn)
+    collect = Mock(side_effect=AssertionError("Do not repeat financial research"))
+    monkeypatch.setattr(reports, "collect_company_sources", collect)
+    recovery = Mock(return_value=[{**SOURCES[0], "text": "Not an original financial statement"},
+        {"id": "S1", "title": "Independent consensus", "url": "https://www.marketscreener.com/quote/stock/example",
+         "basis": "web_research", "text": "As of 2026-10-20, analyst consensus rating Buy; mean price target BRL 40 from 10 analysts."}])
+    monkeypatch.setattr(reports, "recover_market_sources", recovery)
+    first = reports.company_evidence("META", "model", "2026-10-20", Mock())
+    second = reports.company_evidence("META", "model", "2026-10-20", Mock())
+    recovery.assert_called_once()
+    assert first == second and first["coverage"]["has_market_consensus"]
+    assert first["sources"][0]["text"] == SOURCES[0]["text"]
+    assert len({s["id"] for s in first["sources"]}) == len(first["sources"])
 
 
 def test_unsupported_company_research_has_shared_cooldown_instead_of_repeated_paid_search(monkeypatch):

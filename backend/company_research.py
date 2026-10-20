@@ -15,11 +15,15 @@ logger = logging.getLogger(__name__)
 timing_logger = logging.getLogger("uvicorn.error")
 MARKET_PROVIDERS = ("yahoo.com", "stockanalysis.com", "marketbeat.com", "nasdaq.com", "reuters.com", "cnbc.com",
                     "wsj.com", "ft.com", "barrons.com", "tipranks.com", "investing.com", "marketscreener.com",
-                    "morningstar.com", "zacks.com", "benzinga.com", "marketwatch.com", "seekingalpha.com")
+                    "morningstar.com", "zacks.com", "benzinga.com", "marketwatch.com", "seekingalpha.com",
+                    "infomoney.com.br", "fundamentus.com.br", "statusinvest.com.br")
 
 
 def market_research_prompt(company, as_of):
-    return f"""Find dated market sentiment and analyst consensus for {company}, only as of {as_of}.
+    from agents.auto_fetcher import AutoFetcher
+    names = ", ".join(AutoFetcher.transcript_issuers.get(company, ()))
+    return f"""Find dated market sentiment and analyst consensus for {company} ({names or company}), only as of {as_of}.
+For a B3 ticker, verify the Brazilian listing and BRL currency; search Portuguese sources too.
 Verify the exact issuer/ticker. Use independent market-data providers and financial news, not only issuer
 filings or investor relations. Search specifically for analyst consensus rating, analyst sample count,
 mean/low/high price targets and rating distribution (bullish/neutral/bearish), plus a dated stock quote,
@@ -39,7 +43,7 @@ def has_market_evidence(sources):
         if (source.get("basis") == "web_research" and any(host == provider or host.endswith("." + provider) for provider in MARKET_PROVIDERS)
                 and re.search(r"analyst.{0,50}(?:consensus|rating|target)|consensus.{0,30}(?:rating|target)|price target", text, re.I)
                 and re.search(r"\d{4}-\d{2}-\d{2}", text)
-                and re.search(r"\d+(?:\.\d+)?\s*(?:USD|analysts)|(?:USD|\$)\s*\d|\b\d+\s+(?:buy|hold|sell)\b", text, re.I)
+                and re.search(r"\d+(?:\.\d+)?\s*(?:USD|BRL|analysts|analistas)|(?:USD|BRL|R?\$)\s*\d|\b\d+\s+(?:buy|hold|sell)\b", text, re.I)
                 and not re.search(r"(?:no|not available|unavailable|missing|not found).{0,30}(?:consensus|analyst|target)", text, re.I)):
             return True
     return False
@@ -250,3 +254,14 @@ def evidence_manifest(sources):
             "gaps": (["annual_history"] if len(annual) < 3 else []) + (["annual_eps"] if not annual or annual[0]["values"].get("Diluted EPS") is None else []),
             "documents": [{"id": s["id"], "url": s["url"], "basis": s["basis"], "document_type": s.get("document_type", "research")}
                           for s in sources]}
+
+
+def recover_market_sources(client, company, as_of):
+    """One targeted, checkpointed recovery; never repeat completed financial research."""
+    prompt = market_research_prompt(company, as_of)
+    try:
+        return checkpoint("market-recovery-v1", [company, as_of, client.model, prompt],
+            lambda: cited_sources(client.research_company(prompt, max_tool_calls=2, max_output_tokens=2200, timeout=60), minimum=0))
+    except (OpenAIError, TimeoutError) as exc:
+        timing_logger.warning("company_market_recovery_unavailable company=%s code=%s", company, getattr(exc, "code", None))
+        return []

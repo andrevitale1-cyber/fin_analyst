@@ -1,6 +1,6 @@
 # Company research pipeline
 
-The company-v9 report keeps the quarterly methodology but adds company-wide research, a typed operating model and independent validation. Quarterly/call prompts, daily entitlements and default private visibility are unchanged.
+The company-v10 report keeps the quarterly methodology but adds company-wide research, a typed operating model and independent validation. Quarterly/call prompts, daily entitlements and default private visibility are unchanged.
 
 ## Flow
 
@@ -42,7 +42,7 @@ Models remain controlled by `OPENAI_ANALYSIS_MODEL` and `OPENAI_FULL_REPORT_MODE
 
 Offline checks cover CVM unit/share-class/date/version filtering, calculations, mutation rejection, missing-data behavior, financial-sector method selection, private access, quota reservation/release, job recovery, selective checkpoints and telemetry.
 
-The opt-in `VALIDATE_DEEP_REPORTS_20261020=1` runs one private MU and VIVA3 pilot per version, requiring five years, three scenarios, an additional valuation method and an approved audit. It never publishes the pilots or consumes an end user's allowance. Diagnostics are in `maintenance_tasks` under `deep-report-pilot-v2:*` and `report_runs`.
+The opt-in `VALIDATE_DEEP_REPORTS_20261020=1` runs one private MU and VIVA3 pilot per version, requiring five years, three scenarios, an additional valuation method and an approved audit. It never publishes the pilots or consumes an end user's allowance. Diagnostics are in `maintenance_tasks` under `deep-report-pilot-v3:*` and `report_runs`.
 
 References:
 - https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/DFP/DADOS/

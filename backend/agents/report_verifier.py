@@ -71,6 +71,9 @@ def check_consistency(report, sources, as_of):
 
 def verify_report(client, report, dossier, sources, as_of, *, timeout=40, company=None, locale="en"):
     check_consistency(report, sources, as_of)
+    # The reader renders investment_model, not the inactive legacy EPS-only contract.
+    # Audit the active model and valuation narrative together, without a second contradictory contract.
+    audit_report = {key: value for key, value in report.items() if key != "valuation"} if report.get("investment_model") else report
     contexts = []
     for source in sources:
         text = normalized(source["text"])
@@ -110,7 +113,7 @@ acquired growth, recurring versus nonrecurring effects, cash/dilution and prospe
 Apply the shared methodology to supported content only; never require a metric the sources do not disclose
 or replace the full report's factors/aggregation with the quarterly overall-score formula.
 METHODOLOGY:\n{PromptBuilder().company_field_rules(company or report.get('symbol') or report['company_name'], locale)}
-REPORT:\n{json.dumps(report, ensure_ascii=False)}
+REPORT:\n{json.dumps(audit_report, ensure_ascii=False)}
 FACT DOSSIER:\n{json.dumps(dossier, ensure_ascii=False)}
 ORIGINAL SOURCE CONTEXT:\n{json.dumps(contexts, ensure_ascii=False)}
 ORIGINAL FINANCIAL EVIDENCE:\n{json.dumps(writing_sources({'facts': []}, sources), ensure_ascii=False)}"""

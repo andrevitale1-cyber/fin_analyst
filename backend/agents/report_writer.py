@@ -37,6 +37,8 @@ Each section: concise summary, 1–2 focused paragraphs and at most 3 nonrepeati
 with a short **bold key insight**. Cite factual assertions using source_ids, not invented source IDs or URLs.
 Use complete sentences, no HTML, no scripts and no filler about missing information. Never invent figures,
 ratings, consensus, biographies, comparisons, quotations or forecasts. Label AI judgments explicitly.
+If independent sentiment evidence is unavailable, use at most ONE brief sentence about that gap;
+never pad the sentiment section with repeated paragraphs describing missing market information.
 All numbers retain period, currency and scale. Numeric monetary JSON values use full currency units;
 When secondary notes conflict with original statements, use the primary figure for the same accounting basis;
 do not combine reported/adjusted earnings or present a secondary number as primary-verified.
