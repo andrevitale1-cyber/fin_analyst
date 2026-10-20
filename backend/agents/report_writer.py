@@ -49,7 +49,7 @@ or analyst consensus; do not invent model forecasts. Distinguish source facts, c
 SHARED ANALYSIS RULES:\n{PromptBuilder().company_field_rules(company, locale)}
 SECTION PROMPTS:\n{json.dumps(briefs)}
 FACT DOSSIER:\n{json.dumps(dossier, ensure_ascii=False)}
-OFFICIAL ANNUAL FINANCIALS:\n{json.dumps([s for s in sources if s.get('annual_financials')], ensure_ascii=False)}"""
+COMPACT SOURCES AND ORIGINAL FINANCIAL EVIDENCE:\n{json.dumps(sources, ensure_ascii=False)}"""
     return client.analyze_full_report(prompt, schema, max_output_tokens=8500, timeout=timeout)
 
 
@@ -80,7 +80,7 @@ SHARED ANALYSIS RULES:\n{PromptBuilder().company_field_rules(company, locale)}
 ISSUES:\n{json.dumps(issues, ensure_ascii=False)}
 DRAFT:\n{json.dumps(report, ensure_ascii=False)}
 FACTS:\n{json.dumps(dossier, ensure_ascii=False)}
-OFFICIAL ANNUAL FINANCIALS:\n{json.dumps([s for s in sources if s.get('annual_financials')], ensure_ascii=False)}"""
+COMPACT SOURCES AND ORIGINAL FINANCIAL EVIDENCE:\n{json.dumps(sources, ensure_ascii=False)}"""
     replacements = client.analyze_full_report(prompt, schema, max_output_tokens=5000, timeout=timeout)
     if set(replacements) != set(fields):
         raise ReportValidationError("Audit repair returned unexpected fields")

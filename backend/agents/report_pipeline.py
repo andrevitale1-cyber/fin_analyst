@@ -41,11 +41,11 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
     try:
         review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, 40), company=company, locale=locale)
     except EvidenceAuditError as error:
-        if deadline - perf_counter() < 85:
+        if deadline - perf_counter() < 115:
             raise
         logger.info("report_agents company=%s stage=evidence_repair issues=%d", company, len(error.issues))
         corrected = repair_report(client, company, as_of, locale, content, error.issues, dossier,
-                                  compact_sources, timeout=remaining(deadline, 45))
+                                  compact_sources, timeout=remaining(deadline, 75))
         # Revalidate model inputs, then recompute every derived valuation output.
         corrected["valuation"].pop("fair_value", None)
         for case in corrected["valuation"]["scenarios"]:

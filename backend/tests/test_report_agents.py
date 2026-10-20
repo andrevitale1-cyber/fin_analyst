@@ -40,6 +40,27 @@ def test_annual_tables_survive_extraction_budget_without_inventing_facts():
     assert compact[0]["text"] == table
 
 
+def test_original_financial_tables_reach_writer_repair_and_independent_review():
+    from agents.report_writer import write_report, repair_report
+    from agents.report_verifier import verify_report
+    from agents.report_valuation import calculate_valuation
+    marker = "|2023|100|10|"
+    sources = SOURCES + [{"id": "S2", "basis": "web_research", "title": "Financial table", "url": "https://example.com/table",
+                          "text": "|Year|Revenue|Net income|\n" + marker + "\n|2024|120|12|\n|2025|150|15|"}]
+    dossier = validate_dossier(facts(), sources)
+    compact = writing_sources(dossier, sources)
+    client = Mock()
+    write_report(client, "META", "2026-10-20", "en", dossier, compact)
+    assert marker in client.analyze_full_report.call_args.args[0]
+    client.analyze_full_report.return_value = {"metrics": []}
+    repair_report(client, "META", "2026-10-20", "en", complete_report(),
+                  [{"target": "metrics", "reason": "Check figure", "source_ids": ["S2"]}], dossier, compact)
+    assert marker in client.analyze_full_report.call_args.args[0]
+    client.analyze_full_report.return_value = {"passed": True, "issues": []}
+    verify_report(client, calculate_valuation(complete_report()), dossier, sources, "2026-10-20")
+    assert marker in client.analyze_full_report.call_args.args[0]
+
+
 class AgentClient:
     model = "test-model"
 

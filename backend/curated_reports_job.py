@@ -59,7 +59,7 @@ def curate():
 
 def start_if_enabled():
     if os.getenv("VALIDATE_VIVARA_REPORT_20261020") == "1":
-        Thread(target=validate_apple_report, kwargs={"company": "VIVA3", "task": "report-agents-VIVA3-20261020-1"},
+        Thread(target=validate_apple_report, kwargs={"company": "VIVA3", "task": "report-agents-VIVA3-20261020-2"},
                name="validate-vivara-report", daemon=True).start()
     if os.getenv("VALIDATE_EQUIBLES_20261020") == "1":
         Thread(target=validate_equibles_releases, name="validate-equibles-releases", daemon=True).start()
@@ -95,8 +95,10 @@ def validate_apple_report(company="AAPL", task="report-agents-AAPL-20261020-6"):
         with conn.cursor() as cur:
             cause = exc.__context__
             diagnostics = {"error_type": type(cause or exc).__name__}
-            if cause is not None and hasattr(cause, "issues"):
-                diagnostics["audit_issues"] = cause.issues
+            while cause is not None:
+                if hasattr(cause, "issues"):
+                    diagnostics["audit_issues"] = cause.issues
+                cause = cause.__context__
             cur.execute("UPDATE maintenance_tasks SET state='failed',diagnostics=%s::jsonb,updated_at=NOW() WHERE id=%s",
                         (json.dumps(diagnostics), task))
     finally:

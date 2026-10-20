@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool
 
 from company_report_content import ensure_company_completeness
 from full_report_content import ReportValidationError
-from agents.report_facts import normalized
+from agents.report_facts import normalized, writing_sources
 from agents.prompt_builder import PromptBuilder
 
 
@@ -105,7 +105,7 @@ METHODOLOGY:\n{PromptBuilder().company_field_rules(company or report.get('symbol
 REPORT:\n{json.dumps(report, ensure_ascii=False)}
 FACT DOSSIER:\n{json.dumps(dossier, ensure_ascii=False)}
 ORIGINAL SOURCE CONTEXT:\n{json.dumps(contexts, ensure_ascii=False)}
-OFFICIAL DATA:\n{json.dumps([s for s in sources if s.get('annual_financials')], ensure_ascii=False)}"""
+ORIGINAL FINANCIAL EVIDENCE:\n{json.dumps(writing_sources({'facts': []}, sources), ensure_ascii=False)}"""
     result = Review.model_validate(client.analyze_full_report(prompt, Review.model_json_schema(),
                                   max_output_tokens=4000, timeout=timeout)).model_dump()
     source_ids = {s["id"] for s in sources}
