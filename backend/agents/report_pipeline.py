@@ -8,7 +8,7 @@ from agents.report_writer import write_report, repair_report
 from agents.report_valuation import value_company, calculate_valuation
 from agents.report_verifier import verify_report, EvidenceAuditError
 from company_report_content import apply_official_financials, validate_company_report
-from report_runtime import checkpoint, progress
+from report_runtime import checkpoint, progress, editorial_preparation
 from agents.report_model import model_context, model_valuation_section, verify_model
 
 
@@ -29,8 +29,8 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
     progress("writing")
     if investment_model is not None:
         context = {**dossier, "investment_model": model_context(investment_model)}
-        raw = checkpoint("writer", [PIPELINE_VERSION, company, as_of, locale, client.model, context, compact_sources],
-                         lambda: write_report(client, company, as_of, locale, context, compact_sources, timeout=remaining(deadline, 130)))
+        raw = checkpoint("writer", [PIPELINE_VERSION, bool(editorial_preparation.get()), company, as_of, locale, client.model, context, compact_sources],
+                         lambda: write_report(client, company, as_of, locale, context, compact_sources, timeout=remaining(deadline, 360 if editorial_preparation.get() else 130)))
         calculated = model_valuation_section(investment_model, locale)
     else:
         with ThreadPoolExecutor(max_workers=2) as pool:

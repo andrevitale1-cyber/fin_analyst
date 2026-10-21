@@ -5,6 +5,7 @@ import re
 
 from company_report_content import company_report_schema
 from agents.prompt_builder import PromptBuilder
+from report_runtime import editorial_preparation
 
 
 SECTION_BRIEFS = {
@@ -32,8 +33,8 @@ def write_report(client, company, as_of, locale, dossier, sources, *, timeout=95
     prompt = f"""AGENT 2 — write the company-wide research report for {company}, as of {as_of}.
 Write in {'English' if locale == 'en' else 'Portuguese'} using only the supplied cited facts and official financials.
 Return exactly the nine individually specified sections and supporting structured data. Valuation is handled
-by a separate agent: do not produce that section or scenario assumptions here. Use 1,200–1,600 words total.
-Each section: concise summary, 1–2 focused paragraphs and at most 3 nonrepeating bullets. Start paragraphs
+by a separate agent: do not produce that section or scenario assumptions here. Use {'2,500–3,500' if editorial_preparation.get() else '1,200–1,600'} words total.
+Each section: concise summary, {'2–4' if editorial_preparation.get() else '1–2'} focused paragraphs and at most 3 nonrepeating bullets. Start paragraphs
 with a short **bold key insight**. Cite factual assertions using source_ids, not invented source IDs or URLs.
 Use complete sentences, no HTML, no scripts and no filler about missing information. Never invent figures,
 ratings, consensus, biographies, comparisons, quotations or forecasts. Label AI judgments explicitly.
@@ -60,7 +61,7 @@ SHARED ANALYSIS RULES:\n{PromptBuilder().company_field_rules(company, locale)}
 SECTION PROMPTS:\n{json.dumps(briefs)}
 FACT DOSSIER:\n{json.dumps(dossier, ensure_ascii=False)}
 COMPACT SOURCES AND ORIGINAL FINANCIAL EVIDENCE:\n{json.dumps(sources, ensure_ascii=False)}"""
-    return client.analyze_full_report(prompt, schema, max_output_tokens=8500, timeout=timeout)
+    return client.analyze_full_report(prompt, schema, max_output_tokens=14000 if editorial_preparation.get() else 8500, timeout=timeout)
 
 
 def repair_report(client, company, as_of, locale, report, issues, dossier, sources, *, timeout=45):

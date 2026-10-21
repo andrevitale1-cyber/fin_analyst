@@ -161,7 +161,7 @@ def test_history_full_report_uses_company_scope_without_loading_private_or_quart
     cur.fetchone.return_value = (company,)
     monkeypatch.setattr(reports, "connection", lambda: conn)
     company_report = Mock(return_value={"report": {"company": reports.canonical_company(company), "scope": "company"}, "reused": True})
-    monkeypatch.setattr(reports, "open_company_report", company_report)
+    monkeypatch.setattr("thesis_library.resolve_company", company_report)
     monkeypatch.setattr(reports, "generate_or_reuse", Mock(side_effect=AssertionError("No quarterly expansion")))
     response = TestClient(app).post("/api/full-reports", json={"analysis_id": 1, "locale": "en"})
     assert response.status_code == 200, response.text

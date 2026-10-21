@@ -1,3 +1,5 @@
+> The reader-facing company-report flow now uses the hybrid thesis library. See [thesis-library.md](thesis-library.md). The generation pipeline below is used for explicit editorial preparation, not a reader click.
+
 # Company research pipeline
 
 The company-v11 report keeps the quarterly methodology but adds company-wide research, a typed operating model and independent validation. Quarterly/call prompts, daily entitlements and default private visibility are unchanged.

@@ -12,31 +12,31 @@ def database(monkeypatch, rows):
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
     cur.fetchone.side_effect = rows
     monkeypatch.setattr(jobs, "connection", lambda: conn)
+    monkeypatch.setattr("thesis_library.connection", lambda: conn)
     return conn, cur
 
 
-def test_enqueuing_an_active_job_reuses_it_without_new_quota_or_model_calls(monkeypatch):
-    conn, cur = database(monkeypatch, [("same-job",)])
+def test_company_lookup_no_longer_enqueues_or_reserves_quota(monkeypatch):
+    conn, cur = database(monkeypatch, [None, None])
     reserve = Mock(side_effect=AssertionError("No second reservation"))
     monkeypatch.setattr(jobs, "reserve_usage", reserve)
-    assert jobs.enqueue(jobs.StartReport(company="MU"), SessionUser("user_one", plan="free"))["job_id"] == "same-job"
+    assert jobs.enqueue(jobs.StartReport(company="MU"), SessionUser("user_one", plan="free"))["state"] == "unavailable"
     reserve.assert_not_called()
 
 
-def test_new_job_reserves_once_and_never_persists_the_session_token(monkeypatch):
+def test_unavailable_company_does_not_start_private_generation_or_persist_the_session_token(monkeypatch):
     conn, cur = database(monkeypatch, [None, None, (0,)])
     reserve = Mock(return_value="ticket"); monkeypatch.setattr(jobs, "reserve_usage", reserve)
     result = jobs.enqueue(jobs.StartReport(company="Vivara", locale="pt"), SessionUser("user_one", token="secret-session", plan="free"))
-    assert result["state"] == "queued" and result["company"] == "VIVA3"
-    reserve.assert_called_once()
+    assert result["state"] == "unavailable" and result["company"] == "VIVA3"
+    reserve.assert_not_called()
     assert "secret-session" not in str(cur.execute.call_args_list)
-    insert = next(c for c in cur.execute.call_args_list if "INSERT INTO report_jobs" in c.args[0])
-    assert insert.args[1][-1] == "ticket"
-    conn.commit.assert_called_once()
+    assert not any("INSERT" in c.args[0] for c in cur.execute.call_args_list)
+    conn.commit.assert_not_called()
 
 
 def test_ready_public_report_does_not_reserve_a_free_daily_allowance(monkeypatch):
-    _, cur = database(monkeypatch, [None, ({"id": "public", "scope": "company", "company": "MU"}, True)])
+    _, cur = database(monkeypatch, [({"id": "public", "scope": "company", "company": "MU"}, True)])
     reserve = Mock(side_effect=AssertionError("No quota for public reads")); monkeypatch.setattr(jobs, "reserve_usage", reserve)
     result = jobs.enqueue(jobs.StartReport(company="MU"), SessionUser("user_one", plan="free"))
     assert result["report"]["is_public"] and result["reused"]

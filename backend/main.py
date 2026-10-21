@@ -47,6 +47,7 @@ from agents.prompt_builder import PromptBuilder
 from agents.x_bot_router import router as x_bot_router
 from account_limits import analysis_access, complete_usage, access_snapshot, create_tables as create_usage_tables
 from report_jobs import router as report_jobs_router, create_tables as create_job_tables, start_worker, stop as stop_report_worker
+from thesis_library import router as thesis_library_router, note_official_result
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
@@ -65,6 +66,7 @@ app = FastAPI(title="API Analisador Financeiro", lifespan=lifespan)
 app.include_router(report_router)
 app.include_router(full_reports_router)
 app.include_router(report_jobs_router)
+app.include_router(thesis_library_router)
 app.include_router(x_bot_router)
 
 # --- CONFIGURAÇÃO DO CORS ---
@@ -451,6 +453,7 @@ async def analyze_report_auto(
         objeto_final["id"] = inserted_id
         save_analysis_document(cur, inserted_id, visibility="public", title=document.source, url=document.url,
                                text=document.text, pdf_bytes=document.pdf_bytes)
+        note_official_result(cur, ticker, ano, trimestre, document.url)
         complete_usage(cur, usage_ticket)
         conn.commit()
         cur.close()
@@ -509,6 +512,7 @@ async def analyze_earnings_call_auto(
             cur.execute("INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s) RETURNING id", (company, ano, trimestre, json.dumps(saved_result), str(user_id)))
             result["id"] = cur.fetchone()[0]
             save_analysis_document(cur, result["id"], visibility="public", title=document.source, url=document.url, text=document.text)
+            note_official_result(cur, company, ano, trimestre, document.url)
             complete_usage(cur, usage_ticket)
             conn.commit()
             cur.close()

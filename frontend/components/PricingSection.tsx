@@ -11,15 +11,15 @@ export default function PricingSection({ locale }: { locale: string }) {
   const trialFeatures = english
     ? [
         ["3 quarterly or call analyses per day", "Choose automatic search or upload your document."],
-        ["1 private full report per day", "Research a company and keep the report in your library."],
-        ["Public report gallery", "Read the available public company reports."],
+        ["Company thesis library", "Read published research prepared in advance."],
+        ["Request company coverage", "Help prioritize the companies researched next."],
         ["Your saved analyses", "Revisit your own research without using a new daily allowance."],
         ["No credit card required", "Start with the Free plan. Limits renew daily."],
       ]
     : [
         ["3 análises trimestrais ou de calls por dia", "Escolha busca automática ou envie seu documento."],
-        ["1 relatório completo privado por dia", "Pesquise uma empresa e guarde o relatório na sua biblioteca."],
-        ["Galeria de relatórios públicos", "Leia os relatórios públicos de empresas disponíveis."],
+        ["Biblioteca de teses", "Leia pesquisas publicadas e preparadas antecipadamente."],
+        ["Solicite cobertura de empresas", "Ajude a definir as próximas empresas pesquisadas."],
         ["Suas análises salvas", "Consulte sua pesquisa sem consumir uma nova análise diária."],
         ["Sem cartão de crédito", "Comece no Free. Os limites renovam diariamente."],
       ];
@@ -53,7 +53,7 @@ export default function PricingSection({ locale }: { locale: string }) {
         <p className={styles.saving}>{yearly ? (english ? "2 months free with yearly billing" : "2 meses grátis no plano anual") : (english ? "Start with the Free plan" : "Comece com o plano Free")}</p>
       </header>
       <div className={styles.plans}>
-        {[{ name: "Free", description: english ? "Public reports, 3 analyses and 1 private full report per day." : "Relatórios públicos, 3 análises e 1 full report privado por dia.", features: trialFeatures, premium: false }, { name: "Premium", description: english ? "Analyze faster. Keep your research within reach." : "Analise com agilidade. Tenha sua pesquisa sempre à mão.", features: premiumFeatures, premium: true }].map(plan => <article key={plan.name} className={`${styles.card} ${plan.premium ? styles.premium : ""}`} aria-label={plan.name}>
+        {[{ name: "Free", description: english ? "Published company theses and 3 quarterly/call analyses per day." : "Teses publicadas e 3 análises trimestrais/calls por dia.", features: trialFeatures, premium: false }, { name: "Premium", description: english ? "Analyze faster. Keep your research within reach." : "Analise com agilidade. Tenha sua pesquisa sempre à mão.", features: premiumFeatures, premium: true }].map(plan => <article key={plan.name} className={`${styles.card} ${plan.premium ? styles.premium : ""}`} aria-label={plan.name}>
           {plan.premium && <span className={styles.badge}>{english ? "Full access" : "Acesso completo"}</span>}
           <div className={styles.heading}>
             <h3>{plan.premium ? <Sparkles size={20} aria-hidden="true" /> : <Zap size={20} aria-hidden="true" />}{plan.name}</h3>

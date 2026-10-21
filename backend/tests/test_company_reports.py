@@ -101,12 +101,12 @@ def test_history_link_reuses_the_same_general_report_as_the_full_reports_tab(mon
     monkeypatch.setattr(reports, "connection", lambda: conn)
     monkeypatch.setattr(reports, "OpenAIClient", Mock(side_effect=AssertionError("Do not regenerate a ready company report")))
     history = reports.open_report(reports.OpenReport(analysis_id=7, locale="en"), "user_one")
-    direct = reports.open_company_report(reports.OpenCompanyReport(company="WEGE3", locale="en"), "user_two")
+    direct = reports.open_library_company(reports.OpenCompanyReport(company="WEGE3", locale="en"), "user_two")
     assert history == direct and history["reused"] is True
     assert history["report"]["scope"] == "company" and history["report"]["symbol"] == "WEGE3"
     assert cur.execute.call_args_list[0].args[1] == (7, "user_one")
     access = [call.args[1] for call in cur.execute.call_args_list if "INSERT INTO full_report_access" in call.args[0]]
-    assert access == [("user_one", "weg-company"), ("user_two", "weg-company")]
+    assert access == []  # Public reading does not create private ownership or consume quota.
 
 
 def test_saved_company_report_uses_canonical_identity_instead_of_exchange_code():

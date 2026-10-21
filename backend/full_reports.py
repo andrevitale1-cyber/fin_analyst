@@ -22,7 +22,7 @@ from agents.report_pipeline import generate_report, remaining
 from agents.report_model import baseline_from_sources, model_assumptions, calculate_model, VERSION as MODEL_VERSION
 from agents.report_valuation import calculate_valuation as calculated_company_valuation, VALUATION_METHODS
 from company_research import collect_deep_company_sources as collect_company_sources, evidence_manifest, recover_market_sources
-from report_runtime import checkpoint, progress, record_run
+from report_runtime import checkpoint, progress, record_run, editorial_preparation
 from agents.company_documents import collect_issuer_annual_sources
 from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
 
@@ -40,6 +40,7 @@ def connection():
 
 
 def create_tables(cur):
+    from thesis_library import create_tables as create_library_tables
     cur.execute("""CREATE TABLE IF NOT EXISTS report_runs (
         id TEXT PRIMARY KEY,company TEXT NOT NULL,model TEXT NOT NULL,stage TEXT NOT NULL,
         elapsed_ms INTEGER NOT NULL,error_type TEXT,diagnostics JSONB NOT NULL,created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())""")
@@ -64,6 +65,7 @@ def create_tables(cur):
         analysis_id INTEGER REFERENCES historico(id) ON DELETE SET NULL,
         PRIMARY KEY (user_id, report_id)
     )""")
+    create_library_tables(cur)
 
 
 def save_analysis_document(cur, analysis_id, *, visibility, title, url=None, text="", pdf_bytes=b""):
@@ -107,7 +109,7 @@ def stored_report(row):
     report = {**read_report(row[0]), "is_public": bool(row[1])}
     if report.get("scope") == "company":
         report["symbol"] = report["company"]
-        if report.get("valuation"):
+        if report.get("valuation") and not report.get("investment_model"):
             report["valuation"] = {**report["valuation"], "method": VALUATION_METHODS.get(report.get("locale"), VALUATION_METHODS["en"])}
     return report
 
@@ -176,7 +178,8 @@ def company_cache_key(company, model, as_of, locale=None, *, version=None):
 
 def company_evidence(company, model, as_of, client):
     # A separate committed transaction keeps paid research reusable even if synthesis fails.
-    key = company_cache_key(company, model, as_of, version=RESEARCH_VERSION)
+    revision = editorial_preparation.get()
+    key = company_cache_key(company, model, as_of, version=f"editorial-v1:{revision}" if revision else RESEARCH_VERSION)
     conn = connection()
     try:
         with conn.cursor() as cur:
@@ -250,7 +253,7 @@ def company_facts(company, model, evidence, client, *, deadline):
                 raw = {**raw, "facts": [{k: v for k, v in fact.items() if k != "id"} for fact in raw["facts"]]}
                 dossier = validate_dossier(raw, evidence["sources"])
             else:
-                dossier = extract_facts(client, company, evidence["as_of"], evidence["sources"], timeout=remaining(deadline, 60))
+                dossier = extract_facts(client, company, evidence["as_of"], evidence["sources"], timeout=remaining(deadline, 120 if editorial_preparation.get() else 60))
                 cur.execute("INSERT INTO company_research_cache(cache_key,content) VALUES (%s,%s::jsonb)", (key, json.dumps(dossier)))
         conn.commit()
         return dossier
@@ -286,19 +289,26 @@ def cancel_report_usage(ticket):
 
 
 @router.post("/company")
+def open_library_company(body: OpenCompanyReport, user_id: str = Depends(require_report_user)):
+    from thesis_library import resolve_company
+    return resolve_company(body, user_id)
+
+
 def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_report_user)):
     started = perf_counter()
     timings = {}
     company = canonical_company(body.company)
     as_of = datetime.now(TIMEZONE).date().isoformat()
     model = model_for_task("full_report")
-    key = company_cache_key(company, model, as_of, body.locale)
+    revision = editorial_preparation.get()
+    key = company_cache_key(company, model, as_of, body.locale,
+                            version=f"{COMPANY_REPORT_VERSION}:editorial-v1:{revision}" if revision else None)
     conn = connection()
     stage = "cache"
     ticket = None
     client = facts_client = research_client = None
     error_type = None
-    deadline = started + 720
+    deadline = started + (2400 if revision else 720)
     try:
         with conn.cursor() as cur:
             cur.execute("SET LOCAL lock_timeout = '720s'")
@@ -351,6 +361,7 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
                           "scope": "company", "report_version": COMPANY_REPORT_VERSION,
                           "as_of": evidence["as_of"], "locale": body.locale, "kind": "company",
                           "is_public": False, "created_at": datetime.now(timezone.utc).isoformat(),
+                          "research_profile": "editorial-v1" if revision else "standard",
                           "evidence_coverage": evidence.get("coverage", {}),
                           "sources": [{field: source[field] for field in ("id", "title", "url")} for source in sources]}
                 cur.execute("""INSERT INTO full_reports (id,cache_key,company,period,locale,kind,is_public,content)
@@ -430,15 +441,16 @@ def list_reports(user_id: str = Depends(require_report_user)):
                     SELECT 1 FROM full_report_access a WHERE a.report_id=r.id AND a.user_id=%s
                 ) ORDER BY r.is_public DESC,r.created_at DESC,r.id DESC LIMIT 200""", (user_id,))
             items = []
-            microsoft_seen = False
+            public_companies_seen = set()
             for row in cur.fetchall():
                 report = stored_report(row)
                 microsoft = str(report.get("symbol") or report["company"]).strip().upper() in {
                     "MSFT", "MICROSOFT", "MICROSOFT CORPORATION", "MICROSOFT CORPORATION (MSFT)"}
-                if report["is_public"] and microsoft:
-                    if microsoft_seen:
+                if report["is_public"] and (microsoft or report.get("scope") == "company"):
+                    company_key = "MSFT" if microsoft else report["company"].strip().upper()
+                    if company_key in public_companies_seen:
                         continue
-                    microsoft_seen = True
+                    public_companies_seen.add(company_key)
                 items.append(report_summary(report))
             return {"reports": items}
     finally:
@@ -480,7 +492,8 @@ def get_report(report_id: str, user_id: str = Depends(require_report_user)):
             row = cur.fetchone()
             if not row:
                 raise HTTPException(404, "Relatório não encontrado.")
-            return {"report": stored_report(row)}
+            from thesis_library import annotate
+            return {"report": annotate(cur, stored_report(row))}
     finally:
         conn.close()
 
@@ -505,4 +518,5 @@ def open_report(body: OpenReport, user_id: str = Depends(require_report_user)):
     finally:
         conn.close()
     # Match the Full Reports tab; private documents and the selected quarter never enter the public dossier.
-    return open_company_report(OpenCompanyReport(company=company, locale=body.locale), user_id)
+    from thesis_library import resolve_company
+    return resolve_company(OpenCompanyReport(company=company, locale=body.locale), user_id)

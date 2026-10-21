@@ -47,50 +47,12 @@ class StartReport(BaseModel):
         return self
 
 
-@router.post("", status_code=202)
+@router.post("", status_code=200)
 def enqueue(body: StartReport, user=Depends(require_report_user)):
-    from datetime import datetime
-    from account_limits import TIMEZONE
-    conn, ticket = connection(), None
-    try:
-        with conn.cursor() as cur:
-            company = body.company
-            if body.analysis_id:
-                cur.execute("SELECT empresa FROM historico WHERE id=%s AND CAST(user_id AS TEXT)=%s", (body.analysis_id, str(user)))
-                row = cur.fetchone()
-                if not row:
-                    raise HTTPException(404, "Análise não encontrada.")
-                company = row[0]
-            company = canonical_company(company)
-            lock = int.from_bytes(hashlib.sha256(f"job:{user}".encode()).digest()[:8], "big", signed=True)
-            cur.execute("SELECT pg_advisory_xact_lock(%s)", (lock,))
-            cur.execute("SELECT id FROM report_jobs WHERE user_id=%s AND company=%s AND locale=%s AND state IN ('queued','running') ORDER BY created_at LIMIT 1",
-                        (str(user), company, body.locale))
-            existing = cur.fetchone()
-            if existing:
-                return {"job_id": existing[0], "state": "queued", "company": company}
-            key = company_cache_key(company, model_for_task("full_report"), datetime.now(TIMEZONE).date().isoformat(), body.locale)
-            cur.execute("SELECT r.content,r.is_public FROM full_reports r WHERE r.cache_key=%s AND (r.is_public OR EXISTS (SELECT 1 FROM full_report_access a WHERE a.report_id=r.id AND a.user_id=%s))", (key, str(user)))
-            ready = cur.fetchone()
-            if ready:
-                return {"state": "completed", "report": stored_report(ready), "reused": True, "company": company}
-            cur.execute("SELECT COUNT(*) FROM report_jobs WHERE user_id=%s AND state IN ('queued','running')", (str(user),))
-            if cur.fetchone()[0] >= 2:
-                raise HTTPException(429, "You already have reports in progress." if body.locale == "en" else "Você já tem relatórios em andamento.")
-            # Verification happens on the request; never persist Clerk tokens in the queue.
-            plan_for(user)
-            ticket = reserve_usage(user, "full_report", body.locale)
-            job_id = str(uuid.uuid4())
-            cur.execute("INSERT INTO report_jobs(id,user_id,company,locale,state,ticket) VALUES (%s,%s,%s,%s,'queued',%s)",
-                        (job_id, str(user), company, body.locale, ticket))
-        conn.commit()
-        return {"job_id": job_id, "state": "queued", "company": company}
-    except Exception:
-        conn.rollback()
-        cancel_usage(ticket)
-        raise
-    finally:
-        conn.close()
+    from thesis_library import resolve_company, resolve_analysis
+    if body.analysis_id:
+        return resolve_analysis(body, user)
+    return resolve_company(OpenCompanyReport(company=body.company, locale=body.locale), user)
 
 
 @router.get("/{job_id}")
@@ -219,6 +181,6 @@ def worker():
 
 
 def start_worker():
-    if os.getenv("REPORT_JOB_WORKER", "1") != "0":
+    if os.getenv("REPORT_JOB_WORKER", "0") != "0":
         stop.clear()
         Thread(target=worker, daemon=True, name="report-worker").start()

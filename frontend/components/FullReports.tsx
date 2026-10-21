@@ -19,14 +19,16 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api-finanalyze
 const SECTION_IDS = ["thesis", "business", "financials", "moat", "management", "risks", "valuation"] as const;
 const COMPANY_SECTION_IDS = ["thesis", "business", "financials", "moat", "management", "sentiment", "outlook", "risks", "valuation", "verdict"] as const;
 const POPULAR_COMPANIES = [
-  { name: "Microsoft", ticker: "MSFT" }, { name: "NVIDIA", ticker: "NVDA" }, { name: "Google", ticker: "GOOGL" },
-  { name: "Meta", ticker: "META" }, { name: "Amazon", ticker: "AMZN" }, { name: "Micron", ticker: "MU" },
-  { name: "AMD", ticker: "AMD" }, { name: "ServiceNow", ticker: "NOW" },
+  {name: "Microsoft", ticker: "MSFT"}, {name: "NVIDIA", ticker: "NVDA"}, {name: "Apple", ticker: "AAPL"},
+  {name: "Google", ticker: "GOOGL"}, {name: "Amazon", ticker: "AMZN"}, {name: "Meta", ticker: "META"},
+  {name: "Petrobras", ticker: "PETR4"}, {name: "WEG", ticker: "WEGE3"}, {name: "Vivara", ticker: "VIVA3"},
 ];
 type SectionId = typeof SECTION_IDS[number];
 type CompanySectionId = typeof COMPANY_SECTION_IDS[number];
 type FullReportSection = { id: SectionId | CompanySectionId; title: string; summary: string; paragraphs: string[]; bullets: string[]; source_ids: string[] };
 export type FullReport = {
+  publication?: {reviewed: boolean; covered_year: number; covered_quarter: number};
+  editorial_status?: {state: string; latest_year: number | null; latest_quarter: number | null};
   id: string; company: string; company_name?: string | null; symbol?: string | null; period: string; scope?: "company" | "period"; as_of?: string | null; locale: "en" | "pt"; kind: "report" | "transcript" | "company"; created_at: string; report_version?: string; score: number | null; is_public?: boolean;
   coverage: string; sections: FullReportSection[]; metrics: (ReportMetric & { label: string; value: string; group?: "scale" | "performance" | "valuation"; as_of?: string | null; source_id: string })[];
   signals?: { id: string; label: string; value: string; tone: "positive" | "neutral" | "negative" | "unknown"; source_ids: string[] }[];
@@ -82,7 +84,7 @@ export default function FullReports() {
     return () => document.removeEventListener("keydown", focusSearch);
   }, []);
   const [loading, setLoading] = useState(true);
-  const [jobStage, setJobStage] = useState("queued");
+  const [coverageTarget, setCoverageTarget] = useState<{company: string; state: string; owner: string} | null>(null);
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ReportSummary | null>(null);
@@ -104,7 +106,7 @@ export default function FullReports() {
     const company = params.get("company")?.trim() || "";
     const jobId = params.get("jobId") || "";
     setQuery(company);
-    setTarget(jobId ? { type: "job", jobId, company } : company ? { type: "company", company } : analysisId ? { type: "generate", analysisId } : reportId ? { type: "saved", reportId } : { type: "library" });
+    setTarget(company ? { type: "company", company } : jobId ? { type: "job", jobId, company } : analysisId ? { type: "generate", analysisId } : reportId ? { type: "saved", reportId } : { type: "library" });
     setRouteReady(true);
   }, []);
 
@@ -156,7 +158,6 @@ export default function FullReports() {
       const response = await authorizedFetch(`/api/report-jobs/${encodeURIComponent(jobId)}`, { signal }, 30_000);
       const job = await readJson<JobResult>(response);
       if (signal.aborted) throw new DOMException("Aborted", "AbortError");
-      setJobStage(job.stage || "queued");
       if (job.state === "completed" && job.report) return { report: job.report, reused: Boolean(job.reused) };
       if (job.state === "failed") throw new Error(job.detail || t("generationError"));
       await new Promise<void>((resolve, reject) => {
@@ -168,12 +169,12 @@ export default function FullReports() {
     }
   }, [authorizedFetch, readJson, t]);
 
-  const requestJob = useCallback(async (body: {company?: string; analysis_id?: number; locale: string}, signal: AbortSignal) => {
-    const response = await authorizedFetch("/api/report-jobs", { method: "POST", body: JSON.stringify(body), signal }, 30_000);
-    const result = await readJson<{ job_id?: string; company: string; report?: FullReport; reused?: boolean }>(response);
+  const lookupThesis = useCallback(async (body: {company?: string; analysis_id?: number; locale: string}, signal: AbortSignal) => {
+    const response = await authorizedFetch(body.analysis_id ? "/api/full-reports" : "/api/thesis-library/resolve", { method: "POST", body: JSON.stringify(body), signal }, 30_000);
+    const result = await readJson<{ state?: string; job_id?: string; company: string; report?: FullReport; reused?: boolean }>(response);
     if (signal.aborted) throw new DOMException("Aborted", "AbortError");
     if (result.report) return { report: result.report, reused: Boolean(result.reused) };
-    if (!result.job_id) throw new Error(t("generationError"));
+    if (!result.job_id) return {report: undefined, reused: false, company: result.company, state: result.state || "unavailable"};
     const params = new URLSearchParams({company: result.company, jobId: result.job_id});
     window.history.replaceState(null, "", `${window.location.pathname}?${params}`);
     return awaitJob(result.job_id, signal);
@@ -186,7 +187,7 @@ export default function FullReports() {
     requestRef.current?.abort();
     requestRef.current = controller;
     setLoading(true);
-    setJobStage("queued");
+    setCoverageTarget(null);
     setError("");
     setDeleteError(""); setDeleteNotice(""); setDeletingId(null); setDeleteTarget(null);
     setReport(null);
@@ -206,8 +207,9 @@ export default function FullReports() {
       try {
         if (target.type === "generate") {
           if (!/^\d+$/.test(target.analysisId)) throw new Error(t("invalidAnalysis"));
-          const result = await requestJob({ analysis_id: Number(target.analysisId), locale }, controller.signal);
+          const result = await lookupThesis({ analysis_id: Number(target.analysisId), locale }, controller.signal);
           if (sequence !== sequenceRef.current) return;
+          if (!result.report) { setCoverageTarget({company: result.company, state: result.state, owner: userId || ""}); await refreshLibrary(true); return; }
           setReport(result.report);
           setReportOwnerId(userId);
           setReused(result.reused);
@@ -215,8 +217,9 @@ export default function FullReports() {
         } else if (target.type === "company") {
           const company = target.company.trim();
           if (!company || company.length > 100 || /[\u0000-\u001f]/.test(company)) throw new Error(t("invalidCompany"));
-          const result = await requestJob({ company, locale }, controller.signal);
+          const result = await lookupThesis({ company, locale }, controller.signal);
           if (sequence !== sequenceRef.current) return;
+          if (!result.report) { setCoverageTarget({company: result.company, state: result.state, owner: userId || ""}); await refreshLibrary(true); return; }
           setReport(result.report); setReportOwnerId(userId); setReused(result.reused);
         } else if (target.type === "job") {
           const result = await awaitJob(target.jobId, controller.signal);
@@ -238,14 +241,14 @@ export default function FullReports() {
     };
     void run();
     return () => controller.abort();
-  }, [routeReady, target, authorizedFetch, isLoaded, loadLibrary, locale, openReport, readJson, retryCount, t, userId, requestJob, awaitJob]);
+  }, [routeReady, target, authorizedFetch, isLoaded, loadLibrary, locale, openReport, readJson, retryCount, t, userId, lookupThesis, awaitJob]);
 
   useEffect(() => {
     if (!isLoaded) return;
     if (!userId) {
       requestRef.current?.abort();
       sequenceRef.current += 1;
-      setReports([]); setReport(null); setReportOwnerId(null); setLibraryOwnerId(null); setError(""); setLoading(false);
+      setReports([]); setReport(null); setReportOwnerId(null); setLibraryOwnerId(null); setError(""); setLoading(false); setCoverageTarget(null);
     }
   }, [isLoaded, userId]);
 
@@ -293,10 +296,10 @@ export default function FullReports() {
   };
   const returnToGallery = () => {
     setTarget({ type: "library" });
-    setReport(null); setReportOwnerId(null); setError(""); setReused(false); setQuery("");
+    setReport(null); setReportOwnerId(null); setError(""); setReused(false); setQuery(""); setCoverageTarget(null);
     router.replace(`/${locale}/dashboard/reports`);
   };
-  const generateCompany = (company: string) => {
+  const openCompanyInLibrary = (company: string) => {
     const normalized = company.trim();
     if (!normalized) return;
     setQuery(normalized);
@@ -308,8 +311,8 @@ export default function FullReports() {
   const choosePopularCompany = (company: string) => {
     const normalized = company.trim().toLocaleUpperCase();
     const cached = visibleReports.find(item => item.scope === "company" && item.locale === locale && (item.company.toLocaleUpperCase() === normalized || item.company_name?.toLocaleUpperCase() === normalized));
-    if (cached?.report_version === "company-v6") { selectSavedReport(cached.id); return; }
-    generateCompany(company);
+    if (cached?.is_public) { selectSavedReport(cached.id); return; }
+    openCompanyInLibrary(company);
   };
   const submitCompanySearch = (event: FormEvent) => {
     event.preventDefault();
@@ -319,6 +322,19 @@ export default function FullReports() {
     ...POPULAR_COMPANIES.map(item => [item.ticker, item] as const),
     ...visibleReports.filter(item => item.scope === "company").map(item => [item.company, { ticker: item.company, name: item.company_name || item.company }] as const),
   ]).values()).filter(item => query.trim() && `${item.name} ${item.ticker}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase())).slice(0, 6);
+  const requestCoverage = async (company: string) => {
+    const owner = userId;
+    setLoading(true); setError("");
+    try {
+      const response = await authorizedFetch("/api/thesis-library/requests", {method: "POST", body: JSON.stringify({company, locale})}, 30_000);
+      const result = await readJson<{state: string; report?: FullReport}>(response);
+      if (accountRef.current !== owner) return;
+      if (result.report) { setReport(result.report); setReportOwnerId(owner || null); setCoverageTarget(null); }
+      else setCoverageTarget({company, state: "requested", owner: owner || ""});
+    } catch (cause) {
+      if (accountRef.current === owner) setError(cause instanceof Error ? cause.message : t("generationError"));
+    } finally { if (accountRef.current === owner) setLoading(false); }
+  };
   const reportText = (value: string) => splitBold(stripReportCitations(value, visibleReport?.sources || [])).map((part, index) => part.bold ? <strong key={index} className="font-semibold text-slate-900">{part.text}</strong> : part.text);
   const sourcesFor = (ids: (string | null)[], values: string[] = [], anchors = false) => {
     const all = visibleReport?.sources || [];
@@ -331,7 +347,7 @@ export default function FullReports() {
     : `${currency ? `${currency} ` : ""}${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)}`;
   const reportCard = (item: ReportSummary, isPublic: boolean) => <div key={item.id} className="relative h-full"><button onClick={() => selectSavedReport(item.id)} className="group flex h-full w-full flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-sky-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700">
     <div className="flex w-full items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><CompanyLogo symbol={item.symbol || item.company} company={item.company_name || item.company} /><div className="min-w-0"><h3 className="truncate text-lg font-bold text-slate-900">{item.company_name || item.company}</h3><p className="mt-0.5 text-sm text-slate-500">{item.scope === "company" ? item.company : item.period}</p></div></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${isPublic ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{isPublic ? t("publicBadge") : t("privateBadge")}</span></div>
-    <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-500"><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{item.scope === "company" ? t("companyOverview") : item.kind === "transcript" ? t("transcript") : t("report")}</span><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{item.locale === "pt" ? t("localePortuguese") : t("localeEnglish")}</span><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{formatDate(item.created_at)}</span></div>
+    <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-500"><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{item.scope === "company" ? t("companyOverview") : item.kind === "transcript" ? t("transcript") : t("report")}</span><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{item.locale === "pt" ? t("localePortuguese") : t("localeEnglish")}</span><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{formatDate(item.as_of || item.created_at)}</span></div>
     <span className="mt-auto inline-flex items-center gap-1 pr-12 pt-5 text-sm font-semibold text-sky-800">{t("openReport")}<ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" /></span>
   </button>{!isPublic && <button type="button" onClick={() => { setDeleteError(""); setDeleteTarget(item); }} disabled={deletingId !== null} aria-label={t("deleteReport", { company: item.company_name || item.company })} title={t("deleteReport", { company: item.company_name || item.company })} className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 disabled:opacity-40">{deletingId === item.id ? <Loader2 size={17} className="animate-spin" /> : <Trash2 size={17} />}</button>}</div>;
 
@@ -345,7 +361,7 @@ export default function FullReports() {
       </header>
 
       {!visibleReport && <section className="px-5 pb-14 pt-14 md:pb-20 md:pt-20">
-        <p className="mx-auto mb-5 max-w-xl text-center text-xs leading-5 text-slate-500">{locale === "en" ? "New reports are private. Free includes 1 full report per day, plus access to public demos and your own saved reports." : "Novos relatórios são privados. O Free inclui 1 relatório completo por dia, além dos exemplos públicos e dos seus próprios relatórios salvos."}</p>
+        <p className="mx-auto mb-5 max-w-xl text-center text-xs leading-5 text-slate-500">{t("libraryReadyDescription")}</p>
         <div className="mx-auto max-w-[900px] text-center"><p className="sr-only">{t("libraryEyebrow")}</p><h1 className="text-[26px] leading-9 tracking-tight text-[#0a0a0a] md:text-[30px]" style={{ fontFamily: '"Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif' }}>{t("companyHeroTitle")}</h1>
           <form onSubmit={submitCompanySearch} role="search" className="relative mx-auto mt-7 flex h-[52px] max-w-[580px] items-center rounded-[14px] border border-[#e5e5e3] bg-white shadow-[0_8px_26px_rgba(0,0,0,0.16),0_2px_5px_rgba(0,0,0,0.06)] focus-within:ring-2 focus-within:ring-sky-200"><label className="flex min-w-0 flex-1 items-center"><span className="sr-only">{t("companySearchLabel")}</span><Search className="ml-5 shrink-0 text-[#a3a3a3]" size={20} /><input ref={searchRef} value={query} role="combobox" aria-expanded={searchOpen && searchSuggestions.length > 0} aria-controls="company-suggestions" aria-autocomplete="list" aria-activedescendant={searchOpen && searchIndex >= 0 ? `company-suggestion-${searchIndex}` : undefined} autoComplete="off" spellCheck={false} onFocus={() => setSearchOpen(true)} onBlur={event => { if (!event.currentTarget.form?.contains(event.relatedTarget as Node)) setSearchOpen(false); }} onChange={event => { setQuery(event.target.value); setSearchOpen(true); setSearchIndex(-1); }} onKeyDown={event => {
                 if (event.key === "Escape") { setSearchOpen(false); setSearchIndex(-1); }
@@ -369,7 +385,9 @@ export default function FullReports() {
           {!visibleReport && !deleteTarget && deleteError && <p role="alert" className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{deleteError}</p>}
           {!visibleReport && deleteNotice && <p role="status" className="mb-5 text-sm text-slate-600">{deleteNotice}</p>}
           {error && <div role="alert" className="mb-5 flex flex-wrap items-start gap-3 rounded-2xl border border-rose-200 bg-white p-5 text-rose-800 shadow-sm"><AlertCircle className="mt-0.5 shrink-0" size={19} /><div className="min-w-0 flex-1"><p className="font-semibold">{t("errorTitle")}</p><p className="mt-1 text-sm">{error}</p></div><button onClick={retry} className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold hover:bg-rose-100">{t("retry")}</button><button onClick={returnToGallery} className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">{t("backToGallery")}</button></div>}
-          {loading && !visibleReport ? (target.type === "library" || target.type === "saved") ? <div role="status" className="flex min-h-[40vh] items-center justify-center gap-3 text-slate-500"><Loader2 className="animate-spin text-sky-700" />{t("loading")}</div> : <div role="status" aria-live="polite" className="flex min-h-[40vh] items-center justify-center rounded-3xl border border-slate-200 bg-white p-6 text-slate-500"><div className="w-full max-w-md text-center"><Loader2 className="mx-auto mb-4 animate-spin text-sky-700" /><p className="font-semibold text-slate-800">{t(`jobStages.${jobStage}`)}</p><p className="mt-3 text-sm leading-6">{t("backgroundNotice")}</p><ol className="mt-6 grid grid-cols-3 gap-2 text-[11px]">{["research", "model", "verification"].map(stage => <li key={stage} className={`rounded-xl border p-3 ${jobStage === stage ? "border-sky-300 bg-sky-50 text-sky-800" : "border-slate-100"}`}>{t(`jobStages.${stage}`)}</li>)}</ol></div></div> : null}
+          {loading && !visibleReport && <div role="status" className="flex min-h-[30vh] items-center justify-center gap-3 text-slate-500"><Loader2 className="animate-spin text-sky-700" />{t("loading")}</div>}
+          {!loading && coverageTarget && coverageTarget.owner === userId && !visibleReport && <section aria-live="polite" className="mb-8 rounded-2xl border border-sky-100 bg-white p-6 sm:p-8"><div className="flex items-start gap-4"><CompanyLogo symbol={coverageTarget.company} company={coverageTarget.company}/><div><h2 className="text-xl font-bold">{t(coverageTarget.state === "requested" ? "coverageRequestedTitle" : "coverageUnavailableTitle", {company: coverageTarget.company})}</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{t(coverageTarget.state === "requested" ? "coverageRequestedDescription" : "coverageUnavailableDescription")}</p>{coverageTarget.state !== "requested" && <button type="button" onClick={() => void requestCoverage(coverageTarget.company)} className="mt-5 rounded-xl bg-sky-700 px-5 py-3 text-sm font-semibold text-white hover:bg-sky-800">{t("requestCoverage")}</button>}<button type="button" onClick={returnToGallery} className="ml-2 mt-5 rounded-xl px-5 py-3 text-sm font-semibold text-sky-800 hover:bg-sky-50">{t("backToGallery")}</button></div></div></section>}
+          {visibleReport && visibleReport.locale !== locale && <p role="status" className="mb-4 rounded-xl bg-sky-50 p-4 text-sm text-sky-900">{t("libraryLanguageFallback", {language: t(visibleReport.locale === "pt" ? "localePortuguese" : "localeEnglish")})}</p>}
           {!loading && !visibleReport && !error && <div className="space-y-10">
             <section><div className="mb-5"><h2 className="text-xl font-bold text-slate-900">{t("companyReports")}</h2><p className="mt-1 text-sm text-slate-500">{t("companyReportsDescription")}</p></div>
               {publicCompanyReports.length > 0 ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{publicCompanyReports.map(item => reportCard(item, true))}</div> : <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm leading-relaxed text-slate-600">{query ? t("noMatches") : t("publicEmpty")}</div>}
@@ -377,7 +395,7 @@ export default function FullReports() {
             {publicPeriodReports.length > 0 && <section><div className="mb-5"><h2 className="text-xl font-bold text-slate-900">{t("periodReports")}</h2><p className="mt-1 text-sm text-slate-500">{t("periodReportsDescription")}</p></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{publicPeriodReports.map(item => reportCard(item, true))}</div></section>}
             {privateReports.length > 0 && <section><div className="mb-4"><h2 className="text-xl font-bold text-slate-900">{t("yourPrivateReports")}</h2><p className="mt-1 text-sm text-slate-500">{t("privateDescription")}</p></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{privateReports.map(item => reportCard(item, false))}</div></section>}
           </div>}
-          {visibleReport?.scope === "company" && <CompanyReportReader report={visibleReport} locale={locale} t={t} formatDate={formatDate} onBack={returnToGallery} onRefresh={() => generateCompany(visibleReport.company)} onDashboard={() => router.push(`/${locale}/dashboard?company=${encodeURIComponent(visibleReport.company)}`)} />}
+          {visibleReport?.scope === "company" && <CompanyReportReader report={visibleReport} locale={locale} t={t} formatDate={formatDate} onBack={returnToGallery} onRefresh={() => openCompanyInLibrary(visibleReport.company)} onDashboard={() => router.push(`/${locale}/dashboard?company=${encodeURIComponent(visibleReport.company)}`)} />}
           {visibleReport && visibleReport.scope !== "company" && <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-100 px-6 pt-5 md:px-10"><button onClick={returnToGallery} className="mb-4 inline-flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-50"><ArrowLeft size={16} />{t("backToGallery")}</button></div>
             <div className="border-b border-slate-100 bg-gradient-to-br from-white via-white to-sky-50/80 p-6 md:p-10">

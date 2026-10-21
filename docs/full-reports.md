@@ -1,3 +1,5 @@
+> The reader-facing company-report flow now uses the hybrid thesis library. See [thesis-library.md](thesis-library.md). The generation pipeline below is used for explicit editorial preparation, not a reader click.
+
 # Full report library
 
 The default Full Reports screen presents a centered company search, company shortcuts, saved company dossiers, older period reports, and the signed-in user's private reports. Opening the library or typing a filter never starts AI generation. Submitting a company search or choosing an uncached shortcut opens a broad company dossier through `POST /api/full-reports/company` with `{company, locale}`. A saved shortcut opens its report with GET.

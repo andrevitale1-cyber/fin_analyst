@@ -9,6 +9,7 @@ from time import perf_counter
 import uuid
 
 progress_callback = ContextVar("report_progress", default=None)
+editorial_preparation = ContextVar("editorial_preparation", default=None)
 logger = logging.getLogger("uvicorn.error")
 
 

@@ -481,7 +481,7 @@ export default function FinancialDashboard() {
             <div className="mb-4 space-y-2 rounded-xl border border-gray-800 bg-[#161b22] p-4 text-xs text-gray-400">
               <p className="font-bold uppercase text-white">Free</p>
               <p>{locale === 'en' ? `${dailyRemaining.analysis ?? '—'} of 3 quarterly/call analyses left today` : `${dailyRemaining.analysis ?? '—'} de 3 análises trimestrais/calls restantes hoje`}</p>
-              <p>{locale === 'en' ? `${dailyRemaining.full ?? '—'} full report left today` : `${dailyRemaining.full ?? '—'} relatório completo restante hoje`}</p>
+              <p>{locale === 'en' ? 'Published company theses available in Full Reports' : 'Teses publicadas disponíveis em Full Reports'}</p>
               <p>{locale === 'en' ? 'Limits reset at midnight (São Paulo).' : 'Os limites renovam à meia-noite (São Paulo).'}</p>
             </div>
             <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
