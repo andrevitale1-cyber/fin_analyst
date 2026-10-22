@@ -265,17 +265,21 @@ def oil_valuation_section(model, locale):
     ids = list(dict.fromkeys([model["baseline"]["source_id"], model["oil_balance"]["source_id"], *(s for c in model["cases"] for s in c["assumptions"]["source_ids"]),
                 *(v["source_id"] for v in model["oil_inputs"]["bridge"].values() if isinstance(v, dict))]))[:12]
     fmt = lambda value: f"R$ {value:,.2f}"
+    base = model["cases"][1]
+    check = base["methods"][1]["present_value"]
+    comparison = (f"No cenário-base, DCF de {fmt(model['fair_value'])} e saída por EV/EBITDA de {fmt(check)} não são consenso. O múltiplo remunera EBITDA antes do reinvestimento; o DCF incorpora explicitamente esse consumo de caixa e a perpetuidade. Por isso, o DCF é o método principal. "
+                  if pt else f"Base-case DCF {fmt(model['fair_value'])} and EV/EBITDA exit {fmt(check)} are not a consensus. The multiple rewards EBITDA before reinvestment; DCF explicitly incorporates that cash burden and the perpetuity. DCF therefore remains the primary method. ")
     paragraphs = ([
         "**Fluxo de caixa da operação.** O modelo projeta cinco exercícios futuros com Brent, câmbio, produção e EBITDA por atividade, após eliminações. O FCFF corresponde ao EBIT após imposto operacional, mais depreciação, menos reinvestimento e capital de giro. Os cenários são hipóteses da IA, não guidance ou consenso.",
         model["assumptions"]["rationale"],
         f"**Ponte para o acionista.** Do valor operacional de {fmt(bridge['enterprise_value'])}, deduzimos dívida líquida incluindo arrendamentos de {fmt(bridge['net_debt'])} e participação de não controladores de {fmt(bridge['noncontrolling_interests'])}. O saldo é dividido por {bridge['shares']:,.0f} ações ON e PN em circulação. A alocação econômica igual por ação é uma aproximação; não equivale a precificar os direitos ou a liquidez de cada classe.",
-        "**Verificação e sensibilidade.** O EV/EBITDA usa os mesmos fluxos intermediários e uma saída por múltiplo no último ano. A tabela mostra a sensibilidade do DCF ao WACC e ao crescimento terminal. O modelo mantém a estrutura de capital observada, usa patrimônio de minoritários como aproximação e, por prudência, não inclui caixa do restante do ano corrente. Não projeta dividendos a partir de FCFF.",
+        "**Verificação e sensibilidade.** " + comparison + "O modelo mantém a estrutura de capital observada, usa patrimônio de minoritários como aproximação e não inclui caixa do restante do ano corrente. Não projeta dividendos a partir de FCFF.",
         model["assumptions"]["counterthesis"],
     ] if pt else [
         "**Operating cash flow.** Five future full years explicitly model Brent, FX, production and segment EBITDA after eliminations. FCFF equals operating EBIT after tax plus depreciation less reinvestment and working capital. Scenarios are AI assumptions, not guidance or consensus.",
         model["assumptions"]["rationale"],
         f"**Equity bridge.** Enterprise value {fmt(bridge['enterprise_value'])}, less net debt including leases {fmt(bridge['net_debt'])} and noncontrolling interests {fmt(bridge['noncontrolling_interests'])}, is allocated across {bridge['shares']:,.0f} outstanding ON and PN shares. Equal economic allocation is an approximation, not a valuation of each class's distinct rights or liquidity.",
-        "**Cross-check and sensitivity.** EV/EBITDA includes the same interim cash flows and a terminal exit multiple. The DCF sensitivity table varies WACC and terminal growth. Capital structure is held at observed levels; book NCI is a proxy and remaining current-year cash is conservatively omitted. FCFF is not a dividend forecast.",
+        "**Cross-check and sensitivity.** " + comparison + "Capital structure is held at observed levels; book NCI is a proxy and remaining current-year cash is omitted. FCFF is not a dividend forecast.",
         model["assumptions"]["counterthesis"],
     ])
     bullets = [(f"{c['case']}: DCF {fmt(c['methods'][0]['present_value'])}; EV/EBITDA {fmt(c['methods'][1]['present_value'])}.") for c in model["cases"]]

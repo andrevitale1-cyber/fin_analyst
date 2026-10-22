@@ -61,13 +61,20 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
         logger.info("report_agents company=%s stage=evidence_repair issues=%d", company, len(error.issues))
         progress("repair")
         fact_issues = [i for i in error.issues if not i["reason"].startswith("Reader copy:")]
+        if is_petrobras(company):
+            fact_issues = [i for i in fact_issues if "facts" in i["target"].lower() or "dossier" in i["target"].lower()]
+            if investment_model and any("investment_model" in i["target"] for i in error.issues):
+                from agents.petrobras_model import repair_narratives
+                investment_model = repair_narratives(client, investment_model, error.issues, sources, locale,
+                    timeout=remaining(deadline, 180))
         if fact_issues:
             dossier = checkpoint("audited-facts-repair-v1", [company, as_of, client.model, dossier, fact_issues, compact_sources],
                 lambda: repair_fact_dossier(client, dossier, fact_issues, sources, timeout=remaining(deadline, 90 if editorial_preparation.get() else 45)))
         compact_sources = writing_sources(dossier, sources)
         repair_context = {**dossier, "investment_model": model_context(investment_model)} if investment_model is not None else dossier
-        corrected = repair_report(client, company, as_of, locale, content, error.issues, repair_context,
-                                  compact_sources, timeout=remaining(deadline, 240 if editorial_preparation.get() else 75))
+        repair = lambda: repair_report(client, company, as_of, locale, content, error.issues, repair_context,
+                                       compact_sources, timeout=remaining(deadline, 240 if editorial_preparation.get() else 75))
+        corrected = checkpoint("editorial-sections-repair-v1", [company, as_of, locale, client.model, content, error.issues, repair_context, compact_sources], repair) if editorial_preparation.get() else repair()
         # Revalidate model inputs, then recompute every derived valuation output.
         corrected["valuation"].pop("fair_value", None)
         for case in corrected["valuation"]["scenarios"]:

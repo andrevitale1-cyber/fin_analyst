@@ -1,5 +1,6 @@
 """Explicit oil-company cash flows. Source extraction and forecasts have separate contracts."""
 from datetime import date, datetime
+import copy
 import json
 import math
 import re
@@ -162,6 +163,75 @@ FACTS:\n{json.dumps(dossier, ensure_ascii=False)}
 OFFICIAL ANNUAL BASELINE:\n{json.dumps(baseline, ensure_ascii=False)}"""
     prompt += "\nMECHANICALLY EXTRACTED CONSOLIDATED BALANCE:\n" + json.dumps(balance_from_sources(sources, as_of), ensure_ascii=False)
     return client.analyze_full_report(prompt, OilInputs.model_json_schema(), max_output_tokens=12000, timeout=timeout)
+
+
+def original_model_contexts(model, sources):
+    """Give the reviewer original surrounding tables, not model quotations as their own proof."""
+    cells = [*model["oil_balance"]["cells"].values(), model["oil_inputs"]["bridge"]["shares"]]
+    rights = model["oil_inputs"]["bridge"]
+    cells.append({"source_id": rights["share_rights_source_id"], "quote": rights["share_rights_quote"]})
+    contexts = []
+    for source in sources:
+        if source.get("basis") != "primary":
+            continue
+        text = " ".join(source.get("text", "").split())
+        spans = []
+        for cell in cells:
+            if cell["source_id"] == source["id"]:
+                quote = " ".join(cell["quote"].split())
+                position = text.casefold().find(quote.casefold())
+                if position >= 0:
+                    spans.append(text[max(0, position - 2000):position + len(quote) + 2000])
+        for match in list(re.finditer(r"lifting costs?", text, re.I))[:4]:
+            spans.append(text[max(0, match.start() - 1000):match.end() + 3000])
+        if spans:
+            contexts.append({"id": source["id"], "basis": "primary", "title": source.get("title"),
+                             "url": source.get("url"), "excerpts": list(dict.fromkeys(spans))})
+    return contexts
+
+
+class ScenarioNarrative(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    case: Literal["bear", "base", "bull"]
+    rationale: str = Field(min_length=40, max_length=650)
+    terminal_reinvestment_rationale: str = Field(min_length=40, max_length=900)
+
+
+class ModelNarrative(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    rationale: str = Field(min_length=40, max_length=900)
+    counterthesis: str = Field(min_length=40, max_length=900)
+    scenarios: list[ScenarioNarrative] = Field(min_length=3, max_length=3)
+
+
+def repair_narratives(client, model, issues, sources, locale, *, timeout=180):
+    from report_runtime import checkpoint
+    evidence = original_model_contexts(model, sources)
+    prompt = f"""AGENT 3 — repair only the explanations of this Petrobras model.
+Write in {'Portuguese' if locale == 'pt' else 'English'}. All existing numerical inputs are LOCKED.
+Return only rationale, counterthesis and one rationale/terminal explanation for each bear/base/bull case.
+Do not alter a historical amount, quote, date, scenario number or selected method. Support historical
+claims with the ORIGINAL excerpts; omit a historical claim when not evidenced. Complete sentences.
+Explain the existing nominal BRL WACCs and their economic risk differences. A transparent assumed
+nominal/real-rate or risk-premium build-up is allowed, but every assumed component must be labeled as
+an AI assumption, never an observed risk-free rate, measured beta or company-disclosed capital cost.
+Explain reinvestment and the material DCF/exit-multiple divergence: EBITDA multiples can reward earnings
+before the modeled reinvestment burden; do not force agreement. These remain conditional models.
+No internal editorial blocks, absent-scenario claims or invented market/peer observations.
+ISSUES:\n{json.dumps(issues, ensure_ascii=False)}
+MODEL:\n{json.dumps(model, ensure_ascii=False)}
+ORIGINAL EVIDENCE:\n{json.dumps(evidence, ensure_ascii=False)}"""
+    raw = checkpoint("petrobras-narrative-repair-v1", [client.model, locale, model, issues, evidence],
+        lambda: client.analyze_full_report(prompt, ModelNarrative.model_json_schema(), max_output_tokens=4000, timeout=timeout))
+    replacement = ModelNarrative.model_validate(raw).model_dump()
+    narratives = {c["case"]: c for c in replacement["scenarios"]}
+    if len(narratives) != 3:
+        raise ReportValidationError("Model narrative repair must preserve the three cases")
+    inputs = copy.deepcopy(model["oil_inputs"])
+    inputs.update(rationale=replacement["rationale"], counterthesis=replacement["counterthesis"])
+    for scenario in inputs["scenarios"]:
+        scenario.update({key: narratives[scenario["case"]][key] for key in ("rationale", "terminal_reinvestment_rationale")})
+    return calculate(model["baseline"], inputs, sources)
 
 
 def calculate(baseline, raw, sources):

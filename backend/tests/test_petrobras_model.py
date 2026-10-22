@@ -127,6 +127,37 @@ def test_internal_editorial_copy_and_paragraph_signals_require_repair():
     assert reader_copy_issues(report) == []
 
 
+def test_original_model_context_includes_surrounding_table_and_rights():
+    from agents.petrobras_model import original_model_contexts
+    sources, raw = fixture()
+    model = calculate(baseline_from_sources(sources), raw, sources)
+    context = original_model_contexts(model, sources)
+    text = " ".join(context[0]["excerpts"])
+    assert "Consolidated Interim Accounting Information" in text
+    assert "2.02.01.03 Lease Obligations 40 35" in text
+    assert raw["bridge"]["share_rights_quote"] in text
+
+
+def test_model_narrative_repair_cannot_change_any_numerical_input(monkeypatch):
+    from agents.petrobras_model import repair_narratives
+    from unittest.mock import Mock
+    monkeypatch.setattr("report_runtime.checkpoint", lambda stage, identity, compute: compute())
+    sources, raw = fixture()
+    model = calculate(baseline_from_sources(sources), raw, sources)
+    narrative = {"rationale": "Conditional cash generation explains the discounted operating value.",
+                 "counterthesis": raw["counterthesis"], "scenarios": [{key: c[key] for key in
+                    ("case", "rationale", "terminal_reinvestment_rationale")} for c in raw["scenarios"]]}
+    client = Mock(model="test")
+    client.analyze_full_report.return_value = narrative
+    repaired = repair_narratives(client, model, [], sources, "en")
+    assert repaired["fair_value"] == model["fair_value"]
+    for old, new in zip(model["cases"], repaired["cases"]):
+        assert old["equity_bridge"] == new["equity_bridge"]
+        assert old["projections"] == new["projections"]
+        assert old["methods"] == new["methods"]
+    assert repaired["assumptions"]["rationale"] == narrative["rationale"]
+
+
 def test_bear_residual_floor_is_explicit_and_base_distress_still_requires_review():
     sources, raw = fixture()
     # A deeper commodity downside can leave enterprise value below debt.
