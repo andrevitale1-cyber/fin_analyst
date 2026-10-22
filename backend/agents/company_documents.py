@@ -204,16 +204,17 @@ def hydrate_company_documents(company, sources):
 
 def petrobras_document_excerpt(text):
     """Retain middle-of-document capital/segment tables rather than only the cover and appendix."""
-    if len(text) <= 48000:
+    if len(text) <= 90000:
         return text
-    pieces = [text[:8000]]
+    pieces = [text[:32000]]
     terms = (r"net debt|d[ií]vida l[ií]quida", r"non.?controlling|n[aã]o controladores", r"treasury shares|a[cç][oõ]es em tesouraria",
              r"preferred shares|a[cç][oõ]es preferenciais", r"share capital|capital social", r"segment information|informa[cç][oõ]es por segmento",
-             r"lease liabilities|passivos de arrendamento", r"production|produ[cç][aã]o", r"reserves|reservas")
+             r"lease liabilities|passivos de arrendamento", r"production|produ[cç][aã]o", r"reserves|reservas",
+             r"shares outstanding|outstanding shares|number of shares")
     for term in terms:
         matches = list(re.finditer(term, text, re.I))
         # Later occurrences generally belong to statements rather than the table of contents.
         for match in matches[-2:]:
             pieces.append(text[max(0, match.start() - 450):match.start() + 1500])
     pieces.append(text[-8000:])
-    return "\n[... excerpt boundary ...]\n".join(pieces)[:48000]
+    return "\n[... excerpt boundary ...]\n".join(pieces)[:90000]

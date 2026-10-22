@@ -21,14 +21,15 @@ class Amount(BaseModel):
     quote: str = Field(min_length=12, max_length=600)
     unit_quote: str = Field(min_length=12, max_length=300)
     source_id: str
-    period: str
+    period: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
     unit: Literal["BRL", "shares"]
 
 
 class Bridge(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
     shares: Amount
-    gross_debt_including_leases: Amount
+    financial_debt: Amount
+    lease_debt: Amount
     cash: Amount
     noncontrolling_interests: Amount
     share_rights_quote: str = Field(min_length=12, max_length=600)
@@ -80,8 +81,11 @@ def propose(client, company, as_of, locale, dossier, baseline, sources, *, timeo
 Write rationale in {'Portuguese' if locale == 'pt' else 'English'}.
 Return source-extracted bridge separately from AI ASSUMPTIONS. Bridge numeric value is the exact numeral
 in a verbatim quote; unit_quote separately copies the table's verbatim unit/scale header from the SAME
-source. Multiplier converts that explicitly quoted scale into full BRL/shares. All debt/cash/NCI
-must be from the same latest consolidated balance sheet, not mixed dates. Use gross debt INCLUDING leases,
+source. Multiplier converts that explicitly quoted scale into full BRL/shares. Period is the exact
+YYYY-MM-DD balance/share observation date. All debt/cash/NCI
+must be from the same latest consolidated balance sheet, not mixed dates. Extract the reported total
+financial debt and reported total lease debt separately; Python adds them to gross debt INCLUDING leases.
+Use those debt components,
 cash and cash equivalents, reported NCI book value as an explicit proxy, and total outstanding ON+PN shares
 EXCLUDING treasury, not ADRs, free float or EPS-implied shares. Quote original share economic rights and
 explain equal economic allocation as an approximation, with preferred-share rights acknowledged. If a
@@ -117,7 +121,7 @@ def calculate(baseline, raw, sources):
         raise ReportValidationError("PETR valuation requires a verified BRL baseline")
     bridge = inputs["bridge"]
     amounts = {}
-    for name in ("shares", "gross_debt_including_leases", "cash", "noncontrolling_interests"):
+    for name in ("shares", "financial_debt", "lease_debt", "cash", "noncontrolling_interests"):
         cell = bridge[name]
         source = by_id.get(cell["source_id"], {})
         if source.get("basis") != "primary":
@@ -151,11 +155,13 @@ def calculate(baseline, raw, sources):
     if shares <= 0:
         raise ReportValidationError("Outstanding shares must be positive")
     valuation_date = date.fromisoformat(baseline["valuation_date"])
+    if date.fromisoformat(bridge["shares"]["period"]) > valuation_date:
+        raise ReportValidationError("Share observation is after the valuation date")
     expected_years = list(range(valuation_date.year + 1, valuation_date.year + 6))
     cases = inputs["scenarios"]
     if {c["case"] for c in cases} != {"bear", "base", "bull"}:
         raise ReportValidationError("Three unique oil scenarios required")
-    net_debt = amounts["gross_debt_including_leases"] - amounts["cash"]
+    net_debt = amounts["financial_debt"] + amounts["lease_debt"] - amounts["cash"]
     results = []
     for scenario in sorted(cases, key=lambda c: ("bear", "base", "bull").index(c["case"])):
         if not set(scenario["source_ids"]).issubset(by_id) or [r["year"] for r in scenario["years"]] != expected_years:

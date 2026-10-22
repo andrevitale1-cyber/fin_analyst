@@ -89,7 +89,7 @@ def test_petrobras_reads_separate_primary_documents_and_preserves_capital_tables
     text = "Opening " + "x" * 24000 + "net debt including lease liabilities 200" + "x" * 24000 + "outstanding preferred shares 50" + "x" * 24000
     excerpt = documents.petrobras_document_excerpt(text)
     assert "lease liabilities 200" in excerpt and "preferred shares 50" in excerpt
-    assert len(excerpt) <= 48000
+    assert len(excerpt) <= 90000
 
 
 def test_petrobras_sec_issuer_stays_verified_when_financial_baseline_is_cvm(monkeypatch):

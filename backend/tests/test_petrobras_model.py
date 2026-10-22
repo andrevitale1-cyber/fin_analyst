@@ -12,7 +12,7 @@ def fixture():
     source = official_source()
     for row in source["annual_financials"]:
         row["currency"] = "BRL"
-    quote = "At June 30 2026 gross debt including leases was BRL 200, cash BRL 100, noncontrolling interests BRL 10 and outstanding ON and PN shares 50."
+    quote = "At June 30 2026 financial debt was BRL 150, lease debt BRL 50, cash BRL 100, noncontrolling interests BRL 10 and outstanding ON and PN shares 50."
     rights = "Each outstanding common and preferred share has equal participation in distributed earnings, subject to the preferred minimum rights."
     source["text"] += " " + quote + " " + rights
     def amount(n, unit="BRL"):
@@ -29,7 +29,7 @@ def fixture():
                               rationale="Synthetic operational scenario with a constant nominal discount rate.",
                               terminal_reinvestment_rationale="Maintenance and reserve replacement are included in projected reinvestment.",
                               source_ids=["F1", "S1"], years=years))
-    raw = dict(bridge=dict(shares=amount(50, "shares"), gross_debt_including_leases=amount(200), cash=amount(100),
+    raw = dict(bridge=dict(shares=amount(50, "shares"), financial_debt=amount(150), lease_debt=amount(50), cash=amount(100),
                           noncontrolling_interests=amount(10), share_rights_quote=rights, share_rights_source_id="F1",
                           lease_treatment="Debt includes lease obligations and capex includes economic replacement of leased assets."),
                conviction="medium", rationale="Scenario assumptions illustrate commodity and volume exposure with reinvestment.",
@@ -67,7 +67,7 @@ def test_invalid_oil_inputs_are_rejected(mutation):
     if mutation == "scale": raw["bridge"]["cash"]["multiplier"] = 1000000
     if mutation == "date": raw["bridge"]["cash"]["period"] = "2025-12-31"
     if mutation == "stale":
-        for key in ("gross_debt_including_leases", "cash", "noncontrolling_interests"):
+        for key in ("financial_debt", "lease_debt", "cash", "noncontrolling_interests"):
             raw["bridge"][key]["period"] = "2025-12-31"
     if mutation == "shares": raw["bridge"]["shares"]["unit"] = "BRL"
     if mutation == "source": sources[0]["basis"] = "web_research"
