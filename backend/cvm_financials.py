@@ -17,6 +17,8 @@ from agents.auto_fetcher import AutoFetcher
 from company_financials import _format
 
 BASE = "https://dados.cvm.gov.br/dados/CIA_ABERTA"
+# B3 issuer 9512: distinguish the listed parent from other Petrobras-named entities.
+ISSUER_CNPJS = {"PETR3": "33.000.167/0001-01", "PETR4": "33.000.167/0001-01"}
 logger = logging.getLogger("uvicorn.error")
 ACCOUNTS = {"DRE": {"3.01": "Revenue", "3.03": "Gross profit", "3.05": "Operating income",
                     "3.11": "Net income", "3.11.01": "Net income attributable to parent",
@@ -35,13 +37,17 @@ def issuer_cnpj(company):
     fetcher = AutoFetcher()
     ticker = fetcher.resolve_ticker(company)
     aliases = fetcher.transcript_issuers.get(ticker, ()) if re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker) else ()
-    if not aliases:
+    expected_cnpj = ISSUER_CNPJS.get(ticker)
+    if not aliases and not expected_cnpj:
         return None
     response = requests.get(BASE + "/CAD/DADOS/cad_cia_aberta.csv", timeout=10, allow_redirects=False)
     response.raise_for_status()
     if response.status_code != 200 or len(response.content) > 5_000_000:
         return None
     text = response.content.decode("utf-8-sig", errors="replace")
+    if expected_cnpj:
+        return next((row["CNPJ_CIA"] for row in csv.DictReader(io.StringIO(text), delimiter=";")
+                     if row.get("SIT") == "ATIVO" and row.get("CNPJ_CIA") == expected_cnpj), None)
     matches = [row for row in csv.DictReader(io.StringIO(text), delimiter=";")
                if row.get("SIT") == "ATIVO" and any(re.search(r"\b" + re.escape(normalized(a)) + r"\b",
                   normalized(row.get("DENOM_SOCIAL", ""))) for a in aliases if len(a) >= 4)]

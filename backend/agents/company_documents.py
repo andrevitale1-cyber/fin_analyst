@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 
 from agents.auto_fetcher import AutoFetcher
 from openai_client import OpenAIClient, OpenAIError
+from sector_research import is_petrobras
 
 
 def collect_issuer_annual_sources(company, as_of):
@@ -49,7 +50,7 @@ def hydrate_company_documents(company, sources):
     official = next((s for s in sources if s.get("id") == "F1"), {})
     cik = re.search(r"CIK0*(\d+)\.json", official.get("url", ""))
     candidates = []
-    kinds = set()
+    kinds = {}
     for source in sources:
         if source.get("basis") == "primary":
             continue
@@ -60,14 +61,16 @@ def hydrate_company_documents(company, sources):
         kind = "transcript" if transcript else "filing"
         trusted_sec = host in ("www.sec.gov", "sec.gov") and cik and f"/data/{int(cik[1])}/" in parsed.path
         trusted_issuer = (issuer_host and host == issuer_host) or (tenant and host in ("api.mziq.com", "filemanager-cdn.mziq.com") and tenant in parsed.path.split("/"))
+        if is_petrobras(company):
+            trusted_issuer = trusted_issuer or host in ("petrobras.com.br", "www.petrobras.com.br", "agencia.petrobras.com.br", "www.investidorpetrobras.com.br")
         trusted_transcript = transcript and host in ("stockanalysis.com", "www.stockanalysis.com")
-        if (kind in kinds or parsed.scheme != "https" or not (trusted_sec or trusted_issuer or trusted_transcript)
+        if (kinds.get(kind, 0) >= (6 if is_petrobras(company) and kind == "filing" else 1) or parsed.scheme != "https" or not (trusted_sec or trusted_issuer or trusted_transcript)
                 or source.get("id") == "F1" or not AutoFetcher._valid_url(url)):
             continue
-        if not transcript and not trusted_sec and not re.search(r"10-k|20-f|annual|anual|10-q|earnings|result", source.get("title", ""), re.I):
+        if not transcript and not trusted_sec and not re.search(r"10-k|20-f|annual|anual|10-q|earnings|result|plano|business plan|dividend|estatuto|bylaws", source.get("title", ""), re.I):
             continue
         candidates.append((source, kind, bool(trusted_sec or trusted_issuer)))
-        kinds.add(kind)
+        kinds[kind] = kinds.get(kind, 0) + 1
     def fetch(candidate):
         source, kind, primary = candidate
         try:
@@ -95,6 +98,8 @@ def hydrate_company_documents(company, sources):
                     return source
             # Keep prepared remarks and Q&A rather than only the opening of a long transcript.
             bounded = text if len(text) <= 32000 else text[:20000] + "\n[... document excerpt omitted ...]\n" + text[-12000:]
+            if is_petrobras(company) and kind == "filing":
+                bounded = petrobras_document_excerpt(text)
             return {**source, "text": bounded, "basis": "primary" if primary else "transcript", "document_type": kind}
         except (requests.RequestException, ValueError, OpenAIError):
             return source
@@ -103,3 +108,20 @@ def hydrate_company_documents(company, sources):
     return [{**source, **hydrated.get(source["id"], {}),
              "document_type": hydrated.get(source["id"], source).get("document_type",
                               "financials" if source.get("annual_financials") else "research")} for source in sources]
+
+
+def petrobras_document_excerpt(text):
+    """Retain middle-of-document capital/segment tables rather than only the cover and appendix."""
+    if len(text) <= 48000:
+        return text
+    pieces = [text[:8000]]
+    terms = (r"net debt|d[ií]vida l[ií]quida", r"non.?controlling|n[aã]o controladores", r"treasury shares|a[cç][oõ]es em tesouraria",
+             r"preferred shares|a[cç][oõ]es preferenciais", r"segment information|informa[cç][oõ]es por segmento",
+             r"lease liabilities|passivos de arrendamento", r"production|produ[cç][aã]o", r"reserves|reservas")
+    for term in terms:
+        matches = list(re.finditer(term, text, re.I))
+        # Later occurrences generally belong to statements rather than the table of contents.
+        for match in matches[-2:]:
+            pieces.append(text[max(0, match.start() - 450):match.start() + 1500])
+    pieces.append(text[-8000:])
+    return "\n[... excerpt boundary ...]\n".join(pieces)[:48000]

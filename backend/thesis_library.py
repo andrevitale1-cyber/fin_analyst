@@ -136,6 +136,18 @@ def validate_publication(report, company, locale):
         or len(report.get("sections", [])) != 10 or len(report.get("financial_history", [])) < 3
         or not model.get("available") or len(model.get("cases", [])) != 3 or not model.get("cross_check_methods")):
         raise ValueError("Only an audited editorial company draft with history and three scenarios can be published")
+    from sector_research import is_petrobras
+    if is_petrobras(company):
+        latest_annual = str(int(report["as_of"][:4]) - 1)
+        if (model.get("version") != "petrobras-dcf-v1" or model.get("selected_method") != "dcf"
+            or model.get("baseline", {}).get("currency") != "BRL"
+            or len(report["financial_history"]) < 5
+            or not any(row["period"].startswith(latest_annual) for row in report["financial_history"])
+            or {s["id"] for s in report.get("signals", [])} != {"moat", "profitability", "management", "growth", "valuation", "sentiment"}
+            or len(report.get("metrics", [])) < 8
+            or any(len(s["paragraphs"]) < 2 for s in report["sections"] if s["id"] != "sentiment")
+            or "petrobras_sector" not in report["pipeline"]["verification"].get("checks", [])):
+            raise ValueError("Petrobras requires complete sector research, six signals, recent five-year history and a reviewed BRL operating DCF")
 
 
 def publish(company, locale, draft_id):

@@ -47,3 +47,16 @@ def test_preferred_and_unit_listings_never_reuse_ordinary_share_eps():
     with archive_fixture() as z:
         units = parse_archive(z, 2025, "issuer", "2026-10-20", None)
     assert "Diluted EPS" not in units["2025-12-31"]
+
+
+def test_petrobras_parent_uses_verified_cnpj_instead_of_ambiguous_names(monkeypatch):
+    from unittest.mock import Mock
+    import cvm_financials as cvm
+    csv_text = "CNPJ_CIA;SIT;DENOM_SOCIAL\n33.000.167/0001-01;ATIVO;PETROLEO BRASILEIRO S A PETROBRAS\n00.000.000/0001-00;ATIVO;PETROBRAS OTHER COMPANY\n"
+    response = Mock(status_code=200, content=csv_text.encode())
+    monkeypatch.setattr(cvm.requests, "get", Mock(return_value=response))
+    cvm.issuer_cnpj.cache_clear()
+    try:
+        assert cvm.issuer_cnpj("PETR4") == "33.000.167/0001-01"
+    finally:
+        cvm.issuer_cnpj.cache_clear()

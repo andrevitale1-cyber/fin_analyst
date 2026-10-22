@@ -208,13 +208,18 @@ def verify_model(model, sources):
     baseline = baseline_from_sources(sources)
     if baseline != model["baseline"]:
         raise ReportValidationError("Operating model baseline differs from original primary statements")
-    expected = calculate_model(baseline, model["assumptions"], {s["id"] for s in sources})
+    if model.get("version") == "petrobras-dcf-v1":
+        from agents.petrobras_model import calculate
+        expected = calculate(baseline, model["oil_inputs"], sources)
+    else:
+        expected = calculate_model(baseline, model["assumptions"], {s["id"] for s in sources})
     if expected != model:
         raise ReportValidationError("Operating model arithmetic differs from independently recalculated results")
 
 
 def model_context(model):
     return {"basis": "ai_assumption", "selected_method": model["selected_method"], "fair_value": model["fair_value"],
+            **({"oil_inputs": model["oil_inputs"], "equity_bridges": [{"case": c["case"], **c["equity_bridge"]} for c in model["cases"]]} if model.get("oil_inputs") else {}),
             "currency": model["baseline"]["currency"], "source_id": model["baseline"]["source_id"],
             "share_basis": model["baseline"]["share_basis"], "assumptions": model["assumptions"],
             "base_projections": [{k: r[k] for k in ("period", "basis", "revenue", "eps", "fcff")} for c in model["cases"] if c["case"] == "base" for r in c["projections"]],
@@ -227,6 +232,8 @@ def model_valuation_section(model, locale):
     currency = model["baseline"]["currency"]
     value = model["fair_value"]
     method = model["selected_method"]
+    if model.get("oil_inputs"):
+        return oil_valuation_section(model, locale)
     descriptions = {
         "normalized_pe": ("Média do EPS anual de todo o histórico disponível, incluindo prejuízos, multiplicada pelo P/L normalizado de cada cenário. Esse método usa lucro histórico normalizado e não desconto de um lucro terminal.", "Average annual EPS across the entire available history, including losses, multiplied by each scenario's normalized P/E. This method uses normalized historical earnings, not discounted terminal earnings."),
         "pe": ("EPS projetado no último exercício multiplicado pelo P/L terminal, descontado pelo custo de capital próprio.", "Final projected fiscal-year EPS multiplied by terminal P/E, discounted at the cost of equity."),
@@ -250,3 +257,30 @@ def model_valuation_section(model, locale):
     valuation = {"available": False, "base_eps": None, "currency": None, "source_id": None,
                  "reason": "Valuation uses the separate audited operating model.", "method": "Audited operating model", "scenarios": []}
     return {"section": section, "valuation": valuation}
+
+
+def oil_valuation_section(model, locale):
+    pt = locale == "pt"
+    bridge = model["cases"][1]["equity_bridge"]
+    ids = list(dict.fromkeys([model["baseline"]["source_id"], *(s for c in model["cases"] for s in c["assumptions"]["source_ids"]),
+                *(v["source_id"] for v in model["oil_inputs"]["bridge"].values() if isinstance(v, dict))]))[:12]
+    fmt = lambda value: f"R$ {value:,.2f}"
+    paragraphs = ([
+        "**Fluxo de caixa da operação.** O modelo projeta cinco exercícios futuros com Brent, câmbio, produção e EBITDA por atividade, após eliminações. O FCFF corresponde ao EBIT após imposto operacional, mais depreciação, menos reinvestimento e capital de giro. Os cenários são hipóteses da IA, não guidance ou consenso.",
+        model["assumptions"]["rationale"],
+        f"**Ponte para o acionista.** Do valor operacional de {fmt(bridge['enterprise_value'])}, deduzimos dívida líquida incluindo arrendamentos de {fmt(bridge['net_debt'])} e participação de não controladores de {fmt(bridge['noncontrolling_interests'])}. O saldo é dividido por {bridge['shares']:,.0f} ações ON e PN em circulação. A alocação econômica igual por ação é uma aproximação; não equivale a precificar os direitos ou a liquidez de cada classe.",
+        "**Verificação e sensibilidade.** O EV/EBITDA usa os mesmos fluxos intermediários e uma saída por múltiplo no último ano. A tabela mostra a sensibilidade do DCF ao WACC e ao crescimento terminal. O modelo mantém a estrutura de capital observada, usa patrimônio de minoritários como aproximação e, por prudência, não inclui caixa do restante do ano corrente. Não projeta dividendos a partir de FCFF.",
+        model["assumptions"]["counterthesis"],
+    ] if pt else [
+        "**Operating cash flow.** Five future full years explicitly model Brent, FX, production and segment EBITDA after eliminations. FCFF equals operating EBIT after tax plus depreciation less reinvestment and working capital. Scenarios are AI assumptions, not guidance or consensus.",
+        model["assumptions"]["rationale"],
+        f"**Equity bridge.** Enterprise value {fmt(bridge['enterprise_value'])}, less net debt including leases {fmt(bridge['net_debt'])} and noncontrolling interests {fmt(bridge['noncontrolling_interests'])}, is allocated across {bridge['shares']:,.0f} outstanding ON and PN shares. Equal economic allocation is an approximation, not a valuation of each class's distinct rights or liquidity.",
+        "**Cross-check and sensitivity.** EV/EBITDA includes the same interim cash flows and a terminal exit multiple. The DCF sensitivity table varies WACC and terminal growth. Capital structure is held at observed levels; book NCI is a proxy and remaining current-year cash is conservatively omitted. FCFF is not a dividend forecast.",
+        model["assumptions"]["counterthesis"],
+    ])
+    bullets = [(f"{c['case']}: DCF {fmt(c['methods'][0]['present_value'])}; EV/EBITDA {fmt(c['methods'][1]['present_value'])}.") for c in model["cases"]]
+    return {"section": {"id": "valuation", "title": "Valuation", "summary":
+                ("Valor econômico estimado no cenário-base: " if pt else "Estimated base-case economic value: ") + fmt(model["fair_value"]) + ".",
+                "paragraphs": paragraphs, "bullets": bullets, "source_ids": ids},
+            "valuation": {"available": False, "base_eps": None, "currency": None, "source_id": None,
+                "reason": "Separate audited Petrobras operating DCF.", "method": "Operating DCF", "scenarios": []}}

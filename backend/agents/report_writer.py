@@ -6,6 +6,7 @@ import re
 from company_report_content import company_report_schema
 from agents.prompt_builder import PromptBuilder
 from report_runtime import editorial_preparation
+from sector_research import sector_brief
 
 
 SECTION_BRIEFS = {
@@ -32,6 +33,9 @@ def write_report(client, company, as_of, locale, dossier, sources, *, timeout=95
               for key, brief in SECTION_BRIEFS.items()]
     prompt = f"""AGENT 2 — write the company-wide research report for {company}, as of {as_of}.
 Write in {'English' if locale == 'en' else 'Portuguese'} using only the supplied cited facts and official financials.
+{sector_brief(company)}
+Return all six summary signals: moat, profitability, management, growth, valuation and sentiment.
+The valuation signal must explain the audited model's result rather than omit the category.
 Return exactly the nine individually specified sections and supporting structured data. Valuation is handled
 by a separate agent: do not produce that section or scenario assumptions here. Use {'2,500–3,500' if editorial_preparation.get() else '1,200–1,600'} words total.
 Each section: concise summary, {'2–4' if editorial_preparation.get() else '1–2'} focused paragraphs and at most 3 nonrepeating bullets. Start paragraphs

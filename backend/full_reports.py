@@ -20,6 +20,7 @@ from company_report_content import company_report_schema, validate_company_repor
 from agents.report_facts import extract_facts, validate_dossier
 from agents.report_pipeline import generate_report, remaining
 from agents.report_model import baseline_from_sources, model_assumptions, calculate_model, VERSION as MODEL_VERSION
+from sector_research import is_petrobras, VERSION as SECTOR_VERSION
 from agents.report_valuation import calculate_valuation as calculated_company_valuation, VALUATION_METHODS
 from company_research import collect_deep_company_sources as collect_company_sources, evidence_manifest, recover_market_sources
 from report_runtime import checkpoint, progress, record_run, editorial_preparation
@@ -179,7 +180,10 @@ def company_cache_key(company, model, as_of, locale=None, *, version=None):
 def company_evidence(company, model, as_of, client):
     # A separate committed transaction keeps paid research reusable even if synthesis fails.
     revision = editorial_preparation.get()
-    key = company_cache_key(company, model, as_of, version=f"editorial-v1:{revision}" if revision else RESEARCH_VERSION)
+    research_version = f"editorial-v1:{revision}" if revision else RESEARCH_VERSION
+    if is_petrobras(company):
+        research_version += ":" + SECTOR_VERSION
+    key = company_cache_key(company, model, as_of, version=research_version)
     conn = connection()
     try:
         with conn.cursor() as cur:
@@ -268,6 +272,17 @@ def company_model(company, client, evidence, dossier, locale, *, deadline):
     baseline = baseline_from_sources(evidence["sources"])
     if baseline is None:
         return None
+    if is_petrobras(company):
+        from agents import petrobras_model
+        identity = [petrobras_model.VERSION, company, evidence["as_of"], locale, client.model, baseline, dossier, evidence["sources"]]
+        def prepare_oil_model():
+            raw = petrobras_model.propose(client, company, evidence["as_of"], locale, dossier,
+                                         baseline, evidence["sources"], timeout=remaining(deadline, 240))
+            petrobras_model.calculate(baseline, raw, evidence["sources"])
+            return raw
+        raw = checkpoint("petrobras-assumptions", identity,
+                         prepare_oil_model)
+        return petrobras_model.calculate(baseline, raw, evidence["sources"])
     identity = [MODEL_VERSION, company, evidence["as_of"], locale, client.model, baseline, dossier]
     raw = checkpoint("operating-assumptions", identity,
                      lambda: model_assumptions(client, company, evidence["as_of"], locale, dossier, baseline, timeout=remaining(deadline, 90)))
@@ -302,7 +317,8 @@ def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_
     model = model_for_task("full_report")
     revision = editorial_preparation.get()
     key = company_cache_key(company, model, as_of, body.locale,
-                            version=f"{COMPANY_REPORT_VERSION}:editorial-v1:{revision}" if revision else None)
+                            version=(f"{COMPANY_REPORT_VERSION}:editorial-v1:{revision}" if revision else COMPANY_REPORT_VERSION)
+                            + (":" + SECTOR_VERSION if is_petrobras(company) else ""))
     conn = connection()
     stage = "cache"
     ticket = None

@@ -5,13 +5,18 @@ export type ModelCase = {
     terminal_revenue_growth_percent: number; terminal_net_margin_percent: number; terminal_operating_margin_percent: number;
     capex_percent: number; depreciation_percent: number; incremental_working_capital_percent: number;
     tax_percent: number; discount_percent: number; equity_discount_percent: number; perpetual_growth_percent: number; terminal_pe: number; terminal_ev_ebitda: number; price_to_book: number };
-  projections: { period: string; period_end: string; currency: string; revenue: number; net_income: number; eps: number | null; fcff: number;
+  projections: { period: string; period_end: string; currency: string; revenue: number; net_income: number | null; eps: number | null; fcff: number;
+    oil_drivers?: {brent_usd: number; usd_brl: number; production_kboed: number; upstream_ebitda_brl: number; downstream_ebitda_brl: number; other_and_eliminations_ebitda_brl: number; rationale: string};
     operating_income: number; ebitda: number; capex: number; source_ids: string[]; basis: "ai_assumption" }[];
   methods: { method: ModelMethod; present_value: number; future_value: number | null }[];
+  equity_bridge?: {enterprise_value: number; net_debt: number; noncontrolling_interests: number; equity_value: number; shares: number; present_value: number};
+  sensitivity?: {wacc_percent: number; growth_percent: number; value: number}[];
+  terminal_value_share_percent?: number;
 };
 export type InvestmentModel = {
   version: string; available: boolean; selected_method: ModelMethod | null; fair_value: number | null; cross_check_methods: ModelMethod[];
   baseline: { period: string; valuation_date: string; currency: string; source_id: string; share_basis: string | null; shares: number | null; net_debt: number | null };
   assumptions: { profile: string; capacity_driver: string; productivity_driver: string; conviction: "low" | "medium" | "high"; rationale: string; counterthesis: string };
   cases: ModelCase[];
+  oil_inputs?: {bridge: {lease_treatment: string}; scenarios: {case: string; terminal_reinvestment_rationale: string}[]};
 };

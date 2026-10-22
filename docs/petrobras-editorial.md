@@ -1,0 +1,15 @@
+# Petrobras editorial replacement
+
+The October 20 public edition has no audited operating model. Its 2024 SEC financial history is in USD while PETR4 trades in BRL. A historical EPS sensitivity on that basis is not a PETR4 price target. Preserve the old edition until its reviewed replacement exists; do not relabel it as sector research.
+
+New preparation prefers CVM consolidated BRL statements and uses independent caches for the sector version. Research, fact extraction, section writing and independent review share `sector_research.py`. Hydration permits up to six original Petrobras filings and preserves middle-of-document debt, segment and share tables. Other issuers retain their existing document budgets and valuation models.
+
+`agents/petrobras_model.py` separates verbatim primary-source equity-bridge amounts from conditional AI forecasts. Numeric quotes, scale, source class, dates and BRL are checked before calculation. The bridge uses outstanding ON+PN shares, gross debt including leases, cash and NCI from a common balance sheet no more than 200 days old. Share rights require original evidence. Independent evidence review must still check the accounting meaning, consolidated perimeter and scaling: finding a matching numeral alone is not sufficient proof.
+
+Each scenario specifies five future full years of Brent, FX, production, consolidated external revenue, upstream/downstream/other EBITDA after eliminations, D&A, reinvestment, working capital and operating tax. EBITDA contributions are explicit analyst assumptions linked to operational drivers, not a full engineering/reserve model. Python computes FCFF, DCF, an exit-multiple cross-check INCLUDING interim FCFF, an enterprise/equity/share bridge and WACC/growth sensitivities. Financing interest is not deducted from FCFF. Positive EBIT receives operating tax; no unsupported tax-loss benefits are assumed. Terminal capex must at least cover D&A, with a reviewed explanation of economic reserve replacement; this numerical floor alone does not establish reserve sustainability.
+
+Conventions remain visible: no remaining current-year cash; constant observed capital structure in the valuation bridge; book NCI as a proxy; equal economic allocation across ON/PN as an approximation rather than precise class-specific trading targets. FCFF does not equal dividends. Lease debt requires corresponding economic replacement reinvestment. The model does not invent EPS or net income from unlevered cash flow.
+
+Publication additionally requires five annual financial observations including the latest completed year, all six summary signals, at least eight numeric metrics, developed narrative sections and the independent Petrobras sector-review check. The UI exposes annual operating drivers, equity reconciliation, terminal-value contribution and sensitivities.
+
+Operator sequence remains `python -m thesis_library prepare PETR4 --locale pt --year YEAR --quarter QUARTER`, then `review`, then `publish`. Confirm the latest published official fiscal period before preparation. A validation failure leaves the public edition unchanged. Never bypass the checks to publish a partial draft.

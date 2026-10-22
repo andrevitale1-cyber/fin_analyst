@@ -3,10 +3,12 @@
 import type { InvestmentModel, ModelMethod } from "../lib/investmentModel";
 import { formatReportMoney, formatReportNumber } from "../lib/reportNumbers";
 import FinancialChart from "./ReportFinancialChart";
+import OilModelPanel from "./OilModelPanel";
 
 type Props = { model: InvestmentModel; locale: string; mode: "forecast" | "valuation"; selectedCase: string; onCaseChange: (name: string) => void };
 
 export default function OperatingModelPanel({ model, locale, mode, selectedCase, onCaseChange }: Props) {
+  if (model.oil_inputs) return <OilModelPanel model={model} locale={locale} mode={mode} selectedCase={selectedCase} onCaseChange={onCaseChange} />;
   const pt = locale.startsWith("pt");
   const active = model.cases.find(item => item.case === selectedCase) || model.cases[1];
   if (!active) return null;

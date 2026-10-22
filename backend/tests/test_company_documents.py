@@ -76,3 +76,17 @@ def test_verified_primary_documents_are_not_downloaded_again(monkeypatch):
               "title": "Vivara annual results", "url": "https://ri.vivara.com.br/results"}
     assert documents.hydrate_company_documents("VIVA3", [source])[0] == source
     get.assert_not_called()
+
+
+def test_petrobras_reads_separate_primary_documents_and_preserves_capital_tables(monkeypatch):
+    get = install_response(monkeypatch)
+    sources = [{"id": f"S{i}", "basis": "web_research", "text": "Notes", "title": title,
+                "url": f"https://petrobras.com.br/documents/{i}.pdf"} for i, title in enumerate(
+                    ["Annual report", "Earnings results", "Business plan", "Dividend policy"], 1)]
+    result = documents.hydrate_company_documents("PETR4", sources)
+    assert get.call_count == 4
+    assert all(s["basis"] == "primary" for s in result)
+    text = "Opening " + "x" * 24000 + "net debt including lease liabilities 200" + "x" * 24000 + "outstanding preferred shares 50" + "x" * 24000
+    excerpt = documents.petrobras_document_excerpt(text)
+    assert "lease liabilities 200" in excerpt and "preferred shares 50" in excerpt
+    assert len(excerpt) <= 48000
