@@ -49,6 +49,7 @@ def hydrate_company_documents(company, sources):
     tenant = AutoFetcher.mziq_catalogs.get(company, (None,))[0]
     official = next((s for s in sources if s.get("id") == "F1"), {})
     cik = re.search(r"CIK0*(\d+)\.json", official.get("url", ""))
+    issuer_cik = int(cik[1]) if cik else (1119639 if is_petrobras(company) else None)
     candidates = []
     kinds = {}
     for source in sources:
@@ -59,7 +60,7 @@ def hydrate_company_documents(company, sources):
         host = parsed.hostname
         transcript = bool(re.search(r"transcript|transcri[cç][aã]o", source.get("title", "") + " " + parsed.path, re.I))
         kind = "transcript" if transcript else "filing"
-        trusted_sec = host in ("www.sec.gov", "sec.gov") and cik and f"/data/{int(cik[1])}/" in parsed.path
+        trusted_sec = host in ("www.sec.gov", "sec.gov") and issuer_cik and f"/data/{issuer_cik}/" in parsed.path
         trusted_issuer = (issuer_host and host == issuer_host) or (tenant and host in ("api.mziq.com", "filemanager-cdn.mziq.com") and tenant in parsed.path.split("/"))
         if is_petrobras(company):
             trusted_issuer = trusted_issuer or host in ("petrobras.com.br", "www.petrobras.com.br", "agencia.petrobras.com.br", "www.investidorpetrobras.com.br")
@@ -67,7 +68,7 @@ def hydrate_company_documents(company, sources):
         if (kinds.get(kind, 0) >= (6 if is_petrobras(company) and kind == "filing" else 1) or parsed.scheme != "https" or not (trusted_sec or trusted_issuer or trusted_transcript)
                 or source.get("id") == "F1" or not AutoFetcher._valid_url(url)):
             continue
-        if not transcript and not trusted_sec and not re.search(r"10-k|20-f|annual|anual|10-q|earnings|result|plano|business plan|dividend|estatuto|bylaws", source.get("title", ""), re.I):
+        if not transcript and not trusted_sec and not re.search(r"10-k|20-f|annual|anual|10-q|earnings|result|plano|business plan|dividend|estatuto|bylaws|shareholding|composi[cç][aã]o acion[aá]ria", source.get("title", ""), re.I):
             continue
         candidates.append((source, kind, bool(trusted_sec or trusted_issuer)))
         kinds[kind] = kinds.get(kind, 0) + 1

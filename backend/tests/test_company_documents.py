@@ -90,3 +90,13 @@ def test_petrobras_reads_separate_primary_documents_and_preserves_capital_tables
     excerpt = documents.petrobras_document_excerpt(text)
     assert "lease liabilities 200" in excerpt and "preferred shares 50" in excerpt
     assert len(excerpt) <= 48000
+
+
+def test_petrobras_sec_issuer_stays_verified_when_financial_baseline_is_cvm(monkeypatch):
+    get = install_response(monkeypatch)
+    source = {"id": "S1", "basis": "web_research", "text": "notes", "title": "Form 20-F",
+              "url": "https://www.sec.gov/Archives/edgar/data/1119639/annual.htm"}
+    cvm = {"id": "F1", "basis": "primary", "text": "CVM annuals", "url": "https://dados.cvm.gov.br/annuals", "annual_financials": []}
+    result = documents.hydrate_company_documents("PETR4", [cvm, source])
+    assert result[1]["basis"] == "primary"
+    get.assert_called_once()
