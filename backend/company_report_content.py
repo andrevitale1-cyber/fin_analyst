@@ -533,7 +533,8 @@ def validate_company_report(raw: dict, sources: list) -> dict:
         if breakdown["numeric_value"] is not None and (breakdown["numeric_value"] < 0 or not breakdown["currency"]):
             raise ReportValidationError("Breakdown revenue requires a nonnegative amount and currency")
         if breakdown["currency"] is not None and breakdown["numeric_value"] is None:
-            raise ReportValidationError("Breakdown currency requires a numeric revenue amount")
+            # A percentage-only composition has no monetary amount to denominate.
+            breakdown["currency"] = None
     _normalize_breakdown_shares(result["breakdowns"], result["financial_history"])
     for period in result["financial_history"] + result["projections"]:
         if any(period[field] is not None and not math.isfinite(period[field]) for field in ("revenue", "eps", "net_income", "free_cash_flow") if field in period):

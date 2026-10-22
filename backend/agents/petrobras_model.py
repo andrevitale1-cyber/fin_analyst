@@ -5,11 +5,12 @@ import math
 import re
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from agents.report_facts import validate_fact
 from full_report_content import ReportValidationError
 from sector_research import sector_brief
+from agents.report_model import complete_model_prose
 
 VERSION = "petrobras-dcf-v1"
 
@@ -70,6 +71,14 @@ class OilInputs(BaseModel):
     counterthesis: str = Field(min_length=40, max_length=900)
     scenarios: list[OilScenario] = Field(min_length=3, max_length=3)
 
+    @field_validator("rationale", "counterthesis")
+    @classmethod
+    def consistent_prose(cls, value):
+        value = complete_model_prose(value)
+        if re.search(r"publica[çc][aã]o.{0,40}bloquead|n[aã]o foram preenchidos cen[aá]rios|no (?:numerical )?scenarios (?:were|are) populated|valuation (?:is )?blocked", value, re.I):
+            raise ValueError("A populated model cannot describe its scenarios as unavailable")
+        return value
+
 
 def balance_from_sources(sources, as_of):
     """Read standard consolidated balance-sheet account codes, never parent-company totals."""
@@ -107,6 +116,14 @@ def propose(client, company, as_of, locale, dossier, baseline, sources, *, timeo
     prompt = f"""AGENT 3 — Petrobras sector model as of {as_of}.
 {sector_brief(company)}
 Write rationale in {'Portuguese' if locale == 'pt' else 'English'}.
+Separate the evidence gate from the forecast exercise. Historical balance-sheet amounts and shares
+must be source verified. Forward Brent, FX, margins, capex, WACC and terminal multiples are explicitly
+conditional AI ASSUMPTIONS: issuer guidance is NOT required for those estimates. Missing field-level
+decline rates or management's WACC do not prevent conditional scenarios when the supplied historical
+baseline and equity bridge are established. Discuss the resulting uncertainty and sensitivities.
+Your response populates three numerical scenarios. Explain their economic assumptions; never claim
+that scenarios are absent or publication is blocked while supplying them. Write complete sentences
+within each field limit, leaving room for punctuation. Publication decisions belong to the verifier.
 The application already extracts current/noncurrent financing, leases, cash and NCI by consolidated account
 code; do not extract or overwrite those amounts. Extract only outstanding shares and share-rights evidence.
 Return source-extracted shares separately from AI ASSUMPTIONS. Shares numeric value is the exact numeral

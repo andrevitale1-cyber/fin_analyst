@@ -56,6 +56,8 @@ EPS is per underlying share. Do not mix fiscal/calendar years, ADR/ordinary shar
 Financial history contains 3–5 full years when available, never quarters/TTM. Highlight metrics must have
 numeric_value, unit, date/period and source_id. Segment/geography shares are percentage points (51.5, not .515).
 Do not combine overlapping segment/platform classifications. Prefer operational segments and a common period.
+For percentage-only breakdowns, numeric_value and currency must both be null; never manufacture revenue
+to fill the field. Include monetary amounts only when evidenced for that exact segment and period.
 Scores are reasoned AI quality assessments from 1–5, with cited support; never equate a score with market upside.
 Analyst consensus and market data require dated independent sources; their as_of fields must be exact YYYY-MM-DD
 observation dates. Projections require management guidance

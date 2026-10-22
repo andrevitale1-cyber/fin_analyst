@@ -297,7 +297,7 @@ def company_model(company, client, evidence, dossier, locale, *, deadline):
     if is_petrobras(company):
         from agents import petrobras_model
         identity = [petrobras_model.VERSION, company, evidence["as_of"], locale, client.model, baseline, dossier, evidence["sources"]]
-        raw = checkpoint("petrobras-proposal-v2", identity,
+        raw = checkpoint("petrobras-proposal-v3", identity,
                          lambda: petrobras_model.propose(client, company, evidence["as_of"], locale, dossier,
                              baseline, evidence["sources"], timeout=remaining(deadline, 240)))
         return petrobras_model.calculate(baseline, raw, evidence["sources"])

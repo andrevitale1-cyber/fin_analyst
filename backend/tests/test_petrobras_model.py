@@ -97,6 +97,16 @@ def test_independent_review_recomputes_oil_model():
         verify_model(corrupted, sources)
 
 
+def test_populated_oil_scenarios_reject_a_contradictory_refusal():
+    sources, raw = fixture()
+    raw["rationale"] = "PUBLICAÇÃO DE VALUATION BLOQUEADA. Não foram preenchidos cenários numéricos."
+    with pytest.raises(ValueError, match="cannot describe"):
+        calculate(baseline_from_sources(sources), raw, sources)
+    raw["rationale"] = "Explicit conditional assumptions explain the projected cash generation. An unfinished"
+    model = calculate(baseline_from_sources(sources), raw, sources)
+    assert model["oil_inputs"]["rationale"].endswith("generation.")
+
+
 def test_bear_residual_floor_is_explicit_and_base_distress_still_requires_review():
     sources, raw = fixture()
     # A deeper commodity downside can leave enterprise value below debt.

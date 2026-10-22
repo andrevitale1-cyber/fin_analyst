@@ -326,11 +326,18 @@ def test_breakdown_shares_can_be_recovered_from_matching_complete_currency_reven
 
 def test_breakdown_currency_and_amount_are_validated_without_guessing():
     for invalid in ({"numeric_value": float("nan"), "currency": "USD"},
-                    {"numeric_value": -5, "currency": "USD"}, {"numeric_value": 5}, {"currency": "USD"}):
+                    {"numeric_value": -5, "currency": "USD"}, {"numeric_value": 5}):
         raw = geography_report([51.5, 48.5])
         raw["breakdowns"][0].update(invalid)
         with pytest.raises(ValueError):
             validate_company_report(raw, [{"id": "S1", "text": "Reported facts."}])
+
+    raw = geography_report([51.5, 48.5])
+    raw["breakdowns"][0].update(currency="USD", numeric_value=None)
+    result = validate_company_report(raw, [{"id": "S1", "text": "Reported facts."}])
+    assert result["breakdowns"][0]["currency"] is None
+    assert result["breakdowns"][0]["numeric_value"] is None
+    assert result["breakdowns"][0]["share"] == 51.5
 
 
 def test_dated_cited_analyst_consensus_supports_partial_values_and_no_invented_counts():
