@@ -231,6 +231,28 @@ def company_evidence(company, model, as_of, client):
                 evidence["coverage"] = evidence_manifest(evidence["sources"])
                 evidence["market_recovery_version"] = 1
                 cur.execute("UPDATE company_research_cache SET content=%s::jsonb WHERE cache_key=%s", (json.dumps(evidence), key))
+            if is_petrobras(company) and not evidence.get("petrobras_documents_version"):
+                from agents.company_documents import collect_petrobras_filings, collect_petrobras_market_sources, hydrate_company_documents
+                discovered = collect_petrobras_filings(evidence["as_of"])
+                if not discovered:
+                    raise ReportValidationError("Original Petrobras statement catalogue is unavailable")
+                from urllib.parse import urlsplit, urlunsplit
+                def identity(source):
+                    url = urlsplit(source["url"])
+                    return urlunsplit((url.scheme, url.netloc, url.path, "", ""))
+                new_urls = {identity(s) for s in discovered}
+                kept = [s for s in evidence["sources"] if identity(s) not in new_urls]
+                original = [s for s in kept if s.get("id") == "F1"]
+                rest = [s for s in kept if s.get("id") != "F1"]
+                evidence["sources"] = hydrate_company_documents(company, original + discovered + rest)
+                if any(s.get("basis") != "primary" for s in evidence["sources"] if s["id"].startswith("IRSEC")):
+                    raise ReportValidationError("Original Petrobras filings could not be downloaded")
+                market_sources = collect_petrobras_market_sources()
+                market_urls = {identity(s) for s in market_sources}
+                evidence["sources"] = [s for s in evidence["sources"] if identity(s) not in market_urls] + market_sources
+                evidence["coverage"] = evidence_manifest(evidence["sources"])
+                evidence["petrobras_documents_version"] = 1
+                cur.execute("UPDATE company_research_cache SET content=%s::jsonb WHERE cache_key=%s", (json.dumps(evidence), key))
         conn.commit()
         return evidence
     except Exception:

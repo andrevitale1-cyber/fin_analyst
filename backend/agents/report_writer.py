@@ -6,7 +6,7 @@ import re
 from company_report_content import company_report_schema
 from agents.prompt_builder import PromptBuilder
 from report_runtime import editorial_preparation
-from sector_research import sector_brief
+from sector_research import sector_brief, is_petrobras
 
 
 SECTION_BRIEFS = {
@@ -29,6 +29,10 @@ def write_report(client, company, as_of, locale, dossier, sources, *, timeout=95
     sections = schema["properties"]["sections"]
     sections.update(minItems=9, maxItems=9)
     sections["items"]["properties"]["id"]["enum"] = list(SECTION_BRIEFS)
+    if is_petrobras(company):
+        schema["properties"]["signals"].update(minItems=6, maxItems=6)
+        schema["properties"]["metrics"].update(minItems=8)
+        sections["items"]["properties"]["paragraphs"].update(minItems=2, maxItems=4)
     briefs = [{"id": key, "brief": brief, "fact_ids": [f["id"] for f in dossier["facts"] if key in f["sections"]]}
               for key, brief in SECTION_BRIEFS.items()]
     prompt = f"""AGENT 2 — write the company-wide research report for {company}, as of {as_of}.

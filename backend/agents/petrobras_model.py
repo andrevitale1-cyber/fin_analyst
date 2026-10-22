@@ -2,6 +2,7 @@
 from datetime import date
 import json
 import math
+import re
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -18,6 +19,7 @@ class Amount(BaseModel):
     value: float
     multiplier: Literal[1, 1000, 1000000, 1000000000]
     quote: str = Field(min_length=12, max_length=600)
+    unit_quote: str = Field(min_length=12, max_length=300)
     source_id: str
     period: str
     unit: Literal["BRL", "shares"]
@@ -77,14 +79,15 @@ def propose(client, company, as_of, locale, dossier, baseline, sources, *, timeo
 {sector_brief(company)}
 Write rationale in {'Portuguese' if locale == 'pt' else 'English'}.
 Return source-extracted bridge separately from AI ASSUMPTIONS. Bridge numeric value is the exact numeral
-in a verbatim quote; multiplier converts its explicitly quoted scale into full BRL/shares. All debt/cash/NCI
+in a verbatim quote; unit_quote separately copies the table's verbatim unit/scale header from the SAME
+source. Multiplier converts that explicitly quoted scale into full BRL/shares. All debt/cash/NCI
 must be from the same latest consolidated balance sheet, not mixed dates. Use gross debt INCLUDING leases,
 cash and cash equivalents, reported NCI book value as an explicit proxy, and total outstanding ON+PN shares
 EXCLUDING treasury, not ADRs, free float or EPS-implied shares. Quote original share economic rights and
 explain equal economic allocation as an approximation, with preferred-share rights acknowledged. If a
 required amount is not sourced, do not invent zero: extraction must fail instead of producing a target.
 Bridge sources must be original issuer/regulatory documents, not web_research summaries.
-Use five FULL FUTURE calendar years starting after the research year. This is a conservative year-end
+Use five FULL FUTURE calendar years starting after the research year. This is an explicit full-year
 valuation convention: omit the remaining current-year cash and disclose it. No pro-rating of full-year data.
 Project each year explicitly: Brent, USD/BRL, production kboe/d, consolidated EXTERNAL revenue, upstream,
 downstream and other/eliminations EBITDA contributions, depreciation, capex including economic lease
@@ -119,17 +122,23 @@ def calculate(baseline, raw, sources):
         source = by_id.get(cell["source_id"], {})
         if source.get("basis") != "primary":
             raise ReportValidationError("Equity bridge requires original primary evidence")
+        if " ".join(cell["unit_quote"].split()) not in " ".join(source.get("text", "").split()):
+            raise ReportValidationError("Equity bridge table units lack original evidence")
+        if cell["unit"] == "BRL" and not re.search(r"\bBRL\b|R\$|\breais\b", cell["quote"] + " " + cell["unit_quote"], re.I):
+            raise ReportValidationError("Equity bridge currency is not established in the table")
         validate_fact({"quote": cell["quote"], "numeric_value": cell["value"], "unit": cell["unit"],
                        "period": cell["period"], "source_id": cell["source_id"], "sections": ["valuation"]}, by_id)
         expected_unit = "shares" if name == "shares" else "BRL"
         if cell["unit"] != expected_unit or cell["value"] < 0 or not math.isfinite(cell["value"]):
             raise ReportValidationError("Invalid Petrobras equity bridge amount")
-        scale_words = {1000: ("thousand", "mil", "000"), 1000000: ("million", "milh", "milhões"),
-                       1000000000: ("billion", "bilh", "bilhões")}
-        if cell["multiplier"] != 1 and not any(word in cell["quote"].lower() for word in scale_words[cell["multiplier"]]):
+        scale_patterns = {1000: r"\b(?:thousands?|mil|000)\b", 1000000: r"\b(?:millions?|milh[oõ]es|milh[aã]o)\b",
+                          1000000000: r"\b(?:billions?|bilh[oõ]es|bilh[aã]o)\b"}
+        if cell["multiplier"] != 1 and not re.search(scale_patterns[cell["multiplier"]], cell["quote"] + " " + cell["unit_quote"], re.I):
             raise ReportValidationError("Equity bridge scale is not established in the quote")
         # Scaling and the accounting meaning are independently reviewed with the original table context.
         amounts[name] = cell["value"] * cell["multiplier"]
+        if not math.isfinite(amounts[name]):
+            raise ReportValidationError("Equity bridge scaling overflow")
     periods = {bridge[k]["period"] for k in amounts if k != "shares"}
     if len(periods) != 1 or any(date.fromisoformat(p) > date.fromisoformat(baseline["valuation_date"]) for p in periods):
         raise ReportValidationError("Equity bridge mixes balance-sheet dates")
@@ -160,6 +169,8 @@ def calculate(baseline, raw, sources):
             ebit = ebitda - year["depreciation_brl"]
             nopat = ebit - max(0, ebit) * year["tax_percent"] / 100
             fcff = nopat + year["depreciation_brl"] - year["capex_including_lease_reinvestment_brl"] - year["working_capital_investment_brl"]
+            if not all(math.isfinite(v) for v in (ebitda, ebit, nopat, fcff)):
+                raise ReportValidationError("Nonfinite oil cash-flow projection")
             years = (date(year["year"], 12, 31) - valuation_date).days / 365.25
             rows.append({"period": f"FY{year['year']}", "period_end": f"{year['year']}-12-31", "discount_years": years,
                          "currency": "BRL", "basis": "ai_assumption", "revenue": year["external_revenue_brl"],
@@ -174,7 +185,7 @@ def calculate(baseline, raw, sources):
         def equity(terminal_ev, rate=wacc):
             enterprise = sum(r["fcff"] / (1 + rate) ** r["discount_years"] for r in rows) + terminal_ev / (1 + rate) ** last["discount_years"]
             value = enterprise - net_debt - amounts["noncontrolling_interests"]
-            if value <= 0:
+            if not math.isfinite(value) or value <= 0:
                 raise ReportValidationError("Scenario equity is nonpositive; requires a distress valuation review")
             return {"enterprise_value": enterprise, "net_debt": net_debt, "noncontrolling_interests": amounts["noncontrolling_interests"],
                     "equity_value": value, "shares": shares, "present_value": round(value / shares, 2)}

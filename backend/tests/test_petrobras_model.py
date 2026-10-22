@@ -16,7 +16,7 @@ def fixture():
     rights = "Each outstanding common and preferred share has equal participation in distributed earnings, subject to the preferred minimum rights."
     source["text"] += " " + quote + " " + rights
     def amount(n, unit="BRL"):
-        return dict(value=n, multiplier=1, quote=quote, source_id="F1", period="2026-06-30", unit=unit)
+        return dict(value=n, multiplier=1, quote=quote, unit_quote=quote, source_id="F1", period="2026-06-30", unit=unit)
     scenarios = []
     for case, factor in [("bear", .8), ("base", 1), ("bull", 1.2)]:
         years = [dict(year=year, brent_usd=70 * factor, usd_brl=5, production_kboed=2000 * factor,

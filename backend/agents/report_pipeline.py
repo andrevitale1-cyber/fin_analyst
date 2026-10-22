@@ -10,6 +10,7 @@ from agents.report_verifier import verify_report, EvidenceAuditError
 from company_report_content import apply_official_financials, validate_company_report
 from report_runtime import checkpoint, progress, editorial_preparation
 from agents.report_model import model_context, model_valuation_section, verify_model
+from sector_research import is_petrobras
 
 
 PIPELINE_VERSION = "company-agents-v4"
@@ -50,9 +51,10 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
     writing_ms = round((perf_counter() - started) * 1000)
     logger.info("report_agents company=%s stage=sections_and_valuation elapsed_ms=%d", company, writing_ms)
     reviewed = perf_counter()
+    audit_timeout = 90 if is_petrobras(company) else 40
     progress("verification")
     try:
-        review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, 40), company=company, locale=locale)
+        review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, audit_timeout), company=company, locale=locale)
     except EvidenceAuditError as error:
         if deadline - perf_counter() < 165:
             raise
@@ -75,7 +77,7 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
         content = calculate_valuation(validate_company_report(apply_official_financials(corrected, sources), sources), locale)
         if investment_model is not None:
             content["investment_model"] = investment_model
-        review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, 40), company=company, locale=locale)
+        review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, audit_timeout), company=company, locale=locale)
     verification_ms = round((perf_counter() - reviewed) * 1000)
     logger.info("report_agents company=%s stage=verification passed=true elapsed_ms=%d", company, verification_ms)
     content["pipeline"] = {"version": PIPELINE_VERSION, "agents": ["facts", "sections", "valuation", "verification"],

@@ -4,6 +4,7 @@ import re
 from datetime import date
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from html.parser import HTMLParser
 from urllib.parse import urlsplit
 
 import requests
@@ -12,6 +13,94 @@ from bs4 import BeautifulSoup
 from agents.auto_fetcher import AutoFetcher
 from openai_client import OpenAIClient, OpenAIError
 from sector_research import is_petrobras
+
+
+class FilingText(HTMLParser):
+    """SEC annual HTML can exceed 9 MB; extract text without building a large DOM tree."""
+    ignored_tags = {"script", "style", "nav", "footer", "aside", "head"}
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.ignored = 0
+        self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.ignored_tags:
+            self.ignored += 1
+
+    def handle_endtag(self, tag):
+        if tag in self.ignored_tags:
+            self.ignored = max(0, self.ignored - 1)
+
+    def handle_data(self, data):
+        if not self.ignored and data.strip():
+            self.parts.append(data.strip())
+
+
+def filing_text(data):
+    parser = FilingText()
+    parser.feed(data.decode("utf-8", errors="replace"))
+    parser.close()
+    return "\n".join(parser.parts)
+
+
+def collect_petrobras_filings(as_of):
+    """Discover actual SEC primary filenames; never guess a translated release URL."""
+    try:
+        response = requests.get("https://data.sec.gov/submissions/CIK0001119639.json",
+                                headers={"User-Agent": "FinAnalyzer contact@finanalyser.com.br"},
+                                timeout=12, allow_redirects=False)
+        response.raise_for_status()
+        recent = response.json()["filings"]["recent"]
+        selected, groups = [], set()
+        for index, name in enumerate(recent["primaryDocument"]):
+            if recent["filingDate"][index] > as_of:
+                continue
+            form, lower = recent["form"][index], name.lower()
+            group = ("annual" if form == "20-F" else
+                     "annual-brl" if re.search(r"pbrfs4q\d{2}rs", lower) else
+                     "interim-brl" if re.search(r"pbrfs[1-3]q\d{2}rs", lower) else
+                     "annual-performance" if re.search(r"pbrrmf4q\d{2}usd", lower) else
+                     "interim-performance" if re.search(r"pbrrmf[1-3]q\d{2}usd", lower) else None)
+            if group is None or group in groups or form not in ("20-F", "6-K", "6-K/A"):
+                continue
+            accession = recent["accessionNumber"][index].replace("-", "")
+            if not re.fullmatch(r"\d{18}", accession) or not re.fullmatch(r"[A-Za-z0-9_.-]+\.htm", name):
+                continue
+            selected.append({"id": "IRSEC" + accession, "title": f"Petrobras {group} {recent['filingDate'][index]}",
+                "url": f"https://www.sec.gov/Archives/edgar/data/1119639/{accession}/{name}",
+                "basis": "web_research", "text": "", "document_type": "filing"})
+            groups.add(group)
+        return selected
+    except (requests.RequestException, ValueError, KeyError, TypeError, IndexError):
+        return []
+
+
+def collect_petrobras_market_sources():
+    """Read dated PETR4 observations from the exact BRL listing, without another model search."""
+    sources = []
+    for page in ("history", "forecast"):
+        url = f"https://stockanalysis.com/quote/bvmf/PETR4/{page}/"
+        try:
+            with requests.get(url, headers={"User-Agent": "FinAnalyzer contact@finanalyser.com.br"},
+                              timeout=(3, 12), allow_redirects=False, stream=True) as response:
+                if response.status_code != 200:
+                    continue
+                data = bytearray()
+                for chunk in response.iter_content(65536):
+                    data.extend(chunk)
+                    if len(data) > 2_000_000:
+                        break
+                if len(data) > 2_000_000:
+                    continue
+            text = filing_text(bytes(data))[:24000]
+            if "PETR4" not in text or "BRL" not in text:
+                continue
+            sources.append({"id": "MKTPETR4-" + page, "url": url, "title": "StockAnalysis PETR4 " + page,
+                            "text": text, "basis": "web_research", "document_type": "market_data"})
+        except requests.RequestException:
+            continue
+    return sources
 
 
 def collect_issuer_annual_sources(company, as_of):
@@ -82,10 +171,12 @@ def hydrate_company_documents(company, sources):
                 data = bytearray()
                 for chunk in response.iter_content(65536):
                     data.extend(chunk)
-                    if len(data) > 6_000_000:
+                    if len(data) > (12_000_000 if is_petrobras(company) else 6_000_000):
                         return source
             if data.startswith(b"%PDF-"):
                 text = OpenAIClient.extract_text(bytes(data))
+            elif is_petrobras(company):
+                text = filing_text(bytes(data))
             else:
                 soup = BeautifulSoup(bytes(data), "html.parser")
                 for node in soup(["script", "style", "nav", "footer", "aside"]):
@@ -117,7 +208,7 @@ def petrobras_document_excerpt(text):
         return text
     pieces = [text[:8000]]
     terms = (r"net debt|d[ií]vida l[ií]quida", r"non.?controlling|n[aã]o controladores", r"treasury shares|a[cç][oõ]es em tesouraria",
-             r"preferred shares|a[cç][oõ]es preferenciais", r"segment information|informa[cç][oõ]es por segmento",
+             r"preferred shares|a[cç][oõ]es preferenciais", r"share capital|capital social", r"segment information|informa[cç][oõ]es por segmento",
              r"lease liabilities|passivos de arrendamento", r"production|produ[cç][aã]o", r"reserves|reservas")
     for term in terms:
         matches = list(re.finditer(term, text, re.I))

@@ -100,3 +100,34 @@ def test_petrobras_sec_issuer_stays_verified_when_financial_baseline_is_cvm(monk
     result = documents.hydrate_company_documents("PETR4", [cvm, source])
     assert result[1]["basis"] == "primary"
     get.assert_called_once()
+
+
+def test_petrobras_catalogue_uses_filed_names_and_excludes_future_documents(monkeypatch):
+    recent = {"primaryDocument": ["pbrfs3q26rs_6k.htm", "pbrfs2q26rs_6k.htm", "pbrfs1q26rs_6k.htm", "pbrform20f_2025.htm", "pbrfs4q25rs_6k.htm"],
+              "filingDate": ["2026-11-10", "2026-08-07", "2026-05-12", "2026-04-09", "2026-03-06"],
+              "accessionNumber": ["0001292814-26-004999", "0001292814-26-004131", "0001292814-26-002988", "0001292814-26-002168", "0001292814-26-000708"],
+              "form": ["6-K", "6-K", "6-K", "20-F", "6-K"]}
+    response = Mock(); response.json.return_value = {"filings": {"recent": recent}}
+    get = Mock(return_value=response); monkeypatch.setattr(documents.requests, "get", get)
+    sources = documents.collect_petrobras_filings("2026-10-21")
+    assert len(sources) == 3
+    assert any("000129281426004131/pbrfs2q26rs_6k.htm" in s["url"] for s in sources)
+    assert not any("3q26" in s["url"] or "1q26" in s["url"] for s in sources)
+    assert all(s["basis"] != "primary" for s in sources)  # Download must succeed first.
+    assert get.call_args.kwargs["allow_redirects"] is False
+
+
+def test_large_filing_text_extraction_does_not_need_a_dom_tree():
+    text = documents.filing_text(b"<head>omit</head><nav>omit<nav>omit</nav></nav><main>BRL &amp; shares<table><tr><td>Cash</td><td>100</td></tr></table><script>omit</script></main>")
+    assert text == "BRL & shares\nCash\n100"
+
+
+def test_petrobras_market_reads_only_the_exact_brl_listing(monkeypatch):
+    response = Mock(status_code=200)
+    response.__enter__ = Mock(return_value=response); response.__exit__ = Mock(return_value=False)
+    response.iter_content.side_effect = [iter([b"<main>PETR4 Currency BRL Oct 21, 2026 price 58.32</main>"]),
+                                        iter([b"<main>PBR Currency USD</main>"])]
+    get = Mock(return_value=response); monkeypatch.setattr(documents.requests, "get", get)
+    result = documents.collect_petrobras_market_sources()
+    assert len(result) == 1 and result[0]["id"] == "MKTPETR4-history"
+    assert all("/quote/bvmf/PETR4/" in call.args[0] for call in get.call_args_list)
