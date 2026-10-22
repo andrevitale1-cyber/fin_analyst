@@ -1,6 +1,7 @@
 """Agent 4: deterministic consistency checks followed by independent evidence review."""
 import json
 import math
+import re
 from datetime import date
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool
@@ -11,6 +12,7 @@ from agents.report_facts import normalized, writing_sources
 from agents.prompt_builder import PromptBuilder
 from agents.report_model import verify_model
 from sector_research import sector_brief, is_petrobras
+from report_runtime import checkpoint, editorial_preparation
 
 
 class EvidenceAuditError(ReportValidationError):
@@ -68,6 +70,17 @@ def check_consistency(report, sources, as_of):
         present = expected / (1 + case["discount_percent"] / 100) ** 5
         if not math.isclose(case["future_value"], round(expected, 2), abs_tol=0.005) or not math.isclose(case["present_value"], round(present, 2), abs_tol=0.005):
             raise ReportValidationError("Valuation arithmetic is inconsistent")
+
+
+def reader_copy_issues(report):
+    issues = []
+    fields = [("coverage", report.get("coverage", ""))] + [(s["id"], " ".join([s["summary"], *s["paragraphs"], *s["bullets"]])) for s in report["sections"]]
+    for target, text in fields:
+        if re.search(r"(?:publica[çc][aã]o|publication).{0,55}(?:bloquead|blocked|requer.{0,15}confer|requires.{0,15}review)", text, re.I):
+            issues.append({"target": target, "reason": "Reader copy: replace internal editorial publication decisions with a complete scope or investment conclusion; never conceal a material factual uncertainty.", "source_ids": []})
+    if any(len(s["value"].split()) > 8 for s in report["signals"]):
+        issues.append({"target": "signals", "reason": "Reader copy: replace paragraph-length or truncated signal values with concise 2–4 word investment labels, preserving their evidence and tone.", "source_ids": []})
+    return issues
 
 
 def verify_report(client, report, dossier, sources, as_of, *, timeout=40, company=None, locale="en"):
@@ -128,8 +141,10 @@ REPORT:\n{json.dumps(audit_report, ensure_ascii=False)}
 FACT DOSSIER:\n{json.dumps(dossier, ensure_ascii=False)}
 ORIGINAL SOURCE CONTEXT:\n{json.dumps(contexts, ensure_ascii=False)}
 ORIGINAL FINANCIAL EVIDENCE:\n{json.dumps(writing_sources({'facts': []}, sources), ensure_ascii=False)}"""
-    result = Review.model_validate(client.analyze_full_report(prompt, Review.model_json_schema(),
-                                  max_output_tokens=4000, timeout=timeout)).model_dump()
+    compute = lambda: client.analyze_full_report(prompt, Review.model_json_schema(), max_output_tokens=4000, timeout=timeout)
+    raw = checkpoint("evidence-audit-v2", [company, as_of, client.model, prompt], compute) if editorial_preparation.get() else compute()
+    result = Review.model_validate(raw).model_dump()
+    result["issues"].extend(reader_copy_issues(report))
     source_ids = {s["id"] for s in sources}
     if any(not set(issue["source_ids"]).issubset(source_ids) for issue in result["issues"]):
         raise ReportValidationError("Reviewer referenced an unknown source")

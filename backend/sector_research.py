@@ -34,4 +34,9 @@ Justify WACC, terminal reinvestment/reserve replacement and comparable-company a
 finite reserves by growing cash forever without the reinvestment needed to sustain production.
 Dividends are a consequence of distributable cash and policy, not a perpetual yield extrapolation.
 Show bear/base/bull drivers and downside mechanisms; never force a target price or use a guessed P/E on
-one historical EPS. Missing critical evidence blocks editorial publication rather than becoming filler."""
+one historical EPS. Official consolidated CVM annual financial rows are primary financial evidence;
+do not demand a separate PDF for each historical year when those regulatory statements are supplied.
+Missing sourced balance-sheet/share inputs prevents a numerical valuation. Missing management WACC,
+field decline rates or maintenance-capex splits does not prohibit explicitly conditional AI assumptions.
+Do not manufacture those disclosures or describe forecasts as guidance. Explain the economic sensitivity.
+Editorial readiness decisions are internal review feedback, never reader-facing report prose."""

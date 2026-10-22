@@ -116,6 +116,17 @@ def test_rights_quote_accepts_capitalization_but_not_changed_economic_terms():
         calculate(baseline_from_sources(sources), raw, sources)
 
 
+def test_internal_editorial_copy_and_paragraph_signals_require_repair():
+    from agents.report_verifier import reader_copy_issues
+    report = {"coverage": "Publicação editorial definitiva bloqueada: faltam documentos.",
+              "sections": [{"id": "verdict", "summary": "Conclusão de investimento.", "paragraphs": [], "bullets": []}],
+              "signals": [{"value": "Este texto é uma explicação longa que não funciona como rótulo."}]}
+    assert {i["target"] for i in reader_copy_issues(report)} == {"coverage", "signals"}
+    report["coverage"] = "Análise corporativa com histórico de cinco anos e atualização até o 2T26."
+    report["signals"][0]["value"] = "Disciplina sob acompanhamento"
+    assert reader_copy_issues(report) == []
+
+
 def test_bear_residual_floor_is_explicit_and_base_distress_still_requires_review():
     sources, raw = fixture()
     # A deeper commodity downside can leave enterprise value below debt.

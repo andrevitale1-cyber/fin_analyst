@@ -39,6 +39,7 @@ def write_report(client, company, as_of, locale, dossier, sources, *, timeout=95
 Write in {'English' if locale == 'en' else 'Portuguese'} using only the supplied cited facts and official financials.
 {sector_brief(company)}
 Return all six summary signals: moat, profitability, management, growth, valuation and sentiment.
+Each signal value is a concise 2–4 word label, without an 'AI judgment' prefix or a paragraph.
 The valuation signal must explain the audited model's result rather than omit the category.
 Return exactly the nine individually specified sections and supporting structured data. Valuation is handled
 by a separate agent: do not produce that section or scenario assumptions here. Use {'2,500–3,500' if editorial_preparation.get() else '1,200–1,600'} words total.
@@ -47,6 +48,8 @@ with a short **bold key insight**. Cite factual assertions using source_ids, not
 Use complete sentences, no HTML, no scripts and no filler about missing information. Never invent figures,
 ratings, consensus, biographies, comparisons, quotations or forecasts. Label AI judgments explicitly.
 Never mention JSON, arrays, internal field names, the pipeline or omitted fields in reader-facing prose.
+Coverage is a complete sentence under 260 characters about company scope and observation periods.
+Do not put editorial publication blocks, draft status or internal review tasks in coverage or conclusions.
 If independent sentiment evidence is unavailable, use at most ONE brief sentence about that gap;
 never pad the sentiment section with repeated paragraphs describing missing market information.
 All numbers retain period, currency and scale. Numeric monetary JSON values use full currency units;
@@ -102,12 +105,15 @@ Original source context outranks first-pass extracted statements. Correct percen
 reported/adjusted/comparable accounting bases explicitly; do not repeat an extraction error from the old draft.
 Preserve valid content. Remove unsupported assertions rather than inventing support. Do not change other
 fields, add report sections, research again or recalculate valuation prices: Python handles arithmetic.
+{sector_brief(company)}
+Coverage must be a complete scope sentence under 260 characters. Signal values are 2–4 word labels.
+Remove internal publication/draft decisions from reader prose; explain investment implications instead.
 SHARED ANALYSIS RULES:\n{PromptBuilder().company_field_rules(company, locale)}
 ISSUES:\n{json.dumps(issues, ensure_ascii=False)}
 DRAFT:\n{json.dumps(report, ensure_ascii=False)}
 FACTS:\n{json.dumps(dossier, ensure_ascii=False)}
 COMPACT SOURCES AND ORIGINAL FINANCIAL EVIDENCE:\n{json.dumps(sources, ensure_ascii=False)}"""
-    replacements = client.analyze_full_report(prompt, schema, max_output_tokens=5000, timeout=timeout)
+    replacements = client.analyze_full_report(prompt, schema, max_output_tokens=10000 if editorial_preparation.get() else 5000, timeout=timeout)
     if set(replacements) != set(fields):
         raise ReportValidationError("Audit repair returned unexpected fields")
     result = copy.deepcopy(report)

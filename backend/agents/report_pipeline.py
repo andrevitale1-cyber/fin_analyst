@@ -51,7 +51,7 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
     writing_ms = round((perf_counter() - started) * 1000)
     logger.info("report_agents company=%s stage=sections_and_valuation elapsed_ms=%d", company, writing_ms)
     reviewed = perf_counter()
-    audit_timeout = 90 if is_petrobras(company) else 40
+    audit_timeout = (240 if editorial_preparation.get() else 90) if is_petrobras(company) else 40
     progress("verification")
     try:
         review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, audit_timeout), company=company, locale=locale)
@@ -60,12 +60,14 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
             raise
         logger.info("report_agents company=%s stage=evidence_repair issues=%d", company, len(error.issues))
         progress("repair")
-        dossier = checkpoint("audited-facts-repair-v1", [company, as_of, client.model, dossier, error.issues, compact_sources],
-            lambda: repair_fact_dossier(client, dossier, error.issues, sources, timeout=remaining(deadline, 45)))
+        fact_issues = [i for i in error.issues if not i["reason"].startswith("Reader copy:")]
+        if fact_issues:
+            dossier = checkpoint("audited-facts-repair-v1", [company, as_of, client.model, dossier, fact_issues, compact_sources],
+                lambda: repair_fact_dossier(client, dossier, fact_issues, sources, timeout=remaining(deadline, 90 if editorial_preparation.get() else 45)))
         compact_sources = writing_sources(dossier, sources)
         repair_context = {**dossier, "investment_model": model_context(investment_model)} if investment_model is not None else dossier
         corrected = repair_report(client, company, as_of, locale, content, error.issues, repair_context,
-                                  compact_sources, timeout=remaining(deadline, 75))
+                                  compact_sources, timeout=remaining(deadline, 240 if editorial_preparation.get() else 75))
         # Revalidate model inputs, then recompute every derived valuation output.
         corrected["valuation"].pop("fair_value", None)
         for case in corrected["valuation"]["scenarios"]:
