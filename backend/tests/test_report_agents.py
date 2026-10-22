@@ -43,6 +43,12 @@ def test_annual_tables_survive_extraction_budget_without_inventing_facts():
     assert "ANNUAL INCOME TABLE" in writing_sources({"facts": []}, [primary])[0]["text"]
 
 
+def test_dated_market_sources_survive_an_empty_extraction_budget():
+    source = {"id": "MKT1", "text": "PETR4 BRL 57.75, Oct 21 2026. Consensus target BRL 60.38.",
+              "basis": "web_research", "document_type": "market_data"}
+    assert writing_sources({"facts": []}, [source]) == [source]
+
+
 def test_original_financial_tables_reach_writer_repair_and_independent_review():
     from agents.report_writer import write_report, repair_report
     from agents.report_verifier import verify_report

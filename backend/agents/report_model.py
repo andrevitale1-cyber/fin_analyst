@@ -221,7 +221,7 @@ def model_context(model):
     return {"basis": "ai_assumption", "selected_method": model["selected_method"], "fair_value": model["fair_value"],
             **({"oil_inputs": model["oil_inputs"], "oil_balance": model["oil_balance"], "equity_bridges": [{"case": c["case"], **c["equity_bridge"]} for c in model["cases"]]} if model.get("oil_inputs") else {}),
             "currency": model["baseline"]["currency"], "source_id": model["baseline"]["source_id"],
-            "share_basis": model["baseline"]["share_basis"], "assumptions": model["assumptions"],
+            "share_basis": model.get("valuation_share_basis", model["baseline"]["share_basis"]), "assumptions": model["assumptions"],
             "base_projections": [{k: r[k] for k in ("period", "basis", "revenue", "eps", "fcff")} for c in model["cases"] if c["case"] == "base" for r in c["projections"]],
             "cross_checks": [{"case": c["case"], "methods": c["methods"]} for c in model["cases"]],
             "simplifications": model["simplifications"]}

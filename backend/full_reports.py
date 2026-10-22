@@ -253,6 +253,15 @@ def company_evidence(company, model, as_of, client):
                 evidence["coverage"] = evidence_manifest(evidence["sources"])
                 evidence["petrobras_documents_version"] = 1
                 cur.execute("UPDATE company_research_cache SET content=%s::jsonb WHERE cache_key=%s", (json.dumps(evidence), key))
+            if is_petrobras(company) and evidence.get("petrobras_documents_version", 0) < 2:
+                from agents.company_documents import collect_petrobras_calibration_sources
+                supplements = collect_petrobras_calibration_sources()
+                if not supplements:
+                    raise ReportValidationError("Petrobras valuation calibration sources are unavailable")
+                evidence["sources"].extend(supplements)
+                evidence["coverage"] = evidence_manifest(evidence["sources"])
+                evidence["petrobras_documents_version"] = 2
+                cur.execute("UPDATE company_research_cache SET content=%s::jsonb WHERE cache_key=%s", (json.dumps(evidence), key))
         conn.commit()
         return evidence
     except Exception:

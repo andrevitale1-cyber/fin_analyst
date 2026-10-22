@@ -103,6 +103,41 @@ def collect_petrobras_market_sources():
     return sources
 
 
+def collect_petrobras_calibration_sources():
+    pages = [
+        ("MKTGENIAL20260908", "Genial Petrobras valuation and peer-risk comparison, 2026-09-08",
+         "https://analisa.genialinvestimentos.com.br/acoes/PETR4/petrobras-petr4-como-as-eleicoes-podem-afetar-a-avaliacao-da-petrobras/", "web_research", "market_data", "PETR4"),
+        ("MKTBB2026Q2", "BB Investimentos Petrobras 2Q26 valuation",
+         "https://investalk.bb.com.br/noticias/mercado/petrobras-PETR4-resultado-2T26", "web_research", "market_data", "PETR4"),
+        ("IRPROD202502", "Petrobras official 2025 production and reserves announcement, 2026-02-10",
+         "https://agencia.petrobras.com.br/w/produ%C3%A7%C3%A3o-de-petr%C3%B3leo-e-g%C3%A1s-da-petrobras-cresce-11-e-alcan%C3%A7a-3-milh%C3%B5es-de-barris-em-2025", "primary", "filing", "175%"),
+    ]
+    result = []
+    for sid, title, url, basis, kind, marker in pages:
+        try:
+            with requests.get(url, timeout=(3, 12), allow_redirects=False, stream=True,
+                              headers={"User-Agent": "FinAnalyzer contact@finanalyser.com.br"}) as response:
+                if response.status_code != 200:
+                    continue
+                body = bytearray()
+                for chunk in response.iter_content(65536):
+                    body.extend(chunk)
+                    if len(body) > 2_000_000:
+                        break
+                if len(body) > 2_000_000:
+                    continue
+            text = filing_text(bytes(body))[:24000]
+            if marker in text:
+                result.append({"id": sid, "title": title, "url": url, "text": text, "basis": basis, "document_type": kind})
+        except requests.RequestException:
+            continue
+    notes_path = Path(__file__).resolve().parents[1] / "research" / "petrobras-calibration-20261021.json"
+    notes = json.loads(notes_path.read_text(encoding="utf-8"))
+    downloaded = {s["id"] for s in result}
+    result.extend(s for s in notes if s["id"] not in downloaded)
+    return result
+
+
 def collect_issuer_annual_sources(company, as_of):
     """Use verified issuer catalogues for annual comparisons, independently of web summaries."""
     fetcher = AutoFetcher()

@@ -59,6 +59,8 @@ EPS is per underlying share. Do not mix fiscal/calendar years, ADR/ordinary shar
 Financial history contains 3–5 full years when available, never quarters/TTM. Highlight metrics must have
 numeric_value, unit, date/period and source_id. Segment/geography shares are percentage points (51.5, not .515).
 Do not combine overlapping segment/platform classifications. Prefer operational segments and a common period.
+Use disclosed EXTERNAL sales for a revenue composition. Internal transfers and negative accounting
+eliminations belong in the reconciliation narrative, never as positive revenue mix rows.
 For percentage-only breakdowns, numeric_value and currency must both be null; never manufacture revenue
 to fill the field. Include monetary amounts only when evidenced for that exact segment and period.
 Scores are reasoned AI quality assessments from 1–5, with cited support; never equate a score with market upside.
@@ -107,6 +109,8 @@ Preserve valid content. Remove unsupported assertions rather than inventing supp
 fields, add report sections, research again or recalculate valuation prices: Python handles arithmetic.
 {sector_brief(company)}
 Coverage must be a complete scope sentence under 260 characters. Signal values are 2–4 word labels.
+For revenue composition replace the entire segment group with disclosed external sales. Never keep
+accounting eliminations as a positive revenue amount or change their sign to satisfy a numeric field.
 Remove internal publication/draft decisions from reader prose; explain investment implications instead.
 SHARED ANALYSIS RULES:\n{PromptBuilder().company_field_rules(company, locale)}
 ISSUES:\n{json.dumps(issues, ensure_ascii=False)}

@@ -61,6 +61,8 @@ def test_oil_dcf_and_exit_multiple_include_intermediate_flows_and_equity_bridge(
     assert base["methods"][1]["present_value"] == round((pv + exit_ev - 80 - 10) / 50, 2)
     assert len(base["sensitivity"]) == 9
     assert row["eps"] is None and row["net_income"] is None
+    assert model["valuation_share_basis"]["shares"] == 50
+    assert model["valuation_share_basis"]["historical_baseline_shares_used"] is False
     verify_model(model, sources)
     section = model_valuation_section(model, "pt")["section"]
     assert len(section["paragraphs"]) == 5 and "arrendamentos" in " ".join(section["paragraphs"])
@@ -125,6 +127,10 @@ def test_internal_editorial_copy_and_paragraph_signals_require_repair():
     report["coverage"] = "Análise corporativa com histórico de cinco anos e atualização até o 2T26."
     report["signals"][0]["value"] = "Disciplina sob acompanhamento"
     assert reader_copy_issues(report) == []
+    report["breakdowns"] = [{"label": "Eliminações intersegmentos"}]
+    market = {"id": "MKT1", "document_type": "market_data", "text": "PETR4 stock has a consensus rating of Buy."}
+    issues = reader_copy_issues(report, [market])
+    assert len(issues) == 2 and any(i["target"] == "breakdowns" for i in issues)
 
 
 def test_original_model_context_includes_surrounding_table_and_rights():

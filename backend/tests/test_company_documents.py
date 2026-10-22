@@ -131,3 +131,11 @@ def test_petrobras_market_reads_only_the_exact_brl_listing(monkeypatch):
     result = documents.collect_petrobras_market_sources()
     assert len(result) == 1 and result[0]["id"] == "MKTPETR4-history"
     assert all("/quote/bvmf/PETR4/" in call.args[0] for call in get.call_args_list)
+
+
+def test_editorial_calibration_notes_remain_secondary_when_download_fails(monkeypatch):
+    monkeypatch.setattr(documents.requests, "get", Mock(side_effect=documents.requests.Timeout()))
+    sources = documents.collect_petrobras_calibration_sources()
+    assert {s["id"] for s in sources} == {"MKTGENIAL20260908", "MKTNYU20260105"}
+    assert all(s["basis"] == "web_research" and "editorial_paraphrase" in s["retrieval_method"] for s in sources)
+    assert all(s["document_type"] == "market_data" for s in sources)

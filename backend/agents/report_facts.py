@@ -156,7 +156,7 @@ def writing_sources(dossier, sources):
     result = []
     for source in sources:
         facts = [f for f in dossier["facts"] if f["source_id"] == source["id"]]
-        if source.get("annual_financials"):
+        if source.get("annual_financials") or source.get("document_type") == "market_data":
             result.append(source)
         elif facts:
             result.append({**source, "text": json.dumps(facts, ensure_ascii=False)})

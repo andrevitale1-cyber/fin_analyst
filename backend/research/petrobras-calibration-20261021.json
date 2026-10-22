@@ -1,0 +1,20 @@
+[
+  {
+    "id": "MKTGENIAL20260908",
+    "title": "Genial Analisa — Petrobras risk and valuation, published 2026-09-08",
+    "url": "https://analisa.genialinvestimentos.com.br/acoes/PETR4/petrobras-petr4-como-as-eleicoes-podem-afetar-a-avaliacao-da-petrobras/",
+    "basis": "web_research",
+    "document_type": "market_data",
+    "retrieval_method": "editorial_paraphrase_of_public_original_read_2026-10-22",
+    "text": "Editorial research note, paraphrased from the public Genial Analisa article published September 8, 2026; this is analyst opinion, not issuer disclosure or a newly measured capital cost. Genial uses 15% WACC for Petrobras versus 12% for private peers, and discusses 13–14% under partial risk-premium compression. The page does not explicitly establish the currency convention of these rates. Its international comparison names Exxon, Chevron, BP, Shell, Total, ConocoPhillips, Sinopec, CNOOC and Equinor, and describes a roughly 20–50% Petrobras valuation discount across the selected state-controlled and private groups. It attributes the discount to Brazilian risk and state control, including pricing, investment and distributions. These are the analyst's comparisons and scenarios, not a supplied harmonized numerical peer-multiple dataset. Our nominal BRL WACC and terminal multiples remain separately labeled assumptions; do not copy the analyst's target as our fair value."
+  },
+  {
+    "id": "MKTNYU20260105",
+    "title": "NYU Stern / Aswath Damodaran — country-risk estimates, January 5, 2026",
+    "url": "https://pages.stern.nyu.edu/adamodar/New_Home_Page/datafile/ctryprem.html",
+    "basis": "web_research",
+    "document_type": "market_data",
+    "retrieval_method": "editorial_paraphrase_of_public_original_read_2026-10-22",
+    "text": "Editorial research note from Aswath Damodaran's NYU Stern country-default-spread and risk-premium table dated January 5, 2026. Its Brazil row reports rating Ba1, default spread 2.13%, country risk premium 3.24%, total equity risk premium 7.47% and corporate tax rate 34%. These are that dated research dataset's estimates, not current observed Petrobras WACC or a BRL risk-free rate. Do not add country risk twice if using the total equity risk premium. A USD or global reference requires an explicitly assumed currency/inflation conversion before use with nominal BRL cash flows."
+  }
+]

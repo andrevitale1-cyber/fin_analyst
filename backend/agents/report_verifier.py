@@ -72,7 +72,7 @@ def check_consistency(report, sources, as_of):
             raise ReportValidationError("Valuation arithmetic is inconsistent")
 
 
-def reader_copy_issues(report):
+def reader_copy_issues(report, sources=()):
     issues = []
     fields = [("coverage", report.get("coverage", ""))] + [(s["id"], " ".join([s["summary"], *s["paragraphs"], *s["bullets"]])) for s in report["sections"]]
     for target, text in fields:
@@ -80,6 +80,11 @@ def reader_copy_issues(report):
             issues.append({"target": target, "reason": "Reader copy: replace internal editorial publication decisions with a complete scope or investment conclusion; never conceal a material factual uncertainty.", "source_ids": []})
     if any(len(s["value"].split()) > 8 for s in report["signals"]):
         issues.append({"target": "signals", "reason": "Reader copy: replace paragraph-length or truncated signal values with concise 2–4 word investment labels, preserving their evidence and tone.", "source_ids": []})
+    if any(re.search(r"elimina[çc][oõ]es|eliminations?|intersegment", row["label"], re.I) for row in report.get("breakdowns", [])):
+        issues.append({"target": "breakdowns", "reason": "Reader copy: use disclosed external segment revenue for the whole revenue composition. Accounting eliminations are not a revenue category; never display them as a positive amount.", "source_ids": []})
+    consensus_sources = [s["id"] for s in sources if s.get("document_type") == "market_data" and "stock has a consensus rating" in s.get("text", "").lower()]
+    if consensus_sources and (not report.get("analyst_consensus") or report.get("market", {}).get("price") is None):
+        issues.append({"target": "market; analyst_consensus; sections[sentiment]; signals", "reason": "Reader copy: use the supplied dated PETR4 BRL quote and independent consensus evidence. Attribute the provider, currency, observation date and target horizon; never call available evidence absent or merge different dated samples.", "source_ids": consensus_sources})
     return issues
 
 
@@ -147,7 +152,7 @@ ORIGINAL FINANCIAL EVIDENCE:\n{json.dumps(writing_sources({'facts': []}, sources
     compute = lambda: client.analyze_full_report(prompt, Review.model_json_schema(), max_output_tokens=4000, timeout=timeout)
     raw = checkpoint("evidence-audit-v2", [company, as_of, client.model, prompt], compute) if editorial_preparation.get() else compute()
     result = Review.model_validate(raw).model_dump()
-    result["issues"].extend(reader_copy_issues(report))
+    result["issues"].extend(reader_copy_issues(report, sources))
     source_ids = {s["id"] for s in sources}
     if any(not set(issue["source_ids"]).issubset(source_ids) for issue in result["issues"]):
         raise ReportValidationError("Reviewer referenced an unknown source")
