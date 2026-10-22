@@ -280,8 +280,8 @@ def with_petrobras_policy_evidence(sources):
             matches = list(re.finditer(r"shareholders[’']? remuneration policy|distributions to shareholders|preferred shares participate in the distribution", text, re.I))
             if not matches:
                 raise ReportValidationError("Original policy section could not be read")
-            return "\n".join(text[max(0, m.start() - 1800):m.end() + 9000] for m in matches[-2:])
-        appendix = checkpoint("petrobras-original-policy-v1", [source["id"], source["url"]], fetch)
+            return {"text": "\n".join(text[max(0, m.start() - 1800):m.end() + 9000] for m in matches[-2:])}
+        appendix = checkpoint("petrobras-original-policy-v2", [source["id"], source["url"]], fetch)["text"]
         result.append({**source, "text": source["text"] + "\nORIGINAL POLICY EVIDENCE:\n" + appendix,
                        "policy_evidence": appendix})
     return result

@@ -75,10 +75,13 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
             dossier = checkpoint("audited-facts-repair-v1", [company, as_of, client.model, dossier, fact_issues, compact_sources],
                 lambda: repair_fact_dossier(client, dossier, fact_issues, sources, timeout=remaining(deadline, 90 if editorial_preparation.get() else 45)))
         compact_sources = writing_sources(dossier, sources)
+        flagged_sources = {sid for issue in error.issues for sid in issue["source_ids"]}
+        originals = {s["id"]: s for s in sources}
+        repair_sources = [originals[s["id"]] if s["id"] in flagged_sources else s for s in compact_sources]
         repair_context = {**dossier, "investment_model": model_context(investment_model)} if investment_model is not None else dossier
         repair = lambda: repair_report(client, company, as_of, locale, content, error.issues, repair_context,
-                                       compact_sources, timeout=remaining(deadline, 240 if editorial_preparation.get() else 75))
-        corrected = checkpoint("editorial-sections-repair-v1", [company, as_of, locale, client.model, content, error.issues, repair_context, compact_sources], repair) if editorial_preparation.get() else repair()
+                                       repair_sources, timeout=remaining(deadline, 240 if editorial_preparation.get() else 75))
+        corrected = checkpoint("editorial-sections-repair-v1", [company, as_of, locale, client.model, content, error.issues, repair_context, repair_sources], repair) if editorial_preparation.get() else repair()
         # Revalidate model inputs, then recompute every derived valuation output.
         corrected["valuation"].pop("fair_value", None)
         for case in corrected["valuation"]["scenarios"]:
@@ -86,7 +89,9 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
                 case.pop(key, None)
         corrected.pop("investment_model", None)
         if investment_model is not None:
-            corrected["valuation"] = model_valuation_section(investment_model, locale)["valuation"]
+            model_section = model_valuation_section(investment_model, locale)
+            corrected["valuation"] = model_section["valuation"]
+            corrected["sections"] = [model_section["section"] if s["id"] == "valuation" else s for s in corrected["sections"]]
         content = calculate_valuation(validate_company_report(apply_official_financials(corrected, sources), sources), locale)
         if investment_model is not None:
             content["investment_model"] = investment_model
