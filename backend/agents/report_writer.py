@@ -65,6 +65,9 @@ You may explain those in outlook/thesis/verdict with that label and their stated
 them in the sourced projections array or describe them as guidance or consensus. Follow the model's single
 conviction level and selected valuation method throughout. Explain disagreements between cross-check methods.
 Cover the priced-in expectations, counterthesis, catalysts and measurable conditions that invalidate the thesis.
+If an oil-model bear case has residual_negative=true, explain that enterprise value falls below the debt
+bridge and zero is a residual calculation floor. It is not a forecast of a zero trading price or bankruptcy;
+equity option value is not modeled. Do not conceal that downside or force positive scenario values.
 SHARED ANALYSIS RULES:\n{PromptBuilder().company_field_rules(company, locale)}
 SECTION PROMPTS:\n{json.dumps(briefs)}
 FACT DOSSIER:\n{json.dumps(dossier, ensure_ascii=False)}

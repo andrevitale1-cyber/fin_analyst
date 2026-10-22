@@ -297,13 +297,9 @@ def company_model(company, client, evidence, dossier, locale, *, deadline):
     if is_petrobras(company):
         from agents import petrobras_model
         identity = [petrobras_model.VERSION, company, evidence["as_of"], locale, client.model, baseline, dossier, evidence["sources"]]
-        def prepare_oil_model():
-            raw = petrobras_model.propose(client, company, evidence["as_of"], locale, dossier,
-                                         baseline, evidence["sources"], timeout=remaining(deadline, 240))
-            petrobras_model.calculate(baseline, raw, evidence["sources"])
-            return raw
-        raw = checkpoint("petrobras-assumptions", identity,
-                         prepare_oil_model)
+        raw = checkpoint("petrobras-proposal-v2", identity,
+                         lambda: petrobras_model.propose(client, company, evidence["as_of"], locale, dossier,
+                             baseline, evidence["sources"], timeout=remaining(deadline, 240)))
         return petrobras_model.calculate(baseline, raw, evidence["sources"])
     identity = [MODEL_VERSION, company, evidence["as_of"], locale, client.model, baseline, dossier]
     raw = checkpoint("operating-assumptions", identity,

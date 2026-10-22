@@ -9,7 +9,7 @@ export type ModelCase = {
     oil_drivers?: {brent_usd: number; usd_brl: number; production_kboed: number; upstream_ebitda_brl: number; downstream_ebitda_brl: number; other_and_eliminations_ebitda_brl: number; rationale: string};
     operating_income: number; ebitda: number; capex: number; source_ids: string[]; basis: "ai_assumption" }[];
   methods: { method: ModelMethod; present_value: number; future_value: number | null }[];
-  equity_bridge?: {enterprise_value: number; net_debt: number; noncontrolling_interests: number; equity_value: number; shares: number; present_value: number};
+  equity_bridge?: {enterprise_value: number; gross_debt: number; cash: number; marketable_securities: number; net_debt: number; noncontrolling_interests: number; equity_value: number; shares: number; present_value: number; residual_negative?: boolean};
   sensitivity?: {wacc_percent: number; growth_percent: number; value: number}[];
   terminal_value_share_percent?: number;
 };

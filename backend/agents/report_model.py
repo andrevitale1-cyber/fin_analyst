@@ -219,7 +219,7 @@ def verify_model(model, sources):
 
 def model_context(model):
     return {"basis": "ai_assumption", "selected_method": model["selected_method"], "fair_value": model["fair_value"],
-            **({"oil_inputs": model["oil_inputs"], "equity_bridges": [{"case": c["case"], **c["equity_bridge"]} for c in model["cases"]]} if model.get("oil_inputs") else {}),
+            **({"oil_inputs": model["oil_inputs"], "oil_balance": model["oil_balance"], "equity_bridges": [{"case": c["case"], **c["equity_bridge"]} for c in model["cases"]]} if model.get("oil_inputs") else {}),
             "currency": model["baseline"]["currency"], "source_id": model["baseline"]["source_id"],
             "share_basis": model["baseline"]["share_basis"], "assumptions": model["assumptions"],
             "base_projections": [{k: r[k] for k in ("period", "basis", "revenue", "eps", "fcff")} for c in model["cases"] if c["case"] == "base" for r in c["projections"]],
@@ -262,7 +262,7 @@ def model_valuation_section(model, locale):
 def oil_valuation_section(model, locale):
     pt = locale == "pt"
     bridge = model["cases"][1]["equity_bridge"]
-    ids = list(dict.fromkeys([model["baseline"]["source_id"], *(s for c in model["cases"] for s in c["assumptions"]["source_ids"]),
+    ids = list(dict.fromkeys([model["baseline"]["source_id"], model["oil_balance"]["source_id"], *(s for c in model["cases"] for s in c["assumptions"]["source_ids"]),
                 *(v["source_id"] for v in model["oil_inputs"]["bridge"].values() if isinstance(v, dict))]))[:12]
     fmt = lambda value: f"R$ {value:,.2f}"
     paragraphs = ([

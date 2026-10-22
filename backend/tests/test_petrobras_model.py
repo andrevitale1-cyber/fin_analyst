@@ -15,6 +15,14 @@ def fixture():
     quote = "At June 30 2026 financial debt current BRL 50 and noncurrent BRL 100, leases current BRL 10 and noncurrent BRL 40, cash BRL 100, noncontrolling interests BRL 10 and outstanding ON and PN shares 50."
     rights = "Each outstanding common and preferred share has equal participation in distributed earnings, subject to the preferred minimum rights."
     source["text"] += " " + quote + " " + rights
+    source["text"] += """ Consolidated Interim Accounting Information / Statement of Financial Position - Assets
+        (R$ Units) Account Code Account Description 06.30.2026 12.31.2025
+        1.01.01 Cash and Cash Equivalents 100 90 1.01.02 Marketable Securities 20 15
+        Consolidated Interim Accounting Information / Statement of Financial Position - Liabilities
+        (R$ Units) Account Code Account Description 06.30.2026 12.31.2025
+        2.01.04.01 Current Debt 50 45 2.01.04.03 Lease Obligations 10 8
+        2.02.01.01 Non-Current Debt 100 95 2.02.01.03 Lease Obligations 40 35
+        2.03.09 Non-controlling interests 10 9 """
     def amount(n, unit="BRL"):
         return dict(value=n, multiplier=1, quote=quote, unit_quote=quote, source_id="F1", period="2026-06-30", unit=unit)
     scenarios = []
@@ -29,9 +37,7 @@ def fixture():
                               rationale="Synthetic operational scenario with a constant nominal discount rate.",
                               terminal_reinvestment_rationale="Maintenance and reserve replacement are included in projected reinvestment.",
                               source_ids=["F1", "S1"], years=years))
-    raw = dict(bridge=dict(shares=amount(50, "shares"), financial_debt_current=amount(50), financial_debt_noncurrent=amount(100),
-                          lease_debt_current=amount(10), lease_debt_noncurrent=amount(40), cash=amount(100),
-                          noncontrolling_interests=amount(10), share_rights_quote=rights, share_rights_source_id="F1",
+    raw = dict(bridge=dict(shares=amount(50, "shares"), share_rights_quote=rights, share_rights_source_id="F1",
                           lease_treatment="Debt includes lease obligations and capex includes economic replacement of leased assets."),
                conviction="medium", rationale="Scenario assumptions illustrate commodity and volume exposure with reinvestment.",
                counterthesis="Commodity prices and capital allocation could erode the projected operating cash generation.", scenarios=scenarios)
@@ -49,9 +55,10 @@ def test_oil_dcf_and_exit_multiple_include_intermediate_flows_and_equity_bridge(
     pv = sum(r["fcff"] / 1.12 ** r["discount_years"] for r in base["projections"])
     terminal = 128 * 1.02 / .10 / 1.12 ** base["projections"][-1]["discount_years"]
     assert base["equity_bridge"]["enterprise_value"] == pytest.approx(pv + terminal)
-    assert base["methods"][0]["present_value"] == round((pv + terminal - 100 - 10) / 50, 2)
+    assert base["equity_bridge"]["net_debt"] == 80
+    assert base["methods"][0]["present_value"] == round((pv + terminal - 80 - 10) / 50, 2)
     exit_ev = 270 * 5 / 1.12 ** base["projections"][-1]["discount_years"]
-    assert base["methods"][1]["present_value"] == round((pv + exit_ev - 100 - 10) / 50, 2)
+    assert base["methods"][1]["present_value"] == round((pv + exit_ev - 80 - 10) / 50, 2)
     assert len(base["sensitivity"]) == 9
     assert row["eps"] is None and row["net_income"] is None
     verify_model(model, sources)
@@ -64,12 +71,11 @@ def test_invalid_oil_inputs_are_rejected(mutation):
     sources, raw = fixture()
     baseline = baseline_from_sources(sources)
     if mutation == "currency": baseline["currency"] = "USD"
-    if mutation == "quote": raw["bridge"]["cash"]["value"] = 999
-    if mutation == "scale": raw["bridge"]["cash"]["multiplier"] = 1000000
-    if mutation == "date": raw["bridge"]["cash"]["period"] = "2025-12-31"
+    if mutation == "quote": raw["bridge"]["shares"]["value"] = 999
+    if mutation == "scale": raw["bridge"]["shares"]["multiplier"] = 1000000
+    if mutation == "date": sources[0]["text"] = sources[0]["text"].replace("Assets\n        (R$ Units) Account Code Account Description 06.30.2026", "Assets\n        (R$ Units) Account Code Account Description 06.29.2026")
     if mutation == "stale":
-        for key in ("financial_debt_current", "financial_debt_noncurrent", "lease_debt_current", "lease_debt_noncurrent", "cash", "noncontrolling_interests"):
-            raw["bridge"][key]["period"] = "2025-12-31"
+        sources[0]["text"] = sources[0]["text"].replace("06.30.2026", "12.31.2025")
     if mutation == "shares": raw["bridge"]["shares"]["unit"] = "BRL"
     if mutation == "source": sources[0]["basis"] = "web_research"
     if mutation == "rights": raw["bridge"]["share_rights_quote"] = "This is an invented economic rights statement."
@@ -89,6 +95,21 @@ def test_independent_review_recomputes_oil_model():
     corrupted["cases"][1]["equity_bridge"]["shares"] *= 2
     with pytest.raises(ReportValidationError):
         verify_model(corrupted, sources)
+
+
+def test_bear_residual_floor_is_explicit_and_base_distress_still_requires_review():
+    sources, raw = fixture()
+    # A deeper commodity downside can leave enterprise value below debt.
+    for row in raw["scenarios"][0]["years"]:
+        row["upstream_ebitda_brl"] = 110
+        row["downstream_ebitda_brl"] = 10
+    model = calculate(baseline_from_sources(sources), raw, sources)
+    bear = model["cases"][0]["equity_bridge"]
+    assert bear["residual_negative"] and bear["equity_value"] < 0 and bear["present_value"] == 0
+    for row in raw["scenarios"][1]["years"]:
+        row["upstream_ebitda_brl"] = 110
+        row["downstream_ebitda_brl"] = 10
+    with pytest.raises(ReportValidationError): calculate(baseline_from_sources(sources), raw, sources)
 
 
 @pytest.mark.parametrize("missing", [None, "signal", "year", "model", "currency", "review", "paragraphs", "metrics"])

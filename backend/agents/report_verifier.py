@@ -105,6 +105,8 @@ terminal reinvestment/reserve replacement. Reject unsupported baselines and gene
 formally complete. A numerical match in a quote does not establish the correct accounting meaning or scale.
 Future oil model rows and rationales are explicitly AI assumptions; require plausible explained economic
 links to sourced operating history and guidance, not an exact verbatim quote for every forecast amount.
+For residual_negative=true oil downside cases, zero is the limited-liability residual floor, not a
+bankruptcy/trading-price forecast or a modeled equity-option valuation. Require that distinction in prose.
 Verify the financial history and numeric metrics match official financial evidence when supplied.
 Model growth/P/E/discount assumptions are allowed ONLY when explicitly identified as assumptions, not as facts.
 An investment_model, when present, contains independently recalculated AI forecasts and sector-specific
