@@ -163,6 +163,7 @@ def test_model_narrative_repair_cannot_change_any_numerical_input(monkeypatch):
         assert old["methods"] == new["methods"]
     assert repaired["assumptions"]["rationale"] == narrative["rationale"]
     narrative["counterthesis"] = "Supported operating efficiency remains an explicitly conditional counterargument."
+    client.analyze_full_report.return_value = {"counterthesis": narrative["counterthesis"]}
     issues = [{"target": "investment_model.oil_inputs.counterthesis", "reason": "Unsupported historical claim", "source_ids": ["F1"]}]
     selective = repair_narratives(client, model, issues, sources, "en")
     assert selective["oil_inputs"]["rationale"] == model["oil_inputs"]["rationale"]

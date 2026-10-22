@@ -213,9 +213,22 @@ class ModelNarrative(BaseModel):
 def repair_narratives(client, model, issues, sources, locale, *, timeout=180):
     from report_runtime import checkpoint
     evidence = original_model_contexts(model, sources)
+    targets = " ".join(i["target"] for i in issues).lower()
+    fields = set()
+    if "counterthesis" in targets:
+        fields.add("counterthesis")
+    if re.search(r"baseline|share_basis|shares|oil_inputs\.rationale|assumptions\.rationale", targets):
+        fields.add("rationale")
+    if re.search(r"scenarios|wacc|terminal_reinvestment|terminal_ev_ebitda", targets):
+        fields.add("scenarios")
+    if not fields:
+        fields = {"rationale", "counterthesis", "scenarios"}
+    schema = ModelNarrative.model_json_schema()
+    schema["properties"] = {key: value for key, value in schema["properties"].items() if key in fields}
+    schema["required"] = sorted(fields)
     prompt = f"""AGENT 3 — repair only the explanations of this Petrobras model.
 Write in {'Portuguese' if locale == 'pt' else 'English'}. All existing numerical inputs are LOCKED.
-Return rationale, counterthesis and one rationale/terminal explanation for each bear/base/bull case.
+Return ONLY these requested fields: {', '.join(sorted(fields))}.
 Preserve every explanation not named by the reviewer verbatim. Change only the flagged model prose.
 Do not alter a historical amount, quote, date, scenario number or selected method. Support historical
 claims with the ORIGINAL excerpts; omit a historical claim when not evidenced. Complete sentences.
@@ -228,21 +241,23 @@ No internal editorial blocks, absent-scenario claims or invented market/peer obs
 ISSUES:\n{json.dumps(issues, ensure_ascii=False)}
 MODEL:\n{json.dumps(model, ensure_ascii=False)}
 ORIGINAL EVIDENCE:\n{json.dumps(evidence, ensure_ascii=False)}"""
-    raw = checkpoint("petrobras-narrative-repair-v1", [client.model, locale, model, issues, evidence],
-        lambda: client.analyze_full_report(prompt, ModelNarrative.model_json_schema(), max_output_tokens=4000, timeout=timeout))
-    replacement = ModelNarrative.model_validate(raw).model_dump()
+    raw = checkpoint("petrobras-narrative-repair-v2", [client.model, locale, model, issues, evidence, sorted(fields)],
+        lambda: client.analyze_full_report(prompt, schema, max_output_tokens=4000, timeout=timeout))
+    if set(raw) != fields:
+        raise ReportValidationError("Narrative repair returned fields outside the review scope")
+    previous = {"rationale": model["oil_inputs"]["rationale"], "counterthesis": model["oil_inputs"]["counterthesis"],
+        "scenarios": [{key: case[key] for key in ("case", "rationale", "terminal_reinvestment_rationale")} for case in model["oil_inputs"]["scenarios"]]}
+    replacement = ModelNarrative.model_validate({**previous, **raw}).model_dump()
     narratives = {c["case"]: c for c in replacement["scenarios"]}
     if len(narratives) != 3:
         raise ReportValidationError("Model narrative repair must preserve the three cases")
     inputs = copy.deepcopy(model["oil_inputs"])
-    targets = " ".join(i["target"] for i in issues).lower()
     # Accepted WACC explanations must survive a repair of an unrelated historical counterargument.
-    all_fields = not issues
-    if all_fields or "counterthesis" in targets:
+    if "counterthesis" in fields:
         inputs["counterthesis"] = replacement["counterthesis"]
-    if all_fields or re.search(r"baseline|share_basis|shares|(?<!\.)rationale", targets):
+    if "rationale" in fields:
         inputs["rationale"] = replacement["rationale"]
-    if all_fields or re.search(r"scenarios|wacc|terminal_reinvestment|terminal_ev_ebitda", targets):
+    if "scenarios" in fields:
         for scenario in inputs["scenarios"]:
             scenario.update({key: narratives[scenario["case"]][key] for key in ("rationale", "terminal_reinvestment_rationale")})
     return calculate(model["baseline"], inputs, sources)

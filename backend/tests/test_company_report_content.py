@@ -45,6 +45,14 @@ def valid_report():
     }
 
 
+def test_reader_prose_uses_section_sources_and_removes_malformed_inline_markers():
+    raw = valid_report()
+    raw["sections"][0]["paragraphs"] = ["As participações em breakdowns usam receita externa [S1ϟ final complete 0?]. [2025]"]
+    result = validate_company_report(raw, [{"id": "S1", "text": "Annual EPS USD 2.50."}])
+    assert result["sections"][0]["paragraphs"] == ["As participações na composição da receita usam receita externa. [2025]"]
+    assert result["sections"][0]["source_ids"] == ["S1"]
+
+
 def test_valuation_cannot_choose_an_older_profitable_sec_year_or_undated_quote():
     source = {"id": "F1", "basis": "primary", "text":
               "For the full year ended 2025-12-31, diluted earnings per share USD/shares -0.5.\n"

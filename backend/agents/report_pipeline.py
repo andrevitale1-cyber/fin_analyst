@@ -57,45 +57,48 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
     reviewed = perf_counter()
     audit_timeout = (240 if editorial_preparation.get() else 90) if is_petrobras(company) else 40
     progress("verification")
-    try:
-        review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, audit_timeout), company=company, locale=locale)
-    except EvidenceAuditError as error:
-        if deadline - perf_counter() < 165:
-            raise
-        logger.info("report_agents company=%s stage=evidence_repair issues=%d", company, len(error.issues))
-        progress("repair")
-        fact_issues = [i for i in error.issues if not i["reason"].startswith("Reader copy:")]
-        if is_petrobras(company):
-            fact_issues = [i for i in fact_issues if "facts" in i["target"].lower() or "dossier" in i["target"].lower()]
-            if investment_model and any("investment_model" in i["target"] for i in error.issues):
-                from agents.petrobras_model import repair_narratives
-                investment_model = repair_narratives(client, investment_model, error.issues, sources, locale,
-                    timeout=remaining(deadline, 180))
-        if fact_issues:
-            dossier = checkpoint("audited-facts-repair-v1", [company, as_of, client.model, dossier, fact_issues, compact_sources],
-                lambda: repair_fact_dossier(client, dossier, fact_issues, sources, timeout=remaining(deadline, 90 if editorial_preparation.get() else 45)))
-        compact_sources = writing_sources(dossier, sources)
-        flagged_sources = {sid for issue in error.issues for sid in issue["source_ids"]}
-        originals = {s["id"]: s for s in sources}
-        repair_sources = [originals[s["id"]] if s["id"] in flagged_sources else s for s in compact_sources]
-        repair_context = {**dossier, "investment_model": model_context(investment_model)} if investment_model is not None else dossier
-        repair = lambda: repair_report(client, company, as_of, locale, content, error.issues, repair_context,
-                                       repair_sources, timeout=remaining(deadline, 240 if editorial_preparation.get() else 75))
-        corrected = checkpoint("editorial-sections-repair-v1", [company, as_of, locale, client.model, content, error.issues, repair_context, repair_sources], repair) if editorial_preparation.get() else repair()
-        # Revalidate model inputs, then recompute every derived valuation output.
-        corrected["valuation"].pop("fair_value", None)
-        for case in corrected["valuation"]["scenarios"]:
-            for key in ("future_value", "present_value", "upside_percent"):
-                case.pop(key, None)
-        corrected.pop("investment_model", None)
-        if investment_model is not None:
-            model_section = model_valuation_section(investment_model, locale)
-            corrected["valuation"] = model_section["valuation"]
-            corrected["sections"] = [model_section["section"] if s["id"] == "valuation" else s for s in corrected["sections"]]
-        content = calculate_valuation(validate_company_report(apply_official_financials(corrected, sources), sources), locale)
-        if investment_model is not None:
-            content["investment_model"] = investment_model
-        review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, audit_timeout), company=company, locale=locale)
+    attempts = 3 if is_petrobras(company) else 2
+    for attempt in range(attempts):
+        progress("verification")
+        try:
+            review = verify_report(client, content, dossier, sources, as_of, timeout=remaining(deadline, audit_timeout), company=company, locale=locale)
+            break
+        except EvidenceAuditError as error:
+            if attempt == attempts - 1 or deadline - perf_counter() < 165:
+                raise
+            logger.info("report_agents company=%s stage=evidence_repair issues=%d", company, len(error.issues))
+            progress("repair")
+            fact_issues = [i for i in error.issues if not i["reason"].startswith("Reader copy:")]
+            if is_petrobras(company):
+                fact_issues = [i for i in fact_issues if "facts" in i["target"].lower() or "dossier" in i["target"].lower()]
+                if investment_model and any("investment_model" in i["target"] for i in error.issues):
+                    from agents.petrobras_model import repair_narratives
+                    investment_model = repair_narratives(client, investment_model, error.issues, sources, locale,
+                        timeout=remaining(deadline, 180))
+            if fact_issues:
+                dossier = checkpoint("audited-facts-repair-v1", [company, as_of, client.model, dossier, fact_issues, compact_sources],
+                    lambda: repair_fact_dossier(client, dossier, fact_issues, sources, timeout=remaining(deadline, 90 if editorial_preparation.get() else 45)))
+            compact_sources = writing_sources(dossier, sources)
+            flagged_sources = {sid for issue in error.issues for sid in issue["source_ids"]}
+            originals = {s["id"]: s for s in sources}
+            repair_sources = [originals[s["id"]] if s["id"] in flagged_sources else s for s in compact_sources]
+            repair_context = {**dossier, "investment_model": model_context(investment_model)} if investment_model is not None else dossier
+            repair = lambda: repair_report(client, company, as_of, locale, content, error.issues, repair_context,
+                                           repair_sources, timeout=remaining(deadline, 240 if editorial_preparation.get() else 75))
+            corrected = checkpoint("editorial-sections-repair-v1", [company, as_of, locale, client.model, content, error.issues, repair_context, repair_sources], repair) if editorial_preparation.get() else repair()
+            # Revalidate model inputs, then recompute every derived valuation output.
+            corrected["valuation"].pop("fair_value", None)
+            for case in corrected["valuation"]["scenarios"]:
+                for key in ("future_value", "present_value", "upside_percent"):
+                    case.pop(key, None)
+            corrected.pop("investment_model", None)
+            if investment_model is not None:
+                model_section = model_valuation_section(investment_model, locale)
+                corrected["valuation"] = model_section["valuation"]
+                corrected["sections"] = [model_section["section"] if s["id"] == "valuation" else s for s in corrected["sections"]]
+            content = calculate_valuation(validate_company_report(apply_official_financials(corrected, sources), sources), locale)
+            if investment_model is not None:
+                content["investment_model"] = investment_model
     verification_ms = round((perf_counter() - reviewed) * 1000)
     logger.info("report_agents company=%s stage=verification passed=true elapsed_ms=%d", company, verification_ms)
     content["pipeline"] = {"version": PIPELINE_VERSION, "agents": ["facts", "sections", "valuation", "verification"],

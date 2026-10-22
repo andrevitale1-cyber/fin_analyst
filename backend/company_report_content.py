@@ -441,6 +441,16 @@ def ensure_company_completeness(report, sources=()):
 
 def validate_company_report(raw: dict, sources: list) -> dict:
     result = CompanyReport.model_validate(raw).model_dump()
+    identifiers = "|".join(re.escape(s["id"]) for s in sorted(sources, key=lambda item: -len(item["id"])))
+    markers = re.compile(r"\[(?:" + identifiers + r")(?=[^A-Za-z0-9_-])[^\]\n]*\]") if identifiers else None
+    def reader_prose(value):
+        value = markers.sub("", value) if markers else value
+        value = re.sub(r"\bem breakdowns\b", "na composição da receita", value)
+        return re.sub(r" +([,.;:!?])", r"\1", re.sub(r" {2,}", " ", value)).strip()
+    for section in result["sections"]:
+        section["summary"] = reader_prose(section["summary"])
+        for key in ("paragraphs", "bullets"):
+            section[key] = [reader_prose(value) for value in section[key]]
     if result["symbol"] and not any(re.search(r"(?<![A-Z0-9])" + re.escape(result["symbol"]) + r"(?![A-Z0-9])",
             (source.get("title", "") + " " + source.get("text", "")).upper()) for source in sources):
         result["symbol"] = None
