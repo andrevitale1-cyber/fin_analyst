@@ -44,6 +44,10 @@ def generate_report(client, company, as_of, locale, sources, dossier, *, deadlin
         raise ValueError("Agent returned a section outside its assigned role")
     raw["sections"].append(calculated["section"])
     raw["valuation"] = calculated["valuation"]
+    if is_petrobras(company):
+        from agents.company_documents import with_petrobras_policy_evidence
+        sources = with_petrobras_policy_evidence(sources)
+        compact_sources = writing_sources(dossier, sources)
     content = calculate_valuation(validate_company_report(apply_official_financials(raw, sources), sources), locale)
     if investment_model is not None:
         verify_model(investment_model, sources)

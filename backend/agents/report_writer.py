@@ -109,6 +109,8 @@ Preserve valid content. Remove unsupported assertions rather than inventing supp
 fields, add report sections, research again or recalculate valuation prices: Python handles arithmetic.
 {sector_brief(company)}
 Coverage must be a complete scope sentence under 260 characters. Signal values are 2–4 word labels.
+Keep each paragraph under 900 characters and end it with a complete sentence; split complex dividend
+policy, share rights and governance into separate paragraphs instead of packing them into a cut field.
 For revenue composition replace the entire segment group with disclosed external sales. Never keep
 accounting eliminations as a positive revenue amount or change their sign to satisfy a numeric field.
 Remove internal publication/draft decisions from reader prose; explain investment implications instead.

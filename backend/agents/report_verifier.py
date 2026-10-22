@@ -78,6 +78,12 @@ def reader_copy_issues(report, sources=()):
     for target, text in fields:
         if re.search(r"(?:publica[çc][aã]o|publication).{0,55}(?:bloquead|blocked|requer.{0,15}confer|requires.{0,15}review)", text, re.I):
             issues.append({"target": target, "reason": "Reader copy: replace internal editorial publication decisions with a complete scope or investment conclusion; never conceal a material factual uncertainty.", "source_ids": []})
+    for section in report["sections"]:
+        for paragraph in section["paragraphs"]:
+            plain = re.sub(r"(?:\s*\[[^\]]+\])+\s*$", "", paragraph).rstrip("* ")
+            if plain and plain[-1] not in '.!?\"”':
+                issues.append({"target": section["id"], "reason": "Reader copy: a paragraph ends in a cut sentence. Rewrite in complete sentences under 900 characters each, splitting distinct topics into separate paragraphs while preserving evidence.", "source_ids": []})
+                break
     if any(len(s["value"].split()) > 8 for s in report["signals"]):
         issues.append({"target": "signals", "reason": "Reader copy: replace paragraph-length or truncated signal values with concise 2–4 word investment labels, preserving their evidence and tone.", "source_ids": []})
     if any(re.search(r"elimina[çc][oõ]es|eliminations?|intersegment", row["label"], re.I) for row in report.get("breakdowns", [])):

@@ -253,3 +253,35 @@ def petrobras_document_excerpt(text):
             pieces.append(text[max(0, match.start() - 450):match.start() + 1500])
     pieces.append(text[-8000:])
     return "\n[... excerpt boundary ...]\n".join(pieces)[:90000]
+
+
+def with_petrobras_policy_evidence(sources):
+    """Expand only immutable original policy notes; preserve every previously supplied excerpt."""
+    from full_report_content import ReportValidationError
+    from report_runtime import checkpoint
+    result = []
+    for source in sources:
+        if source["id"] not in {"IRSEC000129281426002168", "IRSEC000129281426000708"}:
+            result.append(source)
+            continue
+        url = urlsplit(source["url"])
+        if url.hostname != "www.sec.gov" or not url.path.startswith("/Archives/edgar/data/1119639/") or source.get("basis") != "primary":
+            raise ReportValidationError("Policy context requires the verified original Petrobras filing")
+        def fetch():
+            with requests.get(source["url"], timeout=(3, 20), allow_redirects=False, stream=True,
+                              headers={"User-Agent": "FinAnalyzer contact@finanalyser.com.br"}) as response:
+                response.raise_for_status()
+                body = bytearray()
+                for chunk in response.iter_content(65536):
+                    body.extend(chunk)
+                    if len(body) > 12_000_000:
+                        raise ReportValidationError("Original policy document exceeds its download budget")
+            text = " ".join(filing_text(bytes(body)).split())
+            matches = list(re.finditer(r"shareholders[’']? remuneration policy|distributions to shareholders|preferred shares participate in the distribution", text, re.I))
+            if not matches:
+                raise ReportValidationError("Original policy section could not be read")
+            return "\n".join(text[max(0, m.start() - 1800):m.end() + 9000] for m in matches[-2:])
+        appendix = checkpoint("petrobras-original-policy-v1", [source["id"], source["url"]], fetch)
+        result.append({**source, "text": source["text"] + "\nORIGINAL POLICY EVIDENCE:\n" + appendix,
+                       "policy_evidence": appendix})
+    return result

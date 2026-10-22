@@ -180,6 +180,8 @@ def original_model_contexts(model, sources):
             continue
         text = " ".join(source.get("text", "").split())
         spans = []
+        if source.get("policy_evidence"):
+            spans.append(source["policy_evidence"])
         for cell in cells:
             if cell["source_id"] == source["id"]:
                 quote = " ".join(cell["quote"].split())
@@ -213,7 +215,8 @@ def repair_narratives(client, model, issues, sources, locale, *, timeout=180):
     evidence = original_model_contexts(model, sources)
     prompt = f"""AGENT 3 — repair only the explanations of this Petrobras model.
 Write in {'Portuguese' if locale == 'pt' else 'English'}. All existing numerical inputs are LOCKED.
-Return only rationale, counterthesis and one rationale/terminal explanation for each bear/base/bull case.
+Return rationale, counterthesis and one rationale/terminal explanation for each bear/base/bull case.
+Preserve every explanation not named by the reviewer verbatim. Change only the flagged model prose.
 Do not alter a historical amount, quote, date, scenario number or selected method. Support historical
 claims with the ORIGINAL excerpts; omit a historical claim when not evidenced. Complete sentences.
 Explain the existing nominal BRL WACCs and their economic risk differences. A transparent assumed
@@ -232,9 +235,16 @@ ORIGINAL EVIDENCE:\n{json.dumps(evidence, ensure_ascii=False)}"""
     if len(narratives) != 3:
         raise ReportValidationError("Model narrative repair must preserve the three cases")
     inputs = copy.deepcopy(model["oil_inputs"])
-    inputs.update(rationale=replacement["rationale"], counterthesis=replacement["counterthesis"])
-    for scenario in inputs["scenarios"]:
-        scenario.update({key: narratives[scenario["case"]][key] for key in ("rationale", "terminal_reinvestment_rationale")})
+    targets = " ".join(i["target"] for i in issues).lower()
+    # Accepted WACC explanations must survive a repair of an unrelated historical counterargument.
+    all_fields = not issues
+    if all_fields or "counterthesis" in targets:
+        inputs["counterthesis"] = replacement["counterthesis"]
+    if all_fields or re.search(r"baseline|share_basis|shares|(?<!\.)rationale", targets):
+        inputs["rationale"] = replacement["rationale"]
+    if all_fields or re.search(r"scenarios|wacc|terminal_reinvestment|terminal_ev_ebitda", targets):
+        for scenario in inputs["scenarios"]:
+            scenario.update({key: narratives[scenario["case"]][key] for key in ("rationale", "terminal_reinvestment_rationale")})
     return calculate(model["baseline"], inputs, sources)
 
 

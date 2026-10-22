@@ -162,6 +162,12 @@ def test_model_narrative_repair_cannot_change_any_numerical_input(monkeypatch):
         assert old["projections"] == new["projections"]
         assert old["methods"] == new["methods"]
     assert repaired["assumptions"]["rationale"] == narrative["rationale"]
+    narrative["counterthesis"] = "Supported operating efficiency remains an explicitly conditional counterargument."
+    issues = [{"target": "investment_model.oil_inputs.counterthesis", "reason": "Unsupported historical claim", "source_ids": ["F1"]}]
+    selective = repair_narratives(client, model, issues, sources, "en")
+    assert selective["oil_inputs"]["rationale"] == model["oil_inputs"]["rationale"]
+    assert selective["oil_inputs"]["scenarios"] == model["oil_inputs"]["scenarios"]
+    assert selective["oil_inputs"]["counterthesis"] == narrative["counterthesis"]
 
 
 def test_bear_residual_floor_is_explicit_and_base_distress_still_requires_review():

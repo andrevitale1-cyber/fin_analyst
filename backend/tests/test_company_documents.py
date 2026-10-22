@@ -139,3 +139,18 @@ def test_editorial_calibration_notes_remain_secondary_when_download_fails(monkey
     assert {s["id"] for s in sources} == {"MKTGENIAL20260908", "MKTNYU20260105"}
     assert all(s["basis"] == "web_research" and "editorial_paraphrase" in s["retrieval_method"] for s in sources)
     assert all(s["document_type"] == "market_data" for s in sources)
+
+
+def test_original_policy_appendix_preserves_prior_evidence_and_full_rule(monkeypatch):
+    monkeypatch.setattr("report_runtime.checkpoint", lambda stage, identity, compute: compute())
+    body = b"<main>Shareholders Remuneration Policy " + b"x " * 1500 + b"45% of operating cash flow after investment. Preferred shares participate in the distribution equally above the minimum.</main>"
+    response = Mock(status_code=200)
+    response.__enter__ = Mock(return_value=response); response.__exit__ = Mock(return_value=False)
+    response.iter_content.return_value = [body]
+    monkeypatch.setattr(documents.requests, "get", Mock(return_value=response))
+    source = {"id": "IRSEC000129281426000708", "url": "https://www.sec.gov/Archives/edgar/data/1119639/000129281426000708/pbrfs4q25rs_6k.htm", "basis": "primary", "text": "Previously verified balance sheet."}
+    enriched = documents.with_petrobras_policy_evidence([source])[0]
+    assert enriched["text"].startswith(source["text"])
+    assert "45% of operating cash flow" in enriched["policy_evidence"]
+    assert "equally above the minimum" in enriched["policy_evidence"]
+    assert source["text"] == "Previously verified balance sheet."
