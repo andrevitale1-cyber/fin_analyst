@@ -33,6 +33,8 @@ class Bridge(BaseModel):
     share_rights_source_id: str
     lease_treatment: str = Field(min_length=40, max_length=900)
 
+    _complete_lease = field_validator("lease_treatment")(complete_model_prose)
+
 
 class OilYear(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
@@ -50,6 +52,8 @@ class OilYear(BaseModel):
     tax_percent: float = Field(ge=0, le=60)
     rationale: str = Field(min_length=40, max_length=650)
 
+    _complete_rationale = field_validator("rationale")(complete_model_prose)
+
 
 class OilScenario(BaseModel):
     model_config = ConfigDict(extra="forbid", allow_inf_nan=False)
@@ -61,6 +65,8 @@ class OilScenario(BaseModel):
     terminal_reinvestment_rationale: str = Field(min_length=40, max_length=900)
     source_ids: list[str] = Field(min_length=2, max_length=12)
     years: list[OilYear] = Field(min_length=5, max_length=5)
+
+    _complete_rationale = field_validator("rationale", "terminal_reinvestment_rationale")(complete_model_prose)
 
 
 class OilInputs(BaseModel):
@@ -194,7 +200,7 @@ def calculate(baseline, raw, sources):
     if (date.fromisoformat(baseline["valuation_date"]) - date.fromisoformat(next(iter(periods)))).days > 200:
         raise ReportValidationError("An interim balance sheet is required for the equity bridge")
     rights = by_id.get(bridge["share_rights_source_id"], {})
-    if rights.get("basis") != "primary" or " ".join(bridge["share_rights_quote"].split()) not in " ".join(rights.get("text", "").split()):
+    if rights.get("basis") != "primary" or " ".join(bridge["share_rights_quote"].split()).casefold() not in " ".join(rights.get("text", "").split()).casefold():
         raise ReportValidationError("Share economic rights require primary evidence")
     shares = amounts["shares"]
     if shares <= 0:

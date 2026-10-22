@@ -107,6 +107,15 @@ def test_populated_oil_scenarios_reject_a_contradictory_refusal():
     assert model["oil_inputs"]["rationale"].endswith("generation.")
 
 
+def test_rights_quote_accepts_capitalization_but_not_changed_economic_terms():
+    sources, raw = fixture()
+    raw["bridge"]["share_rights_quote"] = raw["bridge"]["share_rights_quote"].upper()
+    assert calculate(baseline_from_sources(sources), raw, sources)["available"]
+    raw["bridge"]["share_rights_quote"] = raw["bridge"]["share_rights_quote"].replace("EQUAL", "UNEQUAL")
+    with pytest.raises(ReportValidationError, match="economic rights"):
+        calculate(baseline_from_sources(sources), raw, sources)
+
+
 def test_bear_residual_floor_is_explicit_and_base_distress_still_requires_review():
     sources, raw = fixture()
     # A deeper commodity downside can leave enterprise value below debt.
