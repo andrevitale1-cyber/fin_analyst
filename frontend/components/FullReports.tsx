@@ -14,6 +14,7 @@ import { reportCitationIds, stripReportCitations } from "../lib/reportCitations"
 import { splitBold } from "../lib/analysisText";
 import { type ReportMetric } from "../lib/reportNumbers";
 import { calculateIllustrativeValue, type ValuationInputs } from "../lib/fullReportValuation";
+import { PUBLISHED_REPORTS, publishedReportForCompany } from "../lib/publishedReports";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api-finanalyzer.onrender.com";
 const SECTION_IDS = ["thesis", "business", "financials", "moat", "management", "risks", "valuation"] as const;
@@ -105,6 +106,8 @@ export default function FullReports() {
     const reportId = params.get("reportId") || "";
     const company = params.get("company")?.trim() || "";
     const jobId = params.get("jobId") || "";
+    const published = company ? publishedReportForCompany(company) : PUBLISHED_REPORTS.find(item => item.id === reportId);
+    if (published) { window.location.replace(published.url); return; }
     setQuery(company);
     setTarget(company ? { type: "company", company } : jobId ? { type: "job", jobId, company } : analysisId ? { type: "generate", analysisId } : reportId ? { type: "saved", reportId } : { type: "library" });
     setRouteReady(true);
@@ -144,7 +147,8 @@ export default function FullReports() {
 
   const loadLibrary = useCallback(async (signal: AbortSignal) => {
     const response = await authorizedFetch("/api/full-reports", { signal });
-    return readJson<{ reports: ReportSummary[] }>(response);
+    const result = await readJson<{ reports: ReportSummary[] }>(response);
+    return { reports: [...PUBLISHED_REPORTS, ...result.reports.filter(item => !(item.is_public && item.scope === "company" && publishedReportForCompany(item.company)))] };
   }, [authorizedFetch, readJson]);
 
   const openReport = useCallback(async (id: string, signal: AbortSignal) => {
@@ -173,6 +177,11 @@ export default function FullReports() {
     const response = await authorizedFetch(body.analysis_id ? "/api/full-reports" : "/api/thesis-library/resolve", { method: "POST", body: JSON.stringify(body), signal }, 30_000);
     const result = await readJson<{ state?: string; job_id?: string; company: string; report?: FullReport; reused?: boolean }>(response);
     if (signal.aborted) throw new DOMException("Aborted", "AbortError");
+    const published = publishedReportForCompany(result.company || result.report?.company || "");
+    if (published) {
+      window.location.assign(published.url);
+      return { report: undefined, reused: true, company: published.company, state: "completed" };
+    }
     if (result.report) return { report: result.report, reused: Boolean(result.reused) };
     if (!result.job_id) return {report: undefined, reused: false, company: result.company, state: result.state || "unavailable"};
     const params = new URLSearchParams({company: result.company, jobId: result.job_id});
@@ -290,6 +299,8 @@ export default function FullReports() {
   const selectedSection = reportOwnerId === userId ? report?.sections.find(section => section.id === activeSection) : undefined;
   const formatDate = (value: string) => formatReportDate(value, locale);
   const selectSavedReport = (id: string) => {
+    const published = PUBLISHED_REPORTS.find(item => item.id === id);
+    if (published) { window.location.assign(published.url); return; }
     setTarget({ type: "saved", reportId: id });
     setReused(false);
     router.replace(`/${locale}/dashboard/reports?reportId=${encodeURIComponent(id)}`);
@@ -302,6 +313,8 @@ export default function FullReports() {
   const openCompanyInLibrary = (company: string) => {
     const normalized = company.trim();
     if (!normalized) return;
+    const published = publishedReportForCompany(normalized);
+    if (published) { window.location.assign(published.url); return; }
     setQuery(normalized);
     setSearchOpen(false); setSearchIndex(-1);
     setTarget({ type: "company", company: normalized });
