@@ -15,7 +15,15 @@ export const PUBLISHED_REPORTS = [{
   url: "/published-reports/aapl-20261022.html",
 }];
 
-export function publishedReportForCompany(company: string) {
+export function publishedReportsForLocale(locale: string) {
+  return PUBLISHED_REPORTS.map(report => ({
+    ...report,
+    locale: locale === "en" ? "en" as const : "pt" as const,
+    url: locale === "en" ? report.url.replace(/\.html$/, "-en.html") : report.url,
+  }));
+}
+
+export function publishedReportForCompany(company: string, locale = "pt") {
   const normalized = company.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-  return PUBLISHED_REPORTS.find(report => [report.company, "APPLE", "APPLEINC"].includes(normalized));
+  return publishedReportsForLocale(locale).find(report => [report.company, "APPLE", "APPLEINC"].includes(normalized));
 }
