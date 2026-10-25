@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useUser, UserButton } from "@clerk/nextjs";
 import { useTranslations, useLocale } from "next-intl";
 import { formatPeriod, splitBold } from "../../../lib/analysisText";
+import DashboardSidebar from "../../../components/DashboardSidebar";
+import ReportFeedback from "../../../components/ReportFeedback";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import CompanyLogo from "../../../components/CompanyLogo";
 import ConfirmDeleteDialog from "../../../components/ConfirmDeleteDialog";
@@ -122,16 +124,6 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
   );
 }
 
-function NavItem({ icon, label, active = false, onClick, isLocked = false, collapsed = false }: any) {
-  return (
-    <button onClick={onClick} title={collapsed ? label : undefined} className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group relative ${collapsed ? 'justify-center px-2' : ''} ${active ? 'bg-blue-500/15 text-white font-semibold ring-1 ring-blue-400/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
-      {React.cloneElement(icon, { size: 18, className: active ? "text-sky-300" : "text-slate-400 group-hover:text-slate-200" })}
-      {!collapsed && <span className="text-sm">{label}</span>}
-      {!collapsed && isLocked && <Lock size={14} className="ml-auto text-gray-600" />}
-    </button>
-  );
-}
-
 export default function FinancialDashboard() {
   const router = useRouter();
   const t = useTranslations("Dashboard");
@@ -186,7 +178,10 @@ export default function FinancialDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    const company = new URLSearchParams(window.location.search).get("company")?.trim() || "";
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get("view");
+    if (view === "history" || view === "table") setCurrentView(view);
+    const company = params.get("company")?.trim() || "";
     if (company && company.length <= 100 && !/[\u0000-\u001f]/.test(company)) setEmpresa(company);
   }, []);
 
@@ -446,36 +441,7 @@ export default function FinancialDashboard() {
         />
       )}
       
-      {isSidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-black/80 backdrop-blur-sm md:hidden animate-in fade-in" onClick={() => setIsSidebarOpen(false)} />
-      )}
-
-      <aside className={`fixed inset-y-0 left-0 z-50 bg-[#0b1526] border-r border-white/10 flex flex-col p-6 transition-all duration-300 ease-in-out shrink-0 md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarCollapsed ? 'md:w-20 md:px-3' : 'w-72'}`}>
-        <div className="flex items-center justify-between mb-10 px-2">
-          <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'md:justify-center md:w-full' : ''}`}>
-            <div className="w-9 h-9 bg-gradient-to-br from-sky-400 to-blue-700 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/30 flex-shrink-0">
-              <BarChart3 className="text-white w-5 h-5" />
-            </div>
-            {!isSidebarCollapsed && (
-              <span className="text-xl font-bold tracking-tight text-white">FinAnalyzer <span className="text-blue-500">.AI</span></span>
-            )}
-          </div>
-          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-400 hover:text-white"><X size={24} /></button>
-          {!isSidebarCollapsed && (
-            <button onClick={() => setIsSidebarCollapsed(true)} className="hidden md:flex text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all" title="Esconder menu"><ChevronLeft size={20} /></button>
-          )}
-        </div>
-
-        {isSidebarCollapsed && (
-          <button onClick={() => setIsSidebarCollapsed(false)} aria-label={t("sidebar.menu")} title={t("sidebar.menu")} className="hidden md:flex mb-4 h-10 w-full items-center justify-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-white"><Menu size={20} /></button>
-        )}
-        <nav className="space-y-2">
-          <NavItem icon={<LayoutDashboard />} label={t("nav.newAnalysis")} active={currentView === 'dashboard'} onClick={() => handleNavClick('dashboard')} collapsed={isSidebarCollapsed} />
-          <NavItem icon={<TableIcon />} label={t("nav.aggregatedTable")} active={currentView === 'table'} onClick={() => handleNavClick('table')} isLocked={!isPremium} collapsed={isSidebarCollapsed} />
-          <NavItem icon={<History />} label={t("nav.history")} active={currentView === 'history'} onClick={() => handleNavClick('history')} collapsed={isSidebarCollapsed} />
-          <NavItem icon={<BookOpen />} label={t("nav.fullReports")} onClick={() => { setIsSidebarOpen(false); router.push(`/${locale}/dashboard/reports`); }} collapsed={isSidebarCollapsed} />
-        </nav>
-
+      <DashboardSidebar active={currentView} open={isSidebarOpen} collapsed={isSidebarCollapsed} onClose={() => setIsSidebarOpen(false)} onCollapse={setIsSidebarCollapsed} onNavigate={view => view === "reports" ? router.push(`/${locale}/dashboard/reports`) : handleNavClick(view)}>
         {!isPremium && !isSidebarCollapsed && accessStatus === 'active' && (
           <div className="mt-auto mb-6 px-2">
             <div className="mb-4 space-y-2 rounded-xl border border-gray-800 bg-[#161b22] p-4 text-xs text-gray-400">
@@ -490,18 +456,7 @@ export default function FinancialDashboard() {
           </div>
         )}
         
-        {(isPremium || isSidebarCollapsed) && <div className="mt-auto" />}
-
-        <div className="mt-4 py-3 border-t border-gray-800 flex flex-col gap-3">
-           <div className="w-full">
-              <LanguageSwitcher compact={isSidebarCollapsed} />
-           </div>
-           <div className="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-all w-full">
-              <UserButton showName={!isSidebarCollapsed} appearance={{ elements: { userButtonBox: "flex flex-row-reverse w-full justify-start gap-3", userButtonOuterIdentifier: "!text-white !font-bold text-sm tracking-wide", avatarBox: "w-9 h-9 ring-2 ring-gray-700" } }} />
-           </div>
-        </div>
-      </aside>
-      
+      </DashboardSidebar>
       <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-8 relative bg-[#f7f8fc] text-slate-900">
         <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-gray-800">
           <div className="flex items-center gap-3"><button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-[#161b22] border border-gray-800 rounded-lg text-white hover:bg-gray-800 active:scale-95 transition-all"><Menu size={24} /></button><span className="font-bold text-lg tracking-tight text-slate-900">FinAnalyzer <span className="text-blue-500">.AI</span></span></div>
@@ -774,6 +729,7 @@ export default function FinancialDashboard() {
                 {splitBold(result.data?.tese_investimento || result.analise_completa || "Sem análise textual disponível.").map((part, index) => part.bold ? <strong key={index} className="font-bold text-slate-900">{part.text}</strong> : <React.Fragment key={index}>{part.text}</React.Fragment>)}
               </div>
             </div>
+            {result.id && <ReportFeedback key={String(result.id)} reportId={String(result.id)} kind="analysis" locale={locale}/>}
           </div>
         )}
       </main>

@@ -10,9 +10,14 @@ export const PUBLISHED_REPORTS = [{
   kind: "company" as const,
   created_at: "2026-10-22T15:00:00Z",
   as_of: "2026-10-22",
-  score: 4,
+  score: 5,
   is_public: true,
   url: "/published-reports/nvda-20261022.html",
+}, {
+  id: "editorial-aapl-20261022", company: "AAPL", company_name: "Apple Inc.", symbol: "AAPL",
+  period: "Company overview", scope: "company" as const, locale: "pt" as const, kind: "company" as const,
+  created_at: "2026-10-22T15:00:00Z", as_of: "2026-10-22", score: 4, is_public: true,
+  url: "/published-reports/aapl-20261022.html",
 }];
 
 export function publishedReportsForLocale(locale: string) {
@@ -25,5 +30,6 @@ export function publishedReportsForLocale(locale: string) {
 
 export function publishedReportForCompany(company: string, locale = "pt") {
   const normalized = company.trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
-  return publishedReportsForLocale(locale).find(report => [report.company, "NVIDIA", "NVIDIACORPORATION"].includes(normalized));
+  const aliases: Record<string, string> = { NVIDIA: "NVDA", NVIDIACORPORATION: "NVDA", APPLE: "AAPL", APPLEINC: "AAPL" };
+  return publishedReportsForLocale(locale).find(report => report.company === (aliases[normalized] || normalized));
 }

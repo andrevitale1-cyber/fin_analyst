@@ -48,6 +48,7 @@ from agents.x_bot_router import router as x_bot_router
 from account_limits import analysis_access, complete_usage, access_snapshot, create_tables as create_usage_tables
 from report_jobs import router as report_jobs_router, create_tables as create_job_tables, start_worker, stop as stop_report_worker
 from thesis_library import router as thesis_library_router, note_official_result
+from report_feedback import router as feedback_router, create_tables as create_feedback_tables
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
@@ -67,6 +68,7 @@ app.include_router(report_router)
 app.include_router(full_reports_router)
 app.include_router(report_jobs_router)
 app.include_router(thesis_library_router)
+app.include_router(feedback_router)
 app.include_router(x_bot_router)
 
 # --- CONFIGURAÇÃO DO CORS ---
@@ -155,6 +157,7 @@ def init_db():
         create_full_report_tables(cur)
         create_usage_tables(cur)
         create_job_tables(cur)
+        create_feedback_tables(cur)
         conn.commit()
         print("[DB] Banco de dados inicializado com sucesso!")
     except Exception as e:

@@ -4,9 +4,11 @@ import { useAuth, UserButton } from "@clerk/nextjs";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, ChevronRight, Loader2, Search, Trash2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, ChevronRight, Loader2, Search, Trash2, Menu } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 import CompanyReportReader from "./CompanyReportReader";
+import DashboardSidebar from "./DashboardSidebar";
+import ReportFeedback from "./ReportFeedback";
 import CompanyLogo from "./CompanyLogo";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 import ReportSources from "./ReportSources";
@@ -61,6 +63,8 @@ export default function FullReports() {
   const locale = useLocale();
   const t = useTranslations("FullReports");
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [routeReady, setRouteReady] = useState(false);
   const [target, setTarget] = useState<RouteTarget>({ type: "library" });
   const [reports, setReports] = useState<ReportSummary[]>([]);
@@ -357,10 +361,12 @@ export default function FullReports() {
   </button>{!isPublic && <button type="button" onClick={() => { setDeleteError(""); setDeleteTarget(item); }} disabled={deletingId !== null} aria-label={t("deleteReport", { company: item.company_name || item.company })} title={t("deleteReport", { company: item.company_name || item.company })} className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600 disabled:opacity-40">{deletingId === item.id ? <Loader2 size={17} className="animate-spin" /> : <Trash2 size={17} />}</button>}</div>;
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] text-slate-900">
+    <div className="flex min-h-screen bg-[#fafaf9] text-slate-900">
+      <DashboardSidebar active="reports" open={sidebarOpen} collapsed={sidebarCollapsed} onClose={() => setSidebarOpen(false)} onCollapse={setSidebarCollapsed} onNavigate={view => router.push(`/${locale}/dashboard${view === "reports" ? "/reports" : view === "dashboard" ? "" : `?view=${view}`}`)} />
+      <div className="min-w-0 flex-1">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-4 py-3 md:px-8">
-          <div className="flex items-center gap-3"><button onClick={() => router.push(`/${locale}/dashboard`)} className="rounded-xl p-2 text-slate-600 hover:bg-slate-100" aria-label={t("backDashboard")}><ArrowLeft size={19} /></button><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-700 text-white"><BookOpen size={18} /></div><span className="font-bold tracking-tight">FinAnalyzer</span></div>
+          <div className="flex items-center gap-3"><button onClick={() => setSidebarOpen(true)} className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 md:hidden" aria-label={locale === "en" ? "Open menu" : "Abrir menu"}><Menu size={21}/></button><span className="text-sm font-semibold text-slate-700">{locale === "en" ? "Full Reports" : "Relatórios completos"}</span></div>
           <div className="flex items-center gap-3"><LanguageSwitcher /><UserButton appearance={{ elements: { avatarBox: "h-9 w-9" } }} /></div>
         </div>
       </header>
@@ -418,10 +424,12 @@ export default function FullReports() {
             </div>
             {visibleReport.watchpoints.length > 0 && <section className="border-t border-slate-100 bg-slate-50/70 p-6 md:p-8"><h3 className="font-bold text-slate-900">{t("watchpoints")}</h3><ul className="mt-4 space-y-3">{visibleReport.watchpoints.map((point, index) => <li key={index} className="text-sm leading-relaxed text-slate-600">{reportText(point)}</li>)}</ul></section>}
             <section className="border-t border-slate-100 p-6 md:p-8">{sourcesFor(visibleReport.sources.map(source => source.id), [], true)}<p className="mt-3 text-sm text-slate-500">{t("coverageDisclaimer", { coverage: visibleReport.coverage })}</p></section>
+            <div className="px-6 md:px-8"><ReportFeedback key={visibleReport.id} reportId={visibleReport.id} locale={locale}/></div>
           </article>}
         </main>
       </div>
       <ConfirmDeleteDialog subject={libraryOwnerId === userId ? deleteSubject : null} kind="report" pending={deletingId !== null} error={deleteError} onCancel={() => { if (!deletingId) { setDeleteTarget(null); setDeleteError(""); } }} onConfirm={() => { if (deleteTarget) void deletePrivateReport(deleteTarget); }} />
+      </div>
     </div>
   );
 }
