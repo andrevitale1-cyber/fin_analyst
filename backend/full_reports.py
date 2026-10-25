@@ -480,9 +480,10 @@ def list_reports(user_id: str = Depends(require_report_user)):
     try:
         with conn.cursor() as cur:
             cur.execute("""SELECT r.content,r.is_public FROM full_reports r
-                WHERE r.is_public OR EXISTS (
+                WHERE (r.is_public OR EXISTS (
                     SELECT 1 FROM full_report_access a WHERE a.report_id=r.id AND a.user_id=%s
-                ) ORDER BY r.is_public DESC,r.created_at DESC,r.id DESC LIMIT 200""", (user_id,))
+                )) AND COALESCE(r.content->>'public_library_state','active') <> 'retired'
+                ORDER BY r.is_public DESC,r.created_at DESC,r.id DESC LIMIT 200""", (user_id,))
             items = []
             public_companies_seen = set()
             for row in cur.fetchall():
@@ -529,7 +530,8 @@ def get_report(report_id: str, user_id: str = Depends(require_report_user)):
     try:
         with conn.cursor() as cur:
             cur.execute("""SELECT r.content,r.is_public FROM full_reports r
-                WHERE r.id=%s AND (r.is_public OR EXISTS (
+                WHERE r.id=%s AND COALESCE(r.content->>'public_library_state','active') <> 'retired'
+                AND (r.is_public OR EXISTS (
                     SELECT 1 FROM full_report_access a WHERE a.report_id=r.id AND a.user_id=%s
                 ))""", (report_id, user_id))
             row = cur.fetchone()

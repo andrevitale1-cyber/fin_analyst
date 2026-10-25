@@ -37,7 +37,8 @@ def create_tables(cur):
 
 def available(cur, company, locale, user):
     cur.execute("""SELECT r.content,r.is_public FROM full_reports r
-        WHERE r.company=%s AND r.kind='company' AND (r.is_public OR EXISTS (
+        WHERE r.company=%s AND r.kind='company'
+        AND COALESCE(r.content->>'public_library_state','active') <> 'retired' AND (r.is_public OR EXISTS (
             SELECT 1 FROM full_report_access a WHERE a.report_id=r.id AND a.user_id=%s))
         ORDER BY r.is_public DESC,(r.locale=%s) DESC,r.created_at DESC,r.id DESC LIMIT 1""", (company, str(user), locale))
     row = cur.fetchone()

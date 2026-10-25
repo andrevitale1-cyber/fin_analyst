@@ -81,6 +81,23 @@ def test_own_private_reports_remain_readable_and_history_ownership_is_checked(da
     assert library.resolve_company(full_reports.OpenCompanyReport(company="VIVA3"), "other")["state"] == "unavailable"
 
 
+def test_retired_demo_is_not_offered_as_an_owners_private_report(database):
+    retired = add_report(database, "retired-demo", company="NVDA", public=False)
+    retired["public_library_state"] = "retired"
+    database.execute("UPDATE full_reports SET content=? WHERE id=?", (json.dumps(retired), "retired-demo"))
+    database.execute("INSERT INTO full_report_access VALUES ('owner','retired-demo')")
+    own = add_report(database, "own-analysis", company="NVDA", public=False, date="2026-10-19")
+    own.update(period="Company overview", created_at="2026-10-19T00:00:00Z", kind="company", score=4)
+    database.execute("UPDATE full_reports SET content=? WHERE id=?", (json.dumps(own), own["id"]))
+    database.execute("INSERT INTO full_report_access VALUES ('owner','own-analysis')")
+    database.commit()
+    assert library.resolve_company(full_reports.OpenCompanyReport(company="NVDA"), "owner")["report"]["id"] == own["id"]
+    assert [report["id"] for report in full_reports.list_reports("owner")["reports"]] == [own["id"]]
+    with pytest.raises(HTTPException) as error:
+        full_reports.get_report("retired-demo", "owner")
+    assert error.value.status_code == 404
+
+
 def test_request_is_private_deduplicated_and_does_not_create_a_report(database):
     body = full_reports.OpenCompanyReport(company="Vivara")
     assert library.request_coverage(body, "reader")["state"] == "requested"
