@@ -208,7 +208,7 @@
     "marketAsOf": "Market data as of {date}",
     "qualityScore": "Quality score",
     "companyContents": "What you will find in this report",
-    "reportGuideSummary": "Explore the thesis, fundamentals, valuation and risks in about {minutes} min.",
+    "reportGuideSummary": "Explore the thesis, fundamentals, analyst targets and risks in about {minutes} min.",
     "reportGuideDepth": "In-depth analysis",
     "companySectionDescriptions": {
       "thesis": "The central investment case and key drivers",
@@ -229,7 +229,7 @@
       "financials": "Financial history",
       "moat": "Competitive moat",
       "management": "Management",
-      "sentiment": "Market sentiment",
+      "sentiment": "Analyst targets and market view",
       "outlook": "Outlook and projections",
       "risks": "Risks",
       "valuation": "Valuation scenarios",
@@ -238,7 +238,7 @@
     "metricGroups": {
       "scale": "Scale",
       "performance": "Performance",
-      "valuation": "Valuation"
+      "valuation": "Market metrics"
     },
     "segments": "Business segments",
     "geography": "Geography",

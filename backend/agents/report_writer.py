@@ -26,11 +26,13 @@ def write_report(client, company, as_of, locale, dossier, sources, *, timeout=95
     schema = company_report_schema()
     del schema["properties"]["valuation"]
     schema["required"].remove("valuation")
+    schema["properties"]["signals"]["items"]["properties"]["id"]["enum"] = ["moat", "profitability", "management", "growth", "sentiment"]
+    schema["properties"]["signals"].update(maxItems=5)
     sections = schema["properties"]["sections"]
     sections.update(minItems=9, maxItems=9)
     sections["items"]["properties"]["id"]["enum"] = list(SECTION_BRIEFS)
     if is_petrobras(company):
-        schema["properties"]["signals"].update(minItems=6, maxItems=6)
+        schema["properties"]["signals"].update(minItems=5, maxItems=5)
         schema["properties"]["metrics"].update(minItems=8)
         sections["items"]["properties"]["paragraphs"].update(minItems=2, maxItems=4)
     briefs = [{"id": key, "brief": brief, "fact_ids": [f["id"] for f in dossier["facts"] if key in f["sections"]]}
@@ -38,9 +40,9 @@ def write_report(client, company, as_of, locale, dossier, sources, *, timeout=95
     prompt = f"""AGENT 2 — write the company-wide research report for {company}, as of {as_of}.
 Write in {'English' if locale == 'en' else 'Portuguese'} using only the supplied cited facts and official financials.
 {sector_brief(company)}
-Return all six summary signals: moat, profitability, management, growth, valuation and sentiment.
+Return the five summary signals: moat, profitability, management, growth and sentiment. Do not return a valuation signal.
 Each signal value is a concise 2–4 word label, without an 'AI judgment' prefix or a paragraph.
-The valuation signal must explain the audited model's result rather than omit the category.
+Reader policy: present only independently sourced analyst price targets with source, observation date, currency and horizon. Never present proprietary fair values, DCF/WACC outputs, model price scenarios, implied model returns or cheap/expensive conclusions in these nine sections, signals, metrics or watchpoints. Analyst targets are estimates, not guarantees. Do not mix providers or invent targets when evidence is absent.
 Return exactly the nine individually specified sections and supporting structured data. Valuation is handled
 by a separate agent: do not produce that section or scenario assumptions here. Use {'2,500–3,500' if editorial_preparation.get() else '1,200–1,600'} words total.
 Each section: concise summary, {'2–4' if editorial_preparation.get() else '1–2'} focused paragraphs and at most 3 nonrepeating bullets. Start paragraphs
@@ -68,9 +70,7 @@ Analyst consensus and market data require dated independent sources; their as_of
 observation dates. Projections require management guidance
 or analyst consensus; do not invent model forecasts. Distinguish source facts, calculated values and AI judgments.
 When the dossier supplies investment_model, its projections are explicitly conditional AI assumptions.
-You may explain those in outlook/thesis/verdict with that label and their stated source_id, but do not put
-them in the sourced projections array or describe them as guidance or consensus. Follow the model's single
-conviction level and selected valuation method throughout. Explain disagreements between cross-check methods.
+You may explain operational forecasts with that label and stated source_id, but never expose model-derived per-share valuations in reader copy or label model forecasts as guidance or consensus.
 Cover the priced-in expectations, counterthesis, catalysts and measurable conditions that invalidate the thesis.
 If an oil-model bear case has residual_negative=true, explain that enterprise value falls below the debt
 bridge and zero is a residual calculation floor. It is not a forecast of a zero trading price or bankruptcy;

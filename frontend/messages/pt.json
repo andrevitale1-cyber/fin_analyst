@@ -208,7 +208,7 @@
     "marketAsOf": "Dados de mercado em {date}",
     "qualityScore": "Nota de qualidade",
     "companyContents": "O que você vai encontrar neste relatório",
-    "reportGuideSummary": "Explore a tese, os fundamentos, o valuation e os riscos em cerca de {minutes} min de leitura.",
+    "reportGuideSummary": "Explore a tese, os fundamentos, os alvos dos analistas e os riscos em cerca de {minutes} min de leitura.",
     "reportGuideDepth": "Análise detalhada",
     "companySectionDescriptions": {
       "thesis": "Argumento central e principais drivers",
@@ -229,7 +229,7 @@
       "financials": "Histórico financeiro",
       "moat": "Vantagem competitiva",
       "management": "Gestão",
-      "sentiment": "Sentimento de mercado",
+      "sentiment": "Preços-alvo e visão do mercado",
       "outlook": "Perspectivas e projeções",
       "risks": "Riscos",
       "valuation": "Cenários de valuation",
@@ -238,7 +238,7 @@
     "metricGroups": {
       "scale": "Escala",
       "performance": "Desempenho",
-      "valuation": "Valuation"
+      "valuation": "Indicadores de mercado"
     },
     "segments": "Segmentos de negócio",
     "geography": "Geografia",

@@ -13,7 +13,7 @@ import ReportSources from "./ReportSources";
 import { reportCitationIds, stripReportCitations } from "../lib/reportCitations";
 import { splitBold } from "../lib/analysisText";
 import { type ReportMetric } from "../lib/reportNumbers";
-import { calculateIllustrativeValue, type ValuationInputs } from "../lib/fullReportValuation";
+import { analystTargetsOnly } from "../lib/reportPresentation";
 import { publishedReportsForLocale, publishedReportForCompany } from "../lib/publishedReports";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api-finanalyzer.onrender.com";
@@ -46,11 +46,7 @@ export type FullReport = {
 };
 type ReportSummary = Pick<FullReport, "id" | "company" | "company_name" | "symbol" | "period" | "scope" | "as_of" | "locale" | "kind" | "created_at" | "report_version" | "score" | "is_public">;
 type RouteTarget = { type: "library" } | { type: "generate"; analysisId: string } | { type: "company"; company: string } | { type: "saved"; reportId: string } | { type: "job"; jobId: string; company: string };
-const SCENARIOS: { key: "bear" | "base" | "bull"; growthPercent: number; peMultiple: number; discountPercent: number }[] = [
-  { key: "bear", growthPercent: 0, peMultiple: 12, discountPercent: 12 },
-  { key: "base", growthPercent: 10, peMultiple: 15, discountPercent: 10 },
-  { key: "bull", growthPercent: 20, peMultiple: 20, discountPercent: 8 },
-];
+
 
 function formatReportDate(value: string, locale: string) {
   const parsed = new Date(value);
@@ -96,7 +92,6 @@ export default function FullReports() {
   accountRef.current = userId;
   const [reused, setReused] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [scenarioInputs, setScenarioInputs] = useState<Record<"bear" | "base" | "bull", ValuationInputs>>(() => Object.fromEntries(SCENARIOS.map(({ key, ...values }) => [key, values])) as Record<"bear" | "base" | "bull", ValuationInputs>);
   const requestRef = useRef<AbortController | null>(null);
   const sequenceRef = useRef(0);
 
@@ -269,7 +264,7 @@ export default function FullReports() {
     setError(""); setLoading(true); setRetryCount(value => value + 1);
   };
 
-  const visibleReport = reportOwnerId === userId ? report : null;
+  const visibleReport = reportOwnerId === userId && report ? analystTargetsOnly(report) : null;
   const visibleReports = libraryOwnerId === userId ? reports : [];
   const filteredReports = useMemo(() => {
     const term = query.trim().toLocaleLowerCase();
@@ -355,9 +350,6 @@ export default function FullReports() {
     const sources = all.filter(source => selected.has(source.id));
     return <ReportSources sources={sources} label={t("sourceCount", { count: sources.length })} anchors={anchors} />;
   };
-  const formatScenarioValue = (value: number | null, currency: string | null) => value === null
-    ? t("scenarioUnavailable")
-    : `${currency ? `${currency} ` : ""}${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)}`;
   const reportCard = (item: ReportSummary, isPublic: boolean) => <div key={item.id} className="relative h-full"><button onClick={() => selectSavedReport(item.id)} className="group flex h-full w-full flex-col rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-sky-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-700">
     <div className="flex w-full items-start justify-between gap-3"><div className="flex min-w-0 items-center gap-3"><CompanyLogo symbol={item.symbol || item.company} company={item.company_name || item.company} /><div className="min-w-0"><h3 className="truncate text-lg font-bold text-slate-900">{item.company_name || item.company}</h3><p className="mt-0.5 text-sm text-slate-500">{item.scope === "company" ? item.company : item.period}</p></div></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${isPublic ? "bg-emerald-50 text-emerald-800" : "bg-slate-100 text-slate-600"}`}>{isPublic ? t("publicBadge") : t("privateBadge")}</span></div>
     <div className="mt-5 flex flex-wrap gap-2 text-xs text-slate-500"><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{item.scope === "company" ? t("companyOverview") : item.kind === "transcript" ? t("transcript") : t("report")}</span><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{item.locale === "pt" ? t("localePortuguese") : t("localeEnglish")}</span><span className="rounded-lg bg-slate-50 px-2.5 py-1.5">{formatDate(item.as_of || item.created_at)}</span></div>
@@ -419,20 +411,12 @@ export default function FullReports() {
             </div>
             {visibleReport.metrics.length > 0 && <section className="grid gap-px border-b border-slate-100 bg-slate-100 sm:grid-cols-2 xl:grid-cols-4">{visibleReport.metrics.map((metric, index) => <div key={`${metric.label}-${index}`} className="bg-white p-5 md:p-6"><p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{metric.label}</p><p className="mt-2 break-words text-2xl font-bold text-slate-900">{reportText(metric.value)}</p></div>)}</section>}
             <div className="grid lg:grid-cols-[220px_minmax(0,1fr)]">
-              <nav aria-label={t("sectionsLabel")} className="flex gap-1 overflow-x-auto border-b border-slate-100 p-3 lg:block lg:border-b-0 lg:border-r lg:p-4">{SECTION_IDS.map(id => <button key={id} aria-current={activeSection === id ? "page" : undefined} onClick={() => setActiveSection(id)} className={`whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition lg:mb-1 lg:w-full ${activeSection === id ? "bg-sky-50 text-sky-900" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}>{t(`sections.${id}`)}</button>)}</nav>
+              <nav aria-label={t("sectionsLabel")} className="flex gap-1 overflow-x-auto border-b border-slate-100 p-3 lg:block lg:border-b-0 lg:border-r lg:p-4">{SECTION_IDS.filter(id => id !== "valuation").map(id => <button key={id} aria-current={activeSection === id ? "page" : undefined} onClick={() => setActiveSection(id)} className={`whitespace-nowrap rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition lg:mb-1 lg:w-full ${activeSection === id ? "bg-sky-50 text-sky-900" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}>{t(`sections.${id}`)}</button>)}</nav>
               <section className="min-h-[400px] p-6 md:p-10"><p className="text-xs font-bold uppercase tracking-[.14em] text-sky-800">{t("sectionLabel")}</p><h2 className="mt-2 text-2xl font-bold tracking-tight">{selectedSection?.title || t(`sections.${activeSection}`)}</h2>
                 {selectedSection ? <><p className="mt-4 text-lg leading-relaxed text-slate-700">{reportText(selectedSection.summary)}</p><div className="mt-6 space-y-4 text-[15px] leading-7 text-slate-600">{selectedSection.paragraphs.map((paragraph, index) => <p key={index}>{reportText(paragraph)}</p>)}</div>{selectedSection.bullets.length > 0 && <ul className="mt-6 space-y-3">{selectedSection.bullets.map((bullet, index) => <li key={index} className="flex gap-3 text-sm leading-relaxed text-slate-700"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-600" /><span>{reportText(bullet)}</span></li>)}</ul>}{sourcesFor(selectedSection.source_ids, [selectedSection.summary, ...selectedSection.paragraphs, ...selectedSection.bullets])}</> : <p className="mt-4 text-slate-500">{t("sectionUnavailable")}</p>}
               </section>
             </div>
-            {(visibleReport.watchpoints.length > 0 || visibleReport.valuation) && <div className="grid gap-6 border-t border-slate-100 bg-slate-50/70 p-6 md:p-8 xl:grid-cols-2">{visibleReport.watchpoints.length > 0 && <section className="rounded-2xl border border-amber-100 bg-white p-5"><h3 className="font-bold text-slate-900">{t("watchpoints")}</h3><ul className="mt-4 space-y-3">{visibleReport.watchpoints.map((point, index) => <li key={index} className="flex gap-3 text-sm leading-relaxed text-slate-600"><span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />{reportText(point)}</li>)}</ul></section>}{visibleReport.valuation && <section className="rounded-2xl border border-slate-200 bg-white p-5"><h3 className="font-bold text-slate-900">{t("valuation")}</h3><p className="mt-3 text-sm leading-relaxed text-slate-600">{visibleReport.valuation.available && visibleReport.valuation.base_eps !== null ? t("valuationBasis", { eps: visibleReport.valuation.base_eps, currency: visibleReport.valuation.currency || "" }) : visibleReport.valuation.reason || t("valuationUnavailable")}</p>
-              {visibleReport.valuation.available && visibleReport.valuation.base_eps !== null && visibleReport.valuation.base_eps > 0 && <div className="mt-6 border-t border-slate-100 pt-5"><h4 className="font-semibold text-slate-900">{t("scenarioTitle")}</h4><p className="mt-1 text-xs leading-relaxed text-slate-500">{t("scenarioDisclaimer")}</p><div className="mt-4 space-y-4">{SCENARIOS.map(scenario => {
-                const inputs = scenarioInputs[scenario.key];
-                const value = calculateIllustrativeValue(visibleReport.valuation.base_eps!, inputs);
-                const update = (field: keyof ValuationInputs, raw: string) => setScenarioInputs(current => ({ ...current, [scenario.key]: { ...current[scenario.key], [field]: Number(raw) } }));
-                return <div key={scenario.key} className="rounded-xl bg-slate-50 p-3"><div className="flex items-center justify-between gap-3"><span className="text-sm font-semibold text-slate-800">{t(`scenarios.${scenario.key}`)}</span><span className="text-sm font-bold text-sky-800">{formatScenarioValue(value, visibleReport.valuation.currency)}</span></div><div className="mt-3 grid grid-cols-3 gap-2"><label className="text-[11px] font-medium text-slate-500">{t("growthInput")}<input aria-label={`${t(`scenarios.${scenario.key}`)} ${t("growthInput")}`} type="number" min="-50" max="100" step="1" value={inputs.growthPercent} onChange={event => update("growthPercent", event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800" /></label><label className="text-[11px] font-medium text-slate-500">{t("peInput")}<input aria-label={`${t(`scenarios.${scenario.key}`)} ${t("peInput")}`} type="number" min="1" max="100" step="1" value={inputs.peMultiple} onChange={event => update("peMultiple", event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800" /></label><label className="text-[11px] font-medium text-slate-500">{t("discountInput")}<input aria-label={`${t(`scenarios.${scenario.key}`)} ${t("discountInput")}`} type="number" min="0" max="50" step="1" value={inputs.discountPercent} onChange={event => update("discountPercent", event.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-800" /></label></div></div>;
-              })}</div><p className="mt-3 text-xs text-slate-500">{t("scenarioFormula")}</p></div>}
-              {sourcesFor([visibleReport.valuation.source_id])}
-            </section>}</div>}
+            {visibleReport.watchpoints.length > 0 && <section className="border-t border-slate-100 bg-slate-50/70 p-6 md:p-8"><h3 className="font-bold text-slate-900">{t("watchpoints")}</h3><ul className="mt-4 space-y-3">{visibleReport.watchpoints.map((point, index) => <li key={index} className="text-sm leading-relaxed text-slate-600">{reportText(point)}</li>)}</ul></section>}
             <section className="border-t border-slate-100 p-6 md:p-8">{sourcesFor(visibleReport.sources.map(source => source.id), [], true)}<p className="mt-3 text-sm text-slate-500">{t("coverageDisclaimer", { coverage: visibleReport.coverage })}</p></section>
           </article>}
         </main>
