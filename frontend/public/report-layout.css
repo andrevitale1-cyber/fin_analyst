@@ -1,0 +1,35 @@
+/* Published editions share the available viewport beside the report navigation. */
+.wrap{width:100%;max-width:none!important;margin:0;padding:34px 32px 80px;grid-template-columns:245px minmax(0,1fr);gap:38px}
+main,.editorial-prose{min-width:0;width:100%;max-width:none}
+.editorial-prose>p,.summary,.methodology p{max-width:none}
+.nvda-edition .company-logo img{width:44px;height:44px;object-fit:contain}
+.nvda-edition .hero-highlights{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:24px;padding-top:18px;border-top:1px solid #ffffff20}
+.nvda-edition .hero-highlights small{display:block;color:#a4b5cf;font-size:10px;line-height:1.6}
+.nvda-edition .hero-highlights b{display:block;color:white;font-size:23px;margin-top:5px}
+.nvda-edition .hero-score strong{display:flex;align-items:baseline}
+.nvda-edition .hero-score em{font-style:normal;font-size:13px;color:#9fb0cc}
+.nvda-edition .numbers-board{margin:22px 0}
+.nvda-edition .metric-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.nvda-edition .metric strong{display:block}
+.nvda-edition .quality-card h4{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nvda-edition .quality-card h4 b{font-size:20px;color:#13966c}
+.nvda-edition .quality-card p{margin:12px 0 0}
+.nvda-edition .quality-board{margin:22px 0}
+.nvda-edition .visual-panel{margin:22px 0}
+.nvda-edition .visual-chart{position:relative;height:290px}
+.nvda-edition .scroll{overflow:auto}
+.nvda-edition details.sources{margin:22px 0 2px;font-size:12px;color:#64758f}
+.nvda-edition details.sources>summary{display:list-item;list-style-position:inside;width:fit-content;background:#f2f5fa;border:1px solid #e3e9f2;border-radius:20px;padding:7px 14px;font-size:11px;min-height:35px}
+.nvda-edition details.sources ul{max-height:280px;overflow:auto;overflow-wrap:anywhere;padding:18px 30px;background:white;border:1px solid #e3e9f2;border-radius:14px}
+.nvda-edition .evidence{margin:24px 0;padding:15px 20px;border:1px solid #e3e9f2;border-radius:12px}
+.nvda-edition .evidence summary{font-size:12px;color:#64758f}
+.nvda-edition .evidence table{display:block;max-width:100%;overflow:auto}
+.nvda-edition .target{position:relative;height:10px;background:#e2e9f2;margin:28px 0 12px;border-radius:8px}
+.nvda-edition .target i{position:absolute;width:3px;height:24px;top:-7px;background:#7055e8}
+.nvda-edition .target i.spot{background:#172235}
+.nvda-edition .target-labels{display:flex;justify-content:space-between;font-size:12px;color:#69778a}
+.nvda-edition .footer{font-size:12px;color:#69778a;padding:24px 0}
+@media(max-width:1050px){.wrap{grid-template-columns:210px minmax(0,1fr);gap:24px;padding:25px 20px}}
+@media(max-width:820px){.wrap{display:block;padding:19px 20px 60px}}
+@media(max-width:550px){.wrap{padding:19px 16px 50px}.nvda-edition .hero-highlights{grid-template-columns:1fr 1fr;gap:12px}.nvda-edition .hero-highlights b{font-size:19px}.nvda-edition .metric-grid{grid-template-columns:1fr}.nvda-edition .metric{border-right:0}.nvda-edition .company-logo img{width:34px;height:34px}}
+@media print{.wrap{display:block;padding:0}.nvda-edition .sources{display:none}}
