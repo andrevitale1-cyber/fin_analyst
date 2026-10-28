@@ -7,7 +7,7 @@ from agents.sec_fetcher import FetchedDocument, SECFetcher
 
 def test_sec_catalog_resolves_exact_name_but_not_ambiguous(monkeypatch):
     monkeypatch.setattr(SECFetcher, "_company_catalog", [
-        {"ticker": "COST", "title": "Costco Wholesale Corporation"},
+        {"ticker": "COST", "title": "Costco Wholesale Corp /NEW"},
         {"ticker": "ONE", "title": "Example Inc"},
         {"ticker": "TWO", "title": "Example Corp"},
     ])
@@ -41,6 +41,8 @@ def test_b3_name_requires_a_unique_known_ticker(monkeypatch, tmp_path):
 
 def test_us_ticker_falls_back_to_web_and_checks_issuer(monkeypatch, tmp_path):
     monkeypatch.setattr(SECFetcher, "fetch", lambda *args: None)
+    monkeypatch.setattr(SECFetcher, "resolve_name", lambda *args: None)
+    monkeypatch.setattr(AutoFetcher, "_resolve_b3_name", lambda *args: None)
     monkeypatch.setattr(AutoFetcher, "_fetch_equibles", lambda *args: None)
     other = FetchedDocument("https://example.com/release", "RI", text="Other company 3Q 2026")
     monkeypatch.setattr(AutoFetcher, "_fetch_b3", lambda *args: other)

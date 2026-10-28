@@ -129,6 +129,7 @@ class AutoFetcher:
         ))
 
     def fetch_result_pdf(self, ticker, ano, trimestre):
+        original_ticker = ticker.strip().upper()
         ticker = self.resolve_ticker(ticker)
         if not re.fullmatch(r"[\w .&'-]{1,100}", ticker, re.UNICODE):
             raise ValueError("Informe um nome de empresa ou ticker válido.")
@@ -136,7 +137,7 @@ class AutoFetcher:
         if not match or not re.fullmatch(r"\d{4}", str(ano)) or not 1900 <= int(ano) <= 2100:
             raise ValueError("Ano ou trimestre inválido. Use ano com quatro dígitos e trimestre de 1T a 4T.")
         year, quarter = int(ano), int(match.group(1) or match.group(2))
-        if not re.fullmatch(r"[A-Z]{1,5}(?:[-.][A-Z])?|[A-Z]{4}\d{1,2}", ticker):
+        if ticker == original_ticker and ticker not in self.ir_urls and not re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
             ticker = SECFetcher().resolve_name(ticker) or self._resolve_b3_name(ticker) or ticker
         logger.info("release_lookup issuer=%s year=%s quarter=%s", ticker, year, quarter)
         cache_path = self.cache_dir / f"{ticker}-{year}-{quarter}.json"
