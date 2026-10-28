@@ -2,6 +2,8 @@
 from dataclasses import dataclass
 from datetime import date, timedelta
 import re
+import time
+import unicodedata
 from urllib.parse import quote, urljoin, urlparse
 
 import requests
@@ -18,6 +20,31 @@ class FetchedDocument:
 
 class SECFetcher:
     headers = {"User-Agent": "FinAnalyzer contact@finanalyser.com.br"}
+    _company_catalog = None
+    _catalog_expires = 0
+
+    @staticmethod
+    def _company_name(value):
+        value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode().upper()
+        value = re.sub(r"[^A-Z0-9]+", " ", value).strip()
+        return re.sub(r"\s+(?:INCORPORATED|INC|CORPORATION|CORP|COMPANY|CO|LTD|LIMITED|PLC)$", "", value).strip()
+
+    def resolve_name(self, name):
+        """Resolve only an unambiguous exact issuer name, never a partial match."""
+        try:
+            if SECFetcher._company_catalog is None or time.monotonic() >= SECFetcher._catalog_expires:
+                data = self._get("https://www.sec.gov/files/company_tickers.json").json()
+                if not isinstance(data, dict):
+                    return None
+                SECFetcher._company_catalog = list(data.values())
+                SECFetcher._catalog_expires = time.monotonic() + 86400
+            target = self._company_name(name)
+            matches = {item.get("ticker") for item in SECFetcher._company_catalog
+                       if isinstance(item, dict) and self._company_name(str(item.get("title", ""))) == target}
+            matches = {ticker for ticker in matches if isinstance(ticker, str) and re.fullmatch(r"[A-Z]{1,5}(?:[-.][A-Z])?", ticker)}
+            return next(iter(matches)) if len(matches) == 1 else None
+        except (requests.RequestException, ValueError, TypeError):
+            return None
 
     def _get(self, url):
         response = requests.get(url, headers=self.headers, timeout=20)

@@ -73,6 +73,25 @@ class AutoFetcher:
                 return sorted(matches, key=lambda symbol: (0 if symbol.endswith("4") else 1, len(symbol)))[0]
         return ticker
 
+    def _resolve_b3_name(self, company):
+        """Map a verified B3 issuer only when the local ticker mapping is unique."""
+        try:
+            params = {"language": "pt-br", "pageNumber": 1, "pageSize": 20, "company": company}
+            encoded = base64.b64encode(json.dumps(params, separators=(",", ":")).encode()).decode()
+            response = requests.get("https://sistemaswebb3-listados.b3.com.br/listedCompaniesProxy/CompanyCall/GetInitialCompanies/" + encoded, timeout=5)
+            response.raise_for_status()
+            records = response.json().get("results", [])
+            target = SECFetcher._company_name(company)
+            roots = {row.get("issuingCompany") for row in records if isinstance(row, dict)
+                     and row.get("status") == "A" and row.get("type") == "1"
+                     and target in {SECFetcher._company_name(str(row.get("companyName", ""))),
+                                    SECFetcher._company_name(str(row.get("tradingName", "")))}}
+            matches = [symbol for symbol in self.ir_urls if any(
+                isinstance(root, str) and re.fullmatch(r"[A-Z]{4}", root) and symbol.startswith(root) for root in roots)]
+            return matches[0] if len(matches) == 1 else None
+        except (requests.RequestException, ValueError, TypeError, AttributeError):
+            return None
+
     @staticmethod
     def _valid_url(url):
         if not isinstance(url, str):
@@ -117,6 +136,8 @@ class AutoFetcher:
         if not match or not re.fullmatch(r"\d{4}", str(ano)) or not 1900 <= int(ano) <= 2100:
             raise ValueError("Ano ou trimestre inválido. Use ano com quatro dígitos e trimestre de 1T a 4T.")
         year, quarter = int(ano), int(match.group(1) or match.group(2))
+        if not re.fullmatch(r"[A-Z]{1,5}(?:[-.][A-Z])?|[A-Z]{4}\d{1,2}", ticker):
+            ticker = SECFetcher().resolve_name(ticker) or self._resolve_b3_name(ticker) or ticker
         logger.info("release_lookup issuer=%s year=%s quarter=%s", ticker, year, quarter)
         cache_path = self.cache_dir / f"{ticker}-{year}-{quarter}.json"
         try:
@@ -128,10 +149,19 @@ class AutoFetcher:
                 return document
         except (OSError, ValueError, TypeError, KeyError):
             pass
-        if re.fullmatch(r"[A-Z]{1,5}", ticker):
-            document = SECFetcher().fetch(ticker, year, quarter)
+        if re.fullmatch(r"[A-Z]{1,5}(?:[-.][A-Z])?", ticker):
+            document = SECFetcher().fetch(ticker.replace(".", "-"), year, quarter)
             if not document:
                 document = self._fetch_equibles(ticker, year, quarter)
+            if not document:
+                candidate = self._fetch_b3(ticker, year, quarter)
+                if candidate:
+                    try:
+                        evidence = candidate.text or OpenAIClient.extract_text(candidate.pdf_bytes)
+                        if self._transcript_company_matches(evidence[:4000], ticker):
+                            document = candidate
+                    except OpenAIError:
+                        pass
         else:
             document = self._fetch_b3(ticker, year, quarter)
         if document:
