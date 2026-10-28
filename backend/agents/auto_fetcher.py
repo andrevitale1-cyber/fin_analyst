@@ -60,6 +60,7 @@ class AutoFetcher:
             "LOCALIZA": "RENT3", "LOJAS RENNER": "LREN3", "B3": "B3SA3",
             "APPLE": "AAPL", "MICROSOFT": "MSFT", "GOOGLE": "GOOGL", "ALPHABET": "GOOGL",
             "AMAZON": "AMZN", "META": "META", "FACEBOOK": "META", "NVIDIA": "NVDA", "TESLA": "TSLA",
+            "ROBINHOOD": "HOOD", "ROBINHOOD MARKETS": "HOOD", "ROBINHOOD MARKETS INC": "HOOD",
         }
         normalized = " ".join("".join(c for c in unicodedata.normalize("NFKD", ticker) if not unicodedata.combining(c)).split())
         if normalized in company_aliases:
