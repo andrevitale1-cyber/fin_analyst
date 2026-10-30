@@ -35,91 +35,35 @@ const getColumnDefinitions = (t: any) => [
   { key: 'last_analysed_quarter', label: t('lastQuarter'), align: 'center', color: 'text-slate-500 font-medium' },
 ];
 
-function Feature({ text, disabled = false }: any) {
-  return (
-    <li className="flex items-center gap-3">
-      {disabled ? (
-        <div className="p-1 rounded-full text-gray-600"><X size={14} /></div>
-      ) : (
-        <div className="p-1 rounded-full text-blue-500"><Check size={14} /></div>
-      )}
-      <span className={`text-sm ${disabled ? 'text-gray-500' : 'text-gray-200 font-medium'}`}>{text}</span>
-    </li>
-  );
-}
-
 function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'monthly', isExpired = false }: { onClose?: () => void; userId?: string; billingCycle?: 'monthly' | 'yearly'; isExpired?: boolean }) {
-  const t = useTranslations("Dashboard");
   const locale = useLocale();
+  const en = locale === 'en';
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
-
   const handleCheckout = () => {
-    const baseUrl = billingCycle === "yearly" ? STRIPE_CHECKOUT_URL_YEARLY : STRIPE_CHECKOUT_URL_MONTHLY;
-    const url = new URL(baseUrl);
-    if (userId) url.searchParams.set("client_reference_id", userId);
-    window.open(url.toString(), "_blank");
+    const url = new URL(billingCycle === 'yearly' ? STRIPE_CHECKOUT_URL_YEARLY : STRIPE_CHECKOUT_URL_MONTHLY);
+    if (userId) url.searchParams.set('client_reference_id', userId);
+    window.open(url.toString(), '_blank');
   };
-
+  const plans = [
+    { premium: true, name: 'Premium', description: en ? 'More tools for your investment research.' : 'Mais ferramentas para suas pesquisas de investimento.', features: en ? ['Quarterly results and earnings calls', 'Aggregated table and analysis history', 'Public and private company reports', 'Company comparison and PDF export'] : ['Resultados trimestrais e calls', 'Tabela agregada e histórico de análises', 'Relatórios públicos e privados', 'Comparação de empresas e exportação em PDF'] },
+    { premium: false, name: en ? 'Free' : 'Grátis', description: en ? 'Start exploring financial research.' : 'Comece a explorar pesquisas financeiras.', features: en ? ['3 quarterly or call analyses per day', '1 company report per day', 'Access to public company reports', 'Analysis history'] : ['3 análises trimestrais ou de calls por dia', '1 relatório de empresa por dia', 'Acesso aos relatórios públicos', 'Histórico de análises'] },
+  ];
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-200">
-      <div role="dialog" aria-modal="true" className="bg-[#0E1117] border border-gray-800 shadow-2xl rounded-2xl w-full max-w-4xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto relative flex flex-col md:flex-row">
-        {/* Só mostra o botão fechar se o trial ainda está ativo */}
-        {!isExpired && onClose && (
-          <button onClick={onClose} aria-label={locale === 'pt' ? 'Fechar' : 'Close'} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50 bg-[#161b22] p-1.5 rounded-md border border-gray-800">
-            <X size={18} />
-          </button>
-        )}
-        {/* Painel direito: plano pro */}
-        <div className="order-1 w-full md:w-1/2 p-6 sm:p-8 bg-[#161b22] relative flex flex-col">
-          <div className={`absolute top-0 ${!isExpired && onClose ? 'right-14 md:right-0' : 'right-0'} bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider`}>{t("upgrade.recommended")}</div>
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold text-white flex items-center gap-2">FinAnalyzer Pro <Zap size={16} className="text-blue-500 fill-blue-500" /></h3>
-            <p className="text-sm text-gray-400 mt-1">{t("upgrade.proDesc")}</p>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050519]/80 p-3 backdrop-blur-sm sm:p-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="plans-title" className="relative max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl overflow-y-auto rounded-2xl border border-white/15 bg-[#0a0a1f] p-5 text-white shadow-2xl sm:p-8">
+        {!isExpired && onClose && <button onClick={onClose} aria-label={en ? 'Close' : 'Fechar'} className="absolute right-4 top-4 z-10 rounded-lg p-2 text-white/60 hover:bg-white/10 hover:text-white"><X size={20} /></button>}
+        <div className="mb-7 pr-8 text-center"><h2 id="plans-title" className="text-2xl font-bold tracking-tight">{en ? 'Choose your plan' : 'Escolha seu plano'}</h2><p className="mt-2 text-sm text-white/65">{en ? 'More clarity for every investment decision.' : 'Mais clareza para cada decisão de investimento.'}</p>
+          <div role="group" aria-label={en ? 'Billing period' : 'Período de cobrança'} className="mt-5 inline-flex rounded-md border border-white/20 bg-white/5 p-1">
+            {(['monthly', 'yearly'] as const).map(cycle => <button key={cycle} type="button" aria-pressed={billingCycle === cycle} onClick={() => setBillingCycle(cycle)} className={`rounded px-4 py-2 text-sm font-semibold transition ${billingCycle === cycle ? 'bg-[#1a1aff] text-white' : 'text-white/60 hover:text-white'}`}>{cycle === 'monthly' ? (en ? 'Monthly' : 'Mensal') : (en ? 'Yearly' : 'Anual')}</button>)}
           </div>
-          <div className="flex items-center gap-2 mb-6 bg-[#0d1117] p-1 rounded-lg w-fit border border-gray-800">
-            <button onClick={() => setBillingCycle('monthly')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${billingCycle === 'monthly' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}>{t("upgrade.monthly")}</button>
-            <button onClick={() => setBillingCycle('yearly')} className={`px-4 py-1.5 text-xs font-medium rounded-md transition-all ${billingCycle === 'yearly' ? 'bg-gray-800 text-white shadow-sm' : 'text-gray-400 hover:text-white'}`}>{t("upgrade.yearly")}</button>
-          </div>
-          <div className="flex items-end gap-1 mb-8">
-            <span className="text-4xl font-bold text-white tracking-tight">{billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290'}</span>
-            <span className="text-gray-500 text-sm mb-1">{billingCycle === 'monthly' ? '/mês' : '/ano'}</span>
-          </div>
-          <ul className="space-y-4 mb-8 flex-1">
-            <Feature text={t("features.unlimitedAnalysis")} />
-            <Feature text={t("features.premiumReports")} />
-            <Feature text={t("features.tableUnlocked")} />
-            <Feature text={t("features.serverPriority")} />
-          </ul>
-          <button onClick={handleCheckout} className="w-full py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors shadow-sm">
-            {t("upgrade.subscribePro")}
-          </button>
-          <p className="text-center text-xs text-gray-500 mt-3">{billingCycle === 'monthly' ? 'Cancele quando quiser.' : 'Cobrança anual. Cancele quando quiser.'}</p>
         </div>
-        {/* Painel esquerdo: info do trial */}
-        <div className="order-2 w-full md:w-1/2 p-6 sm:p-8 border-t md:border-t-0 md:border-l border-gray-800 bg-[#0d1117]/50 flex flex-col">
-          <div className="mb-6">
-            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4 ${isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
-              <span className={`w-2 h-2 rounded-full ${isExpired ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
-              {isExpired ? t("trial.trialExpired") : t("trial.trialActive")}
-            </div>
-            <h3 className="text-xl font-semibold text-white">{t("upgrade.basicPlan")}</h3>
-            <p className="text-sm text-gray-400 mt-2 leading-relaxed">
-              {isExpired ? t("trial.trialExpiredDesc") : t("upgrade.basicDesc")}
-            </p>
-          </div>
-          <ul className="space-y-4 mb-8 flex-1">
-            <Feature text={t("features.unlimitedAnalysis")} />
-            <Feature text={t("features.summaryReport")} />
-            <Feature text={t("features.downloadFullReport")} />
-            <Feature text={t("features.comparativeTable")} />
-            <Feature text={t("features.serverPriority")} />
-          </ul>
-          {!isExpired && onClose && (
-            <button onClick={onClose} className="w-full py-2.5 rounded-lg border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
-              {t("upgrade.continueBasic")}
-            </button>
-          )}
-        </div>
+        <div className="grid gap-4 md:grid-cols-2">{plans.map(plan => <article key={plan.name} className={`flex min-w-0 flex-col rounded-xl border p-6 ${plan.premium ? 'border-[#2beb78] bg-[radial-gradient(circle_at_top,_#1a1aff4d,_transparent_70%)]' : 'border-white/20 bg-white/5'}`}>
+          <div className="mb-5"><div className="flex items-center justify-between gap-2"><h3 className="flex items-center gap-2 text-xl font-semibold">{plan.premium ? <Sparkles size={19} /> : <Zap size={19} />}{plan.name}</h3>{plan.premium && <span className="rounded-md bg-[#1d423b] px-2 py-1 text-xs font-bold text-[#2beb78]">{en ? 'Full access' : 'Acesso completo'}</span>}</div>
+            <p className="mt-2 min-h-[40px] text-sm leading-5 text-white/60">{plan.description}</p>
+            <p className="mt-5 flex items-baseline gap-1"><strong className="text-3xl font-bold">{plan.premium ? (billingCycle === 'monthly' ? 'R$ 29' : 'R$ 290') : 'R$ 0'}</strong><span className="text-sm text-white/50">{plan.premium ? (billingCycle === 'monthly' ? (en ? '/ month' : '/ mês') : (en ? '/ year' : '/ ano')) : ''}</span></p></div>
+          <ul className="flex-1">{plan.features.map(feature => <li key={feature} className="flex items-start justify-between gap-3 border-t border-white/10 py-3 text-sm leading-5 text-white/85"><span>{feature}</span><Check size={18} className="shrink-0 text-[#2beb78]" aria-hidden="true" /></li>)}</ul>
+          {plan.premium ? <button onClick={handleCheckout} className="mt-5 w-full rounded-md bg-[#1a1aff] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#4032ff]">{en ? 'Choose Premium' : 'Escolher Premium'}</button> : !isExpired && onClose ? <button onClick={onClose} className="mt-5 w-full rounded-md border border-white/25 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10">{en ? 'Continue with Free' : 'Continuar com Grátis'}</button> : null}
+        </article>)}</div>
       </div>
     </div>
   );
@@ -445,15 +389,12 @@ export default function FinancialDashboard() {
       <DashboardSidebar active={currentView} open={isSidebarOpen} collapsed={isSidebarCollapsed} onClose={() => setIsSidebarOpen(false)} onCollapse={setIsSidebarCollapsed} onNavigate={view => view === "reports" ? router.push(`/${locale}/dashboard/reports`) : handleNavClick(view)}>
         {!isPremium && !isSidebarCollapsed && accessStatus === 'active' && (
           <div className="mt-auto mb-6 px-2">
-            <div className="mb-4 space-y-2 rounded-xl border border-gray-800 bg-[#161b22] p-4 text-xs text-gray-400">
-              <p className="font-bold uppercase text-white">Free</p>
-              <p>{locale === 'en' ? `${dailyRemaining.analysis ?? '—'} of 3 quarterly/call analyses left today` : `${dailyRemaining.analysis ?? '—'} de 3 análises trimestrais/calls restantes hoje`}</p>
-              <p>{locale === 'en' ? 'Published company theses available in Full Reports' : 'Teses publicadas disponíveis em Full Reports'}</p>
-              <p>{locale === 'en' ? 'Limits reset at midnight (São Paulo).' : 'Os limites renovam à meia-noite (São Paulo).'}</p>
+            <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
+              <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold uppercase tracking-wider text-white/60">{locale === 'en' ? 'Your plan' : 'Seu plano'}</p><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white">{locale === 'en' ? 'FREE' : 'GRÁTIS'}</span></div>
+              <div className="mt-4 flex items-end justify-between gap-2"><div><p className="text-sm font-semibold text-white">{locale === 'en' ? 'Analyses remaining' : 'Análises restantes'}</p><p className="mt-1 text-xs leading-4 text-slate-400">{locale === 'en' ? 'Quarterly results and calls' : 'Resultados trimestrais e calls'}</p></div><span className="whitespace-nowrap text-lg font-bold text-white">{dailyRemaining.analysis ?? '—'}<span className="text-xs font-normal text-slate-400"> / 3</span></span></div>
+              <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-4 text-slate-400">{locale === 'en' ? 'Resets daily at midnight (São Paulo).' : 'Renova diariamente à meia-noite (São Paulo).'}</p>
+              <button onClick={() => setShowUpgradeModal(true)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#1a1aff] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[#4032ff]"><Sparkles size={14} />{t("sidebar.goPremium")}</button>
             </div>
-            <button onClick={() => setShowUpgradeModal(true)} className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
-              <Zap size={14} className="text-yellow-300 fill-yellow-300" /> {t("sidebar.goPremium")}
-            </button>
           </div>
         )}
         
