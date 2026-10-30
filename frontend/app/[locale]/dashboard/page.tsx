@@ -700,6 +700,10 @@ export default function FinancialDashboard() {
                     <ExternalLink size={15} />{locale === 'en' ? 'View source document' : 'Ver documento de origem'} · {result.source.name}
                   </a>
                 )}
+                {Array.isArray(result.financial_sources) && result.financial_sources.length > 0 && <div className="mt-3 text-xs text-slate-500">
+                  {locale === 'en' ? 'Supplementary financial data' : 'Dados financeiros complementares'} · {result.financial_sources[0].period}
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">{result.financial_sources.map((source: { name: string; url: string }) => <a key={source.name} href={source.url} target="_blank" rel="noopener noreferrer" className="text-sky-700 underline underline-offset-2">{source.name}</a>)}</div>
+                </div>}
               </div>
               
               {/* Só mostra a nota geral se não for um Earnings Call */}

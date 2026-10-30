@@ -7,6 +7,7 @@ import unicodedata
 import requests
 
 from agents.sec_fetcher import SECFetcher
+from agents.brapi_client import search_b3
 
 _cache = {"sec": (0, []), "b3": (0, [])}
 _known = [
@@ -55,7 +56,7 @@ def search_companies(query):
     target = _normalized(query)
     if len(target) < 2:
         return []
-    rows = _known + _load("sec") + _load("b3")
+    rows = _known + search_b3(query) + _load("sec") + _load("b3")
     matches = []
     seen = set()
     for item in rows:
