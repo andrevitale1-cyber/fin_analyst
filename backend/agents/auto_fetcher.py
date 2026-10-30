@@ -29,6 +29,7 @@ class AutoFetcher:
     mziq_catalogs = {"VIVA3": ("61a4df2d-a461-44d6-9128-da74058019db", "release-de-resultados")}
     transcript_issuers = {
         "NKE": ("NIKE",),
+        "TFCO4": ("Track & Field", "Track and Field", "TRACK FIELD"),
         "AAPL": ("Apple",), "MSFT": ("Microsoft",), "GOOGL": ("Alphabet", "Google"),
         "AMZN": ("Amazon",), "META": ("Meta", "Facebook"), "NVDA": ("Nvidia",), "TSLA": ("Tesla",),
         "ITUB4": ("Itaú Unibanco", "Itaú"), "ITSA4": ("Itaúsa",), "BBAS3": ("Banco do Brasil",),
@@ -167,7 +168,7 @@ class AutoFetcher:
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
             cached["pdf_bytes"] = base64.b64decode(cached["pdf_bytes"], validate=True)
             document = FetchedDocument(**cached)
-            if document.pdf_bytes.startswith(b"%PDF-") or document.text.strip():
+            if (document.pdf_bytes.startswith(b"%PDF-") or document.text.strip()) and self._release_company_matches(document, ticker):
                 logger.info("release_lookup issuer=%s year=%s quarter=%s source=cache outcome=found", ticker, year, quarter)
                 return document
         except (OSError, ValueError, TypeError, KeyError):
@@ -179,12 +180,8 @@ class AutoFetcher:
             if not document:
                 candidate = self._fetch_b3(ticker, year, quarter)
                 if candidate:
-                    try:
-                        evidence = candidate.text or OpenAIClient.extract_text(candidate.pdf_bytes)
-                        if self._transcript_company_matches(evidence[:4000], ticker):
-                            document = candidate
-                    except OpenAIError:
-                        pass
+                    if self._release_company_matches(candidate, ticker):
+                        document = candidate
         else:
             document = self._fetch_b3(ticker, year, quarter)
         if document:
@@ -308,6 +305,19 @@ class AutoFetcher:
         normalize = lambda value: "".join(c for c in unicodedata.normalize("NFKD", value).upper() if not unicodedata.combining(c))
         return any(re.search(r"(?<!\w)" + re.escape(normalize(name)) + r"(?!\w)", normalize(text)) for name in aliases)
 
+    def _release_company_matches(self, document, company):
+        try:
+            text = document.text or OpenAIClient.extract_text(document.pdf_bytes)
+            if self._transcript_company_matches(text[:12000], company):
+                return True
+            for row in self._small_caps or []:
+                if row.get("cod") == company and self._transcript_company_matches(text[:12000], row.get("asset", "")):
+                    return True
+        except (OpenAIError, ValueError, TypeError, AttributeError):
+            pass
+        logger.warning("release_document_rejected issuer=%s reason=issuer_not_verified", company)
+        return False
+
     def _valid_transcript(self, text, company, year, quarter):
         if not isinstance(text, str) or len(text.strip()) < 500 or not self._transcript_period_matches(text, year, quarter):
             return False
@@ -387,7 +397,7 @@ class AutoFetcher:
         if catalog:
             company_id, category = catalog
             for candidate in self._mziq_catalog_candidates(company_id, [category], year, quarter):
-                if document := self._download_release(candidate["url"], year, quarter):
+                if (document := self._download_release(candidate["url"], year, quarter)) and self._release_company_matches(document, ticker):
                     return document
         ir_url = self.ir_urls.get(ticker)
         if ir_url and self._valid_url(ir_url):
@@ -402,7 +412,7 @@ class AutoFetcher:
                 candidates = ([] if catalog else self._mziq_release_candidates(soup, year, quarter)) + candidates
                 for candidate in self._candidates(candidates, year, quarter)[:12]:
                     document = self._download_release(candidate["url"], year, quarter)
-                    if document:
+                    if document and self._release_company_matches(document, ticker):
                         return document
             except requests.RequestException:
                 pass
@@ -419,7 +429,7 @@ class AutoFetcher:
             if re.search(r"20\d{2}", evidence) and not self._period_matches(evidence, year, quarter):
                 continue
             document = self._download_release(candidate["url"], year, quarter)
-            if document:
+            if document and self._release_company_matches(document, ticker):
                 return document
         return None
 

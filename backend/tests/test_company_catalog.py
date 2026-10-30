@@ -64,3 +64,17 @@ def test_us_ticker_falls_back_to_web_and_checks_issuer(monkeypatch, tmp_path):
     own = FetchedDocument("https://example.com/release", "RI", text="ZZZZ earnings 3Q 2026")
     monkeypatch.setattr(AutoFetcher, "_fetch_b3", lambda *args: own)
     assert AutoFetcher(tmp_path).fetch_result_pdf("ZZZZ", 2026, "3T") == own
+
+
+def test_brazilian_search_skips_release_of_another_issuer(monkeypatch, tmp_path):
+    fetcher = AutoFetcher(tmp_path)
+    wrong = FetchedDocument("https://example.com/suzano.pdf", "RI", text="Suzano resultados 4T25")
+    right = FetchedDocument("https://example.com/track.pdf", "RI", text="Track & Field resultados 4T25")
+    monkeypatch.setattr(fetcher.equibles_client, "release_candidates", lambda *args: [])
+    monkeypatch.setattr(fetcher.search_client, "search_financial_reports", lambda *args: [
+        {"title": "release resultados 4T25", "url": wrong.url},
+        {"title": "release resultados 4T25", "url": right.url},
+    ])
+    monkeypatch.setattr(fetcher, "_download_release", lambda url, *args, **kwargs: wrong if url == wrong.url else right)
+    assert fetcher._fetch_b3("TFCO4", 2025, 4) == right
+    assert not fetcher._release_company_matches(wrong, "TFCO4")
