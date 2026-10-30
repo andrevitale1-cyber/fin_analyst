@@ -164,7 +164,7 @@ class AutoFetcher:
         if ticker == original_ticker and ticker not in self.ir_urls and not re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
             ticker = SECFetcher().resolve_name(ticker) or self._resolve_b3_name(ticker) or ticker
         logger.info("release_lookup issuer=%s year=%s quarter=%s", ticker, year, quarter)
-        cache_path = self.cache_dir / f"{ticker}-{year}-{quarter}.json"
+        cache_path = self.cache_dir / f"fiscal-v2-{ticker}-{year}-{quarter}.json"
         try:
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
             cached["pdf_bytes"] = base64.b64decode(cached["pdf_bytes"], validate=True)

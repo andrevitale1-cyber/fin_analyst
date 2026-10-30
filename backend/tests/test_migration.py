@@ -85,7 +85,7 @@ def test_blank_pdf_rejected():
 
 
 def test_cache_persists_without_refetch(tmp_path, monkeypatch):
-    document = FetchedDocument("https://www.sec.gov/report.htm", "SEC", text="Financial results")
+    document = FetchedDocument("https://www.sec.gov/report.htm", "SEC", text="Apple financial results")
     fetch = Mock(return_value=document)
     monkeypatch.setattr(SECFetcher, "fetch", fetch)
     assert AutoFetcher(tmp_path).fetch_result_pdf("aapl", "2025", "1T") == document
@@ -230,46 +230,37 @@ def test_pdf_content_period_verified(tmp_path, monkeypatch):
     assert fetcher._download_release(response.url, 2025, 1).pdf_bytes == b"%PDF-test"
 
 
-def test_sec_earnings_primary_and_exhibit(monkeypatch):
-    urls = []
-    def get(url, **kw):
-        urls.append(url)
-        assert kw["headers"]["User-Agent"] == "FinAnalyzer contact@finanalyser.com.br"
-        if url.endswith("company_tickers.json"):
-            return Mock(json=lambda: {"0": {"ticker": "AAPL", "cik_str": 320193}})
-        if url.endswith("CIK0000320193.json"):
-            return Mock(json=lambda: {"filings": {"recent": {
-                "form": ["8-K", "8-K", "8-K"], "filingDate": ["2025-04-01", "2025-02-01", "2025-01-30"],
-                "items": ["2.02", "5.02", "2.02"], "accessionNumber": ["1-1", "2-2", "3-3"],
-                "primaryDocument": ["wrong.htm", "director.htm", "results.htm"],
-            }}})
-        html = ('<p>Results of operations 4T2024</p>' if url.endswith("wrong.htm")
-                else '<p>Results of operations</p><a href="ex99.htm">99.1</a>' if url.endswith("results.htm")
-                else "<p>Quarterly earnings 1T2025 revenue 100</p>")
-        return Mock(content=html.encode(), text=html)
-    monkeypatch.setattr("requests.get", get)
-    doc = SECFetcher().fetch("AAPL", 2025, 1)
-    assert doc.source == "SEC" and "revenue 100" in doc.text
-    assert not any("director.htm" in u for u in urls)
+def test_sec_fiscal_quarter_uses_report_date_not_calendar(monkeypatch):
+    from unittest.mock import Mock
+    fetcher = SECFetcher()
+    monkeypatch.setattr(fetcher, "_catalog", lambda: [{"ticker": "MU", "cik_str": 723125}])
+    filings = {"form": ["10-Q", "10-Q"], "filingDate": ["2026-06-24", "2026-03-19"],
+               "reportDate": ["2026-05-28", "2026-02-26"], "accessionNumber": ["q3", "q2"],
+               "primaryDocument": ["q3.htm", "q2.htm"]}
+    facts = {"facts": {"us-gaap": {"Revenue": {"units": {"USD": [
+        {"fy": 2026, "fp": "Q2", "form": "10-Q", "accn": "q2", "end": "2026-02-26"},
+        {"fy": 2026, "fp": "Q3", "form": "10-Q", "accn": "q3", "end": "2026-05-28"},
+        {"fy": 2026, "fp": "Q2", "form": "10-Q", "accn": "q2", "end": "2025-02-27"},
+    ]}}}}}
+    def get(url):
+        return Mock(json=lambda: facts if "companyfacts" in url else {"filings": {"recent": filings}})
+    monkeypatch.setattr(fetcher, "_get", get)
+    monkeypatch.setattr(fetcher, "_filing_document", lambda batch, i, cik, **kw: FetchedDocument(batch["primaryDocument"][i], "SEC", text="Micron"))
+    assert fetcher.fetch("MU", 2026, 2).url == "q2.htm"
+    assert fetcher.fetch("MU", 2026, 3).url == "q3.htm"
 
 
-def test_sec_balance_uses_report_date(monkeypatch):
-    urls = []
-    def get(url, **kw):
-        urls.append(url)
-        if url.endswith("company_tickers.json"):
-            return Mock(json=lambda: {"0": {"ticker": "AAPL", "cik_str": 320193}})
-        if url.endswith("CIK0000320193.json"):
-            return Mock(json=lambda: {"filings": {"recent": {
-                "form": ["10-Q", "10-Q"], "filingDate": ["2025-05-02", "2025-02-01"],
-                "reportDate": ["2025-03-31", "2024-12-31"],
-                "accessionNumber": ["1-1", "2-2"], "primaryDocument": ["balance.htm", "old.htm"],
-            }}})
-        return Mock(content=b"<p>Financial statements revenue 100</p>", text="<p>Financial statements revenue 100</p>")
-    monkeypatch.setattr("requests.get", get)
-    doc = SECFetcher().fetch("AAPL", 2025, 1)
-    assert doc.source == "SEC" and "revenue 100" in doc.text
-    assert not any("old.htm" in u for u in urls)
+def test_sec_fourth_quarter_does_not_return_annual_filing(monkeypatch):
+    from unittest.mock import Mock
+    fetcher = SECFetcher()
+    monkeypatch.setattr(fetcher, "_catalog", lambda: [{"ticker": "MU", "cik_str": 723125}])
+    filings = {"form": ["10-K"], "filingDate": ["2026-10-01"], "reportDate": ["2026-08-31"],
+               "accessionNumber": ["annual"], "primaryDocument": ["annual.htm"]}
+    facts = {"facts": {"gaap": {"x": {"units": {"USD": [
+        {"fy": 2026, "fp": "FY", "form": "10-K", "accn": "annual", "end": "2026-08-31"}
+    ]}}}}}
+    monkeypatch.setattr(fetcher, "_get", lambda url: Mock(json=lambda: facts if "companyfacts" in url else {"filings": {"recent": filings}}))
+    assert fetcher.fetch("MU", 2026, 4) is None
 
 
 def test_openai_web_search_without_tavily(monkeypatch, openai_client):

@@ -1,4 +1,4 @@
-"""Balanços e releases SEC pelo trimestre do relatório (calendário)."""
+"""Balanços e releases SEC pelo trimestre fiscal do emissor."""
 from dataclasses import dataclass
 from datetime import date, timedelta
 import re
@@ -67,33 +67,48 @@ class SECFetcher:
                 return None
             cik = int(company["cik_str"])
             filings = self._get(f"https://data.sec.gov/submissions/CIK{cik:010d}.json").json()["filings"]
-            start = date(year, 3 * quarter - 2, 1).isoformat()
-            end = date(year + (quarter == 4), 1 if quarter == 4 else 3 * quarter + 1, 1).isoformat()
+            facts = self._get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json").json().get("facts", {})
+            fiscal_period = f"Q{quarter}" if quarter < 4 else "FY"
+            fiscal_filings = set()
+            for taxonomy in facts.values():
+                for fact in taxonomy.values():
+                    for entries in fact.get("units", {}).values():
+                        for entry in entries:
+                            if (entry.get("fy") == year and entry.get("fp") == fiscal_period
+                                    and entry.get("form") in ("10-Q", "10-Q/A", "10-K", "10-K/A")):
+                                fiscal_filings.add((entry.get("accn"), entry.get("end")))
             batches = [filings["recent"]]
             for archive in filings.get("files", []):
-                if archive["filingFrom"] < (date.fromisoformat(end) + timedelta(days=90)).isoformat() and archive["filingTo"] >= start:
-                    name = quote(archive["name"], safe="")
-                    batches.append(self._get(f"https://data.sec.gov/submissions/{name}").json())
-            # Prefer the company's official earnings announcement; fall back to its filing below.
+                if archive["filingFrom"] <= f"{year + 1}-12-31" and archive["filingTo"] >= f"{year - 1}-01-01":
+                    batches.append(self._get(f"https://data.sec.gov/submissions/{quote(archive['name'], safe='')}").json())
+            matching = []
             for batch in batches:
                 for i, form in enumerate(batch.get("form", [])):
-                    if form not in ("8-K", "6-K") or not start <= batch["filingDate"][i] < (date.fromisoformat(end) + timedelta(days=90)).isoformat():
-                        continue
-                    items = batch.get("items", [""] * len(batch["form"]))[i]
-                    if form == "8-K" and "2.02" not in items:
-                        continue
-                    document = self._filing_document(batch, i, cik, exhibit=True)
-                    if document and self._mentions_quarter(document.text, year, quarter):
-                        return document
-            # 10-Q / 10-K remain a fallback when no matching release is filed.
-            for batch in batches:
-                for i, form in enumerate(batch.get("form", [])):
-                    if form not in ("10-Q", "10-K", "10-Q/A", "10-K/A"):
+                    if form not in (("10-Q", "10-Q/A") if quarter < 4 else ("10-K", "10-K/A")):
                         continue
                     report_dates = batch.get("reportDate", [])
-                    if i >= len(report_dates) or not start <= report_dates[i] < end:
-                        continue
-                    document = self._filing_document(batch, i, cik)
+                    if i < len(report_dates) and (batch["accessionNumber"][i], report_dates[i]) in fiscal_filings:
+                        matching.append((batch, i, report_dates[i]))
+            if not matching:
+                return None
+            # An annual filing is not a standalone fourth-quarter result; require an explicit release.
+            for batch, index, report_date in matching:
+                period_end = date.fromisoformat(report_date)
+                for release_batch in batches:
+                    for i, form in enumerate(release_batch.get("form", [])):
+                        if form not in ("8-K", "6-K"):
+                            continue
+                        filed = date.fromisoformat(release_batch["filingDate"][i])
+                        if not period_end <= filed <= period_end + timedelta(days=100):
+                            continue
+                        items = release_batch.get("items", [""] * len(release_batch["form"]))[i]
+                        if form == "8-K" and "2.02" not in items:
+                            continue
+                        document = self._filing_document(release_batch, i, cik, exhibit=True)
+                        if document and self._mentions_quarter(document.text, year, quarter):
+                            return document
+                if quarter < 4:
+                    document = self._filing_document(batch, index, cik)
                     if document:
                         return document
         except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
@@ -107,9 +122,8 @@ class SECFetcher:
         head = text[:10000]
         if re.search(rf"(?:{quarter}[TQ]|[TQ]{quarter})\s*{year}", head, re.I):
             return True
-        # Releases dos EUA frequentemente usam 'quarter ended March 31, 2025'.
-        months = ("March", "June", "September", "December")
-        return bool(re.search(rf"quarter ended.{{0,45}}{months[quarter - 1]}\s+\d{{1,2}},?\s+{year}", head, re.I))
+        ordinal = ("first", "second", "third", "fourth")[quarter - 1]
+        return bool(re.search(rf"\b{ordinal}\s+(?:fiscal\s+)?quarter\b.{{0,80}}\b(?:fiscal\s+)?{year}\b", head, re.I))
 
     def _filing_document(self, batch, i, cik, exhibit=False):
         accession = batch["accessionNumber"][i].replace("-", "")
