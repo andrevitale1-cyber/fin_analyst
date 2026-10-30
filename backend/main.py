@@ -51,6 +51,7 @@ from account_limits import analysis_access, complete_usage, access_snapshot, cre
 from report_jobs import router as report_jobs_router, create_tables as create_job_tables, start_worker, stop as stop_report_worker
 from thesis_library import router as thesis_library_router, note_official_result
 from report_feedback import router as feedback_router, create_tables as create_feedback_tables
+from company_search import search_companies
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
@@ -72,6 +73,12 @@ app.include_router(report_jobs_router)
 app.include_router(thesis_library_router)
 app.include_router(feedback_router)
 app.include_router(x_bot_router)
+
+@app.get("/api/company-suggestions")
+async def company_suggestions(q: str = "", user: str = Depends(require_report_user)):
+    if len(q) > 100 or re.search(r"[\x00-\x1f]", q):
+        raise HTTPException(status_code=400, detail="Busca inválida.")
+    return await asyncio.to_thread(search_companies, q.strip())
 
 # --- CONFIGURAÇÃO DO CORS ---
 origins = ["*"]
