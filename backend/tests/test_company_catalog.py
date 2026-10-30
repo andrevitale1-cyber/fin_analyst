@@ -55,6 +55,18 @@ def test_micron_name_uses_sec_ticker_and_falls_back_to_web(monkeypatch, tmp_path
     sec.assert_called_once_with("MU", 2026, 2)
 
 
+def test_track_field_name_and_catalog_category_with_trailing_space(monkeypatch, tmp_path):
+    from bs4 import BeautifulSoup
+    fetcher = AutoFetcher(tmp_path)
+    assert fetcher.resolve_ticker("track and field") == "TFCO4"
+    assert fetcher.resolve_ticker("Track&Field") == "TFCO4"
+    catalog = Mock(return_value=[])
+    monkeypatch.setattr(fetcher, "_mziq_catalog_candidates", catalog)
+    html = "<script>var fmId = '8e49886e-dded-49c0-b8db-c35451e75eed'; internal_name: 'central_release_de_resultados ';</script>"
+    fetcher._mziq_release_candidates(BeautifulSoup(html, "html.parser"), 2025, 4)
+    catalog.assert_called_once_with("8e49886e-dded-49c0-b8db-c35451e75eed", ["central_release_de_resultados "], 2025, 4)
+
+
 def test_b3_name_requires_a_unique_known_ticker(monkeypatch, tmp_path):
     response = Mock()
     response.json.return_value = {"results": [{"status": "A", "type": "1", "issuingCompany": "TOTS",

@@ -26,7 +26,8 @@ class AutoFetcher:
     _small_caps = None
     _small_caps_expires = 0
     # Query Vivara's verified catalogue without depending on the RI site's certificate chain.
-    mziq_catalogs = {"VIVA3": ("61a4df2d-a461-44d6-9128-da74058019db", "release-de-resultados")}
+    mziq_catalogs = {"VIVA3": ("61a4df2d-a461-44d6-9128-da74058019db", "release-de-resultados"),
+                     "TFCO4": ("8e49886e-dded-49c0-b8db-c35451e75eed", "central_release_de_resultados ")}
     transcript_issuers = {
         "NKE": ("NIKE",), "MU": ("Micron", "Micron Technology"),
         "TFCO4": ("Track & Field", "Track and Field", "TRACK FIELD"),
@@ -65,6 +66,7 @@ class AutoFetcher:
             "APPLE": "AAPL", "MICROSOFT": "MSFT", "GOOGLE": "GOOGL", "ALPHABET": "GOOGL",
             "AMAZON": "AMZN", "META": "META", "FACEBOOK": "META", "NVIDIA": "NVDA", "TESLA": "TSLA",
             "MICRON": "MU", "MICRON TECHNOLOGY": "MU", "MICRON TECHNOLOGY INC": "MU", "MICRON TECHNOLOGY INC.": "MU",
+            "TRACK AND FIELD": "TFCO4", "TRACK & FIELD": "TFCO4", "TRACK&FIELD": "TFCO4", "TRACK FIELD": "TFCO4",
             "ROBINHOOD": "HOOD", "ROBINHOOD MARKETS": "HOOD", "ROBINHOOD MARKETS INC": "HOOD",
         }
         normalized = " ".join("".join(c for c in unicodedata.normalize("NFKD", ticker) if not unicodedata.combining(c)).split())
@@ -437,7 +439,7 @@ class AutoFetcher:
     def _mziq_release_candidates(self, soup, year, quarter):
         scripts = "\n".join(script.get_text() for script in soup.find_all("script"))
         company = re.search(r"\b(?:fmId|company_id)\s*=\s*['\"]([a-fA-F0-9-]{36})['\"]", scripts)
-        categories = re.findall(r"internal_name\s*:\s*['\"]([a-zA-Z0-9_-]+)['\"]", scripts)
+        categories = re.findall(r"internal_name\s*:\s*['\"]([a-zA-Z0-9_ -]+)['\"]", scripts)
         categories = list(dict.fromkeys(name for name in categories if re.search(r"release|earnings", name, re.I)))
         if not company or not categories:
             return []
