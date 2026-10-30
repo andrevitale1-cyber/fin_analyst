@@ -354,6 +354,42 @@ def test_auto_not_found_requests_manual_upload(api, monkeypatch, openai_client):
     assert "upload manual" in result.json()["detail"]
 
 
+def test_auto_reuses_public_analysis_for_another_user(api, monkeypatch, openai_client):
+    main, client = api
+    shared = {}
+    class Cursor:
+        def execute(self, sql, params=None):
+            self.result = None
+            if "SELECT response_text FROM public_quarterly_cache" in sql:
+                self.result = (shared[params[0]],) if params[0] in shared else None
+            elif "INSERT INTO public_quarterly_cache" in sql:
+                shared[params[0]] = params[1]
+            elif "INSERT INTO historico" in sql:
+                shared.setdefault("users", []).append(params[-1])
+                self.result = (len(shared["users"]),)
+        def fetchone(self): return self.result
+        def close(self): pass
+    class Connection:
+        def cursor(self): return Cursor()
+        def commit(self): pass
+        def close(self): pass
+    monkeypatch.setattr(main, "get_db_connection", Connection)
+    monkeypatch.setattr(main, "save_analysis_document", lambda *a, **k: None)
+    monkeypatch.setattr(main, "note_official_result", lambda *a, **k: None)
+    analyze = Mock(return_value=ANALYSIS)
+    monkeypatch.setattr(OpenAIClient, "analyze_document", analyze)
+    monkeypatch.setattr(AutoFetcher, "fetch_result_pdf", lambda *a: FetchedDocument("https://www.sec.gov/report.htm", "SEC", text="Apple earnings"))
+    data = {"ticker": "AAPL", "ano": "2025", "trimestre": "1T", "user_id": "first", "locale": "pt"}
+    first = client.post("/api/analyze-auto", data=data)
+    second = client.post("/api/analyze-auto", data={**data, "user_id": "second"})
+    assert first.status_code == second.status_code == 200
+    assert shared["users"] == ["first", "second"]
+    assert first.json()["id"] != second.json()["id"]
+    assert analyze.call_count == 1
+    third = client.post("/api/analyze-auto", data={**data, "user_id": "second", "locale": "en"})
+    assert third.status_code == 200 and analyze.call_count == 2
+
+
 def test_auto_search_outage_is_retryable_instead_of_report_not_found(api, monkeypatch, openai_client):
     from agents.search_client import SearchError
     _, client = api

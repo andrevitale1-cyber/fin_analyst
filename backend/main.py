@@ -10,6 +10,7 @@ import json
 import re
 import io
 import asyncio
+import hashlib
 from collections import Counter
 from contextlib import asynccontextmanager
 import stripe
@@ -157,6 +158,10 @@ def init_db():
 
         create_full_report_tables(cur)
         create_usage_tables(cur)
+        cur.execute("""CREATE TABLE IF NOT EXISTS public_quarterly_cache (
+            cache_key TEXT PRIMARY KEY, response_text TEXT NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        )""")
         create_job_tables(cur)
         create_feedback_tables(cur)
         conn.commit()
@@ -431,13 +436,29 @@ async def analyze_report_auto(
         raise HTTPException(status_code=404, detail=detail)
     
     prompt = builder.build_prompt(ticker, "[ARQUIVO PDF ANEXADO]", locale=locale, periodo=f"{trimestre}/{ano}")
+    analysis_client = OpenAIClient(task="analysis")
+    cache_hash = hashlib.sha256()
+    for value in (prompt.encode("utf-8"), analysis_client.model.encode("utf-8"),
+                  document.url.encode("utf-8"), document.pdf_bytes or document.text.encode("utf-8")):
+        cache_hash.update(len(value).to_bytes(8, "big"))
+        cache_hash.update(value)
+    cache_key = cache_hash.hexdigest()
     conn = None
     try:
-        response_text = await asyncio.wait_for(
-            asyncio.to_thread(OpenAIClient(task="analysis").analyze_document, prompt,
-                              pdf_bytes=document.pdf_bytes, pdf_text=document.text),
-            timeout=180.0,
-        )
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT response_text FROM public_quarterly_cache WHERE cache_key=%s AND created_at > NOW() - INTERVAL '30 days'", (cache_key,))
+        cached = cur.fetchone()
+        response_text = cached[0] if cached and isinstance(cached[0], str) else None
+        cur.close()
+        conn.close()
+        conn = None
+        if not response_text:
+            response_text = await asyncio.wait_for(
+                asyncio.to_thread(analysis_client.analyze_document, prompt,
+                                  pdf_bytes=document.pdf_bytes, pdf_text=document.text),
+                timeout=180.0,
+            )
 
         # 6. Parse e Salvar
         dados_estruturados = parse_results(response_text)
@@ -449,6 +470,9 @@ async def analyze_report_auto(
 
         conn = get_db_connection()
         cur = conn.cursor()
+        if not (cached and isinstance(cached[0], str)) and all(dados_estruturados.get(key) for key in ("receita_nota", "rentabilidade_nota", "divida_nota", "lucro_nota", "nota_geral", "tese_investimento")):
+            cur.execute("""INSERT INTO public_quarterly_cache (cache_key,response_text) VALUES (%s,%s)
+                        ON CONFLICT (cache_key) DO UPDATE SET response_text=EXCLUDED.response_text,created_at=NOW()""", (cache_key, response_text))
         cur.execute(
             "INSERT INTO historico (empresa, ano, trimestre, data_criacao, resultado_json, user_id) VALUES (%s, %s, %s, NOW(), %s, %s) RETURNING id",
             (ticker, ano, trimestre, json.dumps(objeto_final), str(user_id))
