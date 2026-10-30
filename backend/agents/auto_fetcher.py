@@ -30,6 +30,7 @@ class AutoFetcher:
                      "TFCO4": ("8e49886e-dded-49c0-b8db-c35451e75eed", "central_release_de_resultados ")}
     transcript_issuers = {
         "NKE": ("NIKE",), "MU": ("Micron", "Micron Technology"),
+        "SK HYNIX": ("SK hynix",),
         "TFCO4": ("Track & Field", "Track and Field", "TRACK FIELD"),
         "AAPL": ("Apple",), "MSFT": ("Microsoft",), "GOOGL": ("Alphabet", "Google"),
         "AMZN": ("Amazon",), "META": ("Meta", "Facebook"), "NVDA": ("Nvidia",), "TSLA": ("Tesla",),
@@ -67,6 +68,8 @@ class AutoFetcher:
             "AMAZON": "AMZN", "META": "META", "FACEBOOK": "META", "NVIDIA": "NVDA", "TESLA": "TSLA",
             "MICRON": "MU", "MICRON TECHNOLOGY": "MU", "MICRON TECHNOLOGY INC": "MU", "MICRON TECHNOLOGY INC.": "MU",
             "TRACK AND FIELD": "TFCO4", "TRACK & FIELD": "TFCO4", "TRACK&FIELD": "TFCO4", "TRACK FIELD": "TFCO4",
+            "SK HYNIX": "SK HYNIX", "SK HYNIX INC": "SK HYNIX", "SK HYNIX INC.": "SK HYNIX",
+            "000660": "SK HYNIX", "000660.KS": "SK HYNIX",
             "ROBINHOOD": "HOOD", "ROBINHOOD MARKETS": "HOOD", "ROBINHOOD MARKETS INC": "HOOD",
         }
         normalized = " ".join("".join(c for c in unicodedata.normalize("NFKD", ticker) if not unicodedata.combining(c)).split())
@@ -163,7 +166,7 @@ class AutoFetcher:
         if not match or not re.fullmatch(r"\d{4}", str(ano)) or not 1900 <= int(ano) <= 2100:
             raise ValueError("Ano ou trimestre inválido. Use ano com quatro dígitos e trimestre de 1T a 4T.")
         year, quarter = int(ano), int(match.group(1) or match.group(2))
-        if ticker == original_ticker and ticker not in self.ir_urls and not re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
+        if ticker == original_ticker and ticker != "SK HYNIX" and ticker not in self.ir_urls and not re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
             ticker = SECFetcher().resolve_name(ticker) or self._resolve_b3_name(ticker) or ticker
         logger.info("release_lookup issuer=%s year=%s quarter=%s", ticker, year, quarter)
         cache_path = self.cache_dir / f"fiscal-v2-{ticker}-{year}-{quarter}.json"
@@ -396,6 +399,11 @@ class AutoFetcher:
         return None
 
     def _fetch_b3(self, ticker, year, quarter):
+        if ticker == "SK HYNIX":
+            url = f"https://news.skhynix.com/en/q{quarter}-{year}-business-results/"
+            document = self._download_release(url, year, quarter, depth=1, timeout=10)
+            if document and self._release_company_matches(document, ticker):
+                return document
         catalog = self.mziq_catalogs.get(ticker)
         if catalog:
             company_id, category = catalog

@@ -67,6 +67,21 @@ def test_track_field_name_and_catalog_category_with_trailing_space(monkeypatch, 
     catalog.assert_called_once_with("8e49886e-dded-49c0-b8db-c35451e75eed", ["central_release_de_resultados "], 2025, 4)
 
 
+def test_sk_hynix_official_release_and_web_fallback(monkeypatch, tmp_path):
+    fetcher = AutoFetcher(tmp_path)
+    assert fetcher.resolve_ticker("000660.KS") == "SK HYNIX"
+    assert fetcher.resolve_ticker("sk hynix") == "SK HYNIX"
+    release = FetchedDocument("https://news.skhynix.com/en/q3-2026-business-results/", "RI", text="SK hynix third quarter 2026 results")
+    monkeypatch.setattr(fetcher, "_download_release", lambda *args, **kwargs: release)
+    web = Mock(return_value=[])
+    monkeypatch.setattr(fetcher.search_client, "search_financial_reports", web)
+    assert fetcher._fetch_b3("SK HYNIX", 2026, 3) == release
+    web.assert_not_called()
+    monkeypatch.setattr(fetcher, "_download_release", lambda *args, **kwargs: None)
+    assert fetcher._fetch_b3("SK HYNIX", 2026, 3) is None
+    web.assert_called_once_with("SK HYNIX", 2026, "3T")
+
+
 def test_b3_name_requires_a_unique_known_ticker(monkeypatch, tmp_path):
     response = Mock()
     response.json.return_value = {"results": [{"status": "A", "type": "1", "issuingCompany": "TOTS",
