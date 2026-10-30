@@ -14,7 +14,7 @@ export default function DashboardSidebar({ active, open, collapsed, onClose, onC
   const items = [["dashboard", LayoutDashboard, "newAnalysis"], ["table", Table2, "aggregatedTable"], ["history", History, "history"], ["reports", BookOpen, "fullReports"]] as const;
   return <>
     {open && <div className="fixed inset-0 z-40 bg-black/60 md:hidden" onClick={onClose} />}
-    <aside aria-label={locale === "en" ? "Main navigation" : "Navegação principal"} className={`fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col border-r border-white/10 bg-[#0b1526] p-6 text-white transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "md:w-20 md:px-3" : ""}`}>
+    <aside aria-label={locale === "en" ? "Main navigation" : "Navegação principal"} className={`fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col overflow-y-auto border-r border-white/10 bg-[#0b1526] p-6 text-white transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "md:w-20 md:px-3" : ""}`}>
       <div className="mb-10 flex items-center justify-between gap-2">
         <a href={`/${locale}`} aria-label={locale === "en" ? "FinAnalyzer home" : "Início FinAnalyzer"} className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-sky-400">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-700"><BarChart3 size={21} /></span>
