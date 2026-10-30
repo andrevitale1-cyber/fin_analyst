@@ -30,15 +30,20 @@ class SECFetcher:
         value = re.sub(r"[^A-Z0-9]+", " ", value).strip()
         return re.sub(r"\s+(?:INCORPORATED|INC|CORPORATION|CORP|COMPANY|CO|LTD|LIMITED|PLC)$", "", value).strip()
 
+    def _catalog(self):
+        if SECFetcher._company_catalog is None or time.monotonic() >= SECFetcher._catalog_expires:
+            data = self._get("https://www.sec.gov/files/company_tickers.json").json()
+            if not isinstance(data, dict):
+                return []
+            SECFetcher._company_catalog = list(data.values())
+            SECFetcher._catalog_expires = time.monotonic() + 86400
+        return SECFetcher._company_catalog
+
     def resolve_name(self, name):
         """Resolve only an unambiguous exact issuer name, never a partial match."""
         try:
-            if SECFetcher._company_catalog is None or time.monotonic() >= SECFetcher._catalog_expires:
-                data = self._get("https://www.sec.gov/files/company_tickers.json").json()
-                if not isinstance(data, dict):
-                    return None
-                SECFetcher._company_catalog = list(data.values())
-                SECFetcher._catalog_expires = time.monotonic() + 86400
+            if not self._catalog():
+                return None
             target = self._company_name(name)
             symbols = {item.get("ticker") for item in SECFetcher._company_catalog if isinstance(item, dict)}
             if name in symbols:
@@ -57,8 +62,7 @@ class SECFetcher:
 
     def fetch(self, ticker, year, quarter):
         try:
-            companies = self._get("https://www.sec.gov/files/company_tickers.json").json()
-            company = next((c for c in companies.values() if c["ticker"] == ticker), None)
+            company = next((c for c in self._catalog() if c.get("ticker") == ticker), None)
             if not company:
                 return None
             cik = int(company["cik_str"])

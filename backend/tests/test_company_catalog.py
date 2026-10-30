@@ -28,6 +28,20 @@ def test_unknown_name_still_uses_web_search(monkeypatch, tmp_path):
     web.assert_called_once_with("UNKNOWN COMPANY", 2026, 3)
 
 
+def test_small_cap_name_uses_b3_portfolio_and_rejects_ambiguous_names(monkeypatch, tmp_path):
+    monkeypatch.setattr(AutoFetcher, "_small_caps", [
+        {"cod": "TTEN3", "asset": "3TENTOS"},
+        {"cod": "TEST3", "asset": "TESTE"}, {"cod": "TEST4", "asset": "TESTE"},
+    ])
+    monkeypatch.setattr(AutoFetcher, "_small_caps_expires", time.monotonic() + 60)
+    response = Mock()
+    response.json.return_value = {"results": []}
+    monkeypatch.setattr("agents.auto_fetcher.requests.get", Mock(return_value=response))
+    fetcher = AutoFetcher(tmp_path)
+    assert fetcher._resolve_b3_name("3tentos") == "TTEN3"
+    assert fetcher._resolve_b3_name("teste") is None
+
+
 def test_b3_name_requires_a_unique_known_ticker(monkeypatch, tmp_path):
     response = Mock()
     response.json.return_value = {"results": [{"status": "A", "type": "1", "issuingCompany": "TOTS",

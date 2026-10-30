@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import tempfile
+import time
 import unicodedata
 from urllib.parse import unquote, urljoin, urlparse
 
@@ -22,6 +23,8 @@ logger = logging.getLogger("uvicorn.error")
 
 
 class AutoFetcher:
+    _small_caps = None
+    _small_caps_expires = 0
     # Query Vivara's verified catalogue without depending on the RI site's certificate chain.
     mziq_catalogs = {"VIVA3": ("61a4df2d-a461-44d6-9128-da74058019db", "release-de-resultados")}
     transcript_issuers = {
@@ -75,6 +78,25 @@ class AutoFetcher:
 
     def _resolve_b3_name(self, company):
         """Map a verified B3 issuer only when the local ticker mapping is unique."""
+        try:
+            if AutoFetcher._small_caps is None or time.monotonic() >= AutoFetcher._small_caps_expires:
+                query = base64.b64encode(json.dumps({"language": "pt-br", "pageNumber": 1, "pageSize": 200,
+                                                      "index": "SMLL", "segment": "1"}, separators=(",", ":")).encode()).decode()
+                response = requests.get("https://sistemaswebb3-listados.b3.com.br/indexProxy/indexCall/GetPortfolioDay/" + query, timeout=5)
+                response.raise_for_status()
+                payload = response.json()
+                rows = payload.get("results", [])
+                if rows and payload.get("page", {}).get("totalPages") == 1:
+                    AutoFetcher._small_caps = rows
+                    AutoFetcher._small_caps_expires = time.monotonic() + 86400
+            target = SECFetcher._company_name(company)
+            matches = {row.get("cod") for row in (AutoFetcher._small_caps or []) if isinstance(row, dict)
+                       and SECFetcher._company_name(str(row.get("asset", ""))) == target
+                       and re.fullmatch(r"[A-Z]{4}\d{1,2}", str(row.get("cod", "")))}
+            if len(matches) == 1:
+                return next(iter(matches))
+        except (requests.RequestException, ValueError, TypeError, AttributeError):
+            pass
         try:
             params = {"language": "pt-br", "pageNumber": 1, "pageSize": 20, "company": company}
             encoded = base64.b64encode(json.dumps(params, separators=(",", ":")).encode()).decode()
