@@ -10,6 +10,7 @@ import json
 import re
 import io
 import asyncio
+from collections import Counter
 from contextlib import asynccontextmanager
 import stripe
 from pypdf import PdfReader
@@ -355,7 +356,7 @@ async def analyze_report(
         dados_estruturados = parse_results(response_text)
         
         objeto_final = {
-            "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}" },
+            "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}", "locale": locale },
             "data": dados_estruturados,
             "analise_completa": response_text
         }
@@ -441,7 +442,7 @@ async def analyze_report_auto(
         # 6. Parse e Salvar
         dados_estruturados = parse_results(response_text)
         objeto_final = {
-            "metadata": { "empresa": ticker, "periodo": f"{trimestre}/{ano}" },
+            "metadata": { "empresa": ticker, "periodo": f"{trimestre}/{ano}", "locale": locale },
             "data": dados_estruturados,
             "analise_completa": response_text
         }
@@ -711,6 +712,40 @@ def get_history(user_id: str):
     finally:
         cur.close()
         conn.close()
+
+class AnalysisTranslationRequest(BaseModel):
+    locale: str
+
+
+@app.post("/api/history/{item_id}/translation")
+async def translate_saved_analysis(item_id: int, body: AnalysisTranslationRequest, user_id: str = Depends(require_report_user)):
+    if body.locale not in ("pt", "en"):
+        raise HTTPException(400, "Idioma inválido.")
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute("SELECT resultado_json FROM historico WHERE id=%s AND CAST(user_id AS TEXT)=%s", (item_id, str(user_id)))
+        row = cur.fetchone()
+    finally:
+        cur.close()
+        conn.close()
+    if not row:
+        raise HTTPException(404, "Análise não encontrada.")
+    result = json.loads(row[0])
+    if result.get("metadata", {}).get("tipo") == "Earnings Call":
+        raise HTTPException(400, "Esta tradução é apenas para análises trimestrais.")
+    text = result.get("data", {}).get("tese_investimento") or quarterly_thesis(result.get("analise_completa", ""))
+    if not isinstance(text, str) or not text.strip() or len(text) > 40000:
+        raise HTTPException(400, "Texto da análise indisponível para tradução.")
+    try:
+        translated = await asyncio.wait_for(asyncio.to_thread(OpenAIClient(task="analysis").translate_analysis, text, body.locale), timeout=90)
+        numbers = lambda value: Counter(re.findall(r"(?<!\w)\d[\d.,]*", value))
+        if numbers(text) != numbers(translated):
+            raise OpenAIError("A tradução não preservou os valores da análise.")
+        return {"text": translated}
+    except (asyncio.TimeoutError, TimeoutError, OpenAIError):
+        raise HTTPException(502, "Não foi possível traduzir a análise. Tente novamente.") from None
+
 
 @app.delete("/api/history/{item_id}")
 def delete_history_item(item_id: int, user_id: str = Depends(require_report_user)):

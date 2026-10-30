@@ -153,7 +153,7 @@ include a page/table reference only when actually identifiable, never invent one
         english = locale == "en"
         language_instruction = (
             "OUTPUT LANGUAGE: English. Write every part of the analysis in clear, idiomatic English, including the introduction, section headings, score labels, classification, conclusion, and all prose. Keep the machine-readable labels exactly as specified in the English output template below. Do not mix Portuguese into the analysis.\n\n"
-            if english else ""
+            if english else "IDIOMA DA RESPOSTA: português brasileiro. Escreva toda a análise, incluindo introdução, títulos, notas, classificação e conclusão, em português brasileiro, mesmo que o documento esteja em inglês. Preserve nomes próprios, siglas e dados financeiros. Não misture inglês no texto.\n\n"
         )
         section_labels = [
             "Section 1: Operating Performance and Top Line",

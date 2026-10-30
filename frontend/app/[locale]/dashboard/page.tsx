@@ -102,8 +102,31 @@ export default function FinancialDashboard() {
   const [accessRetry, setAccessRetry] = useState(0);
 
   const [result, setResult] = useState<any>(null);
+  const [translatedThesis, setTranslatedThesis] = useState<string | null>(null);
+  const [translationStatus, setTranslationStatus] = useState<'idle' | 'loading' | 'error'>('idle');
+  const translationCache = useRef<Record<string, string>>({});
   const [historyList, setHistoryList] = useState<any[]>([]);
   const [tableData, setTableData] = useState<any[]>([]);
+
+  useEffect(() => {
+    setTranslatedThesis(null);
+    setTranslationStatus('idle');
+    if (currentView !== 'result' || !result?.id || result.metadata?.tipo === 'Earnings Call') return;
+    const text = String(result.analise_completa || '');
+    const sourceLocale = /\bSection\s+[1-6]\s*:/i.test(text) ? 'en' : /\bSe[cç][aã]o\s+[1-6]\s*:/i.test(text) ? 'pt' : result.metadata?.locale || null;
+    if (!sourceLocale || sourceLocale === locale) return;
+    const key = `${result.id}:${locale}`;
+    if (translationCache.current[key]) { setTranslatedThesis(translationCache.current[key]); return; }
+    const controller = new AbortController();
+    setTranslationStatus('loading');
+    getToken().then(token => {
+      if (!token) throw new Error('Authentication unavailable');
+      return fetch(`${API_BASE}/api/history/${result.id}/translation`, { method: 'POST', signal: controller.signal, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ locale }) });
+    }).then(response => { if (!response.ok) throw new Error('Translation failed'); return response.json(); })
+      .then(data => { if (typeof data.text !== 'string' || !data.text.trim()) throw new Error('Empty translation'); translationCache.current[key] = data.text; setTranslatedThesis(data.text); setTranslationStatus('idle'); })
+      .catch(() => { if (!controller.signal.aborted) setTranslationStatus('error'); });
+    return () => controller.abort();
+  }, [currentView, result?.id, locale, getToken]);
 
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [showColumnMenu, setShowColumnMenu] = useState(false);
@@ -668,7 +691,8 @@ export default function FinancialDashboard() {
                 {result.metadata?.tipo === "Earnings Call" ? t('result.transcriptAnalysis') : t('result.investmentThesis')}
               </h3>
               <div className="prose prose-lg max-w-none text-slate-600 leading-relaxed whitespace-pre-line">
-                {splitBold(result.data?.tese_investimento || result.analise_completa || "Sem análise textual disponível.").map((part, index) => part.bold ? <strong key={index} className="font-bold text-slate-900">{part.text}</strong> : <React.Fragment key={index}>{part.text}</React.Fragment>)}
+                {translationStatus === 'loading' ? (locale === 'en' ? 'Translating analysis…' : 'Traduzindo análise…') : splitBold(translatedThesis || result.data?.tese_investimento || result.analise_completa || (locale === 'en' ? 'No analysis text available.' : 'Sem análise textual disponível.')).map((part, index) => part.bold ? <strong key={index} className="font-bold text-slate-900">{part.text}</strong> : <React.Fragment key={index}>{part.text}</React.Fragment>)}
+                {translationStatus === 'error' && <span className="mt-3 block text-sm text-amber-700" role="status">{locale === 'en' ? 'Translation unavailable; showing the original analysis.' : 'Tradução indisponível; exibindo a análise original.'}</span>}
               </div>
             </div>
             {result.id && <ReportFeedback key={String(result.id)} reportId={String(result.id)} kind="analysis" locale={locale}/>}

@@ -96,6 +96,13 @@ class OpenAIClient:
         with self._client() as client:
             return self._chat(client, prompt, system, max_tokens=1000)
 
+    def translate_analysis(self, text, locale):
+        language = "Brazilian Portuguese" if locale == "pt" else "English"
+        with self._client() as client:
+            return self._chat(client, [{"type": "input_text", "text": text}],
+                              system=f"Translate the supplied financial analysis into {language}. Return only the translation. Preserve every number, currency symbol, percentage, date, score, proper name, source reference and Markdown formatting exactly. Do not add, omit or reinterpret facts.",
+                              max_tokens=6000)
+
     def search_pdf_links(self, query, document_type="report"):
         """Uma pesquisa web retorna candidatos; o fetcher valida o documento baixado."""
         target = ("full earnings-call transcripts, in HTML or PDF, preferably from investor relations. Never return earnings releases, summaries, audio-only pages or paywalled content"
