@@ -28,7 +28,7 @@ class AutoFetcher:
     # Query Vivara's verified catalogue without depending on the RI site's certificate chain.
     mziq_catalogs = {"VIVA3": ("61a4df2d-a461-44d6-9128-da74058019db", "release-de-resultados")}
     transcript_issuers = {
-        "NKE": ("NIKE",),
+        "NKE": ("NIKE",), "MU": ("Micron", "Micron Technology"),
         "TFCO4": ("Track & Field", "Track and Field", "TRACK FIELD"),
         "AAPL": ("Apple",), "MSFT": ("Microsoft",), "GOOGL": ("Alphabet", "Google"),
         "AMZN": ("Amazon",), "META": ("Meta", "Facebook"), "NVDA": ("Nvidia",), "TSLA": ("Tesla",),
@@ -64,6 +64,7 @@ class AutoFetcher:
             "LOCALIZA": "RENT3", "LOJAS RENNER": "LREN3", "B3": "B3SA3",
             "APPLE": "AAPL", "MICROSOFT": "MSFT", "GOOGLE": "GOOGL", "ALPHABET": "GOOGL",
             "AMAZON": "AMZN", "META": "META", "FACEBOOK": "META", "NVIDIA": "NVDA", "TESLA": "TSLA",
+            "MICRON": "MU", "MICRON TECHNOLOGY": "MU", "MICRON TECHNOLOGY INC": "MU", "MICRON TECHNOLOGY INC.": "MU",
             "ROBINHOOD": "HOOD", "ROBINHOOD MARKETS": "HOOD", "ROBINHOOD MARKETS INC": "HOOD",
         }
         normalized = " ".join("".join(c for c in unicodedata.normalize("NFKD", ticker) if not unicodedata.combining(c)).split())

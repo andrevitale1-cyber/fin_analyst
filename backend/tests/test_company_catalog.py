@@ -42,6 +42,19 @@ def test_small_cap_name_uses_b3_portfolio_and_rejects_ambiguous_names(monkeypatc
     assert fetcher._resolve_b3_name("teste") is None
 
 
+def test_micron_name_uses_sec_ticker_and_falls_back_to_web(monkeypatch, tmp_path):
+    fetcher = AutoFetcher(tmp_path)
+    assert fetcher.resolve_ticker("Micron") == "MU"
+    assert fetcher.resolve_ticker("Micron Technology Inc.") == "MU"
+    sec = Mock(return_value=None)
+    monkeypatch.setattr(SECFetcher, "fetch", sec)
+    monkeypatch.setattr(fetcher, "_fetch_equibles", lambda *args: None)
+    release = FetchedDocument("https://example.com/micron", "RI", text="Micron Technology results 2Q 2026")
+    monkeypatch.setattr(fetcher, "_fetch_b3", lambda *args: release)
+    assert fetcher.fetch_result_pdf("Micron", 2026, "2T") == release
+    sec.assert_called_once_with("MU", 2026, 2)
+
+
 def test_b3_name_requires_a_unique_known_ticker(monkeypatch, tmp_path):
     response = Mock()
     response.json.return_value = {"results": [{"status": "A", "type": "1", "issuingCompany": "TOTS",
