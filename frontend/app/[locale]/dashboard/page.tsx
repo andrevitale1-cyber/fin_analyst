@@ -50,6 +50,7 @@ function Feature({ text, disabled = false }: any) {
 
 function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'monthly', isExpired = false }: { onClose?: () => void; userId?: string; billingCycle?: 'monthly' | 'yearly'; isExpired?: boolean }) {
   const t = useTranslations("Dashboard");
+  const locale = useLocale();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
 
   const handleCheckout = () => {
@@ -60,42 +61,17 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-[#0E1117] border border-gray-800 shadow-2xl rounded-2xl w-full max-w-4xl overflow-hidden relative flex flex-col md:flex-row">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4 animate-in fade-in duration-200">
+      <div role="dialog" aria-modal="true" className="bg-[#0E1117] border border-gray-800 shadow-2xl rounded-2xl w-full max-w-4xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto relative flex flex-col md:flex-row">
         {/* Só mostra o botão fechar se o trial ainda está ativo */}
         {!isExpired && onClose && (
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50 bg-[#161b22] p-1.5 rounded-md border border-gray-800">
+          <button onClick={onClose} aria-label={locale === 'pt' ? 'Fechar' : 'Close'} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors z-50 bg-[#161b22] p-1.5 rounded-md border border-gray-800">
             <X size={18} />
           </button>
         )}
-        {/* Painel esquerdo: info do trial */}
-        <div className="w-full md:w-1/2 p-8 border-b md:border-b-0 md:border-r border-gray-800 bg-[#0d1117]/50 flex flex-col">
-          <div className="mb-6">
-            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4 ${isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
-              <span className={`w-2 h-2 rounded-full ${isExpired ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
-              {isExpired ? t("trial.trialExpired") : t("trial.trialActive")}
-            </div>
-            <h3 className="text-xl font-semibold text-white">{t("upgrade.basicPlan")}</h3>
-            <p className="text-sm text-gray-400 mt-2 leading-relaxed">
-              {isExpired ? t("trial.trialExpiredDesc") : t("upgrade.basicDesc")}
-            </p>
-          </div>
-          <ul className="space-y-4 mb-8 flex-1">
-            <Feature text={t("features.unlimitedAnalysis")} />
-            <Feature text={t("features.summaryReport")} />
-            <Feature text={t("features.downloadFullReport")} />
-            <Feature text={t("features.comparativeTable")} />
-            <Feature text={t("features.serverPriority")} />
-          </ul>
-          {!isExpired && onClose && (
-            <button onClick={onClose} className="w-full py-2.5 rounded-lg border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
-              {t("upgrade.continueBasic")}
-            </button>
-          )}
-        </div>
         {/* Painel direito: plano pro */}
-        <div className="w-full md:w-1/2 p-8 bg-[#161b22] relative flex flex-col">
-          <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">{t("upgrade.recommended")}</div>
+        <div className="order-1 w-full md:w-1/2 p-6 sm:p-8 bg-[#161b22] relative flex flex-col">
+          <div className={`absolute top-0 ${!isExpired && onClose ? 'right-14 md:right-0' : 'right-0'} bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider`}>{t("upgrade.recommended")}</div>
           <div className="mb-6">
             <h3 className="text-xl font-semibold text-white flex items-center gap-2">FinAnalyzer Pro <Zap size={16} className="text-blue-500 fill-blue-500" /></h3>
             <p className="text-sm text-gray-400 mt-1">{t("upgrade.proDesc")}</p>
@@ -118,6 +94,31 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
             {t("upgrade.subscribePro")}
           </button>
           <p className="text-center text-xs text-gray-500 mt-3">{billingCycle === 'monthly' ? 'Cancele quando quiser.' : 'Cobrança anual. Cancele quando quiser.'}</p>
+        </div>
+        {/* Painel esquerdo: info do trial */}
+        <div className="order-2 w-full md:w-1/2 p-6 sm:p-8 border-t md:border-t-0 md:border-l border-gray-800 bg-[#0d1117]/50 flex flex-col">
+          <div className="mb-6">
+            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4 ${isExpired ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>
+              <span className={`w-2 h-2 rounded-full ${isExpired ? 'bg-red-400' : 'bg-amber-400 animate-pulse'}`} />
+              {isExpired ? t("trial.trialExpired") : t("trial.trialActive")}
+            </div>
+            <h3 className="text-xl font-semibold text-white">{t("upgrade.basicPlan")}</h3>
+            <p className="text-sm text-gray-400 mt-2 leading-relaxed">
+              {isExpired ? t("trial.trialExpiredDesc") : t("upgrade.basicDesc")}
+            </p>
+          </div>
+          <ul className="space-y-4 mb-8 flex-1">
+            <Feature text={t("features.unlimitedAnalysis")} />
+            <Feature text={t("features.summaryReport")} />
+            <Feature text={t("features.downloadFullReport")} />
+            <Feature text={t("features.comparativeTable")} />
+            <Feature text={t("features.serverPriority")} />
+          </ul>
+          {!isExpired && onClose && (
+            <button onClick={onClose} className="w-full py-2.5 rounded-lg border border-gray-700 text-sm font-medium text-gray-300 hover:bg-gray-800 transition-colors">
+              {t("upgrade.continueBasic")}
+            </button>
+          )}
         </div>
       </div>
     </div>
