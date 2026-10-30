@@ -397,4 +397,7 @@ def test_quarterly_prompt_experiment_preserves_ratings_without_chart_section(loc
     assert heading in prompt and overall in prompt
     assert "Seção 7" not in prompt and "Section 7" not in prompt and "```json" not in prompt
     assert "40%" in prompt and "25%" in prompt and "20%" in prompt and "15%" in prompt
+    assert "não são falhas nem justificam desconto automático" in prompt
+    assert "resultando em 4,85 arredondado para 5/5" in prompt
+    assert "Não atribua 5 por empresa" in prompt
     assert "Supplied release" in prompt
