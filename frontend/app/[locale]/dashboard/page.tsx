@@ -401,7 +401,7 @@ export default function FinancialDashboard() {
       </DashboardSidebar>
       <main className="flex-1 min-w-0 overflow-y-auto p-4 md:p-8 relative bg-[#f7f8fc] text-slate-900">
         <div className="md:hidden flex items-center justify-between mb-6 pb-4 border-b border-gray-800">
-          <div className="flex items-center gap-3"><button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-[#161b22] border border-gray-800 rounded-lg text-white hover:bg-gray-800 active:scale-95 transition-all"><Menu size={24} /></button><span className="font-bold text-lg tracking-tight text-slate-900">FinAnalyzer <span className="text-blue-500">.AI</span></span></div>
+          <div className="flex items-center gap-3"><button onClick={() => setIsSidebarOpen(true)} aria-label={locale === 'en' ? 'Open menu' : 'Abrir menu'} className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-600 transition hover:bg-slate-100 active:scale-95 focus-visible:outline-2 focus-visible:outline-sky-600"><Menu size={24} /></button><span className="font-bold text-lg tracking-tight text-slate-900">FinAnalyzer <span className="text-blue-500">.AI</span></span></div>
           <div className="flex items-center gap-3">
             <LanguageSwitcher />
             <UserButton appearance={{ elements: { avatarBox: "w-8 h-8" } }} />
