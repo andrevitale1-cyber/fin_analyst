@@ -354,6 +354,22 @@ def test_auto_not_found_requests_manual_upload(api, monkeypatch, openai_client):
     assert "upload manual" in result.json()["detail"]
 
 
+def test_recent_analyses_use_authenticated_account(api, monkeypatch):
+    from unittest.mock import MagicMock
+    main, client = api
+    conn = MagicMock()
+    cursor = conn.cursor.return_value.__enter__.return_value
+    cursor.fetchall.return_value = [(9, 'MU', '{"metadata":{"periodo":"2T/2026"}}')]
+    monkeypatch.setattr(main, 'get_db_connection', lambda: conn)
+    main.app.dependency_overrides[main.require_report_user] = lambda: 'owner'
+    try:
+        response = client.get('/api/recent-analyses?user_id=other')
+        assert response.status_code == 200 and response.json()[0]['symbol'] == 'MU'
+        assert cursor.execute.call_args.args[1] == ('owner',)
+    finally:
+        main.app.dependency_overrides.pop(main.require_report_user, None)
+
+
 def test_auto_reuses_public_analysis_for_another_user(api, monkeypatch, openai_client):
     main, client = api
     shared = {}

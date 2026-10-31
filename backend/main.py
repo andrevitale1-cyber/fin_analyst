@@ -53,8 +53,17 @@ from thesis_library import router as thesis_library_router, note_official_result
 from report_feedback import router as feedback_router, create_tables as create_feedback_tables
 from company_search import search_companies
 from agents.brapi_client import FREE_TICKERS, quarterly_context
+from market_data import market_snapshot, reaction_prompt
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
+
+async def market_reaction_context(symbol, text="", pdf_bytes=b""):
+    try:
+        if not text and pdf_bytes:
+            text = await asyncio.to_thread(OpenAIClient.extract_text, pdf_bytes)
+        return await asyncio.to_thread(reaction_prompt, AutoFetcher().resolve_ticker(symbol), text)
+    except (OpenAIError, ValueError, TypeError):
+        return ""
 
 # --- CONFIGURAÇÕES GERAIS ---
 @asynccontextmanager
@@ -80,6 +89,23 @@ async def company_suggestions(q: str = "", user: str = Depends(require_report_us
     if len(q) > 100 or re.search(r"[\x00-\x1f]", q):
         raise HTTPException(status_code=400, detail="Busca inválida.")
     return await asyncio.to_thread(search_companies, q.strip())
+
+@app.get("/api/market-data")
+async def market_data(symbol: str, range: str = "1mo", user: str = Depends(require_report_user)):
+    try:
+        return await asyncio.to_thread(market_snapshot, symbol, range)
+    except ValueError:
+        raise HTTPException(400, "Invalid symbol or range") from None
+
+@app.get("/api/recent-analyses")
+def recent_analyses(user: str = Depends(require_report_user)):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id, empresa, resultado_json FROM historico WHERE CAST(user_id AS TEXT)=%s ORDER BY id DESC LIMIT 3", (str(user),))
+            return [{"id": row[0], "symbol": row[1], "result": json.loads(row[2]) if isinstance(row[2], str) else row[2]} for row in cur.fetchall()]
+    finally:
+        conn.close()
 
 # --- CONFIGURAÇÃO DO CORS ---
 origins = ["*"]
@@ -357,6 +383,7 @@ async def analyze_report(
         contents = await file.read()
         
         prompt = PromptBuilder().build_prompt(empresa, "[ARQUIVO PDF ANEXADO]", locale=locale, periodo=f"{trimestre}/{ano}")
+        prompt += await market_reaction_context(empresa, pdf_bytes=contents)
         response_text = await asyncio.wait_for(
             asyncio.to_thread(OpenAIClient(task="analysis").analyze_document, prompt, pdf_bytes=contents),
             timeout=180.0,
@@ -444,6 +471,7 @@ async def analyze_report_auto(
         raise HTTPException(status_code=404, detail=detail)
     
     prompt = builder.build_prompt(ticker, "[ARQUIVO PDF ANEXADO]", locale=locale, periodo=f"{trimestre}/{ano}")
+    prompt += await market_reaction_context(ticker, document.text, document.pdf_bytes)
     brapi_data = None
     if (os.getenv("BRAPI_API_KEY", "").strip() or ticker in FREE_TICKERS) and re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
         try:
@@ -556,6 +584,7 @@ async def analyze_earnings_call_auto(
                    f"Não foi encontrada uma transcrição pública de {company} para {trimestre}/{ano}. Envie o PDF manualmente.")
         raise HTTPException(status_code=404, detail=message)
     prompt = PromptBuilder().build_call_prompt(company, f"{trimestre}/{ano}", locale=locale)
+    prompt += await market_reaction_context(company, document.text)
     try:
         response_text = await asyncio.wait_for(asyncio.to_thread(
             OpenAIClient(task="analysis").analyze_transcript, prompt, document.text,
@@ -610,6 +639,7 @@ async def analyze_earnings_call(
             texto_transcricao = ""
 
         prompt = PromptBuilder().build_call_prompt(empresa, f"{trimestre}/{ano}", locale=locale)
+        prompt += await market_reaction_context(empresa, texto_transcricao or "", contents)
 
         response_text = await asyncio.wait_for(
             (asyncio.to_thread(OpenAIClient(task="analysis").analyze_transcript, prompt, texto_transcricao)

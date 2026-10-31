@@ -8,6 +8,7 @@ import DashboardSidebar from "../../../components/DashboardSidebar";
 import ReportFeedback from "../../../components/ReportFeedback";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import CompanyLogo from "../../../components/CompanyLogo";
+import AnalysisMarketChart from "../../../components/AnalysisMarketChart";
 import ConfirmDeleteDialog from "../../../components/ConfirmDeleteDialog";
 import {
   LayoutDashboard, History, UploadCloud, FileText, ChevronLeft,
@@ -196,6 +197,19 @@ export default function FinancialDashboard() {
     const company = params.get("company")?.trim() || "";
     if (company && company.length <= 100 && !/[\u0000-\u001f]/.test(company)) setEmpresa(company);
   }, []);
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('analysis');
+    if (!user?.id || !id || !/^\d+$/.test(id)) return;
+    const controller = new AbortController();
+    getToken().then(token => fetch(`${API_BASE}/api/recent-analyses`, {signal:controller.signal,headers:{Authorization:`Bearer ${token}`}}))
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(rows => {
+        if (controller.signal.aborted || !Array.isArray(rows)) return;
+        const entry = rows.find((row:any) => String(row.id) === id);
+        if (entry) { setResult({...entry.result,id:entry.id}); setCurrentView('result'); }
+      }).catch(() => {});
+    return () => controller.abort();
+  }, [user?.id,getToken]);
 
   const isPremium = user?.publicMetadata?.plan === 'premium';
   const accessStatus = isPremium ? 'active' : trialState.userId === user?.id ? trialState.status : 'pending';
@@ -738,6 +752,7 @@ export default function FinancialDashboard() {
               </div>
             )}
             
+            <AnalysisMarketChart key={result.id || result.metadata?.empresa} symbol={result.metadata?.ticker || result.metadata?.symbol || result.metadata?.empresa || ''}/>
             <div className="bg-white/90 border border-slate-200 rounded-3xl p-6 md:p-10 shadow-[0_18px_55px_rgba(38,57,94,0.08)]">
               <h3 className="text-2xl font-bold text-slate-900 mb-8 flex items-center gap-3">
                 <FileText className={result.metadata?.tipo === "Earnings Call" ? "text-purple-500" : "text-blue-500"} /> 

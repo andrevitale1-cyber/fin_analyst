@@ -4,6 +4,7 @@ import { UserButton } from "@clerk/nextjs";
 import { useLocale, useTranslations } from "next-intl";
 import { BarChart3, BookOpen, ChevronLeft, History, LayoutDashboard, Menu, Table2, X } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
+import RecentAnalyses from "./RecentAnalyses";
 
 export default function DashboardSidebar({ active, open, collapsed, onClose, onCollapse, onNavigate, children }: {
   active: string; open: boolean; collapsed: boolean; onClose: () => void; onCollapse: (value: boolean) => void;
@@ -25,6 +26,7 @@ export default function DashboardSidebar({ active, open, collapsed, onClose, onC
       </div>
       {collapsed && <button onClick={() => onCollapse(false)} aria-label={t("sidebar.menu")} className="mb-4 hidden h-10 items-center justify-center rounded-xl hover:bg-white/10 md:flex"><Menu size={20}/></button>}
       <nav className="space-y-2">{items.map(([view, Icon, label]) => <button key={view} onClick={() => { onClose(); onNavigate(view); }} aria-current={active === view ? "page" : undefined} title={t(`nav.${label}`)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${collapsed ? "justify-center" : "text-left"} ${active === view ? "bg-sky-500/15 text-sky-300" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}><Icon size={20}/>{!collapsed && t(`nav.${label}`)}</button>)}</nav>
+      {!collapsed && <RecentAnalyses key={active}/>}
       <div className="mt-auto">{!collapsed && children}</div>
       <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
         <LanguageSwitcher compact={collapsed} dark />

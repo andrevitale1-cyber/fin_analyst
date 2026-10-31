@@ -280,6 +280,7 @@ def test_manual_transcript_route_extracts_and_sends_text_once(api, monkeypatch):
 
 
 def test_transcript_analysis_sends_text_once_without_file_upload(monkeypatch):
+    monkeypatch.delenv("OPENAI_CALL_AGENT_ID", raising=False)
     client = OpenAIClient()
     sent = []
     monkeypatch.setattr(client, "_client", lambda: _Context(client))
