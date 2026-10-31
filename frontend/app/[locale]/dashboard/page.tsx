@@ -21,6 +21,21 @@ import {
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api-finanalyzer.onrender.com";
 const STRIPE_CHECKOUT_URL_MONTHLY = "https://buy.stripe.com/bJe3cwgdleEBfiJ9rT67S00";
 const STRIPE_CHECKOUT_URL_YEARLY  = "https://buy.stripe.com/3cI6oIgdleEBgmNdI967S01"; 
+const QUICK_COMPANIES = [
+  {name:'Petrobras',ticker:'PETR4',market:'B3'}, {name:'Vale',ticker:'VALE3',market:'B3'},
+  {name:'Itaú Unibanco',ticker:'ITUB4',market:'B3'}, {name:'Bradesco',ticker:'BBDC4',market:'B3'},
+  {name:'Banco do Brasil',ticker:'BBAS3',market:'B3'}, {name:'WEG',ticker:'WEGE3',market:'B3'},
+  {name:'Ambev',ticker:'ABEV3',market:'B3'}, {name:'Magazine Luiza',ticker:'MGLU3',market:'B3'},
+  {name:'B3',ticker:'B3SA3',market:'B3'}, {name:'Localiza',ticker:'RENT3',market:'B3'},
+  {name:'Taesa',ticker:'TAEE11',market:'B3'}, {name:'BB Seguridade',ticker:'BBSE3',market:'B3'},
+  {name:'Panvel',ticker:'PNVL3',market:'B3'}, {name:'Track & Field',ticker:'TFCO4',market:'B3'},
+  {name:'Apple',ticker:'AAPL',market:'Nasdaq'}, {name:'Microsoft',ticker:'MSFT',market:'Nasdaq'},
+  {name:'NVIDIA',ticker:'NVDA',market:'Nasdaq'}, {name:'Amazon',ticker:'AMZN',market:'Nasdaq'},
+  {name:'Google / Alphabet',ticker:'GOOGL',market:'Nasdaq'}, {name:'Meta',ticker:'META',market:'Nasdaq'},
+  {name:'Tesla',ticker:'TSLA',market:'Nasdaq'}, {name:'Coca-Cola',ticker:'KO',market:'NYSE'},
+  {name:'JPMorgan Chase',ticker:'JPM',market:'NYSE'}, {name:'Netflix',ticker:'NFLX',market:'Nasdaq'},
+  {name:'Micron',ticker:'MU',market:'Nasdaq'}, {name:'SK hynix',ticker:'000660.KS',market:'Coreia'},
+];
 
 const getColumnDefinitions = (t: any) => [
   { key: 'empresa', label: t('company'), align: 'center', minWidth: 'min-w-[140px]', color: 'text-slate-900 font-medium' },
@@ -150,6 +165,10 @@ export default function FinancialDashboard() {
   const [trimestre, setTrimestre] = useState("1T");
   const [file, setFile] = useState<File | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const normalizeCompany = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const companyQuery = normalizeCompany(empresa.trim());
+  const quickOptions = companyQuery ? QUICK_COMPANIES.filter(item => normalizeCompany(`${item.name} ${item.ticker}`).includes(companyQuery)) : [];
+  const displayCompanyOptions = [...quickOptions, ...companyOptions.filter(item => !quickOptions.some(quick => quick.ticker === item.ticker && quick.market.toLowerCase() === item.market.toLowerCase()))].slice(0, 10);
 
   useEffect(() => {
     if (selectedCompany || empresa.trim().length < 2) { setCompanyOptions([]); setCompanyLoading(false); setCompanyError(false); return; }
@@ -581,41 +600,31 @@ export default function FinancialDashboard() {
               </div>
             ) : (
               <>
-                <div className="mt-7 grid gap-3 md:grid-cols-2">
-                  {([
-                    { id: 'auto' as const, icon: <Search size={20} />, title: t("newAnalysis.autoSearch"), desc: t("newAnalysis.autoModeDesc") },
-                    { id: 'pdf' as const, icon: <UploadCloud size={20} />, title: t("newAnalysis.manualMode"), desc: t("newAnalysis.manualModeDesc") },
-                  ]).map(mode => (
-                    <button key={mode.id} type="button" aria-pressed={tipoAnalise === mode.id} onClick={() => { setTipoAnalise(mode.id); setAnalysisError(""); }} className={`rounded-2xl border p-5 text-left transition-all duration-200 hover:-translate-y-0.5 ${tipoAnalise === mode.id ? 'border-sky-400 bg-sky-50 shadow-[0_12px_36px_rgba(14,86,150,0.12)]' : 'border-slate-200 bg-white hover:border-slate-300'}`}>
-                      <span className={`mb-4 flex h-10 w-10 items-center justify-center rounded-xl ${tipoAnalise === mode.id ? 'bg-sky-100 text-sky-700' : 'bg-slate-100 text-slate-500'}`}>{mode.icon}</span>
-                      <span className="block text-sm font-semibold text-slate-900">{mode.title}</span>
-                      <span className="mt-1 block text-xs leading-relaxed text-slate-500">{mode.desc}</span>
-                    </button>
-                  ))}
-                </div>
-
-                <div className="mt-5">
-                  <div className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-[0_18px_55px_rgba(38,57,94,0.08)] md:p-7">
-                    <div className="mb-6 flex items-center justify-between gap-3 border-b border-slate-100 pb-5">
-                      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700">{t("newAnalysis.setupLabel")}</p><h2 className="mt-1 text-xl font-semibold text-slate-900">{tipoAnalise === 'auto' ? t("newAnalysis.autoSearch") : t("newAnalysis.manualMode")}</h2></div>
+                <div className="mt-6">
+                  <div className="rounded-3xl border border-slate-200 bg-white/90 p-5 shadow-[0_18px_55px_rgba(38,57,94,0.08)] md:p-8">
+                    <div role="group" aria-label={locale === 'en' ? 'Analysis source' : 'Origem da análise'} className="mb-7 flex flex-wrap gap-2 border-b border-slate-100 pb-5">
+                      {([
+                        { id: 'auto' as const, icon: <Search size={17} />, title: t("newAnalysis.autoSearch") },
+                        { id: 'pdf' as const, icon: <UploadCloud size={17} />, title: t("newAnalysis.manualMode") },
+                      ]).map(mode => <button key={mode.id} type="button" aria-pressed={tipoAnalise === mode.id} onClick={() => { setTipoAnalise(mode.id); setAnalysisError(""); }} className={`inline-flex min-h-11 items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-600 ${tipoAnalise === mode.id ? 'bg-sky-100 text-sky-800' : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`}>{mode.icon}{mode.title}</button>)}
                     </div>
                     <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px_140px_160px]">
                       <div className="relative min-w-0" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node)) setCompanyOpen(false); }}>
                         <label htmlFor="company-search" className="block text-xs font-semibold uppercase tracking-wider text-slate-500">{t("newAnalysis.companyInput")}</label>
-                        <input id="company-search" type="text" role="combobox" aria-autocomplete="list" aria-expanded={companyOpen && empresa.trim().length >= 2} aria-controls="analysis-company-options" aria-activedescendant={companyOpen && companyIndex >= 0 ? `analysis-company-option-${companyIndex}` : undefined} autoComplete="off" placeholder={t("newAnalysis.companySearchPlaceholder")} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-base md:text-sm font-medium normal-case text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15" value={empresa} onFocus={() => { if (!selectedCompany) setCompanyOpen(true); }} onChange={(e) => { setEmpresa(e.target.value); setSelectedCompany(null); setCompanyOpen(true); setCompanyIndex(-1); }} onKeyDown={event => {
+                        <input id="company-search" type="text" role="combobox" aria-autocomplete="list" aria-expanded={companyOpen && !selectedCompany && (displayCompanyOptions.length > 0 || empresa.trim().length >= 2)} aria-controls="analysis-company-options" aria-activedescendant={companyOpen && companyIndex >= 0 ? `analysis-company-option-${companyIndex}` : undefined} autoComplete="off" placeholder={t("newAnalysis.companySearchPlaceholder")} className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-base md:text-sm font-medium normal-case text-slate-900 placeholder:text-slate-400 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/15" value={empresa} onFocus={() => { if (!selectedCompany) setCompanyOpen(true); }} onChange={(e) => { setEmpresa(e.target.value); setSelectedCompany(null); setCompanyOptions([]); setCompanyOpen(true); setCompanyIndex(-1); }} onKeyDown={event => {
                           const fallback = { name: empresa.trim(), ticker: empresa.trim(), market: '' };
-                          const options = [...companyOptions, fallback];
+                          const options = empresa.trim().length >= 2 ? [...displayCompanyOptions, fallback] : displayCompanyOptions;
                           if (event.key === 'Escape') { setCompanyOpen(false); setCompanyIndex(-1); }
-                          else if (companyOpen && ['ArrowDown', 'ArrowUp'].includes(event.key) && empresa.trim().length >= 2) { event.preventDefault(); setCompanyIndex(current => current < 0 ? (event.key === 'ArrowDown' ? 0 : options.length - 1) : (current + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length); }
-                          else if (event.key === 'Enter' && companyOpen && companyIndex >= 0 && options[companyIndex]) { event.preventDefault(); chooseCompany(options[companyIndex]); }
+                          else if (companyOpen && ['ArrowDown', 'ArrowUp'].includes(event.key) && options.length > 0) { event.preventDefault(); setCompanyIndex(current => current < 0 ? (event.key === 'ArrowDown' ? 0 : options.length - 1) : (current + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length); }
+                          else if (event.key === 'Enter' && companyOpen && options.length > 0) { event.preventDefault(); chooseCompany(options[companyIndex] ?? options[0]); }
                         }} />
                         {selectedCompany && <p className="mt-2 text-xs text-slate-500">{selectedCompany.market ? `${selectedCompany.ticker} · ${selectedCompany.market}` : (locale === 'en' ? 'Web search · company not verified' : 'Busca na web · empresa não verificada')}</p>}
-                        {companyOpen && !selectedCompany && empresa.trim().length >= 2 && <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-xl">
+                        {companyOpen && !selectedCompany && empresa.trim().length > 0 && (displayCompanyOptions.length > 0 || empresa.trim().length >= 2) && <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-xl">
                           {companyLoading && <p role="status" className="px-4 py-3 text-sm text-slate-500">{locale === 'en' ? 'Searching companies…' : 'Buscando empresas…'}</p>}
                           {companyError && <p role="status" className="px-4 py-3 text-sm text-amber-700">{locale === 'en' ? 'Company suggestions unavailable.' : 'Sugestões de empresas indisponíveis.'}</p>}
                           <ul id="analysis-company-options" role="listbox" className="max-h-64 overflow-y-auto">
-                            {companyOptions.map((option, index) => <li key={`${option.market}-${option.ticker}`} id={`analysis-company-option-${index}`} role="option" aria-selected={companyIndex === index} onMouseDown={event => event.preventDefault()} onClick={() => chooseCompany(option)} className={`cursor-pointer px-4 py-3 text-sm ${companyIndex === index ? 'bg-sky-50' : 'hover:bg-slate-50'}`}><span className="block font-semibold text-slate-900">{option.name}</span><span className="text-xs text-slate-500">{option.ticker} · {option.market}</span></li>)}
-                            <li id={`analysis-company-option-${companyOptions.length}`} role="option" aria-selected={companyIndex === companyOptions.length} onMouseDown={event => event.preventDefault()} onClick={() => chooseCompany({ name: empresa.trim(), ticker: empresa.trim(), market: '' })} className={`cursor-pointer border-t border-slate-100 px-4 py-3 text-sm ${companyIndex === companyOptions.length ? 'bg-sky-50' : 'hover:bg-slate-50'}`}><span className="font-semibold text-sky-700">{locale === 'en' ? 'Search the web' : 'Pesquisar na web'}</span><span className="block text-xs text-slate-500">{locale === 'en' ? 'Company not verified' : 'Empresa não verificada'} · {empresa.trim()}</span></li>
+                            {displayCompanyOptions.map((option, index) => <li key={`${option.market}-${option.ticker}`} id={`analysis-company-option-${index}`} role="option" aria-selected={companyIndex === index} onMouseDown={event => event.preventDefault()} onMouseEnter={() => setCompanyIndex(index)} onClick={() => chooseCompany(option)} className={`flex cursor-pointer items-center gap-3 px-4 py-3 text-sm ${companyIndex === index ? 'bg-sky-50' : 'hover:bg-slate-50'}`}><CompanyLogo small symbol={option.ticker} company={option.name} /><span className="font-bold text-slate-900">{option.ticker}</span><span className="min-w-0 flex-1 truncate text-slate-500">{option.name}</span><span className="shrink-0 text-xs font-semibold text-slate-500">{option.market}</span></li>)}
+                            {empresa.trim().length >= 2 && <li id={`analysis-company-option-${displayCompanyOptions.length}`} role="option" aria-selected={companyIndex === displayCompanyOptions.length} onMouseDown={event => event.preventDefault()} onClick={() => chooseCompany({ name: empresa.trim(), ticker: empresa.trim(), market: '' })} className={`cursor-pointer border-t border-slate-100 px-4 py-3 text-sm ${companyIndex === displayCompanyOptions.length ? 'bg-sky-50' : 'hover:bg-slate-50'}`}><span className="font-semibold text-sky-700">{locale === 'en' ? 'Search the web' : 'Pesquisar na web'}</span><span className="block text-xs text-slate-500">{locale === 'en' ? 'Company not verified' : 'Empresa não verificada'} · {empresa.trim()}</span></li>}
                           </ul>
                         </div>}
                       </div>

@@ -1,6 +1,7 @@
 """Company suggestions from exchange catalogues; never treat index membership as proof of a filing."""
 import base64
 import json
+import os
 import re
 import time
 import unicodedata
@@ -10,6 +11,7 @@ from agents.sec_fetcher import SECFetcher
 from agents.brapi_client import search_b3
 
 _cache = {"sec": (0, []), "b3": (0, [])}
+_twelve_cache = {}
 _known = [
     {"name": "Micron Technology", "ticker": "MU", "market": "Nasdaq"},
     {"name": "Track & Field", "ticker": "TFCO4", "market": "B3"},
@@ -53,11 +55,48 @@ def _load(kind):
         pass
     return rows
 
+def _twelve_search(query, sec_rows):
+    token = os.getenv("TWELVE_DATA_API_KEY", "").strip()
+    if not token or len(query.strip()) < 3:
+        return []
+    key = _normalized(query)
+    cached = _twelve_cache.get(key)
+    if cached and cached[0] > time.monotonic():
+        return cached[1]
+    try:
+        response = requests.get("https://api.twelvedata.com/symbol_search", params={"symbol": query, "outputsize": 30},
+                                headers={"Authorization": f"apikey {token}"}, timeout=4)
+        response.raise_for_status()
+        payload = response.json()
+        entries = payload.get("data", [])
+        if not isinstance(entries, list):
+            return []
+        known = {(x["ticker"].upper(), x["market"].upper()) for x in sec_rows}
+        results = []
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            ticker, name, market = entry.get("symbol"), entry.get("instrument_name"), entry.get("exchange")
+            if (isinstance(ticker, str) and isinstance(name, str) and isinstance(market, str)
+                    and re.fullmatch(r"[A-Z]{1,5}(?:[-.][A-Z])?", ticker)
+                    and (ticker, market.upper()) in known
+                    and entry.get("instrument_type") in ("Common Stock", "Depositary Receipt")):
+                results.append({"name": name, "ticker": ticker, "market": market})
+        if len(_twelve_cache) >= 256:
+            _twelve_cache.clear()
+        _twelve_cache[key] = (time.monotonic() + 300, results)
+        return results
+    except (requests.RequestException, ValueError, TypeError):
+        return []
+
 def search_companies(query):
     target = _normalized(query)
     if len(target) < 2:
         return []
-    rows = _known + search_b3(query) + _load("sec") + _load("b3")
+    sec_rows = _load("sec")
+    rows = _known + search_b3(query) + sec_rows + _load("b3")
+    if not any(target in _normalized(item["ticker"]) or target in _normalized(item["name"]) for item in rows):
+        rows += _twelve_search(query, sec_rows)
     matches = []
     seen = set()
     for item in rows:

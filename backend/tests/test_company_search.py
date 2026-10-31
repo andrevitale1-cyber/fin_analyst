@@ -22,3 +22,22 @@ def test_search_supports_brazil_and_korean_company_names(monkeypatch):
     assert search_companies("000660")[0]["ticker"] == "000660.KS"
     assert search_companies("panvel")[0]["ticker"] == "PNVL3"
     assert search_companies("s")[0:] == []
+
+
+def test_twelve_suggestions_require_verified_us_exchange(monkeypatch):
+    import company_search
+    from unittest.mock import Mock
+    monkeypatch.setenv("TWELVE_DATA_API_KEY", "test-key")
+    company_search._twelve_cache.clear()
+    response = Mock()
+    response.json.return_value = {"data": [
+        {"symbol": "ABC", "instrument_name": "Example Company", "exchange": "NASDAQ", "instrument_type": "Common Stock"},
+        {"symbol": "ABC", "instrument_name": "Another Company", "exchange": "LSE", "instrument_type": "Common Stock"},
+        {"symbol": "FAKE", "instrument_name": "Fake", "exchange": "NASDAQ", "instrument_type": "Common Stock"},
+    ]}
+    monkeypatch.setattr(company_search.requests, "get", Mock(return_value=response))
+    sec = [{"name": "EXAMPLE INC", "ticker": "ABC", "market": "Nasdaq"}]
+    results = company_search._twelve_search("example", sec)
+    assert results == [{"name": "Example Company", "ticker": "ABC", "market": "NASDAQ"}]
+    assert company_search._twelve_search("example", sec) == results
+    assert company_search.requests.get.call_count == 1
