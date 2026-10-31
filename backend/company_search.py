@@ -13,6 +13,7 @@ _cache = {"sec": (0, []), "b3": (0, [])}
 _known = [
     {"name": "Micron Technology", "ticker": "MU", "market": "Nasdaq"},
     {"name": "Track & Field", "ticker": "TFCO4", "market": "B3"},
+    {"name": "Panvel / Dimed", "ticker": "PNVL3", "market": "B3"},
     {"name": "SK hynix", "ticker": "000660.KS", "market": "Coreia"},
     {"name": "Google / Alphabet", "ticker": "GOOGL", "market": "Nasdaq"},
 ]

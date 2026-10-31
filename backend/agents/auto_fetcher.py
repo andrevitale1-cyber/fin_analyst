@@ -27,11 +27,13 @@ class AutoFetcher:
     _small_caps_expires = 0
     # Query Vivara's verified catalogue without depending on the RI site's certificate chain.
     mziq_catalogs = {"VIVA3": ("61a4df2d-a461-44d6-9128-da74058019db", "release-de-resultados"),
-                     "TFCO4": ("8e49886e-dded-49c0-b8db-c35451e75eed", "central_release_de_resultados ")}
+                     "TFCO4": ("8e49886e-dded-49c0-b8db-c35451e75eed", "central_release_de_resultados "),
+                     "PNVL3": ("d19425c2-0ba6-490e-af3b-87fc04d4fc88", "press_release")}
     transcript_issuers = {
         "NKE": ("NIKE",), "MU": ("Micron", "Micron Technology"),
         "SK HYNIX": ("SK hynix",),
         "TFCO4": ("Track & Field", "Track and Field", "TRACK FIELD"),
+        "PNVL3": ("Panvel", "Dimed"),
         "AAPL": ("Apple",), "MSFT": ("Microsoft",), "GOOGL": ("Alphabet", "Google"),
         "AMZN": ("Amazon",), "META": ("Meta", "Facebook"), "NVDA": ("Nvidia",), "TSLA": ("Tesla",),
         "ITUB4": ("Itaú Unibanco", "Itaú"), "ITSA4": ("Itaúsa",), "BBAS3": ("Banco do Brasil",),
@@ -68,6 +70,7 @@ class AutoFetcher:
             "AMAZON": "AMZN", "META": "META", "FACEBOOK": "META", "NVIDIA": "NVDA", "TESLA": "TSLA",
             "MICRON": "MU", "MICRON TECHNOLOGY": "MU", "MICRON TECHNOLOGY INC": "MU", "MICRON TECHNOLOGY INC.": "MU",
             "TRACK AND FIELD": "TFCO4", "TRACK & FIELD": "TFCO4", "TRACK&FIELD": "TFCO4", "TRACK FIELD": "TFCO4",
+            "PANVEL": "PNVL3", "GRUPO PANVEL": "PNVL3", "DIMED": "PNVL3",
             "SK HYNIX": "SK HYNIX", "SK HYNIX INC": "SK HYNIX", "SK HYNIX INC.": "SK HYNIX",
             "000660": "SK HYNIX", "000660.KS": "SK HYNIX",
             "ROBINHOOD": "HOOD", "ROBINHOOD MARKETS": "HOOD", "ROBINHOOD MARKETS INC": "HOOD",

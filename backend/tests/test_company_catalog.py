@@ -42,6 +42,18 @@ def test_small_cap_name_uses_b3_portfolio_and_rejects_ambiguous_names(monkeypatc
     assert fetcher._resolve_b3_name("teste") is None
 
 
+def test_panvel_resolves_name_and_checks_official_catalog(monkeypatch, tmp_path):
+    fetcher = AutoFetcher(tmp_path)
+    assert fetcher.resolve_ticker("panvel") == "PNVL3"
+    assert fetcher.resolve_ticker("Dimed") == "PNVL3"
+    release = FetchedDocument("https://example.com/release", "RI", text="Dimed 2T26 resultados")
+    catalog = Mock(return_value=[{"url": release.url}])
+    monkeypatch.setattr(fetcher, "_mziq_catalog_candidates", catalog)
+    monkeypatch.setattr(fetcher, "_download_release", lambda *args, **kwargs: release)
+    assert fetcher._fetch_b3("PNVL3", 2026, 2) == release
+    catalog.assert_called_once_with("d19425c2-0ba6-490e-af3b-87fc04d4fc88", ["press_release"], 2026, 2)
+
+
 def test_micron_name_uses_sec_ticker_and_falls_back_to_web(monkeypatch, tmp_path):
     fetcher = AutoFetcher(tmp_path)
     assert fetcher.resolve_ticker("Micron") == "MU"

@@ -20,4 +20,5 @@ def test_search_supports_brazil_and_korean_company_names(monkeypatch):
     assert search_companies("track and field")[0]["ticker"] == "TFCO4"
     assert search_companies("track")[0]["ticker"] == "TFCO4"
     assert search_companies("000660")[0]["ticker"] == "000660.KS"
+    assert search_companies("panvel")[0]["ticker"] == "PNVL3"
     assert search_companies("s")[0:] == []
