@@ -555,7 +555,6 @@ export default function FinancialDashboard() {
                   {filteredHistory.map((item: any) => (
                     <tr key={item.id} className="hover:bg-sky-50/60 transition-colors group cursor-pointer" onClick={() => {
                       setResult({ ...item.conteudo, id: item.id }); 
-                      setEmpresa(item.empresa); 
                       setCurrentView('result'); 
                     }}>
                       <td className="py-4 px-6"><div className="flex items-center gap-3"><span className="font-medium text-slate-900">{item.empresa?.toUpperCase()}</span></div></td>
@@ -694,10 +693,10 @@ export default function FinancialDashboard() {
             
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-7 rounded-[2rem] border border-slate-200 bg-white/90 p-6 md:p-10 shadow-[0_24px_70px_rgba(38,57,94,0.10)]">
               <div className="min-w-0">
-                <div className="mb-3 flex items-center gap-3">
-                  <CompanyLogo symbol={result.metadata?.ticker || result.metadata?.symbol || result.metadata?.empresa} company={result.metadata?.empresa || result.metadata?.company || ""} />
+                <div className="mb-4 flex items-center gap-5 md:gap-6">
+                  <CompanyLogo className="h-16 w-20 md:h-20 md:w-28" symbol={result.metadata?.ticker || result.metadata?.symbol || result.metadata?.empresa} company={result.metadata?.empresa || result.metadata?.company || ""} />
                   <div className="min-w-0">
-                    <h2 className="text-slate-500 uppercase tracking-widest text-xs font-bold mb-2">{t("result.analysisReport")}</h2>
+                    <h2 className="text-slate-500 uppercase tracking-widest text-xs font-bold mb-3">{t("result.analysisReport")}</h2>
                     <h1 className="break-words text-3xl md:text-5xl font-bold text-slate-900">{(result.metadata?.empresa || result.metadata?.company)?.toUpperCase()}</h1>
                   </div>
                 </div>
