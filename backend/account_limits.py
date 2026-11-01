@@ -1,4 +1,4 @@
-"""Daily entitlements: server-verified plans and transaction-safe usage reservations."""
+"""Trial and monthly entitlements with transaction-safe usage reservations."""
 from datetime import datetime, timedelta, timezone
 import math
 from hashlib import sha256
@@ -34,6 +34,22 @@ def create_tables(cur):
     )""")
     cur.execute("CREATE INDEX IF NOT EXISTS account_usage_user_day ON account_usage(user_id,usage_day,kind)")
     cur.execute("CREATE INDEX IF NOT EXISTS account_usage_user_period ON account_usage(user_id,kind,created_at)")
+    reset_existing_trials(cur)
+
+
+def reset_existing_trials(cur):
+    # One-time customer reset, committed with database initialization; never renew on restart.
+    cur.execute("SELECT pg_advisory_xact_lock(%s)", (64209120261101,))
+    cur.execute("CREATE TABLE IF NOT EXISTS account_migrations (id TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW())")
+    cur.execute("INSERT INTO account_migrations(id) VALUES (%s) ON CONFLICT(id) DO NOTHING RETURNING id", ('existing-trials-reset-2026-11-01',))
+    if not cur.fetchone(): return
+    cur.execute("""INSERT INTO trial_users(user_id,trial_start)
+        SELECT user_id,NOW() FROM (
+            SELECT user_id FROM trial_users UNION SELECT user_id FROM account_usage
+            UNION SELECT CAST(user_id AS TEXT) FROM historico
+        ) existing_accounts WHERE user_id IS NOT NULL AND user_id<>''
+        ON CONFLICT(user_id) DO UPDATE SET trial_start=EXCLUDED.trial_start""")
+    logger.info('existing_trial_reset accounts=%s',cur.rowcount)
 
 
 def plan_for(user):

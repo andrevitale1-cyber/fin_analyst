@@ -43,6 +43,8 @@ def database(monkeypatch):
                                              tuple(value.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M:%S") if isinstance(value, datetime) else value.isoformat() if hasattr(value, "isoformat") else value for value in params))
                 def fetchone(self): return self.cursor.fetchone()
                 def fetchall(self): return self.cursor.fetchall()
+                @property
+                def rowcount(self): return self.cursor.rowcount
             yield Cursor()
         def commit(self): db.commit()
         def rollback(self): db.rollback()
@@ -119,6 +121,33 @@ def test_legacy_analysis_history_does_not_receive_a_new_trial(database):
     db,_ = database; user = SessionUser('user_legacy_history',plan='free')
     db.execute("INSERT INTO historico VALUES (1,?,'2026-01-01 00:00:00')",(str(user),)); db.commit()
     assert not limits.access_snapshot(user)['has_access']
+
+
+def test_authorized_one_time_reset_releases_existing_accounts_without_deleting_history(database):
+    db,factory = database
+    db.execute("INSERT INTO trial_users VALUES ('user_old','2026-01-01 00:00:00')")
+    db.execute("INSERT INTO historico VALUES (1,'user_history_only','2026-01-01 00:00:00')")
+    for i in range(10):
+        db.execute("INSERT INTO account_usage(id,user_id,kind,usage_day,state,created_at) VALUES (?, 'user_old','analysis','2026-01-01','completed','2026-01-01 00:00:00')",(str(i),))
+    db.commit()
+    conn=factory()
+    try:
+        with conn.cursor() as cur: limits.reset_existing_trials(cur)
+        conn.commit()
+    finally: conn.close()
+    for owner in ('user_old','user_history_only'):
+        snapshot=limits.access_snapshot(SessionUser(owner,plan='free'))
+        assert snapshot['has_access'] and snapshot['analysis_remaining']==10 and snapshot['days_left']==7
+    assert db.execute('SELECT COUNT(*) FROM historico').fetchone()[0]==1
+    assert db.execute('SELECT COUNT(*) FROM account_usage').fetchone()[0]==10
+    original=db.execute('SELECT user_id,trial_start FROM trial_users ORDER BY user_id').fetchall()
+    conn=factory()
+    try:
+        with conn.cursor() as cur: limits.reset_existing_trials(cur)
+        conn.commit()
+    finally: conn.close()
+    assert db.execute('SELECT user_id,trial_start FROM trial_users ORDER BY user_id').fetchall()==original
+    assert db.execute('SELECT COUNT(*) FROM account_migrations').fetchone()[0]==1
 
 
 def test_premium_has_fifty_analyses_per_month_and_can_generate_reports(database):
