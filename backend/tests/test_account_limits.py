@@ -6,7 +6,7 @@ from pathlib import Path
 import sqlite3
 import sys
 import threading
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 
 import pytest
 from fastapi import Depends, FastAPI, HTTPException
@@ -27,6 +27,7 @@ def database(monkeypatch):
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,expires_at TEXT DEFAULT (datetime('now','+15 minutes')));
         CREATE TABLE trial_users(user_id TEXT PRIMARY KEY,trial_start TEXT NOT NULL);
         CREATE TABLE historico(id INTEGER,user_id TEXT,data_criacao TEXT);
+        CREATE TABLE thesis_requests(user_id TEXT,company TEXT,locale TEXT);
         CREATE TABLE full_reports(id TEXT PRIMARY KEY,cache_key TEXT UNIQUE,company TEXT,period TEXT,locale TEXT,kind TEXT,
             is_public BOOLEAN,content TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE full_report_access(user_id TEXT,report_id TEXT,analysis_id INTEGER,PRIMARY KEY(user_id,report_id));""")
@@ -100,27 +101,32 @@ def test_parallel_requests_cannot_exceed_trial_allowance(database):
     assert sum(isinstance(item, str) for item in outcomes) == 1 and 429 in outcomes
 
 
-def test_expired_trial_cannot_read_or_generate_and_does_not_restart(database):
-    db, _ = database; user = SessionUser("user_old", plan="free")
-    start = (datetime.now(timezone.utc) - timedelta(days=7, seconds=1)).strftime("%Y-%m-%d %H:%M:%S")
-    db.execute("INSERT INTO trial_users VALUES (?,?)", (str(user),start)); db.commit()
-    for operation in (lambda: limits.require_active_user(user), lambda: limits.reserve_usage(user,"analysis")):
-        with pytest.raises(HTTPException) as exc: operation()
-        assert exc.value.status_code == 403
-    assert limits.access_snapshot(user)["has_access"] is False
-    assert db.execute("SELECT trial_start FROM trial_users").fetchone()[0] == start
+def test_old_free_account_keeps_access_and_usage_never_expires(database):
+    db,_ = database; user=SessionUser('user_old',plan='free')
+    db.execute("INSERT INTO trial_users VALUES ('user_old','2026-01-01 00:00:00')")
+    for i in range(10):
+        db.execute("INSERT INTO account_usage(id,user_id,kind,usage_day,state,created_at) VALUES (?, 'user_old','analysis','2026-01-02','completed','2026-01-02 00:00:00')",(str(i),))
+    db.commit()
+    assert limits.require_active_user(user)==user
+    snapshot=limits.access_snapshot(user)
+    assert snapshot['has_access'] and snapshot['analysis_remaining']==0
+    assert snapshot['trial_end'] is None and snapshot['days_left'] is None
+    with pytest.raises(HTTPException) as exc: limits.reserve_usage(user,'analysis')
+    assert exc.value.status_code==429
+    assert db.execute('SELECT trial_start FROM trial_users').fetchone()[0]=='2026-01-01 00:00:00'
 
 
 def test_legacy_usage_preserves_original_trial_start(database):
     db, _ = database; user = SessionUser("user_legacy", plan="free")
     db.execute("INSERT INTO account_usage(id,user_id,kind,usage_day,state,created_at) VALUES ('old',?,'analysis','2026-01-01','completed','2026-01-01 00:00:00')", (str(user),)); db.commit()
-    assert limits.access_snapshot(user)["has_access"] is False
+    assert limits.access_snapshot(user)["has_access"] is True
+    assert limits.access_snapshot(user)["analysis_remaining"] == 9
 
 
 def test_legacy_analysis_history_does_not_receive_a_new_trial(database):
     db,_ = database; user = SessionUser('user_legacy_history',plan='free')
     db.execute("INSERT INTO historico VALUES (1,?,'2026-01-01 00:00:00')",(str(user),)); db.commit()
-    assert not limits.access_snapshot(user)['has_access']
+    assert limits.access_snapshot(user)['has_access']
 
 
 def test_authorized_one_time_reset_releases_existing_accounts_without_deleting_history(database):
@@ -137,7 +143,7 @@ def test_authorized_one_time_reset_releases_existing_accounts_without_deleting_h
     finally: conn.close()
     for owner in ('user_old','user_history_only'):
         snapshot=limits.access_snapshot(SessionUser(owner,plan='free'))
-        assert snapshot['has_access'] and snapshot['analysis_remaining']==10 and snapshot['days_left']==7
+        assert snapshot['has_access'] and snapshot['analysis_remaining']==10 and snapshot['days_left'] is None
     assert db.execute('SELECT COUNT(*) FROM historico').fetchone()[0]==1
     assert db.execute('SELECT COUNT(*) FROM account_usage').fetchone()[0]==10
     original=db.execute('SELECT user_id,trial_start FROM trial_users ORDER BY user_id').fetchall()
@@ -183,18 +189,23 @@ def test_monthly_allowance_renews_at_sao_paulo_month_boundary(database, monkeypa
     assert limits.access_snapshot(user)['analysis_remaining'] == 50
 
 
-def test_expired_trial_is_rejected_by_real_read_endpoints(database, monkeypatch):
+def test_old_free_account_can_read_real_endpoints_without_expiration(database, monkeypatch):
     monkeypatch.setattr('psycopg2.connect', Mock())
     import main
     db,_ = database
     user = SessionUser('user_expired',plan='free')
     db.execute("INSERT INTO trial_users VALUES (?,?)",(str(user),(datetime.now(timezone.utc)-timedelta(days=8)).strftime('%Y-%m-%d %H:%M:%S'))); db.commit()
+    fake=MagicMock(); fake.cursor.return_value.fetchall.return_value=[]
+    fake.cursor.return_value.__enter__.return_value.fetchall.return_value=[]
+    fake.cursor.return_value.__enter__.return_value.fetchone.return_value=None
+    monkeypatch.setattr(main,'get_db_connection',lambda:fake)
+    monkeypatch.setattr(main,'market_snapshot',lambda *args:{'available':False})
     main.app.dependency_overrides[require_report_user] = lambda: user
     try:
         with TestClient(main.app) as client:
             for path in ('/api/history?user_id=user_expired','/api/table-data?user_id=user_expired','/api/recent-analyses','/api/market-data?symbol=PETR4','/api/full-reports'):
-                assert client.get(path).status_code == 403, path
-            assert client.post('/api/thesis-library/resolve',json={'company':'AAPL'}).status_code == 403
+                assert client.get(path).status_code == 200, path
+            assert client.post('/api/thesis-library/resolve',json={'company':'AAPL'}).status_code == 200
     finally: main.app.dependency_overrides.pop(require_report_user,None)
 
 

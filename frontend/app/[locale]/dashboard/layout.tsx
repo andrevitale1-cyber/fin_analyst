@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import TrialAccessGate from '../../../components/TrialAccessGate';
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -9,5 +8,5 @@ export const metadata: Metadata = {
 export default function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  return <TrialAccessGate>{children}</TrialAccessGate>;
+  return children;
 }

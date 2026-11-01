@@ -1,6 +1,5 @@
-"""Trial and monthly entitlements with transaction-safe usage reservations."""
+"""Lifetime Free and monthly Premium allowances with transaction-safe reservations."""
 from datetime import datetime, timedelta, timezone
-import math
 from hashlib import sha256
 import logging
 import os
@@ -13,8 +12,7 @@ import requests
 
 from report_auth import require_report_user
 
-TRIAL_DAYS = 7
-TRIAL_ANALYSES = 10
+FREE_ANALYSES = 10
 PREMIUM_ANALYSES = 50
 TIMEZONE = ZoneInfo("America/Sao_Paulo")
 _plans = {}
@@ -79,13 +77,15 @@ def plan_for(user):
 
 
 def usage_count(cur, user, kind, start, end):
-    cur.execute("""SELECT COUNT(*) FROM account_usage WHERE user_id=%s AND kind=%s AND created_at>=%s AND created_at<%s
-        AND (state='completed' OR (state='pending' AND expires_at>NOW()))""", (str(user), kind, start, end))
+    end_clause = ' AND created_at<%s' if end is not None else ''
+    params = (str(user), kind, start) + ((end,) if end is not None else ())
+    cur.execute("SELECT COUNT(*) FROM account_usage WHERE user_id=%s AND kind=%s AND created_at>=%s" + end_clause +
+        " AND (state='completed' OR (state='pending' AND expires_at>NOW()))", params)
     return cur.fetchone()[0]
 
 
 def trial_window(cur, user):
-    # Preserve existing trial dates; older usage must not receive a renewed trial.
+    # Keep the last authorized reset as the accounting baseline, without an expiry date.
     cur.execute("SELECT trial_start FROM trial_users WHERE user_id=%s", (str(user),))
     row = cur.fetchone()
     if not row:
@@ -106,7 +106,7 @@ def trial_window(cur, user):
     start = row[0]
     if isinstance(start, str): start = datetime.fromisoformat(start)
     if start.tzinfo is None: start = start.replace(tzinfo=timezone.utc)
-    return start, start + timedelta(days=TRIAL_DAYS)
+    return start, None
 
 
 def entitlement_window(cur, user, plan, now):
@@ -115,18 +115,11 @@ def entitlement_window(cur, user, plan, now):
         end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
         return start, end, PREMIUM_ANALYSES
     start, end = trial_window(cur, user)
-    return start, end, TRIAL_ANALYSES
+    return start, end, FREE_ANALYSES
 
 
 def require_active_user(user: str = Depends(require_report_user)):
-    if plan_for(user) == 'premium': return user
-    conn = connection()
-    try:
-        with conn.cursor() as cur: _, end = trial_window(cur, user)
-        conn.commit()
-    finally: conn.close()
-    if datetime.now(TIMEZONE) >= end:
-        raise HTTPException(403, 'Seu teste de 7 dias terminou. Assine o Premium para continuar. / Your 7-day trial has ended. Upgrade to continue.')
+    plan_for(user)
     return user
 
 
@@ -148,11 +141,9 @@ def reserve_usage(user, kind, locale="pt"):
         with conn.cursor() as cur:
             cur.execute("SELECT pg_advisory_xact_lock(%s)", (key,))
             start, end, limit = entitlement_window(cur, user, plan, now)
-            if now >= end:
-                raise HTTPException(403, 'Your 7-day trial has ended. Upgrade to continue.' if locale == 'en' else 'Seu teste de 7 dias terminou. Assine o Premium para continuar.')
             if usage_count(cur, user, kind, start, end) >= limit:
                 detail = (('Your 50 monthly analyses have been used. The allowance renews next month.' if locale == 'en' else 'Você utilizou as 50 análises mensais. O limite renova no próximo mês.') if plan == 'premium' else
-                          ('You have used the 10 analyses included in your trial. Upgrade to continue analyzing.' if locale == 'en' else 'Você utilizou as 10 análises incluídas no teste. Assine o Premium para continuar analisando.'))
+                          ('You have used the 10 analyses included in Free. Upgrade to continue analyzing.' if locale == 'en' else 'Você utilizou as 10 análises incluídas no Grátis. Assine o Premium para continuar analisando.'))
                 raise HTTPException(429, detail)
             ticket = str(uuid.uuid4())
             cur.execute("INSERT INTO account_usage (id,user_id,kind,usage_day,state) VALUES (%s,%s,%s,%s,'pending')", (ticket, str(user), kind, now.date()))
@@ -207,11 +198,9 @@ def access_snapshot(user):
         conn.commit()
     finally:
         conn.close()
-    active = plan == 'premium' or now < end
-    return {"plan": plan, "status": plan if active else 'expired', "has_access": active,
-            "can_analyze": active and remaining > 0, "can_generate_full_report": plan == 'premium',
-            "days_left": None if plan == 'premium' else max(0, math.ceil((end - now).total_seconds()/86400)),
-            "trial_end": end.isoformat() if plan == 'free' else None,
-            "analysis_remaining": remaining if active else 0, "analysis_limit": limit,
+    return {"plan": plan, "status": plan, "has_access": True,
+            "can_analyze": remaining > 0, "can_generate_full_report": plan == 'premium',
+            "days_left": None, "trial_end": None,
+            "analysis_remaining": remaining, "analysis_limit": limit,
             "full_report_remaining": None if plan == 'premium' else 0, "full_report_limit": None if plan == 'premium' else 0,
             "resets_at": end.isoformat() if plan == 'premium' else None}

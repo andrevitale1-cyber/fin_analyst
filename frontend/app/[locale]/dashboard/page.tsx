@@ -62,7 +62,7 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
   };
   const plans = [
     { premium: true, name: 'Premium', description: en ? 'More tools for your investment research.' : 'Mais ferramentas para suas pesquisas de investimento.', features: en ? ['50 quarterly or call analyses per month', 'Aggregated table and analysis history', 'Public and private company reports', 'Company comparison and PDF export'] : ['50 análises de resultados ou calls por mês', 'Tabela agregada e histórico de análises', 'Relatórios públicos e privados', 'Comparação de empresas e exportação em PDF'] },
-    { premium: false, name: en ? 'Free' : 'Grátis', description: en ? 'Start exploring financial research.' : 'Comece a explorar pesquisas financeiras.', features: en ? ['10 quarterly or call analyses over 7 days', 'Aggregated table and analysis history', 'Access to public company reports', 'No automatic renewal'] : ['10 análises de resultados ou calls em 7 dias', 'Tabela agregada e histórico de análises', 'Acesso aos relatórios públicos', 'Sem renovação automática'] },
+    { premium: false, name: en ? 'Free' : 'Grátis', description: en ? 'Start exploring financial research.' : 'Comece a explorar pesquisas financeiras.', features: en ? ['10 quarterly or call analyses with no expiry date', 'Aggregated table and analysis history', 'Access to public company reports', 'No automatic renewal'] : ['10 análises de resultados ou calls sem prazo de validade', 'Tabela agregada e histórico de análises', 'Acesso aos relatórios públicos', 'Sem renovação automática'] },
   ];
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050519]/80 p-3 backdrop-blur-sm sm:p-4">
@@ -220,7 +220,6 @@ export default function FinancialDashboard() {
 
   const isPremium = user?.publicMetadata?.plan === 'premium';
   const accessStatus = isPremium ? 'active' : trialState.userId === user?.id ? trialState.status : 'pending';
-  const trialDaysLeft = accessStatus === 'active' ? trialState.daysLeft : null;
   const isTrialExpired = accessStatus === 'expired';
 
   // --- Verificar acesso ao trial no backend ---
@@ -490,9 +489,9 @@ export default function FinancialDashboard() {
         {!isSidebarCollapsed && accessStatus === 'active' && (
           <div className="mt-auto mb-6 px-2">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold uppercase tracking-wider text-white/60">{locale === 'en' ? 'Your plan' : 'Seu plano'}</p><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white">{isPremium ? 'PREMIUM' : locale === 'en' ? 'FREE TRIAL' : 'TESTE GRÁTIS'}</span></div>
+              <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold uppercase tracking-wider text-white/60">{locale === 'en' ? 'Your plan' : 'Seu plano'}</p><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white">{isPremium ? 'PREMIUM' : locale === 'en' ? 'FREE' : 'GRÁTIS'}</span></div>
               <div className="mt-4 flex items-end justify-between gap-2"><div><p className="text-sm font-semibold text-white">{locale === 'en' ? 'Analyses remaining' : 'Análises restantes'}</p><p className="mt-1 text-xs leading-4 text-slate-400">{locale === 'en' ? 'Quarterly results and calls' : 'Resultados trimestrais e calls'}</p></div><span className="whitespace-nowrap text-lg font-bold text-white">{dailyRemaining.analysis ?? '—'}<span className="text-xs font-normal text-slate-400"> / {isPremium ? 50 : 10}</span></span></div>
-              <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-4 text-slate-400">{isPremium ? (locale === 'en' ? '50 analyses per calendar month.' : '50 análises por mês calendário.') : (locale === 'en' ? `${trialDaysLeft ?? '—'} days left. 10 analyses in total; no daily reset.` : `${trialDaysLeft ?? '—'} dias restantes. 10 análises no total, sem renovação diária.`)}</p>
+              <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-4 text-slate-400">{isPremium ? (locale === 'en' ? '50 analyses per calendar month.' : '50 análises por mês calendário.') : (locale === 'en' ? '10 analyses in total, with no expiry date. No automatic reset.' : '10 análises no total, sem prazo de validade. Sem renovação automática.')}</p>
               {!isPremium && <button onClick={() => setShowUpgradeModal(true)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#1a1aff] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[#4032ff]"><Sparkles size={14} />{t("sidebar.goPremium")}</button>}
             </div>
           </div>

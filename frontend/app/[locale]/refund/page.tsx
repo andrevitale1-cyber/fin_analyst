@@ -70,8 +70,8 @@ export default function Refund() {
               : 'Acreditamos na qualidade do FinAnalyzer.AI. Se você não estiver satisfeito com o serviço por qualquer motivo, poderá solicitar reembolso integral em até 7 dias corridos a partir da data do primeiro pagamento de assinatura.'
             }</p>
             <p className="mt-3">{en
-              ? 'Note: The 7-day free trial period is not counted toward the refund guarantee. The guarantee applies to the first paid charge after the trial ends.'
-              : 'Observação: O período de trial gratuito de 7 dias não é contabilizado para a garantia de reembolso. A garantia se aplica ao primeiro pagamento efetuado após o encerramento do trial.'
+              ? 'Note: The Free plan requires no payment. The refund guarantee applies to your first Premium subscription payment.'
+              : 'Observação: O plano Grátis não exige pagamento. A garantia de reembolso se aplica ao primeiro pagamento da assinatura Premium.'
             }</p>
           </Section>
 

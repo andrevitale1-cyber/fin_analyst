@@ -64,10 +64,10 @@ export default function Terms() {
             }</p>
           </Section>
 
-          <Section icon={<CreditCard size={18} className="text-blue-400" />} title={en ? '3. Free Trial & Subscriptions' : '3. Trial Gratuito & Assinaturas'}>
+          <Section icon={<CreditCard size={18} className="text-blue-400" />} title={en ? '3. Free Plan & Subscriptions' : '3. Plano Grátis & Assinaturas'}>
             <p>{en
-              ? 'New users receive a 7-day free trial with full access to all Platform features. No credit card is required to start the trial. After the trial period ends, continued access requires an active paid subscription.'
-              : 'Novos usuários recebem um trial gratuito de 7 dias com acesso completo a todas as funcionalidades da Plataforma. Não é necessário cartão de crédito para iniciar o trial. Após o término do período de trial, o acesso continuado requer uma assinatura paga ativa.'
+              ? 'The Free plan includes 10 quarterly-result or earnings-call analyses in total, with no expiry date, plus access to the aggregated table, analysis history and public reports. After using the 10 analyses, you can continue reading this content; creating further analyses requires Premium.'
+              : 'O plano Grátis inclui 10 análises de resultados trimestrais ou calls no total, sem prazo de validade, além de acesso à tabela agregada, ao histórico e aos relatórios públicos. Após consumir as 10 análises, você mantém acesso a esse conteúdo; realizar novas análises exige o Premium.'
             }</p>
             <ul className="mt-3 space-y-2 list-disc list-inside">
               <li>{en ? 'Monthly plan: R$ 29/month, billed monthly.' : 'Plano Mensal: R$ 29/mês, cobrado mensalmente.'}</li>
