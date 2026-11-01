@@ -10,8 +10,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from full_reports import (canonical_company, canonical_period, stored_report,
                           OpenCompanyReport, OpenReport)
 from report_auth import require_report_user
+from account_limits import require_active_user, require_premium_user, plan_for
 
-router = APIRouter(prefix="/api/thesis-library", tags=["Thesis library"])
+router = APIRouter(prefix="/api/thesis-library", tags=["Thesis library"], dependencies=[Depends(require_active_user)])
 INITIAL_COMPANIES = ("MSFT", "NVDA", "AAPL", "GOOGL", "AMZN", "META", "PETR4", "WEGE3", "VIVA3")
 EDITOR = "thesis-library-editor"
 
@@ -56,11 +57,13 @@ def annotate(cur, report):
 
 
 def resolve_company(body, user):
+    require_active_user(user)
     company = canonical_company(body.company)
     conn = connection()
     try:
         with conn.cursor() as cur:
             report = available(cur, company, body.locale, user)
+            if report and not report.get('is_public') and plan_for(user) != 'premium': report = None
             if report:
                 return {"state": "completed", "company": company, "report": report, "reused": True}
             cur.execute("SELECT 1 FROM thesis_requests WHERE user_id=%s AND company=%s AND locale=%s", (str(user), company, body.locale))
@@ -90,6 +93,7 @@ def resolve(body: OpenCompanyReport, user=Depends(require_report_user)):
 
 @router.post("/requests")
 def request_coverage(body: OpenCompanyReport, user=Depends(require_report_user)):
+    require_premium_user(user)
     company = canonical_company(body.company)
     conn = connection()
     try:

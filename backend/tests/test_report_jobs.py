@@ -8,6 +8,13 @@ import full_reports as reports
 from report_auth import SessionUser
 
 
+@pytest.fixture(autouse=True)
+def isolate_billing_policy(monkeypatch):
+    # These tests cover library/job behavior; access policy has dedicated tests.
+    monkeypatch.setattr("account_limits.plan_for", lambda user: "premium")
+    monkeypatch.setattr("thesis_library.plan_for", lambda user: "premium")
+
+
 def database(monkeypatch, rows):
     conn = MagicMock(); cur = conn.cursor.return_value.__enter__.return_value
     cur.fetchone.side_effect = rows

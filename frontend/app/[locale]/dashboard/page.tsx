@@ -61,8 +61,8 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
     window.open(url.toString(), '_blank');
   };
   const plans = [
-    { premium: true, name: 'Premium', description: en ? 'More tools for your investment research.' : 'Mais ferramentas para suas pesquisas de investimento.', features: en ? ['Quarterly results and earnings calls', 'Aggregated table and analysis history', 'Public and private company reports', 'Company comparison and PDF export'] : ['Resultados trimestrais e calls', 'Tabela agregada e histórico de análises', 'Relatórios públicos e privados', 'Comparação de empresas e exportação em PDF'] },
-    { premium: false, name: en ? 'Free' : 'Grátis', description: en ? 'Start exploring financial research.' : 'Comece a explorar pesquisas financeiras.', features: en ? ['3 quarterly or call analyses per day', '1 company report per day', 'Access to public company reports', 'Analysis history'] : ['3 análises trimestrais ou de calls por dia', '1 relatório de empresa por dia', 'Acesso aos relatórios públicos', 'Histórico de análises'] },
+    { premium: true, name: 'Premium', description: en ? 'More tools for your investment research.' : 'Mais ferramentas para suas pesquisas de investimento.', features: en ? ['50 quarterly or call analyses per month', 'Aggregated table and analysis history', 'Public and private company reports', 'Company comparison and PDF export'] : ['50 análises de resultados ou calls por mês', 'Tabela agregada e histórico de análises', 'Relatórios públicos e privados', 'Comparação de empresas e exportação em PDF'] },
+    { premium: false, name: en ? 'Free' : 'Grátis', description: en ? 'Start exploring financial research.' : 'Comece a explorar pesquisas financeiras.', features: en ? ['10 quarterly or call analyses over 7 days', 'Aggregated table and analysis history', 'Access to public company reports', 'No automatic renewal'] : ['10 análises de resultados ou calls em 7 dias', 'Tabela agregada e histórico de análises', 'Acesso aos relatórios públicos', 'Sem renovação automática'] },
   ];
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#050519]/80 p-3 backdrop-blur-sm sm:p-4">
@@ -268,7 +268,9 @@ export default function FinancialDashboard() {
   const fetchHistory = async () => {
     if (!user) return;
     try {
-      const res = await fetch(`${API_BASE}/api/history?user_id=${user.id}`);
+      const token = await getToken();
+      const res = await fetch(`${API_BASE}/api/history?user_id=${user.id}`, {headers:{Authorization:`Bearer ${token}`}});
+      if (!res.ok) throw new Error('History unavailable');
       setHistoryList(await res.json());
     } catch (error) { console.error("Erro histórico", error); }
   };
@@ -276,7 +278,9 @@ export default function FinancialDashboard() {
   const fetchTableData = async () => {
     if (!user) return;
     try {
-      const res = await fetch(`${API_BASE}/api/table-data?user_id=${user.id}`);
+      const token = await getToken();
+      const res = await fetch(`${API_BASE}/api/table-data?user_id=${user.id}`, {headers:{Authorization:`Bearer ${token}`}});
+      if (!res.ok) throw new Error('Table unavailable');
       setTableData(await res.json());
     } catch (error) { console.error("Erro tabela", error); }
   };
@@ -315,7 +319,6 @@ export default function FinancialDashboard() {
   const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
     analysisRequest.current?.abort(); setOpeningAnalysis(false); setOpenAnalysisError(false);
     setIsSidebarOpen(false);
-    if (view === 'table' && !isPremium) { setShowUpgradeModal(true); return; }
     window.history.replaceState(null, '', `/${locale}/dashboard${view === 'dashboard' ? '' : `?view=${view}`}`);
     setCurrentView(view);
   };
@@ -336,6 +339,7 @@ export default function FinancialDashboard() {
       return;
     }
 
+    if (dailyRemaining.analysis === 0) { setAnalysisError(locale === 'en' ? 'Your analysis allowance has been used.' : 'Você utilizou as análises incluídas no seu plano.'); if (!isPremium) setShowUpgradeModal(true); return; }
     setLoading(true);
     try {
       const formData = new FormData();
@@ -396,7 +400,7 @@ export default function FinancialDashboard() {
   useEffect(() => {
     if (user) { 
         if (currentView === 'history') fetchHistory();
-        if (currentView === 'table' && isPremium) fetchTableData();
+        if (currentView === 'table') fetchTableData();
     }
     const handleClickOutside = (e: MouseEvent) => {
       if (columnMenuRef.current && !columnMenuRef.current.contains(e.target as Node)) setShowColumnMenu(false);
@@ -483,13 +487,13 @@ export default function FinancialDashboard() {
         setResult({...item.result,id:item.id}); setCurrentView('result');
         setOpeningAnalysis(false); setOpenAnalysisError(false); setIsSidebarOpen(false);
       }} onNavigate={view => view === "reports" ? router.push(`/${locale}/dashboard/reports`) : handleNavClick(view)}>
-        {!isPremium && !isSidebarCollapsed && accessStatus === 'active' && (
+        {!isSidebarCollapsed && accessStatus === 'active' && (
           <div className="mt-auto mb-6 px-2">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold uppercase tracking-wider text-white/60">{locale === 'en' ? 'Your plan' : 'Seu plano'}</p><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white">{locale === 'en' ? 'FREE' : 'GRÁTIS'}</span></div>
-              <div className="mt-4 flex items-end justify-between gap-2"><div><p className="text-sm font-semibold text-white">{locale === 'en' ? 'Analyses remaining' : 'Análises restantes'}</p><p className="mt-1 text-xs leading-4 text-slate-400">{locale === 'en' ? 'Quarterly results and calls' : 'Resultados trimestrais e calls'}</p></div><span className="whitespace-nowrap text-lg font-bold text-white">{dailyRemaining.analysis ?? '—'}<span className="text-xs font-normal text-slate-400"> / 3</span></span></div>
-              <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-4 text-slate-400">{locale === 'en' ? 'Resets daily at midnight (São Paulo).' : 'Renova diariamente à meia-noite (São Paulo).'}</p>
-              <button onClick={() => setShowUpgradeModal(true)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#1a1aff] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[#4032ff]"><Sparkles size={14} />{t("sidebar.goPremium")}</button>
+              <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold uppercase tracking-wider text-white/60">{locale === 'en' ? 'Your plan' : 'Seu plano'}</p><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white">{isPremium ? 'PREMIUM' : locale === 'en' ? 'FREE TRIAL' : 'TESTE GRÁTIS'}</span></div>
+              <div className="mt-4 flex items-end justify-between gap-2"><div><p className="text-sm font-semibold text-white">{locale === 'en' ? 'Analyses remaining' : 'Análises restantes'}</p><p className="mt-1 text-xs leading-4 text-slate-400">{locale === 'en' ? 'Quarterly results and calls' : 'Resultados trimestrais e calls'}</p></div><span className="whitespace-nowrap text-lg font-bold text-white">{dailyRemaining.analysis ?? '—'}<span className="text-xs font-normal text-slate-400"> / {isPremium ? 50 : 10}</span></span></div>
+              <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-4 text-slate-400">{isPremium ? (locale === 'en' ? '50 analyses per calendar month.' : '50 análises por mês calendário.') : (locale === 'en' ? `${trialDaysLeft ?? '—'} days left. 10 analyses in total; no daily reset.` : `${trialDaysLeft ?? '—'} dias restantes. 10 análises no total, sem renovação diária.`)}</p>
+              {!isPremium && <button onClick={() => setShowUpgradeModal(true)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#1a1aff] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[#4032ff]"><Sparkles size={14} />{t("sidebar.goPremium")}</button>}
             </div>
           </div>
         )}

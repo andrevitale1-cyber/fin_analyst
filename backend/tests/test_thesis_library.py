@@ -13,6 +13,14 @@ import thesis_library as library
 from report_runtime import editorial_preparation
 
 
+@pytest.fixture(autouse=True)
+def isolate_billing_policy(monkeypatch):
+    # These tests cover library/job behavior; access policy has dedicated tests.
+    monkeypatch.setattr("account_limits.plan_for", lambda user: "premium")
+    monkeypatch.setattr("thesis_library.plan_for", lambda user: "premium")
+    monkeypatch.setattr(full_reports, "plan_for", lambda user: "premium")
+
+
 @pytest.fixture
 def database(monkeypatch):
     db = sqlite3.connect(":memory:", check_same_thread=False)

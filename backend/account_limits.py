@@ -1,5 +1,6 @@
 """Daily entitlements: server-verified plans and transaction-safe usage reservations."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+import math
 from hashlib import sha256
 import logging
 import os
@@ -12,7 +13,9 @@ import requests
 
 from report_auth import require_report_user
 
-FREE_LIMITS = {"analysis": 3, "full_report": 1}
+TRIAL_DAYS = 7
+TRIAL_ANALYSES = 10
+PREMIUM_ANALYSES = 50
 TIMEZONE = ZoneInfo("America/Sao_Paulo")
 _plans = {}
 logger = logging.getLogger("uvicorn.error")
@@ -30,6 +33,7 @@ def create_tables(cur):
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), expires_at TIMESTAMPTZ NOT NULL DEFAULT NOW()+INTERVAL '15 minutes'
     )""")
     cur.execute("CREATE INDEX IF NOT EXISTS account_usage_user_day ON account_usage(user_id,usage_day,kind)")
+    cur.execute("CREATE INDEX IF NOT EXISTS account_usage_user_period ON account_usage(user_id,kind,created_at)")
 
 
 def plan_for(user):
@@ -58,27 +62,84 @@ def plan_for(user):
         raise HTTPException(503, "Não foi possível verificar seu plano. Tente novamente em instantes.") from None
 
 
-def usage_count(cur, user, kind, day):
-    cur.execute("""SELECT COUNT(*) FROM account_usage WHERE user_id=%s AND kind=%s AND usage_day=%s
-        AND (state='completed' OR (state='pending' AND expires_at>NOW()))""", (str(user), kind, day))
+def usage_count(cur, user, kind, start, end):
+    cur.execute("""SELECT COUNT(*) FROM account_usage WHERE user_id=%s AND kind=%s AND created_at>=%s AND created_at<%s
+        AND (state='completed' OR (state='pending' AND expires_at>NOW()))""", (str(user), kind, start, end))
     return cur.fetchone()[0]
 
 
+def trial_window(cur, user):
+    # Preserve existing trial dates; older usage must not receive a renewed trial.
+    cur.execute("SELECT trial_start FROM trial_users WHERE user_id=%s", (str(user),))
+    row = cur.fetchone()
+    if not row:
+        starts = [datetime.now(timezone.utc)]
+        cur.execute("SELECT MIN(created_at) FROM account_usage WHERE user_id=%s", (str(user),))
+        usage = cur.fetchone()
+        cur.execute("SELECT data_criacao FROM historico WHERE CAST(user_id AS TEXT)=%s ORDER BY id ASC LIMIT 1", (str(user),))
+        history = cur.fetchone()
+        for record in (usage, history):
+            if not record or not record[0]: continue
+            try:
+                value = datetime.fromisoformat(record[0]) if isinstance(record[0], str) else record[0]
+                starts.append(value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value)
+            except (ValueError, AttributeError): pass
+        cur.execute("INSERT INTO trial_users(user_id,trial_start) VALUES (%s,%s) ON CONFLICT(user_id) DO NOTHING", (str(user),min(starts)))
+        cur.execute("SELECT trial_start FROM trial_users WHERE user_id=%s", (str(user),))
+        row = cur.fetchone()
+    start = row[0]
+    if isinstance(start, str): start = datetime.fromisoformat(start)
+    if start.tzinfo is None: start = start.replace(tzinfo=timezone.utc)
+    return start, start + timedelta(days=TRIAL_DAYS)
+
+
+def entitlement_window(cur, user, plan, now):
+    if plan == 'premium':
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = (start.replace(day=28) + timedelta(days=4)).replace(day=1)
+        return start, end, PREMIUM_ANALYSES
+    start, end = trial_window(cur, user)
+    return start, end, TRIAL_ANALYSES
+
+
+def require_active_user(user: str = Depends(require_report_user)):
+    if plan_for(user) == 'premium': return user
+    conn = connection()
+    try:
+        with conn.cursor() as cur: _, end = trial_window(cur, user)
+        conn.commit()
+    finally: conn.close()
+    if datetime.now(TIMEZONE) >= end:
+        raise HTTPException(403, 'Seu teste de 7 dias terminou. Assine o Premium para continuar. / Your 7-day trial has ended. Upgrade to continue.')
+    return user
+
+
+def require_premium_user(user: str = Depends(require_active_user)):
+    if plan_for(user) != 'premium':
+        raise HTTPException(403, 'Gerar relatórios completos é exclusivo do Premium. / Creating full reports requires Premium.')
+    return user
+
+
 def reserve_usage(user, kind, locale="pt"):
-    if plan_for(user) == "premium":
+    plan = plan_for(user)
+    if kind == 'full_report':
+        require_premium_user(require_active_user(user))
         return None
-    day = datetime.now(TIMEZONE).date()
-    key = int.from_bytes(sha256(f"usage:{user}:{kind}:{day}".encode()).digest()[:8], "big", signed=True)
+    now = datetime.now(TIMEZONE)
+    key = int.from_bytes(sha256(f"usage:{user}:{kind}".encode()).digest()[:8], "big", signed=True)
     conn = connection()
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT pg_advisory_xact_lock(%s)", (key,))
-            if usage_count(cur, user, kind, day) >= FREE_LIMITS[kind]:
-                detail = (f"Free daily limit reached: {FREE_LIMITS[kind]} {'quarterly/call analyses' if kind == 'analysis' else 'full report'}. Try again tomorrow or upgrade."
-                          if locale == "en" else f"Limite diário do Free atingido: {FREE_LIMITS[kind]} {'análises trimestrais/calls' if kind == 'analysis' else 'relatório completo'}. Tente amanhã ou assine o Premium.")
+            start, end, limit = entitlement_window(cur, user, plan, now)
+            if now >= end:
+                raise HTTPException(403, 'Your 7-day trial has ended. Upgrade to continue.' if locale == 'en' else 'Seu teste de 7 dias terminou. Assine o Premium para continuar.')
+            if usage_count(cur, user, kind, start, end) >= limit:
+                detail = (('Your 50 monthly analyses have been used. The allowance renews next month.' if locale == 'en' else 'Você utilizou as 50 análises mensais. O limite renova no próximo mês.') if plan == 'premium' else
+                          ('You have used the 10 analyses included in your trial. Upgrade to continue analyzing.' if locale == 'en' else 'Você utilizou as 10 análises incluídas no teste. Assine o Premium para continuar analisando.'))
                 raise HTTPException(429, detail)
             ticket = str(uuid.uuid4())
-            cur.execute("INSERT INTO account_usage (id,user_id,kind,usage_day,state) VALUES (%s,%s,%s,%s,'pending')", (ticket, str(user), kind, day))
+            cur.execute("INSERT INTO account_usage (id,user_id,kind,usage_day,state) VALUES (%s,%s,%s,%s,'pending')", (ticket, str(user), kind, now.date()))
         conn.commit()
         return ticket
     except Exception:
@@ -121,15 +182,20 @@ def analysis_access(user_id: str = Form(...), locale: str = Form(default="pt"), 
 
 def access_snapshot(user):
     plan = plan_for(user)
-    day = datetime.now(TIMEZONE).date()
+    now = datetime.now(TIMEZONE)
     conn = connection()
     try:
         with conn.cursor() as cur:
-            remaining = {kind: max(0, limit - usage_count(cur, user, kind, day)) for kind, limit in FREE_LIMITS.items()}
+            start, end, limit = entitlement_window(cur, user, plan, now)
+            remaining = max(0, limit - usage_count(cur, user, 'analysis', start, end))
+        conn.commit()
     finally:
         conn.close()
-    return {"plan": plan, "status": plan, "has_access": plan == "premium" or remaining["analysis"] > 0,
-            "days_left": None, "analysis_remaining": None if plan == "premium" else remaining["analysis"],
-            "full_report_remaining": None if plan == "premium" else remaining["full_report"],
-            "analysis_limit": None if plan == "premium" else 3, "full_report_limit": None if plan == "premium" else 1,
-            "resets_at": datetime.combine(day + timedelta(days=1), datetime.min.time(), TIMEZONE).isoformat()}
+    active = plan == 'premium' or now < end
+    return {"plan": plan, "status": plan if active else 'expired', "has_access": active,
+            "can_analyze": active and remaining > 0, "can_generate_full_report": plan == 'premium',
+            "days_left": None if plan == 'premium' else max(0, math.ceil((end - now).total_seconds()/86400)),
+            "trial_end": end.isoformat() if plan == 'free' else None,
+            "analysis_remaining": remaining if active else 0, "analysis_limit": limit,
+            "full_report_remaining": None if plan == 'premium' else 0, "full_report_limit": None if plan == 'premium' else 0,
+            "resets_at": end.isoformat() if plan == 'premium' else None}

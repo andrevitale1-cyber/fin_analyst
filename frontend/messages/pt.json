@@ -14,7 +14,7 @@
     "average": "Média",
     "lastQuarter": "Último Tri",
     "features": {
-      "analysisPerWeek": "3 análises por dia",
+      "analysisPerWeek": "10 análises no teste de 7 dias",
       "summaryReport": "Relatório Resumido na Tela",
       "communitySupport": "Suporte Comunitário",
       "downloadFullReport": "Biblioteca de Relatórios Completos da IA",
@@ -26,7 +26,7 @@
     },
     "upgrade": {
       "basicPlan": "Gratuito",
-      "basicDesc": "3 análises trimestrais/calls por dia e acesso à biblioteca pública de teses.",
+      "basicDesc": "10 análises de resultados/calls em 7 dias, com tabela, histórico e relatórios públicos.",
       "continueBasic": "Continuar no Free",
       "recommended": "Recomendado",
       "proDesc": "Desbloqueie todo o poder da IA.",
@@ -38,8 +38,8 @@
       "daysLeft": "dias restantes no trial",
       "dayLeft": "dia restante no trial",
       "trialActive": "Plano Free",
-      "trialExpired": "Limite diário atingido",
-      "trialExpiredDesc": "Você usou suas análises diárias do Free. Tente amanhã ou assine o Premium.",
+      "trialExpired": "Seu teste terminou",
+      "trialExpiredDesc": "Seu teste de 7 dias terminou. Assine o Premium para continuar.",
       "upgradeNow": "Assinar Agora",
       "trialBannerText": "Você está no período de trial gratuito.",
       "endsIn": "Termina em",

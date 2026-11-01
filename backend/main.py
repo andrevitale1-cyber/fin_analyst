@@ -47,7 +47,7 @@ from agents.auto_fetcher import AutoFetcher
 from agents.search_client import SearchError
 from agents.prompt_builder import PromptBuilder
 from agents.x_bot_router import router as x_bot_router
-from account_limits import analysis_access, complete_usage, access_snapshot, create_tables as create_usage_tables
+from account_limits import analysis_access, complete_usage, access_snapshot, require_active_user, create_tables as create_usage_tables
 from report_jobs import router as report_jobs_router, create_tables as create_job_tables, start_worker, stop as stop_report_worker
 from thesis_library import router as thesis_library_router, note_official_result
 from report_feedback import router as feedback_router, create_tables as create_feedback_tables
@@ -85,20 +85,20 @@ app.include_router(feedback_router)
 app.include_router(x_bot_router)
 
 @app.get("/api/company-suggestions")
-async def company_suggestions(q: str = "", user: str = Depends(require_report_user)):
+async def company_suggestions(q: str = "", user: str = Depends(require_active_user)):
     if len(q) > 100 or re.search(r"[\x00-\x1f]", q):
         raise HTTPException(status_code=400, detail="Busca inválida.")
     return await asyncio.to_thread(search_companies, q.strip())
 
 @app.get("/api/market-data")
-async def market_data(symbol: str, range: str = "1mo", user: str = Depends(require_report_user)):
+async def market_data(symbol: str, range: str = "1mo", user: str = Depends(require_active_user)):
     try:
         return await asyncio.to_thread(market_snapshot, symbol, range)
     except ValueError:
         raise HTTPException(400, "Invalid symbol or range") from None
 
 @app.get("/api/recent-analyses")
-def recent_analyses(user: str = Depends(require_report_user)):
+def recent_analyses(user: str = Depends(require_active_user)):
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
@@ -309,52 +309,16 @@ def parse_results(text):
         "chart_data": get_chart_data(text),
     }
 
-TRIAL_DAYS = 7  # Duração do trial gratuito em dias
-
 # --- ROTAS ---
 @app.get("/")
 def read_root():
     return {"message": "FinAnalyst Backend está Online (Clerk Compatible) 🚀"}
 
 @app.post("/api/register-trial")
-def register_trial(user_id: str = Form(...)):
-    """
-    Registra o início do trial para um novo usuário.
-    Se o usuário já tem trial registrado, apenas retorna os dados existentes.
-    """
-    conn = get_db_connection()
-    cur = conn.cursor()
-    try:
-        # Tenta inserir; se já existir, ignora (ON CONFLICT DO NOTHING)
-        cur.execute(
-            "INSERT INTO trial_users (user_id, trial_start) VALUES (%s, NOW()) ON CONFLICT (user_id) DO NOTHING",
-            (str(user_id),)
-        )
-        conn.commit()
-        
-        # Busca a data de início do trial
-        cur.execute("SELECT trial_start FROM trial_users WHERE user_id = %s", (str(user_id),))
-        row = cur.fetchone()
-        if row:
-            trial_start = row[0]
-            from datetime import datetime, timezone, timedelta
-            now = datetime.now(timezone.utc)
-            trial_end = trial_start.replace(tzinfo=timezone.utc) + timedelta(days=TRIAL_DAYS)
-            days_left = max(0, (trial_end - now).days)
-            is_active = now < trial_end
-            return {
-                "trial_start": trial_start.isoformat(),
-                "trial_end": trial_end.isoformat(),
-                "days_left": days_left,
-                "is_trial_active": is_active
-            }
-        return {"error": "Erro ao registrar trial"}
-    except Exception as e:
-        print(f"Erro ao registrar trial: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        cur.close()
-        conn.close()
+def register_trial(user_id: str = Form(...), user: str = Depends(require_report_user)):
+    if user_id != user:
+        raise HTTPException(403, "A conta informada não corresponde à sessão.")
+    return access_snapshot(user)
 
 @app.get("/api/check-access")
 def check_access(user_id: str, is_premium: bool = False, user: str = Depends(require_report_user)):
@@ -687,7 +651,8 @@ async def analyze_earnings_call(
         if conn: conn.close()
     
 @app.get("/api/table-data")
-def get_table_data(user_id: str): 
+def get_table_data(user_id: str, user: str = Depends(require_active_user)):
+    if user_id != user: raise HTTPException(403, 'A conta informada não corresponde à sessão.')
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -759,7 +724,8 @@ def get_table_data(user_id: str):
         conn.close()
 
 @app.get("/api/history")
-def get_history(user_id: str):
+def get_history(user_id: str, user: str = Depends(require_active_user)):
+    if user_id != user: raise HTTPException(403, 'A conta informada não corresponde à sessão.')
     conn = get_db_connection()
     cur = conn.cursor()
     try:
@@ -800,7 +766,7 @@ class AnalysisTranslationRequest(BaseModel):
 
 
 @app.post("/api/history/{item_id}/translation")
-async def translate_saved_analysis(item_id: int, body: AnalysisTranslationRequest, user_id: str = Depends(require_report_user)):
+async def translate_saved_analysis(item_id: int, body: AnalysisTranslationRequest, user_id: str = Depends(require_active_user)):
     if body.locale not in ("pt", "en"):
         raise HTTPException(400, "Idioma inválido.")
     conn = get_db_connection()

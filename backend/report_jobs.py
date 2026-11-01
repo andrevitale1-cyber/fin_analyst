@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing import Literal
 
-from account_limits import reserve_usage, cancel_usage, plan_for
+from account_limits import reserve_usage, cancel_usage, plan_for, require_active_user
 from full_reports import connection, canonical_company, company_cache_key, OpenCompanyReport, open_company_report, get_report, stored_report
 from openai_client import model_for_task
 from report_auth import SessionUser, require_report_user
@@ -56,7 +56,7 @@ def enqueue(body: StartReport, user=Depends(require_report_user)):
 
 
 @router.get("/{job_id}")
-def status(job_id: str, user=Depends(require_report_user)):
+def status(job_id: str, user=Depends(require_active_user)):
     conn = connection()
     try:
         with conn.cursor() as cur:

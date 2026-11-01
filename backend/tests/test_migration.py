@@ -306,10 +306,12 @@ def api(monkeypatch):
     main = importlib.import_module("main")
     from fastapi.testclient import TestClient
     main.app.dependency_overrides[main.analysis_access] = lambda: None
+    main.app.dependency_overrides[main.require_active_user] = lambda: "test"
     try:
         yield main, TestClient(main.app)
     finally:
         main.app.dependency_overrides.pop(main.analysis_access, None)
+        main.app.dependency_overrides.pop(main.require_active_user, None)
 
 
 @pytest.mark.parametrize("route", ["analyze", "analyze-auto", "analyze-call"])
@@ -362,6 +364,7 @@ def test_recent_analyses_use_authenticated_account(api, monkeypatch):
     cursor.fetchall.return_value = [(9, 'MU', '{"metadata":{"periodo":"2T/2026"}}')]
     monkeypatch.setattr(main, 'get_db_connection', lambda: conn)
     main.app.dependency_overrides[main.require_report_user] = lambda: 'owner'
+    main.app.dependency_overrides[main.require_active_user] = lambda: 'owner'
     try:
         response = client.get('/api/recent-analyses?user_id=other')
         assert response.status_code == 200 and response.json()[0]['symbol'] == 'MU'

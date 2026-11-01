@@ -253,7 +253,7 @@ def test_saved_call_history_omits_retired_section_but_preserves_financial_report
         (2, "Example", "2026", "1Q", "2026-10-14", json.dumps(report)),
     ]
     monkeypatch.setattr(main, "get_db_connection", lambda: conn)
-    history = main.get_history("test-user")
+    history = main.get_history("test-user", "test-user")
     assert history[0]["conteudo"]["analise_completa"] == "Conclusion [12:34]"
     assert history[1]["conteudo"]["analise_completa"] == report["analise_completa"]
 

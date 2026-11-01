@@ -18,6 +18,9 @@ from test_company_report_content import complete_report as valid_report
 
 @pytest.fixture(autouse=True)
 def isolate_usage_service(monkeypatch):
+    # Billing and expiration are exercised with real rules in test_account_limits.
+    monkeypatch.setattr("account_limits.plan_for", lambda user: "premium")
+    monkeypatch.setattr(reports, "plan_for", lambda user: "premium")
     from test_company_report_content import stub_pipeline
     monkeypatch.setattr(reports, "company_facts", lambda *a, **kw: {})
     monkeypatch.setattr(reports, "generate_report", stub_pipeline)

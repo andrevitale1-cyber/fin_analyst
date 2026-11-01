@@ -10,35 +10,33 @@ export default function PricingSection({ locale }: { locale: string }) {
   const [yearly, setYearly] = useState(false);
   const trialFeatures = english
     ? [
-        ["3 quarterly or call analyses per day", "Choose automatic search or upload your document."],
-        ["Company thesis library", "Read published research prepared in advance."],
-        ["Request company coverage", "Help prioritize the companies researched next."],
-        ["Your saved analyses", "Revisit your own research without using a new daily allowance."],
-        ["No credit card required", "Start with the Free plan. Limits renew daily."],
+        ["10 analyses during your 7-day trial", "Shared between quarterly results and earnings calls."],
+        ["Aggregated table", "View company indicators in one place."],
+        ["Analysis history", "Revisit the analyses you saved during your trial."],
+        ["Public full reports", "Explore the published company research collection."],
       ]
     : [
-        ["3 análises trimestrais ou de calls por dia", "Escolha busca automática ou envie seu documento."],
-        ["Biblioteca de teses", "Leia pesquisas publicadas e preparadas antecipadamente."],
-        ["Solicite cobertura de empresas", "Ajude a definir as próximas empresas pesquisadas."],
-        ["Suas análises salvas", "Consulte sua pesquisa sem consumir uma nova análise diária."],
-        ["Sem cartão de crédito", "Comece no Free. Os limites renovam diariamente."],
+        ["10 análises durante o teste de 7 dias", "Compartilhadas entre resultados trimestrais e calls."],
+        ["Tabela agregada", "Consulte os indicadores das empresas em um só lugar."],
+        ["Histórico de análises", "Volte às análises salvas durante o período de teste."],
+        ["Full reports públicos", "Explore a coleção publicada de pesquisas sobre empresas."],
       ];
   const premiumFeatures = english
     ? [
-        ["Unlimited AI analyses", "Get straight to the drivers, strengths and risks."],
-        ["Complete reports", "Explore the thesis, fundamentals, risks and sources in one place."],
-        ["Unlimited analysis history", "Return to saved analyses whenever you need them."],
+        ["50 analyses per month", "Shared between quarterly results and earnings calls."],
+        ["Aggregated table and history", "View indicators and revisit your saved analyses."],
+        ["Public full reports", "Read published company research."],
         ["Company comparisons", "Review companies side by side."],
-        ["Documents and earnings calls", "Upload without limits and explore management’s outlook."],
-        ["Support and priority", "Get help by email and have analyses prioritized."],
+        ["Generate new full reports", "Request company-wide research, saved privately."],
+        ["PDF export", "Download your analyses and reports. Exclusive to Premium."],
       ]
     : [
-        ["Análises de IA ilimitadas", "Vá direto aos fatores, pontos fortes e riscos."],
-        ["Relatórios completos", "Explore a tese, os fundamentos, os riscos e as fontes em um só lugar."],
-        ["Histórico de análises ilimitado", "Volte às análises salvas quando precisar."],
+        ["50 análises por mês", "Compartilhadas entre resultados trimestrais e calls."],
+        ["Tabela agregada e histórico", "Consulte indicadores e revisite suas análises salvas."],
+        ["Full reports públicos", "Leia as pesquisas publicadas sobre empresas."],
         ["Comparação de empresas", "Revise empresas lado a lado."],
-        ["Documentos e earnings calls", "Envie arquivos sem limite e entenda as perspectivas da gestão."],
-        ["Suporte e prioridade", "Receba ajuda por e-mail e tenha análises priorizadas."],
+        ["Geração de novos full reports", "Solicite pesquisas sobre a empresa como um todo, salvas como privadas."],
+        ["Exportação para PDF", "Baixe suas análises e relatórios. Exclusivo do Premium."],
       ];
 
   return <section id="planos" className={styles.section} aria-labelledby="pricing-heading">
@@ -50,21 +48,21 @@ export default function PricingSection({ locale }: { locale: string }) {
           <button type="button" aria-pressed={!yearly} onClick={() => setYearly(false)}>{english ? "Monthly" : "Mensal"}</button>
           <button type="button" aria-pressed={yearly} onClick={() => setYearly(true)}>{english ? "Yearly" : "Anual"}</button>
         </div>
-        <p className={styles.saving}>{yearly ? (english ? "2 months free with yearly billing" : "2 meses grátis no plano anual") : (english ? "Start with the Free plan" : "Comece com o plano Free")}</p>
+        <p className={styles.saving}>{yearly ? (english ? "2 months free with yearly billing" : "2 meses grátis no plano anual") : (english ? "Try FinAnalyzer free for 7 days" : "Experimente o FinAnalyzer grátis por 7 dias")}</p>
       </header>
       <div className={styles.plans}>
-        {[{ name: "Free", description: english ? "Published company theses and 3 quarterly/call analyses per day." : "Teses publicadas e 3 análises trimestrais/calls por dia.", features: trialFeatures, premium: false }, { name: "Premium", description: english ? "Analyze faster. Keep your research within reach." : "Analise com agilidade. Tenha sua pesquisa sempre à mão.", features: premiumFeatures, premium: true }].map(plan => <article key={plan.name} className={`${styles.card} ${plan.premium ? styles.premium : ""}`} aria-label={plan.name}>
+        {[{ name: english ? "Free trial" : "Teste grátis", description: english ? "7 days to explore the platform, with 10 analyses included." : "7 dias para conhecer a plataforma, com 10 análises incluídas.", features: trialFeatures, premium: false }, { name: "Premium", description: english ? "Analyze faster. Keep your research within reach." : "Analise com agilidade. Tenha sua pesquisa sempre à mão.", features: premiumFeatures, premium: true }].map(plan => <article key={plan.name} className={`${styles.card} ${plan.premium ? styles.premium : ""}`} aria-label={plan.name}>
           {plan.premium && <span className={styles.badge}>{english ? "Full access" : "Acesso completo"}</span>}
           <div className={styles.heading}>
             <h3>{plan.premium ? <Sparkles size={20} aria-hidden="true" /> : <Zap size={20} aria-hidden="true" />}{plan.name}</h3>
             <p className={styles.description}>{plan.description}</p>
-            <p className={styles.price}><strong>{plan.premium ? (yearly ? "R$ 290" : "R$ 29") : "R$ 0"}</strong><span>{plan.premium ? (yearly ? (english ? "/ year" : "/ ano") : (english ? "/ month" : "/ mês")) : (english ? "/ free" : "/ grátis")}</span></p>
+            <p className={styles.price}><strong>{plan.premium ? (yearly ? "R$ 290" : "R$ 29") : "R$ 0"}</strong><span>{plan.premium ? (yearly ? (english ? "/ year" : "/ ano") : (english ? "/ month" : "/ mês")) : (english ? "/ 7 days" : "/ 7 dias")}</span></p>
           </div>
-          <Link href="/dashboard" className={styles.action}><span>{english ? "Start free" : "Começar grátis"}</span><ChevronRight size={16} aria-hidden="true" /></Link>
+          <Link href="/dashboard" className={styles.action}><span>{plan.premium ? (english ? "Choose Premium" : "Escolher Premium") : (english ? "Start free trial" : "Começar teste grátis")}</span><ChevronRight size={16} aria-hidden="true" /></Link>
           <ul className={styles.features}>
             {plan.features.map(([title, detail]) => <li key={title}><span><strong>{title}</strong><small>{detail}</small></span><CheckCheck size={20} aria-label={english ? "Included" : "Incluído"} /></li>)}
           </ul>
-          <p className={styles.note}>{plan.premium ? (english ? `Premium: ${yearly ? "R$ 290/year" : "R$ 29/month"}. Cancel anytime.` : `Premium: ${yearly ? "R$ 290/ano" : "R$ 29/mês"}. Cancele quando quiser.`) : (english ? "Daily limits renew at midnight (São Paulo). No credit card required." : "Limites diários renovam à meia-noite (São Paulo). Sem cartão de crédito.")}</p>
+          <p className={styles.note}>{plan.premium ? (english ? `Premium: ${yearly ? "R$ 290/year" : "R$ 29/month"}. 50 analyses per month, including yearly subscriptions. Cancel anytime.` : `Premium: ${yearly ? "R$ 290/ano" : "R$ 29/mês"}. 50 análises por mês, inclusive na assinatura anual. Cancele quando quiser.`) : (english ? "10 analyses in total over 7 days. PDF export is exclusive to Premium." : "10 análises no total durante 7 dias. Exportação para PDF exclusiva do Premium.")}</p>
         </article>)}
       </div>
     </div>

@@ -25,9 +25,9 @@ from agents.report_valuation import calculate_valuation as calculated_company_va
 from company_research import collect_deep_company_sources as collect_company_sources, evidence_manifest, recover_market_sources
 from report_runtime import checkpoint, progress, record_run, editorial_preparation
 from agents.company_documents import collect_issuer_annual_sources
-from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE
+from account_limits import reserve_usage, complete_usage, cancel_usage, TIMEZONE, require_active_user, require_premium_user, plan_for
 
-router = APIRouter(prefix="/api/full-reports", tags=["Full reports"])
+router = APIRouter(prefix="/api/full-reports", tags=["Full reports"], dependencies=[Depends(require_active_user)])
 PROMPT_VERSION = "thesis-v1"
 COMPANY_REPORT_VERSION = "company-v11"
 RESEARCH_VERSION = "company-v7"
@@ -337,6 +337,7 @@ def open_library_company(body: OpenCompanyReport, user_id: str = Depends(require
 
 
 def open_company_report(body: OpenCompanyReport, user_id: str = Depends(require_report_user)):
+    require_premium_user(user_id)
     started = perf_counter()
     timings = {}
     company = canonical_company(body.company)
@@ -476,6 +477,7 @@ def generate_or_reuse(cur, key, *, user_id, analysis_id, company, period, locale
 
 @router.get("")
 def list_reports(user_id: str = Depends(require_report_user)):
+    premium = plan_for(user_id) == 'premium'
     conn = connection()
     try:
         with conn.cursor() as cur:
@@ -488,6 +490,7 @@ def list_reports(user_id: str = Depends(require_report_user)):
             public_companies_seen = set()
             for row in cur.fetchall():
                 report = stored_report(row)
+                if not premium and not report['is_public']: continue
                 microsoft = str(report.get("symbol") or report["company"]).strip().upper() in {
                     "MSFT", "MICROSOFT", "MICROSOFT CORPORATION", "MICROSOFT CORPORATION (MSFT)"}
                 if report["is_public"] and (microsoft or report.get("scope") == "company"):
@@ -537,6 +540,8 @@ def get_report(report_id: str, user_id: str = Depends(require_report_user)):
             row = cur.fetchone()
             if not row:
                 raise HTTPException(404, "Relatório não encontrado.")
+            if not row[1] and plan_for(user_id) != 'premium':
+                raise HTTPException(403, 'Relatórios privados são exclusivos do Premium. / Private reports require Premium.')
             from thesis_library import annotate
             return {"report": annotate(cur, stored_report(row))}
     finally:
