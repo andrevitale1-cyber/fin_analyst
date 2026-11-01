@@ -6,9 +6,10 @@ import { BarChart3, BookOpen, ChevronLeft, History, LayoutDashboard, Menu, Table
 import LanguageSwitcher from "./LanguageSwitcher";
 import RecentAnalyses from "./RecentAnalyses";
 
-export default function DashboardSidebar({ active, open, collapsed, onClose, onCollapse, onNavigate, children }: {
+export default function DashboardSidebar({ active, open, collapsed, onClose, onCollapse, onNavigate, onSelectAnalysis, children }: {
   active: string; open: boolean; collapsed: boolean; onClose: () => void; onCollapse: (value: boolean) => void;
   onNavigate: (view: "dashboard" | "table" | "history" | "reports") => void; children?: React.ReactNode;
+  onSelectAnalysis?: (item: any) => void;
 }) {
   const locale = useLocale();
   const t = useTranslations("Dashboard");
@@ -26,7 +27,7 @@ export default function DashboardSidebar({ active, open, collapsed, onClose, onC
       </div>
       {collapsed && <button onClick={() => onCollapse(false)} aria-label={t("sidebar.menu")} className="mb-4 hidden h-10 items-center justify-center rounded-xl hover:bg-white/10 md:flex"><Menu size={20}/></button>}
       <nav className="space-y-2">{items.map(([view, Icon, label]) => <button key={view} onClick={() => { onClose(); onNavigate(view); }} aria-current={active === view ? "page" : undefined} title={t(`nav.${label}`)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition ${collapsed ? "justify-center" : "text-left"} ${active === view ? "bg-sky-500/15 text-sky-300" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}><Icon size={20}/>{!collapsed && t(`nav.${label}`)}</button>)}</nav>
-      {!collapsed && <RecentAnalyses key={active}/>}
+      {!collapsed && <RecentAnalyses onSelect={onSelectAnalysis}/>}
       <div className="mt-auto">{!collapsed && children}</div>
       <div className="mt-4 space-y-3 border-t border-white/10 pt-4">
         <LanguageSwitcher compact={collapsed} dark />

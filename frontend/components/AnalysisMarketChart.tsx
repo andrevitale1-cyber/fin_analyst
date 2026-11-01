@@ -20,7 +20,12 @@ export default function AnalysisMarketChart({ symbol, compact = false }: { symbo
     return () => controller.abort();
   }, [symbol, period, compact, getToken]);
   const money = (value: number) => new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'pt-BR', data?.currency ? { style: 'currency', currency: data.currency, maximumFractionDigits: 2 } : { maximumFractionDigits: 2 }).format(value);
-  const change = typeof data?.changePercent === 'number' ? data.changePercent : null;
+  const points = data?.points || [];
+  const firstPrice = points[0]?.close;
+  const lastPrice = points[points.length - 1]?.close;
+  const change = compact || period === '1d'
+    ? (typeof data?.changePercent === 'number' ? data.changePercent : null)
+    : points.length > 1 && firstPrice > 0 ? (lastPrice / firstPrice - 1) * 100 : null;
   const asOf = data?.asOf ? new Date(typeof data.asOf === 'number' ? data.asOf * 1000 : data.asOf).toLocaleString(locale === 'en' ? 'en-US' : 'pt-BR') : '';
   const quote = <span title={asOf ? `${data?.source} · ${asOf}` : undefined} className="flex flex-wrap items-baseline gap-x-2 text-sm"><strong>{typeof data?.price === 'number' ? money(data.price) : '—'}</strong>{change !== null && <span className={change >= 0 ? 'text-emerald-500' : 'text-red-500'}>{change > 0 ? '+' : ''}{change.toFixed(2)}%</span>}</span>;
   if (compact) return <span>{quote}{asOf && <span className="block text-[9px] text-slate-500">{asOf}</span>}</span>;

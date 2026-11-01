@@ -102,6 +102,9 @@ export default function FinancialDashboard() {
   useEffect(() => { setPendingDelete(null); setDeletingHistory(false); setDeleteHistoryError(""); }, [user?.id]);
 
   const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
+  const [openingAnalysis, setOpeningAnalysis] = useState(true);
+  const [openAnalysisError, setOpenAnalysisError] = useState(false);
+  const analysisRequest = useRef<AbortController | null>(null);
   const [loading, setLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -200,14 +203,18 @@ export default function FinancialDashboard() {
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('analysis');
-    if (!user?.id || !id || !/^\d+$/.test(id)) return;
+    if (!id || !/^\d+$/.test(id)) { setOpeningAnalysis(false); return; }
+    if (!user?.id) return;
     const controller = new AbortController();
+    analysisRequest.current = controller;
+    setOpeningAnalysis(true); setOpenAnalysisError(false);
     getToken().then(token => fetch(`${API_BASE}/api/recent-analyses`, {signal:controller.signal,headers:{Authorization:`Bearer ${token}`}}))
       .then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(rows => {
         if (controller.signal.aborted || !Array.isArray(rows)) return;
         const entry = rows.find((row:any) => String(row.id) === id);
-        if (entry) { setResult({...entry.result,id:entry.id}); setCurrentView('result'); }
-      }).catch(() => {});
+        if (!entry) throw new Error('Analysis unavailable');
+        setResult({...entry.result,id:entry.id}); setCurrentView('result'); setOpeningAnalysis(false);
+      }).catch(() => { if (!controller.signal.aborted) { setOpenAnalysisError(true); setOpeningAnalysis(false); } });
     return () => controller.abort();
   }, [user?.id,getToken]);
 
@@ -306,6 +313,7 @@ export default function FinancialDashboard() {
   };
 
   const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
+    analysisRequest.current?.abort(); setOpeningAnalysis(false); setOpenAnalysisError(false);
     setIsSidebarOpen(false);
     if (view === 'table' && !isPremium) { setShowUpgradeModal(true); return; }
     setCurrentView(view);
@@ -468,7 +476,11 @@ export default function FinancialDashboard() {
         />
       )}
       
-      <DashboardSidebar active={currentView} open={isSidebarOpen} collapsed={isSidebarCollapsed} onClose={() => setIsSidebarOpen(false)} onCollapse={setIsSidebarCollapsed} onNavigate={view => view === "reports" ? router.push(`/${locale}/dashboard/reports`) : handleNavClick(view)}>
+      <DashboardSidebar active={currentView} open={isSidebarOpen} collapsed={isSidebarCollapsed} onClose={() => setIsSidebarOpen(false)} onCollapse={setIsSidebarCollapsed} onSelectAnalysis={item => {
+        analysisRequest.current?.abort();
+        setResult({...item.result,id:item.id}); setCurrentView('result');
+        setOpeningAnalysis(false); setOpenAnalysisError(false); setIsSidebarOpen(false);
+      }} onNavigate={view => view === "reports" ? router.push(`/${locale}/dashboard/reports`) : handleNavClick(view)}>
         {!isPremium && !isSidebarCollapsed && accessStatus === 'active' && (
           <div className="mt-auto mb-6 px-2">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
@@ -592,7 +604,9 @@ export default function FinancialDashboard() {
           </div>
         )}
 
-        {currentView === 'dashboard' && (
+        {openingAnalysis && <div role="status" className="flex items-center justify-center gap-3 py-20 text-slate-500"><Loader2 className="animate-spin"/>{locale === 'en' ? 'Opening analysis…' : 'Abrindo análise…'}</div>}
+        {openAnalysisError && <div role="alert" className="rounded-2xl border border-red-200 bg-white p-6 text-slate-700"><p>{locale === 'en' ? 'We could not open this saved analysis.' : 'Não foi possível abrir esta análise salva.'}</p><button className="mt-3 font-semibold text-sky-700" onClick={() => handleNavClick('history')}>{t('result.backHistory')}</button></div>}
+        {currentView === 'dashboard' && !openingAnalysis && !openAnalysisError && (
           <section className="relative isolate min-h-full animate-in fade-in slide-in-from-bottom-4 duration-700 max-w-6xl mx-auto pb-12">
             <div aria-hidden="true" className="pointer-events-none absolute -left-32 top-20 -z-10 h-80 w-80 rounded-full bg-cyan-200/60 blur-3xl" />
             <div aria-hidden="true" className="pointer-events-none absolute -right-24 top-[28rem] -z-10 h-96 w-96 rounded-full bg-violet-200/50 blur-3xl" />
@@ -712,11 +726,11 @@ export default function FinancialDashboard() {
                   <div className="min-w-0">
                     <h2 className="text-slate-500 uppercase tracking-widest text-xs font-bold mb-3">{t("result.analysisReport")}</h2>
                     <h1 className="break-words text-3xl md:text-5xl font-bold text-slate-900">{(result.metadata?.empresa || result.metadata?.company)?.toUpperCase()}</h1>
+                    <p className={`mt-3 text-xl font-medium ${result.metadata?.tipo === "Earnings Call" ? 'text-purple-600' : 'text-sky-700'}`}>
+                      {result.metadata?.tipo === "Earnings Call" ? `Earnings Call · ${formatPeriod(result.metadata?.periodo, locale)}` : formatPeriod(result.metadata?.periodo, locale)}
+                    </p>
                   </div>
                 </div>
-                <p className={`text-xl font-medium ${result.metadata?.tipo === "Earnings Call" ? 'text-purple-600' : 'text-sky-700'}`}>
-                  {result.metadata?.tipo === "Earnings Call" ? `Earnings Call · ${formatPeriod(result.metadata?.periodo, locale)}` : formatPeriod(result.metadata?.periodo, locale)}
-                </p>
                 {result.source?.url && /^https?:\/\//.test(result.source.url) && (
                   <a href={result.source.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-sky-400/20 bg-sky-400/10 px-3 py-2 text-sm text-sky-700 transition hover:bg-sky-400/20">
                     <ExternalLink size={15} />{locale === 'en' ? 'View source document' : 'Ver documento de origem'} · {result.source.name}
