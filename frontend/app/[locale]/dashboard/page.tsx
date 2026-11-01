@@ -316,6 +316,7 @@ export default function FinancialDashboard() {
     analysisRequest.current?.abort(); setOpeningAnalysis(false); setOpenAnalysisError(false);
     setIsSidebarOpen(false);
     if (view === 'table' && !isPremium) { setShowUpgradeModal(true); return; }
+    window.history.replaceState(null, '', `/${locale}/dashboard${view === 'dashboard' ? '' : `?view=${view}`}`);
     setCurrentView(view);
   };
 
@@ -478,6 +479,7 @@ export default function FinancialDashboard() {
       
       <DashboardSidebar active={currentView} open={isSidebarOpen} collapsed={isSidebarCollapsed} onClose={() => setIsSidebarOpen(false)} onCollapse={setIsSidebarCollapsed} onSelectAnalysis={item => {
         analysisRequest.current?.abort();
+        window.history.replaceState(null, '', `/${locale}/dashboard?analysis=${item.id}`);
         setResult({...item.result,id:item.id}); setCurrentView('result');
         setOpeningAnalysis(false); setOpenAnalysisError(false); setIsSidebarOpen(false);
       }} onNavigate={view => view === "reports" ? router.push(`/${locale}/dashboard/reports`) : handleNavClick(view)}>
