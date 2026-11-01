@@ -12,8 +12,11 @@ Frontend:   window.open(`${API_BASE}/api/report/${item.id}`, '_blank')
 """
 
 import json, re, html as _h
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import HTMLResponse
+from account_limits import plan_for
+from report_auth import require_report_user
+from analysis_pdf import generate_analysis_pdf
 from call_analysis import without_key_moments
 
 router = APIRouter()
@@ -1181,17 +1184,32 @@ initializeCharts();
    .replace("{charts_js}", charts_js)
 
 @router.get("/api/report/{item_id}", response_class=HTMLResponse)
-def get_report(item_id: int, locale: str = "pt"):
+def get_report(item_id: int, locale: str = "pt", user: str = Depends(require_report_user)):
+    resultado = export_result(item_id, user)
+    return HTMLResponse(content=generate_report_html(resultado, locale=locale), headers={"Cache-Control": "no-store"})
+
+
+def export_result(item_id, user):
+    if plan_for(user) != 'premium':
+        raise HTTPException(403, "PDF export is exclusive to Premium. A exportação em PDF é exclusiva do Premium.")
     from main import get_db_connection
     conn = get_db_connection()
     cur  = conn.cursor()
     try:
-        cur.execute("SELECT resultado_json FROM historico WHERE id = %s", (item_id,))
+        cur.execute("SELECT resultado_json FROM historico WHERE id = %s AND CAST(user_id AS TEXT) = %s", (item_id, str(user)))
         row = cur.fetchone()
         if not row:
-            raise HTTPException(status_code=404, detail="Analysis not found." if locale == "en" else "Análise não encontrada.")
-        resultado = json.loads(row[0])
-        return HTMLResponse(content=generate_report_html(resultado, locale=locale), status_code=200)
+            raise HTTPException(status_code=404, detail="Analysis not found. Análise não encontrada.")
+        return json.loads(row[0])
     finally:
         cur.close()
         conn.close()
+
+
+@router.get("/api/report/{item_id}/pdf")
+def download_analysis_pdf(item_id: int, locale: str = Query(default='pt', pattern='^(pt|en)$'), user: str = Depends(require_report_user)):
+    result = export_result(item_id, user)
+    return Response(generate_analysis_pdf(result, locale), media_type='application/pdf', headers={
+        'Content-Disposition': f'attachment; filename="finanalyser-analysis-{item_id}.pdf"',
+        'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff',
+    })

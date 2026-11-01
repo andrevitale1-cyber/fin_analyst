@@ -5,6 +5,7 @@ bcrypt==3.2.2
 passlib==1.7.4
 psycopg2-binary
 pypdf>=4.0.0
+reportlab>=4.4,<5
 python-dotenv
 python-multipart
 stripe

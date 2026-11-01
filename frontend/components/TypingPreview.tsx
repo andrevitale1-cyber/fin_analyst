@@ -17,13 +17,15 @@ export default function TypingPreview({ children }: { children: ReactNode }) {
     finish.current = complete;
     copy.replaceChildren(...Array.from(root.firstElementChild?.childNodes ?? [], node => node.cloneNode(true)));
     const walker = document.createTreeWalker(copy, NodeFilter.SHOW_TEXT);
-    const nodes: { node: Text; text: string; start: number }[] = [];
-    let total = 0;
+    const groups = new Map<Element, { nodes: { node: Text; text: string; start: number }[]; length: number }>();
     while (walker.nextNode()) {
       const node = walker.currentNode as Text, text = node.data;
-      nodes.push({ node, text, start: total }); total += text.length;
+      const paragraph = node.parentElement?.closest('p, li, h5') ?? copy;
+      const group = groups.get(paragraph) ?? { nodes: [], length: 0 };
+      group.nodes.push({ node, text, start: group.length }); group.length += text.length;
+      groups.set(paragraph, group);
     }
-    const duration = Math.min(total, 700) * 24;
+    const duration = 4500;
     const observer = new IntersectionObserver(entries => {
       cancelAnimationFrame(frame);
       if (!entries.some(entry => entry.intersectionRatio >= .2)) { setTyping(false); return; }
@@ -33,8 +35,11 @@ export default function TypingPreview({ children }: { children: ReactNode }) {
         const cycle = (now - started) % (duration + 7000);
         setTyping(cycle < duration);
         if (cycle < duration) {
-          const count = Math.floor(cycle / 24);
-          for (const { node, text, start } of nodes) node.data = text.slice(0, Math.max(0, count - start));
+          for (const group of groups.values()) {
+            const paragraphDuration = Math.min(duration, Math.max(900, group.length * 8));
+            const count = Math.ceil(group.length * Math.min(1, cycle / paragraphDuration));
+            for (const { node, text, start } of group.nodes) node.data = text.slice(0, Math.max(0, count - start));
+          }
         }
         frame = requestAnimationFrame(tick);
       };
