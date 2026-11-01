@@ -44,10 +44,11 @@ def test_multipage_pdf_has_all_text_watermark_and_no_raw_json(call):
 
 def test_untrusted_markup_is_literal_and_cannot_load_files():
     result = sample()
-    result['analise_completa'] = '<img src="file:///etc/passwd"/>\n[invalid](javascript:alert)\n**Safe & sound**'
+    result['analise_completa'] = '<img src="file:///etc/passwd"/>\n[invalid](javascript:alert)\n**Safe & sound**\n10 − 3 = 7; growth ≥ 5%'
     reader = PdfReader(io.BytesIO(generate_analysis_pdf(result, 'en')))
     assert '<img src="file:///etc/passwd"/>' in reader.pages[0].extract_text()
     assert 'Safe & sound' in reader.pages[0].extract_text()
+    assert '10 - 3 = 7; growth >= 5%' in reader.pages[0].extract_text()
     assert not reader.pages[0].get('/Annots')
 
 

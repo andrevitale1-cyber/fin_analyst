@@ -14,7 +14,8 @@ from call_analysis import without_key_moments
 
 
 def inline(text):
-    text = str(text).replace('\u2011', '-').replace('\u2013', '-').replace('\u2014', '-')
+    text = str(text).translate(str.maketrans({'\u2011': '-', '\u2013': '-', '\u2014': '-',
+                                             '\u2212': '-', '\u2264': '<=', '\u2265': '>=', '\u2192': '->'}))
     text = escape(text)
     text = re.sub(r'\*\*(.+?)\*\*', r'<b>\1</b>', text)
     # Documents are untrusted: only http(s) links become PDF annotations.
