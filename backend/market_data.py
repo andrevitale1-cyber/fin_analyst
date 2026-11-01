@@ -10,11 +10,13 @@ import json
 RANGES = {"1d": (1, "5min"), "5d": (7, "30min"), "1mo": (31, "1day"), "6mo": (184, "1day"), "1y": (366, "1day"), "max": (None, "1month")}
 _cache = {}
 
-def _json(url, params, headers):
+def _json(url, params, headers, preserve_plan_error=False):
     try:
         response = requests.get(url, params=params, headers=headers, timeout=7)
-        response.raise_for_status()
         data = response.json()
+        if preserve_plan_error and isinstance(data, dict) and data.get('code') in ('INVALID_INTERVAL', 'INVALID_RANGE'):
+            return {'code': data['code'], 'allowed': data.get('details', {}).get('limit', {}).get('current', [])}
+        response.raise_for_status()
         return data if isinstance(data, dict) and data.get('status') != 'error' else {}
     except (requests.RequestException, ValueError):
         return {}
@@ -73,11 +75,18 @@ def market_snapshot(symbol, period="1mo"):
         if b3:
             headers = {"Authorization": f"Bearer {token}"}
             def get(path, params):
-                rows = _json("https://brapi.dev/api/v2/stocks/" + path, params, headers).get("results", [])
-                return next((row.get("data") for row in rows if row.get("symbol") == symbol), None)
+                body = _json("https://brapi.dev/api/v2/stocks/" + path, params, headers, preserve_plan_error=True)
+                if body.get('code'): return body
+                return next((row.get("data", row) for row in body.get("results", []) if row.get("symbol") == symbol), None)
             quote = get("quote", {"symbols": symbol}) or {}
             interval = "5m" if period == "1d" else "30m" if period == "5d" else "1d" if period != "max" else "1mo"
             history = get("historical", {"symbols": symbol, "range": period, "interval": interval}) or []
+            if isinstance(history, dict) and history.get('code') == 'INVALID_INTERVAL' and '1d' in history.get('allowed', []):
+                interval = '1d'
+                history = get("historical", {"symbols": symbol, "range": period, "interval": interval}) or []
+            unavailable_reason = 'plan_range' if isinstance(history, dict) and history.get('code') == 'INVALID_RANGE' else None
+            if isinstance(history, dict) and history.get('code') == 'INVALID_INTERVAL': unavailable_reason = 'plan_interval'
+            used_interval = history.get('usedInterval', interval) if isinstance(history, dict) else interval
             if isinstance(history, dict):
                 history = history.get("historicalDataPrice", history.get("prices", []))
             points = []
@@ -89,6 +98,8 @@ def market_snapshot(symbol, period="1mo"):
                 if value is not None and value > 0 and isinstance(stamp, str):
                     points.append({"time": stamp, "close": value})
             result = {"symbol": symbol, "price": number(quote.get("regularMarketPrice")), "changePercent": number(quote.get("regularMarketChangePercent")), "asOf": quote.get("regularMarketTime"), "currency": quote.get("currency"), "points": points, "source": "brapi", "sourceUrl": "https://brapi.dev/docs/acoes/historico"}
+            result['interval'] = used_interval
+            result['unavailableReason'] = unavailable_reason or ('plan_interval' if period == '1d' and used_interval == '1d' else None)
         else:
             headers = {"Authorization": f"apikey {token}"}
             def get(path, params):
