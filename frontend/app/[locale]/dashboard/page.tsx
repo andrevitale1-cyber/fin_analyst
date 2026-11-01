@@ -711,7 +711,7 @@ export default function FinancialDashboard() {
 
         {currentView === 'result' && result && (
           <div key={result.id || result.metadata?.empresa} className="animate-in fade-in zoom-in duration-500 max-w-6xl mx-auto pb-10">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+            <div className="flex flex-col flex-wrap md:flex-row justify-between items-start md:items-center mb-10 gap-4">
               <button onClick={() => setCurrentView('history')} className="text-slate-500 hover:text-sky-700 flex items-center gap-2 transition-colors group"><div className="p-2 rounded-full bg-slate-100 group-hover:bg-slate-200 transition-colors"><ChevronLeft size={16} /></div><span className="font-medium">{t("result.backHistory")}</span></button>
               
               <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">

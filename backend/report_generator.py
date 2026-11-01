@@ -6,8 +6,8 @@ Adicione ao main.py (2 linhas):
     from report_generator import router as report_router
     app.include_router(report_router)   # logo após app = FastAPI(...)
 
-Endpoint:   GET /api/report/{item_id}
-Frontend:   window.open(`${API_BASE}/api/report/${item.id}`, '_blank')
+Endpoints: GET /api/report/{item_id} and /api/report/{item_id}/pdf
+Both require an authenticated Premium session and analysis ownership.
 ════════════════════════════════════════════════════════════════
 """
 

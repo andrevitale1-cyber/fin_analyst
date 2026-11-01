@@ -15,7 +15,7 @@ export default function ExportAnalysisPdf({ analysisId, locale, premium, onUpgra
   const [error, setError] = useState('');
   const request = useRef<AbortController | null>(null);
   const en = locale === 'en';
-  useEffect(() => { setBusy(false); setError(''); return () => request.current?.abort(); }, [analysisId, user?.id, locale]);
+  useEffect(() => { setBusy(false); setError(''); return () => { request.current?.abort(); request.current = null; }; }, [analysisId, user?.id, locale]);
 
   async function download() {
     if (!premium) { onUpgrade(); return; }

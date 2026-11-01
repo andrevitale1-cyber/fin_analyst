@@ -32,7 +32,7 @@ def test_multipage_pdf_has_all_text_watermark_and_no_raw_json(call):
     reader = PdfReader(io.BytesIO(pdf))
     assert len(reader.pages) > 1
     for page in reader.pages:
-        assert 'FinAnalyser' in page.extract_text()
+        assert page.extract_text().count('FinAnalyser') >= 3  # Watermark, header and footer on every page.
         assert 'Página' in page.extract_text()
         assert b'FinAnalyser' in page.get_contents().get_data()  # Painted watermark, not metadata only.
     text = '\n'.join(page.extract_text() for page in reader.pages)
