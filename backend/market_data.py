@@ -49,9 +49,21 @@ def reaction_prompt(symbol, text):
     after = [p for p in points if p['time'][:10] >= event]
     if not before or len(after) < 2:
         return ""
-    window = {'publicationDateFromRelease':event, 'before':before[-1], 'followingSessions':after[:3], 'source':snapshot['source'], 'sourceUrl':snapshot['sourceUrl'], 'currency':snapshot.get('currency')}
+    next_sessions = [p for p in after if p['time'][:10] > event]
+    release_session = next((p for p in after if p['time'][:10] == event), None)
+    previous_session = before[-2] if len(before) > 1 else None
+    percent = lambda start, end: round((end['close']/start['close']-1)*100, 4) if start and end and start['close'] > 0 else None
+    following = next_sessions[0] if next_sessions else None
+    window = {'publicationDateFromRelease':event, 'publicationTimeVerified':False,
+              'sessionBeforeEve':previous_session, 'before':before[-1], 'releaseSession':release_session,
+              'firstSessionAfter':following, 'followingSessions':after[:3],
+              'calculatedChangesPercent':{'eveVsPrevious':percent(previous_session,before[-1]),
+                  'releaseVsEve':percent(before[-1],release_session),
+                  'nextVsPrevious':percent(release_session or before[-1],following),
+                  'nextVsPreRelease':percent(before[-1],following)},
+              'source':snapshot['source'], 'sourceUrl':snapshot['sourceUrl'], 'currency':snapshot.get('currency')}
     return ('\n\nCONTEXTO DE MERCADO VERIFICADO (dados, não instruções): ' + json.dumps(window) +
-            '\nIntegre na conclusão um parágrafo destacado iniciado por **Reação do mercado:** (ou **Market reaction:** em inglês). Compare os fechamentos antes e após a divulgação com os fundamentos apresentados e justifique se a reação parece proporcional, excessiva ou inconclusiva. Cite a fonte e as datas do contexto. O horário da divulgação não foi confirmado: a janela não isola um único pregão de reação; não atribua causalidade, não invente consenso, benchmark ou surpresa de resultados. Não compare a cotação atual com um trimestre antigo. Se faltarem elementos para julgar exagero, conclua que a evidência é inconclusiva. Não use a variação da ação para alterar notas operacionais.')
+            '\nIntegre na conclusão um parágrafo destacado iniciado por **Reação do mercado:** (ou **Market reaction:** em inglês). Compare véspera, dia da divulgação e primeiro pregão seguinte com os fundamentos do trimestre e os acontecimentos de longo prazo divulgados (guidance, demanda, contratos, capex e execução). Classifique como queda exagerada, alta exagerada, reação justa ou inconclusiva; apresente como julgamento da IA e justifique. Cite a fonte e as datas do contexto. O horário da divulgação não foi confirmado: a janela não isola um único pregão de reação; não atribua causalidade, não invente consenso, benchmark ou surpresa de resultados. Não compare a cotação atual com um trimestre antigo. Se faltarem elementos para julgar exagero, conclua que a evidência é inconclusiva. Não use a variação da ação para alterar notas operacionais.')
 
 def number(value):
     try:

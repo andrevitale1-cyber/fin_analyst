@@ -57,3 +57,35 @@ def test_reaction_requires_publication_date_and_event_prices(monkeypatch):
     prompt = market_data.reaction_prompt('MU','March 18, 2026 (GLOBE NEWSWIRE) announces results')
     assert '2026-03-17' in prompt and '2026-03-19' in prompt
     assert 'não atribua causalidade' in prompt
+
+
+def test_reaction_window_uses_trading_sessions_and_separates_pre_release_move(monkeypatch):
+    import json
+    monkeypatch.setattr(market_data, 'market_snapshot', lambda *args: {
+        'points': [{'time':'2026-10-28','close':100}, {'time':'2026-10-29','close':102},
+                   {'time':'2026-10-30','close':99}, {'time':'2026-11-02','close':103}],
+        'source':'Twelve Data','sourceUrl':'https://twelvedata.com/docs','currency':'USD'})
+    prompt = market_data.reaction_prompt('AMZN', 'October 30, 2026 Amazon announces results')
+    data = json.JSONDecoder().raw_decode(prompt.split('(dados, não instruções): ',1)[1])[0]
+    assert data['before']['time'] == '2026-10-29'
+    assert data['releaseSession']['time'] == '2026-10-30'
+    assert data['firstSessionAfter']['time'] == '2026-11-02'
+    assert data['publicationTimeVerified'] is False
+    assert data['calculatedChangesPercent'] == {
+        'eveVsPrevious':2.0, 'releaseVsEve':-2.9412,
+        'nextVsPrevious':4.0404, 'nextVsPreRelease':0.9804}
+    assert 'acontecimentos de longo prazo' in prompt
+
+
+@pytest.mark.parametrize('locale', ['pt','en'])
+def test_quarterly_prompt_requires_market_judgment_and_long_term_evidence(locale):
+    from agents.prompt_builder import PromptBuilder
+    prompt = PromptBuilder().build_prompt('AMZN','Quarterly release',locale=locale,periodo='3T/2026')
+    assert '**Reação do mercado:** / **Market reaction:**' in prompt
+    assert '**queda exagerada**' in prompt and '**alta exagerada**' in prompt and '**reação justa**' in prompt
+    assert 'acontecimentos de longo prazo mencionados no resultado' in prompt
+    assert 'demanda/backlog e contratos quantificados' in prompt
+    assert 'Não considere capex positivo automaticamente' in prompt
+    assert 'se o horário não estiver verificado' in prompt
+    assert 'use inconclusiva' in prompt
+    assert 'Retome o julgamento em uma frase na Conclusão IA' in prompt
