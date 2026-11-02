@@ -230,6 +230,7 @@ def test_agent_uses_passage_identifiers_and_server_inserts_original_quotes(monke
         for dimension in raw['dimensions']:
             dimension.pop('left_quote');dimension.pop('right_quote')
             dimension['left_evidence_ids']=['A001'];dimension['right_evidence_ids']=['B001']
+            if dimension['id']=='cash':dimension['winner']='insufficient'
         return raw
     client.analyze_full_report.side_effect=respond
     monkeypatch.setattr(agent,'OpenAIClient',lambda **_:client)
@@ -284,6 +285,7 @@ def test_agent_makes_at_most_one_evidence_repair(monkeypatch):
         for dimension in raw['dimensions']:
             dimension.pop('left_quote');dimension.pop('right_quote')
             dimension['left_evidence_ids']=['A001'];dimension['right_evidence_ids']=['B001']
+            if dimension['id']=='cash':dimension['winner']='insufficient'
         if len(calls)==2:raw['dimensions'][0]['left_assessment']='Operating margin was 95%.'
         return raw
     client=Mock();client.analyze_full_report.side_effect=respond
@@ -304,3 +306,38 @@ def test_validation_reports_all_numeric_and_verdict_issues_in_one_repair():
     fields={issue['field'] for issue in error.value.issues}
     assert {'growth/A','profitability/B','verdict'}.issubset(fields)
     assert comparison.period_end({},'Micron announced its second quarter of fiscal 2026 ended February 26, 2026.')=='2026-02-26'
+
+
+def test_missing_quarter_cash_never_awards_the_other_company_a_win():
+    docs=participants();docs[0]['quarter_cash_verified']=False;docs[1]['quarter_cash_verified']=True
+    with pytest.raises(agent.DuelValidationError) as error:
+        agent.validate_verdict(verdict(),docs,[])
+    assert any(issue['issue']=='missing_comparable_quarter_cash' for issue in error.value.issues)
+    raw=verdict();raw['dimensions'][2]['winner']='insufficient'
+    assert agent.validate_verdict(raw,docs,[])['verdict']=='A'
+
+
+def test_currencies_cannot_be_declared_different_without_verification():
+    raw=verdict();raw['summary']='As empresas possuem moedas diferentes.'
+    docs=participants();docs[0]['verified_currencies']=['USD'];docs[1]['verified_currencies']=[]
+    with pytest.raises(agent.DuelValidationError) as error:agent.validate_verdict(raw,docs,[])
+    assert any(issue['issue']=='currency_difference_not_established' for issue in error.value.issues)
+
+
+def test_cumulative_cash_flows_are_not_standalone_quarter_facts():
+    source='Cash flows for six months ended March 31, 2026. USD 100 million net cash from operations.'
+    docs=[{'side':'A','evidence':source}]
+    fact={'side':'A','metric':'operating_cash_flow','basis':'current','accounting_basis':'reported',
+          'value':100,'unit':'currency_millions','currency':'USD','quote':source,'unit_quote':source}
+    assert agent.checked_facts({'facts':[fact]},docs)==[]
+
+
+def test_only_the_rollout_qa_duel_can_be_withdrawn_and_refunded():
+    cur=Mock();cur.fetchall.return_value=[('invalid-duel-ticket',)]
+    comparison.create_tables(cur)
+    calls=[call.args for call in cur.execute.call_args_list]
+    assert any('cash_basis_invalidated' in sql and 'COUNT(DISTINCT' in sql for sql,*_ in calls)
+    assert "WHERE r.id='183f97b6-feec-4dab-aecb-d20871f3e331'" in calls[-1][0]
+    assert 'UPDATE account_usage' in calls[-1][0]
+    assert 'SELECT ticket FROM invalidated' in calls[-1][0]
+    assert "state='completed'" in calls[-1][0]

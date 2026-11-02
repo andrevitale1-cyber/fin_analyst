@@ -51,6 +51,16 @@ def create_tables(cur):
     )''')
     cur.execute('CREATE INDEX IF NOT EXISTS results_duels_user ON results_duels(user_id,created_at DESC)')
     cur.execute('CREATE INDEX IF NOT EXISTS results_duels_pending ON results_duels(state,created_at)')
+    # Correct only the private QA duel generated during this rollout, never other customers' usage.
+    cur.execute("""WITH invalidated AS (
+        UPDATE results_duels r SET state='failed',error_code='cash_basis_invalidated',updated_at=NOW()
+        WHERE r.id='183f97b6-feec-4dab-aecb-d20871f3e331' AND state='completed' AND EXISTS (
+            SELECT 1 FROM jsonb_array_elements(COALESCE(r.content->'dimensions','[]'::jsonb)) d
+            WHERE d->>'id'='cash' AND d->>'winner'<>'insufficient')
+        AND (SELECT COUNT(DISTINCT f->>'side') FROM jsonb_array_elements(COALESCE(r.content->'facts','[]'::jsonb)) f
+             WHERE f->>'basis'='current' AND f->>'metric' IN ('operating_cash_flow','free_cash_flow'))<2
+        RETURNING ticket)
+        UPDATE account_usage SET state='failed' WHERE state='completed' AND id IN (SELECT ticket FROM invalidated)""")
 
 
 def parse_period(year, quarter, meta):

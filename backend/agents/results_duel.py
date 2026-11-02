@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from openai_client import OpenAIClient, model_for_task
 from agents.prompt_builder import QUALITY_RULES, QUARTERLY_FIELDS, SCORE_RUBRIC
 
-VERSION = 'results-duel-v1'
+VERSION = 'results-duel-v2'
 DIMENSIONS = ('growth', 'profitability', 'cash', 'balance', 'outlook')
 METRICS = Literal['revenue', 'net_income', 'operating_margin', 'gross_margin', 'operating_cash_flow',
                   'free_cash_flow', 'net_debt', 'roe', 'credit_loss', 'capital_ratio', 'eps', 'same_store_sales']
@@ -123,7 +123,7 @@ def checked_facts(raw, participants):
                          'ratio': r'ratio|[íi]ndice|[x×]|vezes', 'count': r'units|unidades|shares|a[cç][oõ]es|customers|clientes'}
         if not re.search(unit_patterns[unit], unit_quote, re.I):
             continue
-        if unit.startswith('currency') and (not fact['currency'] or not re.fullmatch('[A-Z]{3}', fact['currency'])):
+        if unit.startswith('currency') and fact['currency'] is not None and not re.fullmatch('[A-Z]{3}', fact['currency']):
             continue
         if unit == 'currency_units' and re.search(r'million|billion|thousand|milh|bilh', unit_quote, re.I):
             continue
@@ -132,9 +132,13 @@ def checked_facts(raw, participants):
                                 'BRL':r'\bBRL\b|R\$|reais', 'JPY':r'\bJPY\b|yen|iene',
                                 'KRW':r'\bKRW\b|\bwon\b', 'EUR':r'\bEUR\b|euro|€'}.get(fact['currency'], re.escape(fact['currency']))
             if not re.search(currency_pattern, quote+' '+unit_quote, re.I):
-                continue
+                fact['currency'] = None
         if not unit.startswith('currency') and fact['currency'] is not None:
             continue
+        if fact['metric'] in ('operating_cash_flow','free_cash_flow') and fact['basis'] != 'guidance':
+            context = quote+' '+unit_quote
+            if re.search(r'(?:six|nine|twelve|seis|nove|doze)\s+(?:months|meses)',context,re.I) and not re.search(r'(?:three|tr[eê]s)\s+(?:months|meses)',context,re.I):
+                continue  # A cumulative cash-flow statement is not evidence of a standalone fiscal quarter.
         key = fact['side'], fact['metric'], fact['basis'], fact['accounting_basis']
         if key in seen:  # Ambiguous GAAP/adjusted duplicates are not silently interchangeable.
             accepted = [f for f in accepted if (f['side'], f['metric'], f['basis'], f['accounting_basis']) != key]
@@ -154,6 +158,8 @@ def comparisons(facts):
         for basis in ('prior_year', 'prior_quarter'):
             previous = by_key.get((current['side'], current['metric'], basis, current['accounting_basis']))
             if not previous or (current['unit'], current['currency']) != (previous['unit'], previous['currency']):
+                continue
+            if current['unit'].startswith('currency') and current['currency'] is None and current['unit_quote'] != previous['unit_quote']:
                 continue
             change = round(current['value'] - previous['value'], 4)
             output.append({'side': current['side'], 'metric': current['metric'], 'basis': basis,
@@ -188,6 +194,8 @@ def validate_verdict(raw, participants, calculated):
     allowed = set()
     issues = []
     for dimension in result['dimensions']:
+        if dimension['id']=='cash' and dimension['winner']!='insufficient' and any(p.get('quarter_cash_verified') is False for p in participants):
+            issues.append({'field':'cash/winner','issue':'missing_comparable_quarter_cash','required':'insufficient'})
         for side, field in (('A', 'left'), ('B', 'right')):
             quote = dimension[field + '_quote']
             supporting = dimension[field + '_supporting_quotes']
@@ -221,6 +229,10 @@ def validate_verdict(raw, participants, calculated):
         issues.append({'field':'confidence', 'issue':'insufficient_evidence', 'required':'low'})
     if any(not p.get('period_end') for p in participants) and result['confidence'] == 'high':
         issues.append({'field':'confidence', 'issue':'unknown_fiscal_dates', 'required':'moderate or low'})
+    known_currencies = {currency for p in participants for currency in p.get('verified_currencies',[])}
+    all_prose = ' '.join([result['summary'],result['conclusion'],*[d['reason']+' '+d['left_assessment']+' '+d['right_assessment'] for d in result['dimensions']]])
+    if len(known_currencies)<2 and re.search(r'(?:moedas|currenc(?:y|ies)).{0,20}(?:diferentes|distintas|differ)|(?:different|distinct).{0,15}currenc|(?:diferentes|distintas).{0,15}moedas',all_prose,re.I):
+        issues.append({'field':'comparability/currency','issue':'currency_difference_not_established','required':'do not claim that currencies differ'})
     if issues:
         raise DuelValidationError(issues)
     return result
@@ -260,7 +272,8 @@ Only the supplied PRIMARY documents establish facts. The previous AI analysis is
 Each fact must have quote_id identifying a supplied passage containing its unconverted number,
 and unit_quote_id identifying a supplied passage establishing scale/unit. Reference passage IDs; do not copy or reconstruct quotes.
 Both passage IDs must belong to the fact's side. Choose currency_thousands when a filing reports amounts in thousands.
-Currency must be explicit, not inferred from the company domicile. Use ISO currency codes or omit the fact.
+Currency must be explicit, not inferred from the company domicile. Use ISO codes when established, or null when ambiguous;
+retain the exact unconverted amount and scale even if a currency code cannot be established.
 Keep GAAP and non-GAAP separate: prefer GAAP; never label adjusted figures as GAAP. Do not duplicate a metric/basis.
 current means the requested standalone quarter; prior_year the matching quarter a year earlier; prior_quarter the immediately preceding fiscal quarter.
 Do not label six/nine-month accumulated figures as standalone quarterly results. Guidance remains guidance.
@@ -278,6 +291,8 @@ PARTICIPANTS: {source_json}''', fact_schema, max_output_tokens=3300, timeout=75)
         raw = {'facts':resolved}
         facts = checked_facts(raw, participants)
         calculated = comparisons(facts)
+        participants = [{**p, 'quarter_cash_verified':any(f['side']==p['side'] and f['metric'] in ('operating_cash_flow','free_cash_flow') and f['basis']=='current' for f in facts),
+                         'verified_currencies':sorted({f['currency'] for f in facts if f['side']==p['side'] and f['currency']})} for p in participants]
         judgment_schema = Verdict.model_json_schema()
         for field in ('left_quote','right_quote'):
             definition = judgment_schema['$defs']['Dimension']
@@ -299,6 +314,9 @@ retail/industry require margins, working capital and operating/free cash. Flag c
 Equal dimension weight: verdict is insufficient when fewer than three dimensions have evidence on both sides;
 otherwise tie if A/B win counts equal or neither wins at least two dimensions; otherwise side with more dimension wins.
 Missing information is NOT poor performance: mark insufficient rather than awarding the other company a win.
+Cash must be insufficient unless both sides have verified standalone-quarter operating/free cash-flow facts.
+Do not use a cash BALANCE or cumulative six/nine-month cash flow as a substitute for quarterly cash generation.
+Never claim currencies differ unless two distinct ISO codes are verified. Unknown currency is not a different currency.
 Prospective guidance is not realized performance. Do not penalize a record quarter merely for hypothetical risks.
 For each dimension provide both assessments, left_evidence_ids from A and right_evidence_ids from B and a concise reason.
 Reference ONLY supplied passage IDs. The server inserts the original excerpts; never reconstruct or translate quotes.
@@ -314,6 +332,7 @@ In reader-facing prose use company names or tickers, never internal A/B labels, 
 The conclusion must agree with the dimension tally. Limit the complete narrative to about 700 words.
 SHARED QUARTERLY RULES: {QUALITY_RULES}\n{json.dumps(QUARTERLY_FIELDS, ensure_ascii=False)}\n{SCORE_RUBRIC}
 CHECKED FACTS: {json.dumps([{k:v for k,v in f.items() if k not in ('quote','unit_quote')} for f in facts], ensure_ascii=False)}
+MANDATORY EVIDENCE AVAILABILITY: {json.dumps([{'side':p['side'],'quarter_cash_verified':p['quarter_cash_verified'],'verified_currencies':p['verified_currencies']} for p in participants])}
 CALCULATED CHANGES: {json.dumps(calculated, ensure_ascii=False)}
 PARTICIPANTS AND UNTRUSTED PRIMARY EVIDENCE: {source_json}'''
         def verified(raw):

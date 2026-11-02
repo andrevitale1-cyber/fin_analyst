@@ -37,6 +37,7 @@ export default function CompanyComparison({ premium, onUpgrade, onOpenAnalysis, 
   const [leftId, setLeftId] = useState(''), [rightId, setRightId] = useState('');
   const [starting, setStarting] = useState(false), [duelError, setDuelError] = useState('');
   const [jobId, setJobId] = useState(''), [job, setJob] = useState<Duel | null>(null), [pollRevision, setPollRevision] = useState(0);
+  const formJob = useRef('');
   const usageCallback = useRef(onUsageChange);
   usageCallback.current = onUsageChange;
   const metrics = en ? {nota_geral:'Overall score', receita_nota:'Revenue', lucro_nota:'Net income', divida_nota:'Net debt', rentabilidade_nota:'Profitability'} : {nota_geral:'Nota geral', receita_nota:'Receita', lucro_nota:'Lucro líquido', divida_nota:'Dívida líquida', rentabilidade_nota:'Rentabilidade'};
@@ -85,6 +86,11 @@ export default function CompanyComparison({ premium, onUpgrade, onOpenAnalysis, 
         const next: Duel = await request('/duels/' + encodeURIComponent(jobId), {signal:controller.signal});
         if (controller.signal.aborted) return;
         setJob(next);
+        if (formJob.current !== next.id) {
+          const a=next.participants.find(p=>p.side==='A'), b=next.participants.find(p=>p.side==='B');
+          if(a&&b){setLeftSymbol(a.symbol);setLeftId(String(a.id));setRightSymbol(b.symbol);setRightId(String(b.id));}
+          formJob.current=next.id;
+        }
         if (['queued','running'].includes(next.state)) timer = setTimeout(poll, 2200);
         else {
           usageCallback.current();
@@ -131,11 +137,6 @@ export default function CompanyComparison({ premium, onUpgrade, onOpenAnalysis, 
   };
 
   function openJob(id: string) {
-    const saved = history.find(item => item.id === id);
-    if (saved) {
-      const a = saved.participants.find(p => p.side==='A'), b = saved.participants.find(p => p.side==='B');
-      if (a && b) { setLeftSymbol(a.symbol); setLeftId(String(a.id)); setRightSymbol(b.symbol); setRightId(String(b.id)); }
-    }
     setTab('duel'); setJob(null); setJobId(id); setPollRevision(value => value+1);
     window.history.replaceState(null, '', `/${locale}/dashboard?view=comparison&duel=${encodeURIComponent(id)}`);
   }
