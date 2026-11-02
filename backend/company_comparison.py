@@ -62,7 +62,7 @@ def parse_period(year, quarter, meta):
     except (ValueError, TypeError, AttributeError):
         pass
     match = re.search(r'([1-4])[TQ]/(\d{4})', str(meta.get('periodo', '')), re.I)
-    return (int(match[2]), int(match[1])) if match else (None, None)
+    return (int(match[2]), int(match[1])) if match and 1990 <= int(match[2]) <= 2100 else (None, None)
 
 
 def period_end(meta, source):

@@ -255,6 +255,7 @@ def test_sec_fiscal_focus_is_not_a_calendar_quarter(setup):
     row=next(row for row in http.get('/api/company-comparison/analyses').json()['analyses'] if row['id']==6)
     assert row['duel_eligible'] and row['quarter']==2 and row['year']==2026
     assert row['period_end']=='2025-12-31'
+    assert comparison.parse_period('invalid','invalid',{'periodo':'1T/1000'})==(None,None)
 
 
 def test_new_duel_is_blocked_when_monthly_allowance_is_exhausted(setup):

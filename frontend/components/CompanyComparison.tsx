@@ -131,6 +131,11 @@ export default function CompanyComparison({ premium, onUpgrade, onOpenAnalysis, 
   };
 
   function openJob(id: string) {
+    const saved = history.find(item => item.id === id);
+    if (saved) {
+      const a = saved.participants.find(p => p.side==='A'), b = saved.participants.find(p => p.side==='B');
+      if (a && b) { setLeftSymbol(a.symbol); setLeftId(String(a.id)); setRightSymbol(b.symbol); setRightId(String(b.id)); }
+    }
     setTab('duel'); setJob(null); setJobId(id); setPollRevision(value => value+1);
     window.history.replaceState(null, '', `/${locale}/dashboard?view=comparison&duel=${encodeURIComponent(id)}`);
   }
