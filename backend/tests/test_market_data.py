@@ -51,7 +51,7 @@ def test_twelve_prices_are_sorted_and_provider_errors_are_optional(monkeypatch):
 
 def test_reaction_requires_publication_date_and_event_prices(monkeypatch):
     snapshot = Mock(return_value={'points':[{'time':'2026-03-17','close':100},{'time':'2026-03-18','close':110},{'time':'2026-03-19','close':112}], 'source':'Twelve Data','sourceUrl':'https://twelvedata.com/docs','currency':'USD'})
-    monkeypatch.setattr(market_data,'market_snapshot',snapshot)
+    monkeypatch.setattr(market_data,'earnings_prices',snapshot)
     assert market_data.reaction_prompt('MU','quarter ended February 26, 2026') == ''
     snapshot.assert_not_called()
     prompt = market_data.reaction_prompt('MU','March 18, 2026 (GLOBE NEWSWIRE) announces results')
@@ -61,7 +61,7 @@ def test_reaction_requires_publication_date_and_event_prices(monkeypatch):
 
 def test_reaction_window_uses_trading_sessions_and_separates_pre_release_move(monkeypatch):
     import json
-    monkeypatch.setattr(market_data, 'market_snapshot', lambda *args: {
+    monkeypatch.setattr(market_data, 'earnings_prices', lambda *args: {
         'points': [{'time':'2026-10-28','close':100}, {'time':'2026-10-29','close':102},
                    {'time':'2026-10-30','close':99}, {'time':'2026-11-02','close':103}],
         'source':'Twelve Data','sourceUrl':'https://twelvedata.com/docs','currency':'USD'})
@@ -89,3 +89,40 @@ def test_quarterly_prompt_requires_market_judgment_and_long_term_evidence(locale
     assert 'se o horário não estiver verificado' in prompt
     assert 'use inconclusiva' in prompt
     assert 'Retome o julgamento em uma frase na Conclusão IA' in prompt
+
+
+@pytest.mark.parametrize('text,event', [
+    ('SEATTLE—(BUSINESS WIRE) October 29, 2026—Amazon today announced financial results for its third quarter ended September 30, 2026.', '2026-10-29'),
+    ('São Paulo, 29 de outubro de 2026 — divulga os resultados do trimestre encerrado em 30 de setembro de 2026.', '2026-10-29'),
+])
+def test_publication_date_is_not_confused_with_quarter_end(monkeypatch, text, event):
+    prices = Mock(return_value={'points':[{'time':'2026-10-28','close':100},
+        {'time':'2026-10-29','close':98},{'time':'2026-10-30','close':99}],
+        'source':'Twelve Data','sourceUrl':'https://twelvedata.com/docs'})
+    monkeypatch.setattr(market_data,'earnings_prices',prices)
+    assert 'CONTEXTO DE MERCADO VERIFICADO' in market_data.reaction_prompt('AMZN',text)
+    prices.assert_called_once_with('AMZN',event)
+
+
+def test_earnings_query_targets_event_dates_and_caches_success_only(monkeypatch):
+    monkeypatch.setenv('TWELVE_DATA_API_KEY','test')
+    market_data._cache.clear()
+    get = Mock(side_effect=[{}, {'meta':{'symbol':'AMZN','currency':'USD'},'values':[
+        {'datetime':'2024-10-31','close':'100'}, {'datetime':'2024-11-01','close':'105'}]}])
+    monkeypatch.setattr(market_data,'_json',get)
+    assert market_data.earnings_prices('AMZN','2024-10-31') == {}
+    result = market_data.earnings_prices('AMZN','2024-10-31')
+    assert len(result['points']) == 2
+    assert market_data.earnings_prices('AMZN','2024-10-31') == result
+    assert get.call_count == 2
+    url, params, _ = get.call_args.args
+    assert url.endswith('/time_series') and params['symbol'] == 'AMZN'
+    assert params['start_date']=='2024-10-21' and params['end_date']=='2024-11-07'
+    assert params['interval']=='1day' and params['outputsize']==30
+
+
+def test_earnings_query_rejects_wrong_company(monkeypatch):
+    monkeypatch.setenv('TWELVE_DATA_API_KEY','test')
+    market_data._cache.clear()
+    monkeypatch.setattr(market_data,'_json',lambda *a: {'meta':{'symbol':'MSFT'},'values':[{'datetime':'2026-10-29','close':'100'}]})
+    assert market_data.earnings_prices('AMZN','2026-10-29') == {}
