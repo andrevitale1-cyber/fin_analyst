@@ -138,19 +138,36 @@ class SECFetcher:
         text = soup.get_text("\n", strip=True)
         if not text.strip():
             return None
-        if exhibit and re.search(r"results of operations|financial results|earnings|quarterly results", text, re.I):
-            for link in soup.find_all("a", href=True):
-                if not re.search(r"99|exhibit|earnings|release", link["href"] + link.get_text(), re.I):
-                    continue
-                exhibit_url = urljoin(url, link["href"])
-                if urlparse(exhibit_url).netloc != "www.sec.gov" or not exhibit_url.startswith(url.rsplit("/", 1)[0] + "/"):
-                    continue
-                exhibit_response = self._get(exhibit_url)
-                if exhibit_response.content.startswith(b"%PDF-"):
-                    return FetchedDocument(exhibit_url, "SEC", pdf_bytes=exhibit_response.content)
-                exhibit_soup = BeautifulSoup(exhibit_response.text, "html.parser")
-                for tag in exhibit_soup(["script", "style"]):
-                    tag.decompose()
-                text += "\n" + exhibit_soup.get_text("\n", strip=True)
-                break
+        if exhibit:
+            return self.fetch_earnings_exhibit(url, soup)
         return FetchedDocument(url, "SEC", text=text[:180000])
+
+    @staticmethod
+    def has_financial_results(text):
+        return bool(re.search(r"(?:net sales|total revenue|net revenue|revenues|net income|operating income)[\s\S]{0,150}\d", text, re.I))
+
+    def fetch_earnings_exhibit(self, url, soup):
+        # An 8-K notice is not the earnings release; follow actual exhibit files, not TOC anchors.
+        links = sorted(soup.find_all("a", href=True), key=lambda a: not bool(re.search(r"(?:ex)?99[-_.]?1", a["href"], re.I)))
+        seen = {urlparse(url)._replace(fragment="").geturl()}
+        for link in links:
+            if not re.search(r"99|exhibit|earnings|release", link["href"] + link.get_text(), re.I):
+                continue
+            target = urlparse(urljoin(url, link["href"]))._replace(fragment="").geturl()
+            if target in seen or urlparse(target).netloc != "www.sec.gov" or not target.startswith(url.rsplit("/", 1)[0] + "/"):
+                continue
+            seen.add(target)
+            try:
+                response = self._get(target)
+                if response.content.startswith(b"%PDF-"):
+                    return FetchedDocument(target, "SEC", pdf_bytes=response.content)
+                exhibit = BeautifulSoup(response.text, "html.parser")
+                for tag in exhibit(["script", "style"]):
+                    tag.decompose()
+                text = exhibit.get_text("\n", strip=True)
+                if self.has_financial_results(text):
+                    return FetchedDocument(target, "SEC", text=text[:180000])
+            except requests.RequestException:
+                continue
+        text = soup.get_text("\n", strip=True)
+        return FetchedDocument(url, "SEC", text=text[:180000]) if self.has_financial_results(text) else None

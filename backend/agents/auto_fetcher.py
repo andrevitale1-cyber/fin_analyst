@@ -172,7 +172,7 @@ class AutoFetcher:
         if ticker == original_ticker and ticker != "SK HYNIX" and ticker not in self.ir_urls and not re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
             ticker = SECFetcher().resolve_name(ticker) or self._resolve_b3_name(ticker) or ticker
         logger.info("release_lookup issuer=%s year=%s quarter=%s", ticker, year, quarter)
-        cache_path = self.cache_dir / f"fiscal-v2-{ticker}-{year}-{quarter}.json"
+        cache_path = self.cache_dir / f"fiscal-v3-{ticker}-{year}-{quarter}.json"
         try:
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
             cached["pdf_bytes"] = base64.b64decode(cached["pdf_bytes"], validate=True)
@@ -516,7 +516,8 @@ class AutoFetcher:
         if not self._valid_url(url):
             return None
         try:
-            response = requests.get(url, timeout=timeout)
+            response = (SECFetcher()._get(url) if urlparse(url).hostname == "www.sec.gov"
+                        else requests.get(url, timeout=timeout))
             response.raise_for_status()
             if not self._valid_url(response.url):
                 return None
@@ -531,6 +532,14 @@ class AutoFetcher:
                 catalog = self._mziq_release_candidates(soup, year, quarter) if depth == 0 else []
                 for tag in soup(["script", "style", "nav", "footer"]):
                     tag.decompose()
+                if (urlparse(response.url).hostname == "www.sec.gov"
+                        and re.search(r"FORM\s+8-K", soup.get_text(" ", strip=True), re.I)):
+                    document = SECFetcher().fetch_earnings_exhibit(response.url, soup)
+                    if not document:
+                        return None
+                    if document.pdf_bytes:
+                        return document if self._period_matches(OpenAIClient.extract_text(document.pdf_bytes)[:10000], year, quarter) else None
+                    return document if self._period_matches(document.text[:10000], year, quarter) else None
                 if depth == 0:
                     linked = catalog + [
                         {"title": a.get_text(" ", strip=True), "url": urljoin(response.url, a["href"])}

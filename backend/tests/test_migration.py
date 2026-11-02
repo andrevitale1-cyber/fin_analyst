@@ -263,6 +263,48 @@ def test_sec_fourth_quarter_does_not_return_annual_filing(monkeypatch):
     assert fetcher.fetch("MU", 2026, 4) is None
 
 
+def test_sec_web_result_follows_exhibit_without_period_in_link_title(monkeypatch):
+    url = 'https://www.sec.gov/Archives/edgar/data/1018724/0001/amzn.htm'
+    cover = '<html>FORM 8-K Item 2.02 Third quarter 2026<a href="#ex99">Exhibit 99</a><a href="amzn-ex991.htm">Press Release dated</a></html>'
+    release = '<html>Amazon third quarter 2026 Net sales increased to $201.9 billion. Net income was $20.7 billion.</html>'
+    calls = []
+    def get(self, target):
+        calls.append(target)
+        html = cover if target == url else release
+        return Mock(text=html, content=html.encode(), url=target, headers={'Content-Type':'text/html'})
+    monkeypatch.setattr(SECFetcher, '_get', get)
+    document = AutoFetcher()._download_release(url, 2026, 3)
+    assert document.url.endswith('/amzn-ex991.htm')
+    assert '201.9' in document.text and document.source == 'SEC'
+    assert calls == [url, url.rsplit('/', 1)[0]+'/amzn-ex991.htm']
+
+
+def test_sec_notice_without_financial_exhibit_is_rejected(monkeypatch):
+    from bs4 import BeautifulSoup
+    url = 'https://www.sec.gov/Archives/edgar/data/1/2/cover.htm'
+    soup = BeautifulSoup('<html>FORM 8-K Third quarter 2026 earnings release<a href="#99">99.1</a><a href="https://other.example/99.htm">99.1</a></html>', 'html.parser')
+    fetcher = SECFetcher()
+    get = Mock()
+    monkeypatch.setattr(fetcher, '_get', get)
+    assert fetcher.fetch_earnings_exhibit(url, soup) is None
+    get.assert_not_called()
+
+
+@pytest.mark.parametrize('route', ['analyze', 'analyze-auto'])
+def test_unrateable_quarterly_analysis_is_not_saved_or_charged(api, monkeypatch, openai_client, route):
+    main, client = api
+    conn = Mock()
+    conn.cursor.return_value.fetchone.return_value = None
+    monkeypatch.setattr(main, 'get_db_connection', lambda: conn)
+    monkeypatch.setattr(OpenAIClient, 'analyze_document', lambda *a, **k: 'Section Score 1: Not rateable\nOverall Score: Not rateable')
+    monkeypatch.setattr(AutoFetcher, 'fetch_result_pdf', lambda *a: FetchedDocument('https://www.sec.gov/release.htm', 'SEC', text='Amazon third quarter 2026'))
+    response = client.post('/api/'+route, data={'ticker':'AMZN','empresa':'AMZN','ano':'2026','trimestre':'3T','user_id':'test','locale':'en'}, files={'file':('release.pdf',b'%PDF-test')})
+    assert response.status_code == 422
+    assert 'No analysis was saved or charged' in response.json()['detail']
+    statements = [call.args[0] for call in conn.cursor.return_value.execute.call_args_list]
+    assert not any('INSERT INTO historico' in sql or "state='completed'" in sql for sql in statements)
+
+
 def test_openai_web_search_without_tavily(monkeypatch, openai_client):
     from agents.search_client import SearchClient
     monkeypatch.delenv("TAVILY_API_KEY", raising=False)

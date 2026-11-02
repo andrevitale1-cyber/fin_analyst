@@ -314,6 +314,14 @@ def parse_results(text):
         "chart_data": get_chart_data(text),
     }
 
+
+def validate_quarterly_result(data, locale):
+    if not all(data.get(key) and 1 <= data[key] <= 5 for key in
+               ("receita_nota", "rentabilidade_nota", "divida_nota", "lucro_nota", "nota_geral")):
+        message = ("The source did not provide enough information for a complete analysis. No analysis was saved or charged. Please try again or upload the earnings release."
+                   if locale == "en" else "A fonte não permitiu uma análise completa. Nenhuma análise foi salva ou cobrada. Tente novamente ou envie o release de resultados.")
+        raise HTTPException(422, message)
+
 # --- ROTAS ---
 @app.get("/")
 def read_root():
@@ -363,6 +371,7 @@ async def analyze_report(
         
         print("⚙️ [PASSO 6] Parseando os resultados para JSON...")
         dados_estruturados = parse_results(response_text)
+        validate_quarterly_result(dados_estruturados, locale)
         
         objeto_final = {
             "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}", "locale": locale, "scoring_version": PromptBuilder.scoring_version() },
@@ -482,6 +491,7 @@ async def analyze_report_auto(
 
         # 6. Parse e Salvar
         dados_estruturados = parse_results(response_text)
+        validate_quarterly_result(dados_estruturados, locale)
         objeto_final = {
             "metadata": { "empresa": ticker, "periodo": f"{trimestre}/{ano}", "locale": locale, "scoring_version": PromptBuilder.scoring_version() },
             "data": dados_estruturados,
