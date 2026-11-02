@@ -56,7 +56,7 @@ def test_reaction_requires_publication_date_and_event_prices(monkeypatch):
     snapshot.assert_not_called()
     prompt = market_data.reaction_prompt('MU','March 18, 2026 (GLOBE NEWSWIRE) announces results')
     assert '2026-03-17' in prompt and '2026-03-19' in prompt
-    assert 'não atribua causalidade' in prompt
+    assert 'causalidade exclusiva' in prompt
 
 
 def test_reaction_window_uses_trading_sessions_and_separates_pre_release_move(monkeypatch):
@@ -74,7 +74,7 @@ def test_reaction_window_uses_trading_sessions_and_separates_pre_release_move(mo
     assert data['calculatedChangesPercent'] == {
         'eveVsPrevious':2.0, 'releaseVsEve':-2.9412,
         'nextVsPrevious':4.0404, 'nextVsPreRelease':0.9804}
-    assert 'acontecimentos de longo prazo' in prompt
+    assert 'efeito de longo prazo' in prompt
 
 
 @pytest.mark.parametrize('locale', ['pt','en'])
@@ -83,11 +83,14 @@ def test_quarterly_prompt_requires_market_judgment_and_long_term_evidence(locale
     prompt = PromptBuilder().build_prompt('AMZN','Quarterly release',locale=locale,periodo='3T/2026')
     assert '**Reação do mercado:** / **Market reaction:**' in prompt
     assert '**queda exagerada**' in prompt and '**alta exagerada**' in prompt and '**reação justa**' in prompt
-    assert 'acontecimentos de longo prazo mencionados no resultado' in prompt
-    assert 'demanda/backlog e contratos quantificados' in prompt
-    assert 'Não considere capex positivo automaticamente' in prompt
-    assert 'se o horário não estiver verificado' in prompt
-    assert 'use inconclusiva' in prompt
+    assert 'efeito de longo prazo' in prompt
+    assert 'contratos/backlog' in prompt
+    assert 'Não trate capex como positivo automaticamente' in prompt
+    assert 'NÃO são pré-requisitos' in prompt
+    assert 'não justifica classificar como inconclusiva' in prompt
+    assert 'nextVsPreRelease' in prompt and 'não confunda com a variação diária nextVsPrevious' in prompt
+    assert 'Não mencione Twelve Data, brapi' in prompt
+    assert 'pelo menos dois fatos materiais' in prompt
     assert 'Retome o julgamento em uma frase na Conclusão IA' in prompt
 
 
