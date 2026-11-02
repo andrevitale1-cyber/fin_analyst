@@ -72,7 +72,7 @@ def period_end(meta, source):
             return datetime.fromisoformat(value).date().isoformat()
         except ValueError:
             pass
-    match = re.search(r'(?:quarterly period|quarter|three months)\s+(?:ended|ending)\s+([A-Za-z]+\s+\d{1,2},?\s+20\d{2})', normalized(source[:60000]), re.I)
+    match = re.search(r'(?:quarterly period|quarter|three months)\b.{0,65}?\b(?:ended|ending)\s+([A-Za-z]+\s+\d{1,2},?\s+20\d{2})', normalized(source[:60000]), re.I)
     if match:
         try:
             return datetime.strptime(match[1].replace(',', ''), '%B %d %Y').date().isoformat()
@@ -351,14 +351,24 @@ def process(job):
             conn.close()
     except Exception as exc:
         cancel_usage(ticket)
+        error_code = 'verification_failed'
+        known_errors = {'Invalid evidence reference':'citation_side', 'Invalid watchpoint reference':'watchpoint_side',
+                        'Citation does not match primary evidence':'citation_mismatch', 'Watchpoint lacks primary evidence':'citation_mismatch',
+                        'Duel inputs changed':'input_changed', 'Stale duel inputs':'input_changed', 'Duel no longer active':'interrupted'}
+        if type(exc) is ValueError:
+            error_code = known_errors.get(str(exc),error_code)
+        if getattr(exc, 'issues', None):
+            error_code = 'evidence_' + str(exc.issues[0].get('issue', 'invalid'))
+        elif getattr(exc, 'status_code', None):
+            error_code = 'provider_' + str(exc.status_code)
         conn = connection()
         try:
             with conn.cursor() as cur:
-                cur.execute("UPDATE results_duels SET state='failed',error_code='verification_failed',updated_at=NOW() WHERE id=%s AND state='running'", (job_id,))
+                cur.execute("UPDATE results_duels SET state='failed',error_code=%s,updated_at=NOW() WHERE id=%s AND state='running'", (error_code,job_id))
             conn.commit()
         finally:
             conn.close()
-        logger.warning('results_duel_failed job=%s error_type=%s', job_id, type(exc).__name__)
+        logger.warning('results_duel_failed job=%s error_type=%s code=%s', job_id, type(exc).__name__,error_code)
 
 
 def worker():

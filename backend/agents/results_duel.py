@@ -174,12 +174,19 @@ def expected_verdict(dimensions):
     return 'A' if a > b else 'B'
 
 
+class DuelValidationError(ValueError):
+    def __init__(self, issues):
+        self.issues = issues
+        super().__init__(json.dumps(issues, ensure_ascii=False))
+
+
 def validate_verdict(raw, participants, calculated):
     result = Verdict.model_validate(raw).model_dump()
     if set(d['id'] for d in result['dimensions']) != set(DIMENSIONS):
         raise ValueError('Incomplete duel dimensions')
     sources = {p['side']: normalized(p.get('_original_evidence', p['evidence'])) for p in participants}
     allowed = set()
+    issues = []
     for dimension in result['dimensions']:
         for side, field in (('A', 'left'), ('B', 'right')):
             quote = dimension[field + '_quote']
@@ -187,32 +194,35 @@ def validate_verdict(raw, participants, calculated):
             assessment = dimension[field + '_assessment']
             if quote is None:
                 if dimension['winner'] != 'insufficient' or numbers(assessment) or supporting:
-                    raise ValueError('Unsubstantiated assessment')
+                    issues.append({'field':f'{dimension["id"]}/{side}', 'issue':'missing_evidence', 'numbers':sorted(numbers(assessment))})
                 continue
             quotes = [quote, *supporting]
             if any(len(item.strip()) < 8 or normalized(item) not in sources[side] for item in quotes):
                 raise ValueError('Citation does not match primary evidence')
             permitted = numbers(' '.join(quotes)) | numbers(json.dumps([c for c in calculated if c['side'] == side]))
             if not numbers(assessment).issubset(permitted):
-                raise ValueError(f'Unsupported numeric claims: {dimension["id"]}/{side}. Cite all relevant passages or remove unsupported numbers.')
+                issues.append({'field':f'{dimension["id"]}/{side}', 'issue':'unsupported_numbers', 'numbers':sorted(numbers(assessment)-permitted)})
             allowed |= permitted
-        if not numbers(dimension['reason']).issubset(allowed):
-            raise ValueError('Unsupported reason')
     for watchpoint in result['watchpoints']:
         quotes = [watchpoint['quote'], *watchpoint['supporting_quotes']]
         if any(normalized(quote) not in sources[watchpoint['side']] for quote in quotes):
             raise ValueError('Watchpoint lacks primary evidence')
         if not numbers(watchpoint['text']).issubset(numbers(' '.join(quotes))):
-            raise ValueError('Unsupported watchpoint')
+            issues.append({'field':f'watchpoint/{watchpoint["side"]}', 'issue':'unsupported_numbers', 'numbers':sorted(numbers(watchpoint['text'])-numbers(' '.join(quotes)))})
         allowed |= numbers(' '.join(quotes))
+    for dimension in result['dimensions']:
+        if not numbers(dimension['reason']).issubset(allowed):
+            issues.append({'field':dimension['id']+'/reason', 'issue':'unsupported_numbers', 'numbers':sorted(numbers(dimension['reason'])-allowed)})
     if not numbers(result['summary'] + result['conclusion']).issubset(allowed):
-        raise ValueError('Unsupported conclusion')
+        issues.append({'field':'summary/conclusion', 'issue':'unsupported_numbers', 'numbers':sorted(numbers(result['summary']+result['conclusion'])-allowed)})
     if result['verdict'] != expected_verdict(result['dimensions']):
-        raise ValueError('Verdict contradicts dimension outcomes')
+        issues.append({'field':'verdict', 'issue':'contradicts_dimensions', 'required':expected_verdict(result['dimensions'])})
     if result['verdict'] == 'insufficient' and result['confidence'] != 'low':
-        raise ValueError('Insufficient evidence cannot have high confidence')
+        issues.append({'field':'confidence', 'issue':'insufficient_evidence', 'required':'low'})
     if any(not p.get('period_end') for p in participants) and result['confidence'] == 'high':
-        raise ValueError('Unverified fiscal end dates limit confidence')
+        issues.append({'field':'confidence', 'issue':'unknown_fiscal_dates', 'required':'moderate or low'})
+    if issues:
+        raise DuelValidationError(issues)
     return result
 
 
@@ -300,6 +310,7 @@ Preserve numeric notation exactly as written in your cited quote; use only suppl
 Do not invent amounts, quotes, currencies, periods, current scores, sources or forecasts. Prefer explanations without extra numbers.
 Confidence cannot be high if either fiscal end date is unknown. Insufficient verdict requires low confidence.
 Return a short summary, the five dimensions, up to four cited watchpoints and a concise conclusion.
+In reader-facing prose use company names or tickers, never internal A/B labels, passage IDs or references to the schema.
 The conclusion must agree with the dimension tally. Limit the complete narrative to about 700 words.
 SHARED QUARTERLY RULES: {QUALITY_RULES}\n{json.dumps(QUARTERLY_FIELDS, ensure_ascii=False)}\n{SCORE_RUBRIC}
 CHECKED FACTS: {json.dumps([{k:v for k,v in f.items() if k not in ('quote','unit_quote')} for f in facts], ensure_ascii=False)}
@@ -331,6 +342,7 @@ PARTICIPANTS AND UNTRUSTED PRIMARY EVIDENCE: {source_json}'''
             progress('verifying')
             repaired = self.client.analyze_full_report(prompt + '\nREPAIR YOUR PREVIOUS RESPONSE. Validation issue: ' + str(error) +
                 '\nSelect ALL supporting passage IDs for each side. Remove any claim you cannot cite. Do not invent or round numbers. '
+                'Fix EVERY listed issue in one response, including summary, watchpoints, confidence and verdict. '
                 'Recheck the dimension tally and verdict. Previous response:\n' + json.dumps(raw_result, ensure_ascii=False),
                 judgment_schema, max_output_tokens=4700, timeout=45)
             result = verified(repaired)

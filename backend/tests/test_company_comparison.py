@@ -292,3 +292,15 @@ def test_agent_makes_at_most_one_evidence_repair(monkeypatch):
     result=agent.ResultsDuelAgent().run(participants(),'en',stages.append)
     assert client.analyze_full_report.call_count==3 and stages==['facts','judging','verifying']
     assert result['verdict']=='A'
+
+
+def test_validation_reports_all_numeric_and_verdict_issues_in_one_repair():
+    raw=verdict()
+    raw['dimensions'][0]['left_assessment']='Revenue increased 95%.'
+    raw['dimensions'][1]['right_assessment']='Cash increased 89%.'
+    raw['verdict']='B'
+    with pytest.raises(agent.DuelValidationError) as error:
+        agent.validate_verdict(raw,participants(),[])
+    fields={issue['field'] for issue in error.value.issues}
+    assert {'growth/A','profitability/B','verdict'}.issubset(fields)
+    assert comparison.period_end({},'Micron announced its second quarter of fiscal 2026 ended February 26, 2026.')=='2026-02-26'

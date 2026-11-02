@@ -523,8 +523,6 @@ export default function FinancialDashboard() {
         </div>
 
         {currentView === 'comparison' && <CompanyComparison key={`${user?.id}:${locale}`} premium={isPremium} onUpgrade={() => setShowUpgradeModal(true)} onOpenAnalysis={id => void openComparedAnalysis(id)} onUsageChange={() => setAccessRetry(value => value+1)} />}
-        {currentView === 'result' && !result && openingAnalysis && <div role="status" className="flex items-center gap-3 p-8 text-slate-500"><Loader2 className="animate-spin"/>{locale==='en'?'Opening saved analysis…':'Abrindo análise salva…'}</div>}
-        {currentView === 'result' && !result && openAnalysisError && <div role="alert" className="rounded-2xl bg-amber-50 p-6 text-amber-900"><p>{locale==='en'?'Could not open this analysis.':'Não foi possível abrir esta análise.'}</p><button onClick={()=>handleNavClick('comparison')} className="mt-4 font-semibold">{locale==='en'?'Back to comparison':'Voltar à comparação'}</button></div>}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto pb-20">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 rounded-[2rem] border border-slate-200 bg-white/90 p-6 md:p-10 shadow-[0_24px_70px_rgba(38,57,94,0.10)]">
