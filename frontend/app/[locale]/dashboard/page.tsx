@@ -10,6 +10,7 @@ import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import CompanyLogo from "../../../components/CompanyLogo";
 import AnalysisMarketChart from "../../../components/AnalysisMarketChart";
 import ExportAnalysisPdf from "../../../components/ExportAnalysisPdf";
+import CompanyComparison from "../../../components/CompanyComparison";
 import ConfirmDeleteDialog from "../../../components/ConfirmDeleteDialog";
 import {
   LayoutDashboard, History, UploadCloud, FileText, ChevronLeft,
@@ -62,7 +63,7 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
     window.open(url.toString(), '_blank');
   };
   const plans = [
-    { premium: true, name: 'Premium', description: en ? 'More tools for your investment research.' : 'Mais ferramentas para suas pesquisas de investimento.', features: en ? ['50 quarterly or call analyses per month', 'Aggregated table and analysis history', 'Public and private company reports', 'Company comparison and PDF export'] : ['50 análises de resultados ou calls por mês', 'Tabela agregada e histórico de análises', 'Relatórios públicos e privados', 'Comparação de empresas e exportação em PDF'] },
+    { premium: true, name: 'Premium', description: en ? 'More tools for your investment research.' : 'Mais ferramentas para suas pesquisas de investimento.', features: en ? ['50 monthly analyses: results, calls and duels', 'Aggregated table and analysis history', 'Public and private company reports', 'Company comparison and PDF export'] : ['50 análises mensais: resultados, calls e duelos', 'Tabela agregada e histórico de análises', 'Relatórios públicos e privados', 'Comparação de empresas e exportação em PDF'] },
     { premium: false, name: en ? 'Free' : 'Grátis', description: en ? 'Start exploring financial research.' : 'Comece a explorar pesquisas financeiras.', features: en ? ['10 quarterly or call analyses with no expiry date', 'Aggregated table and analysis history', 'Access to public company reports', 'No automatic renewal'] : ['10 análises de resultados ou calls sem prazo de validade', 'Tabela agregada e histórico de análises', 'Acesso aos relatórios públicos', 'Sem renovação automática'] },
   ];
   return (
@@ -102,7 +103,7 @@ export default function FinancialDashboard() {
   accountRef.current = user?.id;
   useEffect(() => { setPendingDelete(null); setDeletingHistory(false); setDeleteHistoryError(""); }, [user?.id]);
 
-  const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'history' | 'result' | 'table' | 'comparison'>('dashboard');
   const [openingAnalysis, setOpeningAnalysis] = useState(true);
   const [openAnalysisError, setOpenAnalysisError] = useState(false);
   const analysisRequest = useRef<AbortController | null>(null);
@@ -197,7 +198,7 @@ export default function FinancialDashboard() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const view = params.get("view");
-    if (view === "history" || view === "table") setCurrentView(view);
+    if (view === "history" || view === "table" || view === "comparison") setCurrentView(view);
     const company = params.get("company")?.trim() || "";
     if (company && company.length <= 100 && !/[\u0000-\u001f]/.test(company)) setEmpresa(company);
   }, []);
@@ -209,12 +210,10 @@ export default function FinancialDashboard() {
     const controller = new AbortController();
     analysisRequest.current = controller;
     setOpeningAnalysis(true); setOpenAnalysisError(false);
-    getToken().then(token => fetch(`${API_BASE}/api/recent-analyses`, {signal:controller.signal,headers:{Authorization:`Bearer ${token}`}}))
-      .then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(rows => {
-        if (controller.signal.aborted || !Array.isArray(rows)) return;
-        const entry = rows.find((row:any) => String(row.id) === id);
-        if (!entry) throw new Error('Analysis unavailable');
-        setResult({...entry.result,id:entry.id}); setCurrentView('result'); setOpeningAnalysis(false);
+    getToken().then(token => fetch(`${API_BASE}/api/history/${id}`, {signal:controller.signal,headers:{Authorization:`Bearer ${token}`}}))
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(entry => {
+        if (controller.signal.aborted) return;
+        setResult(entry); setCurrentView('result'); setOpeningAnalysis(false);
       }).catch(() => { if (!controller.signal.aborted) { setOpenAnalysisError(true); setOpeningAnalysis(false); } });
     return () => controller.abort();
   }, [user?.id,getToken]);
@@ -316,11 +315,26 @@ export default function FinancialDashboard() {
     }
   };
 
-  const handleNavClick = (view: 'dashboard' | 'history' | 'table') => {
+  const handleNavClick = (view: 'dashboard' | 'history' | 'table' | 'comparison') => {
     analysisRequest.current?.abort(); setOpeningAnalysis(false); setOpenAnalysisError(false);
     setIsSidebarOpen(false);
     window.history.replaceState(null, '', `/${locale}/dashboard${view === 'dashboard' ? '' : `?view=${view}`}`);
     setCurrentView(view);
+  };
+
+  const openComparedAnalysis = async (id: number) => {
+    analysisRequest.current?.abort();
+    const controller = new AbortController(); analysisRequest.current = controller;
+    setResult(null); setCurrentView('result'); setOpeningAnalysis(true); setOpenAnalysisError(false);
+    window.history.replaceState(null, '', `/${locale}/dashboard?analysis=${id}`);
+    try {
+      const token = await getToken();
+      const response = await fetch(`${API_BASE}/api/history/${id}`, {signal:controller.signal,headers:{Authorization:`Bearer ${token}`}});
+      if (!response.ok) throw new Error();
+      const entry = await response.json();
+      if (!controller.signal.aborted) setResult(entry);
+    } catch { if (!controller.signal.aborted) setOpenAnalysisError(true); }
+    finally { if (!controller.signal.aborted) setOpeningAnalysis(false); }
   };
 
   const handleAnalyze = async () => {
@@ -491,7 +505,7 @@ export default function FinancialDashboard() {
           <div className="mt-auto mb-6 px-2">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
               <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold uppercase tracking-wider text-white/60">{locale === 'en' ? 'Your plan' : 'Seu plano'}</p><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white">{isPremium ? 'PREMIUM' : locale === 'en' ? 'FREE' : 'GRÁTIS'}</span></div>
-              <div className="mt-4 flex items-end justify-between gap-2"><div><p className="text-sm font-semibold text-white">{locale === 'en' ? 'Analyses remaining' : 'Análises restantes'}</p><p className="mt-1 text-xs leading-4 text-slate-400">{locale === 'en' ? 'Quarterly results and calls' : 'Resultados trimestrais e calls'}</p></div><span className="whitespace-nowrap text-lg font-bold text-white">{dailyRemaining.analysis ?? '—'}<span className="text-xs font-normal text-slate-400"> / {isPremium ? 50 : 10}</span></span></div>
+              <div className="mt-4 flex items-end justify-between gap-2"><div><p className="text-sm font-semibold text-white">{locale === 'en' ? 'Analyses remaining' : 'Análises restantes'}</p><p className="mt-1 text-xs leading-4 text-slate-400">{locale === 'en' ? (isPremium ? 'Results, calls and duels' : 'Quarterly results and calls') : (isPremium ? 'Resultados, calls e duelos' : 'Resultados trimestrais e calls')}</p></div><span className="whitespace-nowrap text-lg font-bold text-white">{dailyRemaining.analysis ?? '—'}<span className="text-xs font-normal text-slate-400"> / {isPremium ? 50 : 10}</span></span></div>
               <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-4 text-slate-400">{isPremium ? (locale === 'en' ? '50 analyses per calendar month.' : '50 análises por mês calendário.') : (locale === 'en' ? '10 analyses in total, with no expiry date. No automatic reset.' : '10 análises no total, sem prazo de validade. Sem renovação automática.')}</p>
               {!isPremium && <button onClick={() => setShowUpgradeModal(true)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#1a1aff] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[#4032ff]"><Sparkles size={14} />{t("sidebar.goPremium")}</button>}
             </div>
@@ -508,6 +522,9 @@ export default function FinancialDashboard() {
           </div>
         </div>
 
+        {currentView === 'comparison' && <CompanyComparison key={`${user?.id}:${locale}`} premium={isPremium} onUpgrade={() => setShowUpgradeModal(true)} onOpenAnalysis={id => void openComparedAnalysis(id)} onUsageChange={() => setAccessRetry(value => value+1)} />}
+        {currentView === 'result' && !result && openingAnalysis && <div role="status" className="flex items-center gap-3 p-8 text-slate-500"><Loader2 className="animate-spin"/>{locale==='en'?'Opening saved analysis…':'Abrindo análise salva…'}</div>}
+        {currentView === 'result' && !result && openAnalysisError && <div role="alert" className="rounded-2xl bg-amber-50 p-6 text-amber-900"><p>{locale==='en'?'Could not open this analysis.':'Não foi possível abrir esta análise.'}</p><button onClick={()=>handleNavClick('comparison')} className="mt-4 font-semibold">{locale==='en'?'Back to comparison':'Voltar à comparação'}</button></div>}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto pb-20">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 rounded-[2rem] border border-slate-200 bg-white/90 p-6 md:p-10 shadow-[0_24px_70px_rgba(38,57,94,0.10)]">

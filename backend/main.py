@@ -54,6 +54,7 @@ from report_feedback import router as feedback_router, create_tables as create_f
 from company_search import search_companies
 from agents.brapi_client import FREE_TICKERS, quarterly_context
 from market_data import market_snapshot, reaction_prompt
+from company_comparison import router as comparison_router, create_tables as create_comparison_tables, start_worker as start_comparison_worker, stop as stop_comparison_worker
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
@@ -69,10 +70,12 @@ async def market_reaction_context(symbol, text="", pdf_bytes=b""):
 @asynccontextmanager
 async def lifespan(app):
     start_worker()
+    start_comparison_worker()
     try:
         yield
     finally:
         stop_report_worker.set()
+        stop_comparison_worker.set()
 
 
 app = FastAPI(title="API Analisador Financeiro", lifespan=lifespan)
@@ -83,6 +86,7 @@ app.include_router(report_jobs_router)
 app.include_router(thesis_library_router)
 app.include_router(feedback_router)
 app.include_router(x_bot_router)
+app.include_router(comparison_router)
 
 @app.get("/api/company-suggestions")
 async def company_suggestions(q: str = "", user: str = Depends(require_active_user)):
@@ -198,6 +202,7 @@ def init_db():
         )""")
         create_job_tables(cur)
         create_feedback_tables(cur)
+        create_comparison_tables(cur)
         conn.commit()
         print("[DB] Banco de dados inicializado com sucesso!")
     except Exception as e:
@@ -360,7 +365,7 @@ async def analyze_report(
         dados_estruturados = parse_results(response_text)
         
         objeto_final = {
-            "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}", "locale": locale },
+            "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}", "locale": locale, "scoring_version": PromptBuilder.scoring_version() },
             "data": dados_estruturados,
             "analise_completa": response_text
         }
@@ -478,7 +483,7 @@ async def analyze_report_auto(
         # 6. Parse e Salvar
         dados_estruturados = parse_results(response_text)
         objeto_final = {
-            "metadata": { "empresa": ticker, "periodo": f"{trimestre}/{ano}", "locale": locale },
+            "metadata": { "empresa": ticker, "periodo": f"{trimestre}/{ano}", "locale": locale, "scoring_version": PromptBuilder.scoring_version() },
             "data": dados_estruturados,
             "analise_completa": response_text
         }
@@ -765,6 +770,26 @@ class AnalysisTranslationRequest(BaseModel):
     locale: str
 
 
+@app.get('/api/history/{item_id}')
+def get_saved_analysis(item_id: int, user: str = Depends(require_active_user)):
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('''SELECT h.resultado_json,d.source_title,d.source_url FROM historico h
+                LEFT JOIN analysis_documents d ON d.analysis_id=h.id
+                WHERE h.id=%s AND CAST(h.user_id AS TEXT)=%s''', (item_id,str(user)))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(404, 'Análise não encontrada. Analysis not found.')
+            result = json.loads(row[0]) if isinstance(row[0],str) else row[0]
+            result = {**result,'id':item_id}
+            if row[2] and AutoFetcher._valid_url(row[2]):
+                result['source'] = {'name':row[1],'url':row[2]}
+            return result
+    finally:
+        conn.close()
+
+
 @app.post("/api/history/{item_id}/translation")
 async def translate_saved_analysis(item_id: int, body: AnalysisTranslationRequest, user_id: str = Depends(require_active_user)):
     if body.locale not in ("pt", "en"):
@@ -800,6 +825,9 @@ def delete_history_item(item_id: int, user_id: str = Depends(require_report_user
     conn = get_db_connection()
     cur = conn.cursor()
     try:
+        cur.execute("""UPDATE account_usage SET state='failed' WHERE state='pending' AND id IN (
+            SELECT ticket FROM results_duels WHERE user_id=%s AND (left_id=%s OR right_id=%s)
+            AND state IN ('queued','running'))""", (str(user_id), item_id, item_id))
         cur.execute("DELETE FROM historico WHERE id=%s AND CAST(user_id AS TEXT)=%s RETURNING id", (item_id, user_id))
         if not cur.fetchone():
             raise HTTPException(404, "Análise não encontrada.")

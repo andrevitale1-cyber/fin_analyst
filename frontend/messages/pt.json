@@ -50,6 +50,7 @@
     "nav": {
       "newAnalysis": "Nova Análise",
       "aggregatedTable": "Tabela Agregada",
+      "comparison": "Comparar Empresas",
       "history": "Histórico",
       "fullReports": "Relatórios completos"
     },

@@ -23,18 +23,18 @@ export default function PricingSection({ locale }: { locale: string }) {
       ];
   const premiumFeatures = english
     ? [
-        ["50 analyses per month", "Shared between quarterly results and earnings calls."],
+        ["50 analyses per month", "Shared between quarterly results, earnings calls and new results duels."],
         ["Aggregated table and history", "View indicators and revisit your saved analyses."],
         ["Public full reports", "Read published company research."],
-        ["Company comparisons", "Review companies side by side."],
+        ["Company comparisons", "Compare up to three score histories and duel two quarterly results."],
         ["Generate new full reports", "Request company-wide research, saved privately."],
         ["PDF export", "Download your analyses and reports. Exclusive to Premium."],
       ]
     : [
-        ["50 análises por mês", "Compartilhadas entre resultados trimestrais e calls."],
+        ["50 análises por mês", "Compartilhadas entre resultados trimestrais, calls e novos duelos."],
         ["Tabela agregada e histórico", "Consulte indicadores e revisite suas análises salvas."],
         ["Full reports públicos", "Leia as pesquisas publicadas sobre empresas."],
-        ["Comparação de empresas", "Revise empresas lado a lado."],
+        ["Comparação de empresas", "Compare o histórico de até três empresas e coloque dois resultados em duelo."],
         ["Geração de novos full reports", "Solicite pesquisas sobre a empresa como um todo, salvas como privadas."],
         ["Exportação para PDF", "Baixe suas análises e relatórios. Exclusivo do Premium."],
       ];

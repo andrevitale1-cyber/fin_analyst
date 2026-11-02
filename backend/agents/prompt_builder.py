@@ -1,5 +1,6 @@
 import json
 import os
+import hashlib
 
 QUALITY_RULES = """FILTROS DE QUALIDADE (METODOLOGIA BYHOLDER):
 - Foco em alocação de capital e geração de valor.
@@ -41,6 +42,10 @@ SCORE_RUBRIC = """- 5 (Excelente): desempenho excepcional, amplamente sustentado
 
 
 class PromptBuilder:
+    @staticmethod
+    def scoring_version():
+        return hashlib.sha256((QUALITY_RULES + SCORE_RUBRIC + EDITORIAL_RULES + json.dumps(QUARTERLY_FIELDS)).encode()).hexdigest()[:12]
+
     def __init__(self):
         # Ajustando caminhos para a estrutura do backend
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -2,18 +2,18 @@
 
 import { UserButton } from "@clerk/nextjs";
 import { useLocale, useTranslations } from "next-intl";
-import { BarChart3, BookOpen, ChevronLeft, History, LayoutDashboard, Menu, Table2, X } from "lucide-react";
+import { BarChart3, BookOpen, ChevronLeft, History, LayoutDashboard, Menu, Scale, Table2, X } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 import RecentAnalyses from "./RecentAnalyses";
 
 export default function DashboardSidebar({ active, open, collapsed, onClose, onCollapse, onNavigate, onSelectAnalysis, children }: {
   active: string; open: boolean; collapsed: boolean; onClose: () => void; onCollapse: (value: boolean) => void;
-  onNavigate: (view: "dashboard" | "table" | "history" | "reports") => void; children?: React.ReactNode;
+  onNavigate: (view: "dashboard" | "table" | "history" | "reports" | "comparison") => void; children?: React.ReactNode;
   onSelectAnalysis?: (item: any) => void;
 }) {
   const locale = useLocale();
   const t = useTranslations("Dashboard");
-  const items = [["dashboard", LayoutDashboard, "newAnalysis"], ["table", Table2, "aggregatedTable"], ["history", History, "history"], ["reports", BookOpen, "fullReports"]] as const;
+  const items = [["dashboard", LayoutDashboard, "newAnalysis"], ["table", Table2, "aggregatedTable"], ["comparison", Scale, "comparison"], ["history", History, "history"], ["reports", BookOpen, "fullReports"]] as const;
   return <>
     {open && <div className="fixed inset-0 z-40 bg-black/60 md:hidden" onClick={onClose} />}
     <aside aria-label={locale === "en" ? "Main navigation" : "Navegação principal"} className={`fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col overflow-y-auto border-r border-white/10 bg-[#0b1526] p-6 text-white transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "md:w-20 md:px-3" : ""}`}>

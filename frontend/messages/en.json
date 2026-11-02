@@ -50,6 +50,7 @@
     "nav": {
       "newAnalysis": "New Analysis",
       "aggregatedTable": "Aggregated Table",
+      "comparison": "Compare Companies",
       "history": "History",
       "fullReports": "Full Reports"
     },
