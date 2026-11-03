@@ -11,6 +11,7 @@ import CompanyLogosBenefit from "@/components/CompanyLogosBenefit";
 import AggregatedTableSection from "@/components/AggregatedTableSection";
 import MetaAnalysisSection from "@/components/MetaAnalysisSection";
 import CallAnalysisSection from "@/components/CallAnalysisSection";
+import FullReportShowcase from "@/components/FullReportShowcase";
 import PricingSection from "@/components/PricingSection";
 import benefitsStyles from "@/components/BenefitsLayout.module.css";
 import { Link } from "@/i18n/routing";
@@ -62,6 +63,7 @@ function LandingPageContent({ locale }: { locale: string }) {
         <AggregatedTableSection locale={locale} />
         <MetaAnalysisSection locale={locale} />
         <CallAnalysisSection locale={locale} />
+        <FullReportShowcase locale={locale} />
 
       </div>
 

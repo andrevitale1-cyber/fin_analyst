@@ -1,0 +1,56 @@
+{
+  "source": "/published-reports/aapl-20261022-en.html",
+  "asOf": "2026-10-22",
+  "products": [
+    {
+      "label": "iPhone",
+      "value": 209.6,
+      "share": 50.4
+    },
+    {
+      "label": "Mac",
+      "value": 33.7,
+      "share": 8.1
+    },
+    {
+      "label": "iPad",
+      "value": 28.0,
+      "share": 6.7
+    },
+    {
+      "label": "Wearables, Home & Accessories",
+      "value": 35.7,
+      "share": 8.6
+    },
+    {
+      "label": "Services",
+      "value": 109.2,
+      "share": 26.2
+    }
+  ],
+  "years": [
+    "FY2020",
+    "FY2021",
+    "FY2022",
+    "FY2023",
+    "FY2024",
+    "FY2025"
+  ],
+  "revenue": [
+    274.5,
+    365.8,
+    394.3,
+    383.3,
+    391.0,
+    416.2
+  ],
+  "revenueTTM": 466.8,
+  "freeCashFlowTTM": 136.7,
+  "operatingMargin9M": 33.6,
+  "qualityScore": 4,
+  "scores": {
+    "moat": 5,
+    "capital": 5,
+    "growth": 3
+  }
+}
