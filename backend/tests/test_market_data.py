@@ -199,3 +199,46 @@ def test_event_cache_uses_bound_symbol_date_keys_and_json(monkeypatch):
     assert cursor.execute.call_args.args[1][:2]==('AMZN','2026-10-29')
     conn.commit.assert_called_once()
     assert conn.close.call_count==2
+
+
+
+def test_parallel_snapshot_requests_share_provider_work(monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    import time
+    monkeypatch.setenv('TWELVE_DATA_API_KEY', 'test')
+    market_data._cache.clear()
+    calls = []
+    def get(url, *args, **kwargs):
+        calls.append(url)
+        time.sleep(.025)
+        if url.endswith('/quote'):
+            return {'symbol':'MSFT','close':'400','currency':'USD'}
+        return {'meta':{'symbol':'MSFT','currency':'USD'},'values':[{'datetime':'2026-11-02','close':'399'},{'datetime':'2026-11-03','close':'400'}]}
+    monkeypatch.setattr(market_data, '_json', get)
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        results = list(pool.map(lambda _: market_data.market_snapshot('MSFT'), range(4)))
+    assert all(r['price'] == 400 and len(r['points']) == 2 for r in results)
+    assert len(calls) == 2
+    market_data.market_snapshot('MSFT','1d')
+    assert sum(url.endswith('/quote') for url in calls) == 1
+
+
+def test_rate_limited_primary_uses_matching_public_fallback_and_caches(monkeypatch):
+    monkeypatch.setenv('TWELVE_DATA_API_KEY', 'test')
+    market_data._cache.clear()
+    requests = []
+    def get(url, *args, **kwargs):
+        requests.append(url)
+        if 'twelvedata' in url:
+            return {}
+        return {'chart':{'result':[{'meta':{'symbol':'MSFT','regularMarketPrice':401,'previousClose':400,'currency':'USD','regularMarketTime':1793700000,'exchangeTimezoneName':'America/New_York'},'timestamp':[1793613600,1793700000],'indicators':{'quote':[{'close':[400,401]}]}}]}}
+    monkeypatch.setattr(market_data, '_json', get)
+    result = market_data.market_snapshot('MSFT')
+    assert result['price'] == 401 and result['changePercent'] == pytest.approx(.25)
+    assert result['source'] == 'Yahoo Finance' and len(result['points']) == 2
+    assert market_data.market_snapshot('MSFT') == result and len(requests) == 3
+
+
+def test_fallback_does_not_accept_another_issuer(monkeypatch):
+    monkeypatch.setattr(market_data, '_json', lambda *a, **k: {'chart':{'result':[{'meta':{'symbol':'AAPL','regularMarketPrice':100}}]}})
+    assert market_data.yahoo_market_snapshot('MSFT','1mo') == {}

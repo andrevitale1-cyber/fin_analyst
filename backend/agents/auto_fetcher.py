@@ -30,7 +30,7 @@ class AutoFetcher:
                      "TFCO4": ("8e49886e-dded-49c0-b8db-c35451e75eed", "central_release_de_resultados "),
                      "PNVL3": ("d19425c2-0ba6-490e-af3b-87fc04d4fc88", "press_release")}
     transcript_issuers = {
-        "NKE": ("NIKE",), "MU": ("Micron", "Micron Technology"),
+        "CAVA": ("CAVA Group", "CAVA"), "NKE": ("NIKE",), "MU": ("Micron", "Micron Technology"),
         "SK HYNIX": ("SK hynix",),
         "TFCO4": ("Track & Field", "Track and Field", "TRACK FIELD"),
         "PNVL3": ("Panvel", "Dimed"),
@@ -66,6 +66,7 @@ class AutoFetcher:
             "VIVARA": "VIVA3", "VIVARA S.A.": "VIVA3", "VIVARA S A": "VIVA3",
             "VIVARA PARTICIPACOES": "VIVA3", "VIVARA PARTICIPACOES S.A.": "VIVA3", "VIVARA PARTICIPACOES S A": "VIVA3",
             "LOCALIZA": "RENT3", "LOJAS RENNER": "LREN3", "B3": "B3SA3",
+            "CAVA GROUP": "CAVA", "CAVA GROUP INC": "CAVA", "CAVA GROUP, INC": "CAVA", "CAVA GROUP, INC.": "CAVA",
             "APPLE": "AAPL", "MICROSOFT": "MSFT", "GOOGLE": "GOOGL", "ALPHABET": "GOOGL",
             "AMAZON": "AMZN", "META": "META", "FACEBOOK": "META", "NVIDIA": "NVDA", "TESLA": "TSLA",
             "MICRON": "MU", "MICRON TECHNOLOGY": "MU", "MICRON TECHNOLOGY INC": "MU", "MICRON TECHNOLOGY INC.": "MU",
@@ -163,7 +164,7 @@ class AutoFetcher:
     def fetch_result_pdf(self, ticker, ano, trimestre):
         original_ticker = ticker.strip().upper()
         ticker = self.resolve_ticker(ticker)
-        if not re.fullmatch(r"[\w .&'-]{1,100}", ticker, re.UNICODE):
+        if not re.fullmatch(r"[\w .,&'()-]{1,100}", ticker, re.UNICODE):
             raise ValueError("Informe um nome de empresa ou ticker válido.")
         match = re.fullmatch(r"(?:([1-4])[TQ]?|[TQ]([1-4]))", str(trimestre).upper())
         if not match or not re.fullmatch(r"\d{4}", str(ano)) or not 1900 <= int(ano) <= 2100:
@@ -194,6 +195,7 @@ class AutoFetcher:
         else:
             document = self._fetch_b3(ticker, year, quarter)
         if document:
+            logger.info("transcript_lookup issuer=%s year=%s quarter=%s outcome=found source=%s", issuer, year, quarter, urlparse(document.url).hostname)
             try:
                 self.cache_dir.mkdir(parents=True, exist_ok=True)
                 data = asdict(document)
@@ -228,21 +230,25 @@ class AutoFetcher:
         if not match or not re.fullmatch(r"\d{4}", str(ano)) or not 1900 <= int(ano) <= 2100:
             raise ValueError("Ano ou trimestre inválido.")
         company = company.strip()
-        if not re.fullmatch(r"[\w .&'-]{1,100}", company, re.UNICODE):
+        if not re.fullmatch(r"[\w .,&'()-]{1,100}", company, re.UNICODE):
             raise ValueError("Informe um nome de empresa ou ticker válido.")
         year, quarter = int(ano), int(match.group(1) or match.group(2))
         issuer = self.resolve_ticker(company)
+        if not re.fullmatch(r"[A-Z]{1,5}(?:[.-][A-Z])?|[A-Z]{4}\d{1,2}", issuer):
+            issuer = SECFetcher().resolve_name(issuer) or issuer
         query_name = self.transcript_issuers.get(issuer, (company,))[0]
+        logger.info("transcript_lookup issuer=%s year=%s quarter=%s", issuer, year, quarter)
         cache_key = hashlib.sha256(issuer.encode("utf-8")).hexdigest()[:24]
         cache_path = self.cache_dir / f"transcript-v2-{cache_key}-{year}-{quarter}.json"
         try:
             document = FetchedDocument(**json.loads(cache_path.read_text(encoding="utf-8")))
-            if self._valid_url(document.url) and self._valid_transcript(document.text, company, year, quarter):
+            if (self._valid_url(document.url) and not re.search(r"/transcripts/?$", urlparse(document.url).path)
+                    and self._valid_transcript(document.text, issuer, year, quarter)):
                 return document
         except (OSError, ValueError, TypeError):
             pass
         self._transcript_download_failed = False
-        document = self._fetch_transcript_ir(issuer, company, year, quarter)
+        document = self._fetch_transcript_ir(issuer, issuer, year, quarter)
         seen = set()
         for allow_openai in (False, True):
             if document:
@@ -263,10 +269,11 @@ class AutoFetcher:
                 if not re.search(r"transcript|transcri[cç][aã]o|teleconfer[eê]ncia|earnings.call", evidence + " " + str(item.get("content") or ""), re.I):
                     continue
                 seen.add(url)
-                document = self._download_transcript(url, year, quarter, company)
+                document = self._download_transcript(url, year, quarter, issuer)
                 if document:
                     break
         if document:
+            logger.info("transcript_lookup issuer=%s year=%s quarter=%s outcome=found source=%s", issuer, year, quarter, urlparse(document.url).hostname)
             try:
                 self.cache_dir.mkdir(parents=True, exist_ok=True)
                 # Only verified text is cached; analysis never needs a second PDF copy.
@@ -276,6 +283,7 @@ class AutoFetcher:
             except OSError:
                 pass
             return document
+        logger.info("transcript_lookup issuer=%s year=%s quarter=%s outcome=%s", issuer, year, quarter, "source_unavailable" if self._transcript_download_failed else "not_found")
         if self._transcript_download_failed:
             raise SearchError("Não foi possível acessar as fontes de transcrição. Tente novamente ou envie o PDF.")
         return None
@@ -363,7 +371,7 @@ class AutoFetcher:
             except requests.RequestException:
                 pass
         # A public text archive avoids paid web search when IR only offers audio.
-        if issuer in self.transcript_issuers and re.fullmatch(r"[A-Z]{1,5}", issuer):
+        if re.fullmatch(r"[A-Z]{1,5}(?:[.-][A-Z])?", issuer):
             return self._download_transcript(f"https://stockanalysis.com/stocks/{issuer.lower()}/transcripts/", year, quarter, company)
         return None
 
@@ -371,9 +379,16 @@ class AutoFetcher:
         if not self._valid_url(url):
             return None
         try:
+            def same_archive_issuer(candidate):
+                parsed = urlparse(candidate)
+                match = re.match(r"/stocks/([^/]+)/transcripts(?:/|$)", parsed.path)
+                return not (company and parsed.hostname in ("stockanalysis.com", "www.stockanalysis.com") and match
+                            and match[1].upper() != self.resolve_ticker(company))
+            if not same_archive_issuer(url):
+                return None
             response = requests.get(url, timeout=12)
             response.raise_for_status()
-            if not self._valid_url(response.url):
+            if not self._valid_url(response.url) or not same_archive_issuer(response.url):
                 return None
             if response.content.startswith(b"%PDF-"):
                 text = OpenAIClient.extract_text(response.content)
@@ -385,14 +400,17 @@ class AutoFetcher:
                     tag.decompose()
                 region = soup.find("article") or soup.find("main") or soup
                 text = region.get_text("\n", strip=True)
-                if not self._valid_transcript(text, company, year, quarter) and depth == 0:
+                archive = bool(re.search(r"/transcripts/?$", urlparse(response.url).path))
+                if (archive or not self._valid_transcript(text, company, year, quarter)) and depth == 0:
                     links = [(a.get_text(" ", strip=True), urljoin(response.url, a["href"])) for a in soup.find_all("a", href=True)]
                     links = [(title, href) for title, href in links if re.search(r"transcript|transcri[cç][aã]o", title + " " + href, re.I) and self._valid_url(href) and urlparse(href).hostname == urlparse(response.url).hostname]
-                    links.sort(key=lambda link: not self._period_matches(" ".join(link), year, quarter))
-                    for _, href in links[:2]:
+                    links = [(title, href) for title, href in links if not self._transcript_period(title + " " + href)
+                             or self._transcript_period_matches(title + " " + href, year, quarter)]
+                    links.sort(key=lambda link: not self._transcript_period_matches(" ".join(link), year, quarter))
+                    for _, href in links[:4]:
                         if href != response.url and (document := self._download_transcript(href, year, quarter, company, depth=1)):
                             return document
-            if self._valid_transcript(text, company, year, quarter):
+            if not re.search(r"/transcripts/?$", urlparse(response.url).path) and self._valid_transcript(text, company, year, quarter):
                 return FetchedDocument(response.url, "Earnings Call Transcript", text=text[:180000])
         except requests.RequestException as exc:
             if not isinstance(exc, requests.HTTPError) or exc.response is None or exc.response.status_code != 404:

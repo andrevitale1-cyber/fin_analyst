@@ -1,6 +1,8 @@
 """Bounded, cached market data. Never infer that a recent move was an earnings reaction."""
 from datetime import datetime, timedelta, timezone
 import math
+from functools import lru_cache
+from threading import Lock
 import os
 import re
 import time
@@ -200,10 +202,55 @@ def yahoo_earnings_prices(symbol,day):
     return {'points':sorted(points,key=lambda p:p['time']),'currency':row['meta'].get('currency'),
             'source':'Yahoo Finance','sourceUrl':'https://finance.yahoo.com/quote/'+symbol+'/history/'}
 
+@lru_cache(maxsize=1024)
+def _market_lock(symbol):
+    return Lock()
+
+
+def _cached_quote(provider, symbol, fetch):
+    key = (provider, symbol, "quote")
+    cached = _cache.get(key)
+    if cached and cached[0] > time.monotonic():
+        return cached[1]
+    quote = fetch() or {}
+    price = number(quote.get("regularMarketPrice") if provider == "brapi" else quote.get("close"))
+    _cache[key] = (time.monotonic() + (60 if price is not None and price > 0 else 15), quote)
+    return quote
+
+
+def yahoo_market_snapshot(symbol, period):
+    interval = {"1d": "5m", "5d": "30m", "max": "1mo"}.get(period, "1d")
+    payload = _json("https://query1.finance.yahoo.com/v8/finance/chart/" + symbol,
+                    {"range": period, "interval": interval},
+                    {"User-Agent": "FinAnalyzer/1.0 contact@finanalyser.com.br"})
+    rows = (payload.get("chart") or {}).get("result") or []
+    if not rows or rows[0].get("meta", {}).get("symbol", "").upper() != symbol:
+        return {}
+    row, meta = rows[0], rows[0].get("meta", {})
+    try:
+        zone = ZoneInfo(meta.get("exchangeTimezoneName") or "UTC")
+        closes = row["indicators"]["quote"][0]["close"]
+        points = [{"time": datetime.fromtimestamp(stamp, zone).isoformat(), "close": number(close)}
+                  for stamp, close in zip(row.get("timestamp", []), closes)
+                  if number(close) is not None and number(close) > 0]
+    except (KeyError, IndexError, TypeError, ValueError):
+        points = []
+    price, previous = number(meta.get("regularMarketPrice")), number(meta.get("previousClose") or meta.get("chartPreviousClose"))
+    return {"symbol": symbol, "price": price, "changePercent": (price / previous - 1) * 100 if price and previous else None,
+            "asOf": meta.get("regularMarketTime"), "currency": meta.get("currency"), "points": points,
+            "interval": interval, "source": "Yahoo Finance", "sourceUrl": "https://finance.yahoo.com/quote/" + symbol + "/history/"}
+
+
 def market_snapshot(symbol, period="1mo"):
     symbol = symbol.strip().upper()
     if period not in RANGES or not re.fullmatch(r"[A-Z0-9][A-Z0-9.-]{0,14}", symbol):
         raise ValueError("Invalid symbol or range")
+    # The sidebar and result can request the same issuer at the same time.
+    with _market_lock(symbol):
+        return _market_snapshot(symbol, period)
+
+
+def _market_snapshot(symbol, period):
     key = (symbol, period)
     if key in _cache and _cache[key][0] > time.monotonic():
         return _cache[key][1]
@@ -218,7 +265,7 @@ def market_snapshot(symbol, period="1mo"):
                 body = _json("https://brapi.dev/api/v2/stocks/" + path, params, headers, preserve_plan_error=True)
                 if body.get('code'): return body
                 return next((row.get("data", row) for row in body.get("results", []) if row.get("symbol") == symbol), None)
-            quote = get("quote", {"symbols": symbol}) or {}
+            quote = _cached_quote("brapi", symbol, lambda: get("quote", {"symbols": symbol}))
             interval = "5m" if period == "1d" else "30m" if period == "5d" else "1d" if period != "max" else "1mo"
             history = get("historical", {"symbols": symbol, "range": period, "interval": interval}) or []
             if isinstance(history, dict) and history.get('code') == 'INVALID_INTERVAL' and '1d' in history.get('allowed', []):
@@ -244,7 +291,7 @@ def market_snapshot(symbol, period="1mo"):
             headers = {"Authorization": f"apikey {token}"}
             def get(path, params):
                 return _json("https://api.twelvedata.com/" + path, params, headers)
-            quote = get("quote", {"symbol": symbol})
+            quote = _cached_quote("twelve", symbol, lambda: get("quote", {"symbol": symbol}))
             if quote.get('symbol') and quote['symbol'].upper() != symbol:
                 quote = {}
             days, interval = RANGES[period]
@@ -257,12 +304,21 @@ def market_snapshot(symbol, period="1mo"):
                 return {"symbol": symbol, "available": False}
             points = [{"time": row["datetime"], "close": number(row.get("close"))} for row in history.get("values", []) if isinstance(row, dict) and row.get("datetime") and number(row.get("close")) is not None and number(row.get("close")) > 0]
             result = {"symbol": symbol, "price": number(quote.get("close")), "changePercent": number(quote.get("percent_change")), "asOf": quote.get("datetime"), "currency": quote.get("currency") or meta.get("currency"), "points": points, "source": "Twelve Data", "sourceUrl": "https://twelvedata.com/docs#time-series"}
+        if not b3 and (result["price"] is None or len(result["points"]) < 2):
+            fallback = yahoo_market_snapshot(symbol, period)
+            if fallback and (fallback.get("price") is not None or fallback.get("points")):
+                # Keep each snapshot's quote, history and attribution from one source.
+                if (fallback.get("price") is not None and len(fallback.get("points", [])) > 1) or (result["price"] is None and not result["points"]):
+                    result = fallback
         result["points"].sort(key=lambda row: row["time"])
+        if result["price"] is None and result["points"]:
+            result["price"] = result["points"][-1]["close"]
+            result["asOf"] = result["points"][-1]["time"]
         result["available"] = bool(result["points"] or result["price"] is not None)
         result["range"] = period
         if len(_cache) > 1000:
             _cache.clear()
-        _cache[key] = (time.monotonic() + 300, result)
+        _cache[key] = (time.monotonic() + (300 if result["available"] else 15), result)
         return result
     except (requests.RequestException, ValueError, TypeError, AttributeError, KeyError):
         return {"symbol": symbol, "available": False}

@@ -108,7 +108,7 @@ def recent_analyses(user: str = Depends(require_active_user)):
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT id, empresa, resultado_json FROM historico WHERE CAST(user_id AS TEXT)=%s ORDER BY id DESC LIMIT 3", (str(user),))
+            cur.execute("SELECT id, empresa, resultado_json FROM (SELECT DISTINCT ON (UPPER(TRIM(empresa))) id, empresa, resultado_json FROM historico WHERE CAST(user_id AS TEXT)=%s ORDER BY UPPER(TRIM(empresa)), id DESC) latest ORDER BY id DESC LIMIT 3", (str(user),))
             return [{"id": row[0], "symbol": row[1], "result": json.loads(row[2]) if isinstance(row[2], str) else row[2]} for row in cur.fetchall()]
     finally:
         conn.close()

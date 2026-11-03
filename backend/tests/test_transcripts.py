@@ -307,3 +307,41 @@ def test_scanned_manual_transcript_preserves_native_pdf_reading(api, monkeypatch
     assert response.status_code == 200
     analyze.assert_called_once()
     assert analyze.call_args.kwargs["pdf_bytes"] == b"scanned pdf"
+
+
+@pytest.mark.parametrize("issuer", ["CAVA", "SBUX", "PLTR", "BRK.B"])
+def test_every_us_symbol_uses_public_archive_without_alias_whitelist(tmp_path, monkeypatch, issuer):
+    fetcher = AutoFetcher(tmp_path)
+    fetcher.ir_urls = {}
+    document = FetchedDocument(f"https://stockanalysis.com/stocks/{issuer.lower()}/transcripts/100-q1-2026/", "Transcript", text="verified")
+    download = Mock(return_value=document)
+    monkeypatch.setattr(fetcher, "_download_transcript", download)
+    assert fetcher._fetch_transcript_ir(issuer, issuer, 2026, 1) == document
+    assert download.call_args.args[0] == f"https://stockanalysis.com/stocks/{issuer.lower()}/transcripts/"
+
+
+def test_cava_archive_selects_requested_fiscal_quarter_and_not_summary(tmp_path, monkeypatch):
+    fetcher = AutoFetcher(tmp_path)
+    fetcher.ir_urls = {}
+    archive = "https://stockanalysis.com/stocks/cava/transcripts/"
+    target = archive + "569001-q1-2026/"
+    body = "CAVA Group Q1 2026 Earnings Call Transcript\nOperator: " + "Prepared remarks and answers. " * 30
+    pages = {
+        archive: html_response(archive, '<main>CAVA Group Q1 2026 transcript summary and prepared remarks ' + 'summary ' * 80 +
+                               f'<a href="{archive}800-q2-2026/">Earnings Call Q2 2026</a><a href="{target}">Read full transcript</a></main>'),
+        target: html_response(target, f'<main>{body}</main>'),
+    }
+    get = Mock(side_effect=lambda url, **kwargs: pages[url])
+    monkeypatch.setattr("requests.get", get)
+    fetcher.search_client.search_transcripts = Mock(side_effect=AssertionError("archive should avoid paid search"))
+    doc = fetcher.fetch_transcript("CAVA Group, Inc.", 2026, "1Q")
+    assert doc and doc.url == target and "Prepared remarks" in doc.text
+    assert [c.args[0] for c in get.call_args_list] == [archive, target]
+    assert fetcher.fetch_transcript("CAVA", 2026, "1Q").url == target
+    assert get.call_count == 2
+
+
+def test_archive_rejects_other_issuer_even_if_requested_company_is_mentioned(monkeypatch):
+    get = Mock(side_effect=AssertionError("foreign issuer must not be downloaded"))
+    monkeypatch.setattr("requests.get", get)
+    assert AutoFetcher()._download_transcript("https://stockanalysis.com/stocks/sbux/transcripts/10-q1-2026/", 2026, 1, "CAVA") is None
