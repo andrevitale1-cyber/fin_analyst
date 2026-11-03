@@ -66,26 +66,29 @@ export default function AnalysisStory({ locale }: { locale: string }) {
       ScrollTrigger.refresh();
     };
     sources();
+    const motion = gsap.matchMedia();
     const context = gsap.context(() => {
       const ease = CustomEase.create("finanalyzer-story-title", "M0,0 C0.202,0 0.253,1 0.5,1 0.672,1 0.819,0 1,0");
       panels.forEach((panel, index) => {
         ScrollTrigger.create({
-          trigger: panel, start: "top bottom", end: "top top",
+          trigger: panel,
+          start: () => query.matches ? "top bottom" : "top center",
+          end: () => query.matches ? "top top" : "bottom center",
           onEnter: () => activate(index),
           onEnterBack: () => activate(index),
           onLeave: () => { if (index < videos.length - 1) videos[index].pause(); },
           onLeaveBack: () => { if (index < videos.length - 1) videos[index].pause(); },
           onRefresh: self => { if (self.isActive) activate(index); },
           onUpdate: self => {
-            const opacity = index === videos.length - 1 && self.progress > .5 ? 0 : 1 - Math.sin(self.progress * Math.PI);
+            const opacity = !query.matches ? .28 : index === videos.length - 1 && self.progress > .5 ? 0 : 1 - Math.sin(self.progress * Math.PI);
             scenes[index].style.setProperty("--overlay-opacity", reduced ? ".28" : opacity.toFixed(2));
-            if (index === 0) scenes[0].style.setProperty("--overlay-color", self.progress > .5 ? "#040313" : "#2e21de");
+            if (index === 0) scenes[0].style.setProperty("--overlay-color", !query.matches || self.progress > .5 ? "#040313" : "#2e21de");
           },
         });
-        if (!reduced) gsap.fromTo(panel.querySelector("h2"), { y: 20, opacity: 0 }, {
+        if (!reduced) motion.add(query.media, () => { gsap.fromTo(panel.querySelector("h2"), { y: 20, opacity: 0 }, {
           y: -20, opacity: 1, ease,
           scrollTrigger: { trigger: panel.querySelector("h2"), start: "top+=100px bottom", end: "top top", scrub: true, invalidateOnRefresh: true },
-        });
+        }); });
       });
       ScrollTrigger.create({
         trigger: root, start: "top bottom", end: "bottom top",
@@ -107,6 +110,7 @@ export default function AnalysisStory({ locale }: { locale: string }) {
     ScrollTrigger.refresh();
     return () => {
       disposed = true;
+      motion.revert();
       context.revert();
       videos.forEach(video => { video.pause(); video.removeEventListener("canplay", resume); });
       document.removeEventListener("touchstart", resume, true);
@@ -122,7 +126,7 @@ export default function AnalysisStory({ locale }: { locale: string }) {
     <section ref={section} className={styles.story} aria-label={english ? "From reports to understanding" : "Dos relatórios à compreensão"}>
       <div className={styles.sticky}>
         {copy[english ? "en" : "pt"].map((_, index) => <div key={index} data-story-scene data-active={index === 0} className={styles.scene}>
-          <video className={styles.video} src={`/reference/clearstreet/story-${index + 1}.mp4#t=0.01`} width="1920" height="1080" muted loop playsInline preload="auto" aria-hidden="true" />
+          <video className={styles.video} src={`/reference/clearstreet/story-${index + 1}.mp4#t=0.01`} width="1920" height="1080" muted loop playsInline preload={index === 0 ? "auto" : "metadata"} aria-hidden="true" />
         </div>)}
       </div>
       <div className={styles.titles}>

@@ -42,7 +42,7 @@ export default function ComparisonShowcase({ locale }: { locale: string }) {
             <p className={styles.periodLabel}>{text.period}</p><div className={styles.period}><span>{en ? "3Q/2026" : "3T/2026"}</span><small>{en ? "Nov 2, 2026" : "2 de nov. de 2026"}</small></div><small className={styles.fiscal}>{text.fiscal}</small>
           </article>)}
         </div>
-        <div className={styles.connection} aria-hidden="true"><div className={styles.brand}><BarChart3 size={38} /></div><span>FinAnalyzer</span><Swords className={styles.swords} size={19} /></div>
+        <div className={styles.connection} aria-hidden="true"><i className={`${styles.flow} ${styles.flowIn}`} /><i className={`${styles.flow} ${styles.flowOut}`} /><div className={styles.brand}><BarChart3 size={38} /></div><span>FinAnalyzer</span><Swords className={styles.swords} size={19} /></div>
         <article className={styles.verdict} aria-label={text.winner}>
           <p className={styles.eyebrow}><Trophy size={17} />{text.verdict}</p><h3>{text.winner}</h3><p className={styles.meta}>AMZN · {en ? "3Q/2026" : "3T/2026"}<span />GOOGL · {en ? "3Q/2026" : "3T/2026"}</p><p className={styles.confidence}>{text.confidence}</p>
           <p className={styles.summary}>{text.summary}</p><div className={styles.dimensions}>{text.dimensions.map(label => <span key={label}><CheckMark />{label}</span>)}</div><p className={styles.caveat}>{text.caveat}</p>

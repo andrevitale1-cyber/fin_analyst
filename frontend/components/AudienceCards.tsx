@@ -27,7 +27,7 @@ export default function AudienceCards({ locale }: { locale: string }) {
     return () => query.removeEventListener("change", sync);
   }, []);
 
-  return <motion.section id="clients" ref={section} className={styles.section} style={reduce ? undefined : { opacity: exitOpacity }} aria-label={english ? "Who FinAnalyzer is for" : "Para quem é o FinAnalyzer"}>
+  return <motion.section id="clients" ref={section} className={styles.section} style={reduce || !desktop ? undefined : { opacity: exitOpacity }} aria-label={english ? "Who FinAnalyzer is for" : "Para quem é o FinAnalyzer"}>
     <div className={styles.grid}>
       <motion.div style={{ y: revealY, opacity: revealOpacity, minWidth: 0 }}><article className={styles.card}>
         <h2>Clients</h2>

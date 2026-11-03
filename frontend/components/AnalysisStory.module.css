@@ -1,7 +1,7 @@
 .story { --pad: clamp(16px, calc(8.278px + 1.98vw), 42px); --gutter: clamp(2px, calc(-.964px + .76vw), 12px); position: relative; margin-top: -50vh; background: #040313; color: white; font-family: "Audience Reyhan", sans-serif; }
 .sticky { position: sticky; top: 0; height: 100vh; display: grid; overflow: hidden; z-index: 0; }
-.scene { grid-column: 1; grid-row: 1; width: 100%; height: 100%; }
-.scene[data-active="true"] { z-index: 1; }
+.scene { visibility: hidden; grid-column: 1; grid-row: 1; width: 100%; height: 100%; }
+.scene[data-active="true"] { z-index: 1; visibility: visible; }
 .video { width: 100%; height: 100%; object-fit: cover; }
 .scene::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, transparent 0%, #0c101880 100%); }
 .scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: var(--overlay-color, #040313); opacity: var(--overlay-opacity, .28); }
@@ -38,4 +38,13 @@
   .solution p { margin-bottom: 40px; }
   .solutionButton { max-width: 100%; min-height: 48px; font-size: 15px; }
   .solutionGlow { width: 200%; max-width: none; margin-top: -16px; margin-left: -50%; }
+}
+
+/* Native mobile scroll: no overlapping purple section or viewport resize during the video. */
+@media (max-width: 743px), (hover: none) and (pointer: coarse) {
+  .story { margin-top: 0; }
+  .sticky { height: 100svh; }
+  .titles { margin-top: -100svh; padding-inline: 24px; }
+  .titlePanel { height: 100svh; justify-content: center; }
+  .scene::after { background: #040313; opacity: .28; }
 }
