@@ -305,6 +305,23 @@ def test_unrateable_quarterly_analysis_is_not_saved_or_charged(api, monkeypatch,
     assert not any('INSERT INTO historico' in sql or "state='completed'" in sql for sql in statements)
 
 
+@pytest.mark.parametrize('route',['analyze','analyze-auto'])
+def test_missing_event_prices_stop_before_ai_save_and_charge(api,monkeypatch,openai_client,route):
+    import market_data
+    main,client=api
+    monkeypatch.setattr(main,'reaction_prompt',Mock(side_effect=market_data.MarketDataUnavailable()))
+    monkeypatch.setattr(AutoFetcher,'fetch_result_pdf',lambda *a:FetchedDocument('https://www.sec.gov/release.htm','SEC',text='Amazon October 29, 2026 announces results'))
+    monkeypatch.setattr(OpenAIClient,'extract_text',lambda *a:'Amazon October 29, 2026 announces results')
+    analyze=Mock()
+    complete=Mock()
+    monkeypatch.setattr(OpenAIClient,'analyze_document',analyze)
+    monkeypatch.setattr(main,'complete_usage',complete)
+    response=client.post('/api/'+route,data={'ticker':'AMZN','empresa':'AMZN','ano':'2026','trimestre':'3T','user_id':'test'},files={'file':('release.pdf',b'%PDF-test')})
+    assert response.status_code==503
+    analyze.assert_not_called()
+    complete.assert_not_called()
+
+
 def test_openai_web_search_without_tavily(monkeypatch, openai_client):
     from agents.search_client import SearchClient
     monkeypatch.delenv("TAVILY_API_KEY", raising=False)

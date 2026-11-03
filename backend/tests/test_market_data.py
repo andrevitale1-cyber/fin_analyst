@@ -110,12 +110,13 @@ def test_publication_date_is_not_confused_with_quarter_end(monkeypatch, text, ev
 def test_earnings_query_targets_event_dates_and_caches_success_only(monkeypatch):
     monkeypatch.setenv('TWELVE_DATA_API_KEY','test')
     market_data._cache.clear()
+    monkeypatch.setattr(market_data,'yahoo_earnings_prices',lambda *a:{})
     get = Mock(side_effect=[{}, {'meta':{'symbol':'AMZN','currency':'USD'},'values':[
-        {'datetime':'2024-10-31','close':'100'}, {'datetime':'2024-11-01','close':'105'}]}])
+        {'datetime':'2024-10-30','close':'99'}, {'datetime':'2024-10-31','close':'100'}, {'datetime':'2024-11-01','close':'105'}]}])
     monkeypatch.setattr(market_data,'_json',get)
     assert market_data.earnings_prices('AMZN','2024-10-31') == {}
     result = market_data.earnings_prices('AMZN','2024-10-31')
-    assert len(result['points']) == 2
+    assert len(result['points']) == 3
     assert market_data.earnings_prices('AMZN','2024-10-31') == result
     assert get.call_count == 2
     url, params, _ = get.call_args.args
@@ -129,3 +130,72 @@ def test_earnings_query_rejects_wrong_company(monkeypatch):
     market_data._cache.clear()
     monkeypatch.setattr(market_data,'_json',lambda *a: {'meta':{'symbol':'MSFT'},'values':[{'datetime':'2026-10-29','close':'100'}]})
     assert market_data.earnings_prices('AMZN','2026-10-29') == {}
+
+
+def test_primary_failure_uses_one_complete_alternate_series(monkeypatch):
+    market_data._cache.clear()
+    monkeypatch.setenv('TWELVE_DATA_API_KEY','test')
+    monkeypatch.setattr(market_data,'stored_earnings_prices',lambda *a:{})
+    monkeypatch.setattr(market_data,'_json',lambda *a:{})
+    alternate={'points':[{'time':'2026-10-28','close':100},{'time':'2026-10-30','close':95}],
+               'source':'Yahoo Finance','sourceUrl':'https://finance.yahoo.com'}
+    fallback=Mock(return_value=alternate)
+    monkeypatch.setattr(market_data,'yahoo_earnings_prices',fallback)
+    assert market_data.earnings_prices('AMZN','2026-10-29') == alternate
+    fallback.assert_called_once()
+
+
+def test_persisted_event_prices_survive_memory_cache_reset(monkeypatch):
+    store={}
+    def stored(symbol,event,payload=None):
+        if payload is not None:store[(symbol,event)]=payload
+        return store.get((symbol,event),{})
+    result={'points':[{'time':'2026-10-28','close':100},{'time':'2026-10-30','close':95}]}
+    monkeypatch.setattr(market_data,'stored_earnings_prices',stored)
+    fetch=Mock(return_value=result)
+    monkeypatch.setattr(market_data,'fetch_earnings_prices',fetch)
+    market_data._cache.clear()
+    assert market_data.earnings_prices('AMZN','2026-10-29')==result
+    market_data._cache.clear()
+    assert market_data.earnings_prices('AMZN','2026-10-29')==result
+    fetch.assert_called_once()
+
+
+def test_all_price_sources_down_does_not_generate_missing_price_analysis(monkeypatch):
+    monkeypatch.setattr(market_data,'earnings_prices',lambda *a:{})
+    with pytest.raises(market_data.MarketDataUnavailable):
+        market_data.reaction_prompt('AMZN','October 29, 2026 Amazon announces results')
+
+
+def test_friday_release_waits_for_monday_not_weekend(monkeypatch):
+    monkeypatch.setattr(market_data,'earnings_prices',lambda *a:{
+        'points':[{'time':'2026-10-29','close':100},{'time':'2026-10-30','close':101}],
+        'source':'test','sourceUrl':'https://example.com'})
+    assert market_data.reaction_prompt('AMZN','October 30, 2026 Amazon announces results')==''
+
+
+def test_yahoo_prices_use_exchange_dates_and_reject_invalid_values(monkeypatch):
+    from datetime import datetime,timezone
+    stamps=[int(datetime(2026,10,day,20,tzinfo=timezone.utc).timestamp()) for day in (28,29,30)]
+    monkeypatch.setattr(market_data,'_json',lambda *a:{'chart':{'result':[{
+        'meta':{'symbol':'AMZN','exchangeTimezoneName':'America/New_York','currency':'USD'},
+        'timestamp':stamps,'indicators':{'quote':[{'close':[100,None,95]}]}}]}})
+    result=market_data.yahoo_earnings_prices('AMZN',datetime(2026,10,29))
+    assert result['points']==[{'time':'2026-10-28','close':100},{'time':'2026-10-30','close':95}]
+    assert result['source']=='Yahoo Finance'
+
+
+def test_event_cache_uses_bound_symbol_date_keys_and_json(monkeypatch):
+    from unittest.mock import MagicMock
+    monkeypatch.setenv('DATABASE_URL','test')
+    conn=MagicMock()
+    cursor=conn.cursor.return_value.__enter__.return_value
+    payload={'points':[{'time':'2026-10-28','close':100},{'time':'2026-10-30','close':95}]}
+    cursor.fetchone.return_value=(payload,)
+    monkeypatch.setattr(market_data,'get_db_connection',lambda:conn)
+    assert market_data.stored_earnings_prices('AMZN','2026-10-29')==payload
+    assert cursor.execute.call_args.args[1]==('AMZN','2026-10-29')
+    market_data.stored_earnings_prices('AMZN','2026-10-29',payload)
+    assert cursor.execute.call_args.args[1][:2]==('AMZN','2026-10-29')
+    conn.commit.assert_called_once()
+    assert conn.close.call_count==2

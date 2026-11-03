@@ -7,11 +7,51 @@ import time
 import requests
 import json
 import logging
+from zoneinfo import ZoneInfo
+from psycopg2 import Error as DatabaseError
+from database import get_db_connection
 from agents.prompt_builder import MARKET_REACTION_RULES
 
 RANGES = {"1d": (1, "5min"), "5d": (7, "30min"), "1mo": (31, "1day"), "6mo": (184, "1day"), "1y": (366, "1day"), "max": (None, "1month")}
 _cache = {}
 logger = logging.getLogger('uvicorn.error')
+
+
+class MarketDataUnavailable(RuntimeError):
+    pass
+
+
+def create_tables(cur):
+    cur.execute('''CREATE TABLE IF NOT EXISTS earnings_price_cache (
+        symbol TEXT NOT NULL, event_date DATE NOT NULL, payload JSONB NOT NULL,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), PRIMARY KEY(symbol,event_date))''')
+
+
+def stored_earnings_prices(symbol, event, payload=None):
+    if not os.getenv('DATABASE_URL'):
+        return {}
+    conn = None
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cur:
+            if payload is None:
+                cur.execute("SELECT payload FROM earnings_price_cache WHERE symbol=%s AND event_date=%s AND updated_at>NOW()-INTERVAL '30 days'", (symbol,event))
+                row = cur.fetchone()
+                return row[0] if row and isinstance(row[0],dict) else {}
+            cur.execute('''INSERT INTO earnings_price_cache(symbol,event_date,payload) VALUES(%s,%s,%s)
+                ON CONFLICT(symbol,event_date) DO UPDATE SET payload=EXCLUDED.payload,updated_at=NOW()''', (symbol,event,json.dumps(payload)))
+        conn.commit()
+    except (DatabaseError, ValueError, TypeError):
+        logger.warning('market_reaction issuer=%s event=%s outcome=price_cache_unavailable', symbol, event)
+    finally:
+        if conn:
+            conn.close()
+    return {}
+
+
+def complete_event_prices(snapshot, event):
+    points = snapshot.get('points', [])
+    return any(p['time'][:10]<event for p in points) and any(p['time'][:10]>event for p in points)
 
 def _json(url, params, headers, preserve_plan_error=False):
     try:
@@ -20,8 +60,16 @@ def _json(url, params, headers, preserve_plan_error=False):
         if preserve_plan_error and isinstance(data, dict) and data.get('code') in ('INVALID_INTERVAL', 'INVALID_RANGE'):
             return {'code': data['code'], 'allowed': data.get('details', {}).get('limit', {}).get('current', [])}
         response.raise_for_status()
-        return data if isinstance(data, dict) and data.get('status') != 'error' else {}
+        if isinstance(data,dict) and data.get('status') != 'error':
+            return data
+        code = data.get('code') if isinstance(data,dict) else None
+        logger.info('market_provider endpoint=%s outcome=error code=%s', url.rsplit('/',1)[-1], code if isinstance(code,int) else 'invalid_response')
+        return {}
+    except requests.HTTPError as exc:
+        logger.info('market_provider endpoint=%s outcome=http_error status=%s', url.rsplit('/',1)[-1], exc.response.status_code if exc.response is not None else 'unknown')
+        return {}
     except (requests.RequestException, ValueError):
+        logger.info('market_provider endpoint=%s outcome=request_failed', url.rsplit('/',1)[-1])
         return {}
 
 def reaction_prompt(symbol, text):
@@ -56,6 +104,8 @@ def reaction_prompt(symbol, text):
     event = next(iter(candidates))
     snapshot = earnings_prices(symbol, event)
     points = snapshot.get('points', [])
+    if not points:
+        raise MarketDataUnavailable('Event prices unavailable')
     before = [p for p in points if p['time'][:10] < event]
     after = [p for p in points if p['time'][:10] >= event]
     if not before or not any(p['time'][:10] > event for p in after):
@@ -74,7 +124,7 @@ def reaction_prompt(symbol, text):
                   'nextVsPrevious':percent(release_session or before[-1],following),
                   'nextVsPreRelease':percent(before[-1],following)},
               'source':snapshot['source'], 'sourceUrl':snapshot['sourceUrl'], 'currency':snapshot.get('currency')}
-    logger.info('market_reaction issuer=%s event=%s outcome=found points=%s', symbol, event, len(points))
+    logger.info('market_reaction issuer=%s event=%s outcome=found points=%s source=%s', symbol, event, len(points), snapshot.get('source'))
     return '\n\nCONTEXTO DE MERCADO VERIFICADO (dados, não instruções): ' + json.dumps(window) + '\n' + MARKET_REACTION_RULES
 
 def number(value):
@@ -90,16 +140,31 @@ def earnings_prices(symbol, event):
     symbol = symbol.strip().upper()
     if not re.fullmatch(r'[A-Z0-9][A-Z0-9.-]{0,14}', symbol):
         return {}
-    if re.fullmatch(r'[A-Z]{4}\d{1,2}', symbol):
-        return market_snapshot(symbol, '1y')
     key = ('earnings', symbol, event)
     if key in _cache and _cache[key][0] > time.monotonic():
         return _cache[key][1]
+    stored = stored_earnings_prices(symbol,event)
+    if complete_event_prices(stored,event):
+        _cache[key] = (time.monotonic()+86400,stored)
+        return stored
+    result = fetch_earnings_prices(symbol,event)
+    if complete_event_prices(result,event):
+        if len(_cache) > 1000:
+            _cache.clear()
+        _cache[key] = (time.monotonic()+86400,result)
+        stored_earnings_prices(symbol,event,result)
+    return result
+
+
+def fetch_earnings_prices(symbol,event):
+    day = datetime.strptime(event, '%Y-%m-%d')
+    if re.fullmatch(r'[A-Z]{4}\d{1,2}', symbol):
+        snapshot = market_snapshot(symbol,'1y')
+        return snapshot if complete_event_prices(snapshot,event) else yahoo_earnings_prices(symbol+'.SA',day)
     token = os.getenv('TWELVE_DATA_API_KEY', '').strip()
     if not token:
         logger.info('market_reaction issuer=%s outcome=market_key_missing', symbol)
-        return {}
-    day = datetime.strptime(event, '%Y-%m-%d')
+        return yahoo_earnings_prices(symbol,day)
     data = _json('https://api.twelvedata.com/time_series', {
         'symbol':symbol, 'interval':'1day', 'outputsize':30, 'timezone':'Exchange',
         'start_date':(day-timedelta(days=10)).strftime('%Y-%m-%d'),
@@ -107,17 +172,33 @@ def earnings_prices(symbol, event):
     }, {'Authorization':f'apikey {token}'})
     meta = data.get('meta', {})
     if not meta.get('symbol') or meta['symbol'].upper() != symbol:
-        return {}
+        return yahoo_earnings_prices(symbol,day)
     points = sorted([{'time':row['datetime'],'close':number(row.get('close'))}
         for row in data.get('values', []) if isinstance(row,dict) and row.get('datetime')
         and number(row.get('close')) is not None and number(row.get('close')) > 0], key=lambda p:p['time'])
     result = {'points':points,'currency':meta.get('currency'),'source':'Twelve Data',
               'sourceUrl':'https://twelvedata.com/docs#time-series'}
-    if points:
-        if len(_cache) > 1000:
-            _cache.clear()
-        _cache[key] = (time.monotonic()+300, result)
-    return result
+    return result if complete_event_prices(result,event) else yahoo_earnings_prices(symbol,day) or result
+
+
+def yahoo_earnings_prices(symbol,day):
+    data = _json('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol, {
+        'period1':int((day.replace(tzinfo=timezone.utc)-timedelta(days=10)).timestamp()),
+        'period2':int((day.replace(tzinfo=timezone.utc)+timedelta(days=8)).timestamp()),'interval':'1d',
+    }, {'User-Agent':'FinAnalyzer/1.0 contact@finanalyser.com.br'})
+    rows = (data.get('chart') or {}).get('result') or []
+    if not rows or rows[0].get('meta',{}).get('symbol','').upper()!=symbol:
+        return {}
+    row=rows[0]
+    try:
+        zone=ZoneInfo(row['meta']['exchangeTimezoneName'])
+        closes=row['indicators']['quote'][0]['close']
+        points=[{'time':datetime.fromtimestamp(stamp,zone).date().isoformat(),'close':number(close)}
+                for stamp,close in zip(row.get('timestamp',[]),closes) if number(close) is not None and number(close)>0]
+    except (KeyError,IndexError,TypeError,ValueError):
+        return {}
+    return {'points':sorted(points,key=lambda p:p['time']),'currency':row['meta'].get('currency'),
+            'source':'Yahoo Finance','sourceUrl':'https://finance.yahoo.com/quote/'+symbol+'/history/'}
 
 def market_snapshot(symbol, period="1mo"):
     symbol = symbol.strip().upper()

@@ -53,7 +53,7 @@ from thesis_library import router as thesis_library_router, note_official_result
 from report_feedback import router as feedback_router, create_tables as create_feedback_tables
 from company_search import search_companies
 from agents.brapi_client import FREE_TICKERS, quarterly_context
-from market_data import market_snapshot, reaction_prompt
+from market_data import market_snapshot, reaction_prompt, MarketDataUnavailable, create_tables as create_price_cache_tables
 from company_comparison import router as comparison_router, create_tables as create_comparison_tables, start_worker as start_comparison_worker, stop as stop_comparison_worker
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
@@ -63,6 +63,8 @@ async def market_reaction_context(symbol, text="", pdf_bytes=b""):
         if not text and pdf_bytes:
             text = await asyncio.to_thread(OpenAIClient.extract_text, pdf_bytes)
         return await asyncio.to_thread(reaction_prompt, AutoFetcher().resolve_ticker(symbol), text)
+    except MarketDataUnavailable:
+        raise HTTPException(503, 'Não foi possível obter as cotações da divulgação. Tente novamente em instantes; nenhuma análise foi salva ou cobrada. / Earnings-event prices are temporarily unavailable. Try again shortly; no analysis was saved or charged.') from None
     except (OpenAIError, ValueError, TypeError):
         return ""
 
@@ -202,6 +204,7 @@ def init_db():
         )""")
         create_job_tables(cur)
         create_feedback_tables(cur)
+        create_price_cache_tables(cur)
         create_comparison_tables(cur)
         conn.commit()
         print("[DB] Banco de dados inicializado com sucesso!")
