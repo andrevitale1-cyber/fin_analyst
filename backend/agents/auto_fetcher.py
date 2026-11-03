@@ -195,7 +195,7 @@ class AutoFetcher:
         else:
             document = self._fetch_b3(ticker, year, quarter)
         if document:
-            logger.info("transcript_lookup issuer=%s year=%s quarter=%s outcome=found source=%s", issuer, year, quarter, urlparse(document.url).hostname)
+            logger.info("release_lookup issuer=%s year=%s quarter=%s outcome=found source=%s", ticker, year, quarter, urlparse(document.url).hostname)
             try:
                 self.cache_dir.mkdir(parents=True, exist_ok=True)
                 data = asdict(document)
