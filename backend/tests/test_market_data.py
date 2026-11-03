@@ -242,3 +242,20 @@ def test_rate_limited_primary_uses_matching_public_fallback_and_caches(monkeypat
 def test_fallback_does_not_accept_another_issuer(monkeypatch):
     monkeypatch.setattr(market_data, '_json', lambda *a, **k: {'chart':{'result':[{'meta':{'symbol':'AAPL','regularMarketPrice':100}}]}})
     assert market_data.yahoo_market_snapshot('MSFT','1mo') == {}
+
+
+
+def test_sidebar_quote_skips_history_and_reuses_quote_for_full_chart(monkeypatch):
+    monkeypatch.setenv('TWELVE_DATA_API_KEY','test')
+    market_data._cache.clear()
+    calls=[]
+    def get(url, *args, **kwargs):
+        calls.append(url)
+        return {'symbol':'MSFT','close':'400','currency':'USD'} if url.endswith('/quote') else {'meta':{'symbol':'MSFT','currency':'USD'},'values':[{'datetime':'2026-11-02','close':'399'},{'datetime':'2026-11-03','close':'400'}]}
+    monkeypatch.setattr(market_data,'_json',get)
+    result=market_data.market_snapshot('MSFT','1d',quote_only=True)
+    assert result['price']==400 and result['points']==[]
+    assert len(calls)==1 and calls[0].endswith('/quote')
+    assert market_data.market_snapshot('MSFT','1d',quote_only=True)==result
+    full=market_data.market_snapshot('MSFT','1mo')
+    assert len(full['points'])==2 and len(calls)==2 and calls[-1].endswith('/time_series')

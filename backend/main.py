@@ -97,9 +97,9 @@ async def company_suggestions(q: str = "", user: str = Depends(require_active_us
     return await asyncio.to_thread(search_companies, q.strip())
 
 @app.get("/api/market-data")
-async def market_data(symbol: str, range: str = "1mo", user: str = Depends(require_active_user)):
+async def market_data(symbol: str, range: str = "1mo", quote_only: bool = False, user: str = Depends(require_active_user)):
     try:
-        return await asyncio.to_thread(market_snapshot, symbol, range)
+        return await asyncio.to_thread(market_snapshot, symbol, range, quote_only)
     except ValueError:
         raise HTTPException(400, "Invalid symbol or range") from None
 

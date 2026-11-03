@@ -16,7 +16,7 @@ export default function AnalysisMarketChart({ symbol, compact = false }: { symbo
     if (!userId || !symbol.trim()) { setData(null); setLoading(false); return; }
     const controller = new AbortController();
     setLoading(true); setData(null);
-    tokenRef.current().then(token => fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api-finanalyzer.onrender.com'}/api/market-data?symbol=${encodeURIComponent(symbol)}&range=${compact ? '1d' : period}`, { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } }))
+    tokenRef.current().then(token => fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api-finanalyzer.onrender.com'}/api/market-data?symbol=${encodeURIComponent(symbol)}&range=${compact ? '1d&quote_only=true' : period}`, { signal: controller.signal, headers: { Authorization: `Bearer ${token}` } }))
       .then(response => { if (!response.ok) throw new Error(); return response.json(); })
       .then(value => { if (!controller.signal.aborted) { setData(value); setLoading(false); } })
       .catch(() => { if (!controller.signal.aborted) { setData(null); setLoading(false); } });

@@ -241,17 +241,17 @@ def yahoo_market_snapshot(symbol, period):
             "interval": interval, "source": "Yahoo Finance", "sourceUrl": "https://finance.yahoo.com/quote/" + symbol + "/history/"}
 
 
-def market_snapshot(symbol, period="1mo"):
+def market_snapshot(symbol, period="1mo", quote_only=False):
     symbol = symbol.strip().upper()
     if period not in RANGES or not re.fullmatch(r"[A-Z0-9][A-Z0-9.-]{0,14}", symbol):
         raise ValueError("Invalid symbol or range")
     # The sidebar and result can request the same issuer at the same time.
     with _market_lock(symbol):
-        return _market_snapshot(symbol, period)
+        return _market_snapshot(symbol, period, quote_only)
 
 
-def _market_snapshot(symbol, period):
-    key = (symbol, period)
+def _market_snapshot(symbol, period, quote_only=False):
+    key = (symbol, "quote" if quote_only else period)
     if key in _cache and _cache[key][0] > time.monotonic():
         return _cache[key][1]
     b3 = bool(re.fullmatch(r"[A-Z]{4}\d{1,2}", symbol))
@@ -267,10 +267,10 @@ def _market_snapshot(symbol, period):
                 return next((row.get("data", row) for row in body.get("results", []) if row.get("symbol") == symbol), None)
             quote = _cached_quote("brapi", symbol, lambda: get("quote", {"symbols": symbol}))
             interval = "5m" if period == "1d" else "30m" if period == "5d" else "1d" if period != "max" else "1mo"
-            history = get("historical", {"symbols": symbol, "range": period, "interval": interval}) or []
+            history = [] if quote_only else get("historical", {"symbols": symbol, "range": period, "interval": interval}) or []
             if isinstance(history, dict) and history.get('code') == 'INVALID_INTERVAL' and '1d' in history.get('allowed', []):
                 interval = '1d'
-                history = get("historical", {"symbols": symbol, "range": period, "interval": interval}) or []
+                history = [] if quote_only else get("historical", {"symbols": symbol, "range": period, "interval": interval}) or []
             unavailable_reason = 'plan_range' if isinstance(history, dict) and history.get('code') == 'INVALID_RANGE' else None
             if isinstance(history, dict) and history.get('code') == 'INVALID_INTERVAL': unavailable_reason = 'plan_interval'
             used_interval = history.get('usedInterval', interval) if isinstance(history, dict) else interval
@@ -298,14 +298,14 @@ def _market_snapshot(symbol, period):
             params = {"symbol": symbol, "interval": interval, "outputsize": 5000, "timezone": "UTC"}
             if days:
                 params["start_date"] = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
-            history = get("time_series", params)
+            history = {} if quote_only else get("time_series", params)
             meta = history.get("meta", {})
             if meta.get("symbol") and meta["symbol"].upper() != symbol:
                 return {"symbol": symbol, "available": False}
             points = [{"time": row["datetime"], "close": number(row.get("close"))} for row in history.get("values", []) if isinstance(row, dict) and row.get("datetime") and number(row.get("close")) is not None and number(row.get("close")) > 0]
             result = {"symbol": symbol, "price": number(quote.get("close")), "changePercent": number(quote.get("percent_change")), "asOf": quote.get("datetime"), "currency": quote.get("currency") or meta.get("currency"), "points": points, "source": "Twelve Data", "sourceUrl": "https://twelvedata.com/docs#time-series"}
-        if not b3 and (result["price"] is None or len(result["points"]) < 2):
-            fallback = yahoo_market_snapshot(symbol, period)
+        if not b3 and (result["price"] is None or (not quote_only and len(result["points"]) < 2)):
+            fallback = yahoo_market_snapshot(symbol, "1d" if quote_only else period)
             if fallback and (fallback.get("price") is not None or fallback.get("points")):
                 # Keep each snapshot's quote, history and attribution from one source.
                 if (fallback.get("price") is not None and len(fallback.get("points", [])) > 1) or (result["price"] is None and not result["points"]):
@@ -314,11 +314,13 @@ def _market_snapshot(symbol, period):
         if result["price"] is None and result["points"]:
             result["price"] = result["points"][-1]["close"]
             result["asOf"] = result["points"][-1]["time"]
+        if quote_only:
+            result["points"] = []
         result["available"] = bool(result["points"] or result["price"] is not None)
         result["range"] = period
         if len(_cache) > 1000:
             _cache.clear()
-        _cache[key] = (time.monotonic() + (300 if result["available"] else 15), result)
+        _cache[key] = (time.monotonic() + ((60 if quote_only else 300) if result["available"] else 15), result)
         return result
     except (requests.RequestException, ValueError, TypeError, AttributeError, KeyError):
         return {"symbol": symbol, "available": False}
