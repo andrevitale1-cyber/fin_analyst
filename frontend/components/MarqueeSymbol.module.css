@@ -1,0 +1,6 @@
+.symbol { position: relative; display: block; width: 100%; height: 100%; color: inherit; }
+.vector { display: block; width: 100%; height: 100%; }
+.canvas { position: absolute; inset: 0; width: 100%; height: 100%; visibility: hidden; }
+.symbol[data-ready="true"] .canvas { visibility: visible; }
+.symbol[data-ready="true"] .vector { visibility: hidden; }
+@media(max-width:743px), (hover:none) and (pointer:coarse) { .symbol[data-ready="true"] .vector { visibility: visible; } .canvas { display: none; } }

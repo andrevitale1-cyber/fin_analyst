@@ -63,6 +63,7 @@
 @media (max-width: 743px) { .navigation { top: 24px; width: calc(100% - 2 * clamp(32px, 11.8vw, 46px)); } .pill { padding-left: 20px; gap: 8px; } .brand { font-size: 17px; } .brand svg { width: 21px; height: 21px; } .inner { padding: 118px 0 40px; } .copy { padding: 0 18px; gap: 23px; } .copy h1 { max-width: 340px; padding: 0 16px; font-size: 40px; } .copy p { max-width: 358px; font-size: 18px; line-height: 1.1; } .headlineBreak { display: none; } .scrollDown { height: 50px; } }
 @media (max-width: 374px), (max-height: 700px) and (max-width: 743px) { .navigation { width: calc(100% - 40px); } .copy h1 { font-size: 34px; } .copy p { font-size: 17px; } .copy { gap: 18px; } }
 @media (max-height: 700px) and (min-width: 744px) { .inner { min-height: 540px; } }
+@media (max-width: 743px), (hover: none) and (pointer: coarse) { .track { animation-duration: 16s; } }
 @media (prefers-reduced-motion: reduce) {
   .scrollDown svg { animation: none; }
   .track { animation-duration: 48s; }
