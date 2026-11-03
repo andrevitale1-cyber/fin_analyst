@@ -790,7 +790,7 @@ export default function FinancialDashboard() {
               </div>
             )}
             
-            <AnalysisMarketChart key={result.id || result.metadata?.empresa} symbol={result.metadata?.ticker || result.metadata?.symbol || result.metadata?.empresa || ''}/>
+            <AnalysisMarketChart key={`market-${result.id || result.metadata?.empresa}`} symbol={result.metadata?.ticker || result.metadata?.symbol || result.metadata?.empresa || ''}/>
             <div className="bg-white/90 border border-slate-200 rounded-3xl p-6 md:p-10 shadow-[0_18px_55px_rgba(38,57,94,0.08)]">
               <h3 className="text-2xl font-bold text-slate-900 mb-8 flex items-center gap-3">
                 <FileText className={result.metadata?.tipo === "Earnings Call" ? "text-purple-500" : "text-blue-500"} /> 
@@ -801,7 +801,7 @@ export default function FinancialDashboard() {
                 {translationStatus === 'error' && <span className="mt-3 block text-sm text-amber-700" role="status">{locale === 'en' ? 'Translation unavailable; showing the original analysis.' : 'Tradução indisponível; exibindo a análise original.'}</span>}
               </div>
             </div>
-            {result.id && <ReportFeedback key={String(result.id)} reportId={String(result.id)} kind="analysis" locale={locale}/>}
+            {result.id && <ReportFeedback key={`feedback-${result.id}`} reportId={String(result.id)} kind="analysis" locale={locale}/>}
           </div>
         )}
       </main>
