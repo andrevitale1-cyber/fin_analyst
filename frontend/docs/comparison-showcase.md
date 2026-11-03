@@ -14,3 +14,6 @@ Validation: production Webpack build; browser review at 1440, 1920, 390 and 320 
 
 ## Mobile video entry correction
 The preceding audience section and first story scene formerly overlapped by 50vh, with a purple scroll-driven overlay and dynamic vh panel sizing. Mobile/coarse-pointer layouts now use a normal section boundary, stable svh heights, a dark fixed-opacity overlay, centered headings and center-based scene activation. Desktop retains its original scroll fade/title curve. Inactive video layers are hidden and later clips preload metadata. Browser checks confirm first clip playback, second-scene activation, reverse navigation and no horizontal overflow; physical iOS/Android toolbar behavior remains untested.
+
+### Mobile connector visibility follow-up
+Replaced the short 22px mobile links with a branched connection from both company cards, a 72px inbound track, a centered logo, and a 76px outbound track reaching the verdict. Larger arrow markers travel over each full track on a 2s loop; reduced-motion users retain static markers. Desktop center spacing also expands to 400px. The source Rive hero symbols now explicitly run their embedded State Machine 1, rather than relying on default timeline playback. Checks cover the original symbol gallery and mobile connectors over multiple animation cycles.

@@ -3,7 +3,7 @@
 .intro { text-align: center; max-width: 1064px; margin: 0 auto; }
 .intro h2 { margin: 0; color: #3428ff; background: linear-gradient(110deg,#3428ff 25%,#5298ff); background-clip: text; -webkit-text-fill-color: transparent; font-size: clamp(32px,4.1vw,56px); font-weight: 700; line-height: 1.08; letter-spacing: -.045em; text-wrap: balance; }
 .intro > p { max-width: 600px; margin: 24px auto 0; color: #535768; font-size: 18px; font-weight: 500; line-height: 1.6; text-wrap: balance; }
-.scene { display: grid; grid-template-columns: minmax(0,1fr) clamp(180px,22vw,320px) minmax(0,1fr); align-items: center; gap: 24px; max-width: 1280px; margin: 64px auto 0; }
+.scene { display: grid; grid-template-columns: minmax(0,1fr) clamp(220px,28vw,400px) minmax(0,1fr); align-items: center; gap: 24px; max-width: 1280px; margin: 64px auto 0; }
 .inputs { display: grid; gap: 14px; position: relative; z-index: 1; }
 .company { padding: 20px; background: #fff; border: 1px solid #e0e4ef; border-radius: 13px; box-shadow: 0 8px 28px #24224a06; }
 .companyHeader { display: flex; align-items: center; gap: 12px; }
@@ -49,14 +49,15 @@
 @keyframes comparison-flow-down { 0% { top: 0; opacity: 0; transform: rotate(90deg); } 10%,90% { opacity: 1; } 100% { top: 100%; opacity: 0; transform: rotate(90deg); } }
 @keyframes comparison-flow { 0% { left: 0; opacity: 0; transform: translateX(-50%); } 10%,90% { opacity: 1; } 100% { left: 100%; opacity: 0; transform: translateX(-50%); } }
 @keyframes comparison-pulse { 0% { transform: scale(.98); opacity: .8; } 85%,100% { transform: scale(1.2); opacity: 0; } }
-@media(max-width:1000px) { .surface { padding: 88px 30px; } .scene { grid-template-columns: minmax(0,1fr) 120px minmax(0,1fr); gap: 15px; } .brand { width: 64px; height: 64px; border-radius: 19px; } .brand::after { border-radius: 25px; } .connection { height: 64px; } .flow { top: 31px; width: calc(50% - 32px + 15px); } .flowIn { right: calc(50% + 32px); } .flowOut { left: calc(50% + 32px); } .connection > span { top: 76px; } .swords { top: 100px; } .connection > span { font-size: 11px; } .verdict { padding: 24px; } .company { padding: 16px; } .companyHeader { gap: 8px; } .companyHeader img { width: 30px; height: 30px; } .companyHeader strong { font-size: 15px; } .period { flex-wrap: wrap; } .benefits { gap: 16px; } .benefits > li { font-size: 13px; } }
+@media(max-width:1000px) { .surface { padding: 88px 30px; } .scene { grid-template-columns: minmax(0,1fr) 150px minmax(0,1fr); gap: 15px; } .brand { width: 64px; height: 64px; border-radius: 19px; } .brand::after { border-radius: 25px; } .connection { height: 64px; } .flow { top: 31px; width: calc(50% - 32px + 15px); } .flowIn { right: calc(50% + 32px); } .flowOut { left: calc(50% + 32px); } .connection > span { top: 76px; } .swords { top: 100px; } .connection > span { font-size: 11px; } .verdict { padding: 24px; } .company { padding: 16px; } .companyHeader { gap: 8px; } .companyHeader img { width: 30px; height: 30px; } .companyHeader strong { font-size: 15px; } .period { flex-wrap: wrap; } .benefits { gap: 16px; } .benefits > li { font-size: 13px; } }
 @media(max-width:743px) {
   .section { padding: 12px 8px; }
   .surface { border-radius: 16px; padding: 64px 20px 52px; }
   .intro h2 { font-size: 34px; line-height: 1.12; }
   .intro > p { font-size: 16px; margin-top: 20px; }
-  .scene { display: flex; flex-direction: column; gap: 22px; margin-top: 36px; }
+  .scene { display: flex; flex-direction: column; gap: 0; margin-top: 36px; }
   .inputs { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; width: 100%; }
+  .inputs::after { content: ""; position: absolute; top: 100%; left: 25%; width: 50%; height: 28px; border: 2px dashed #5147ff; border-top: 0; border-radius: 0 0 12px 12px; }
   .company { padding: 14px 11px; border-radius: 10px; }
   .companyHeader { flex-direction: column; align-items: flex-start; gap: 8px; }
   .companyHeader img { height: 30px; width: 32px; }
@@ -66,14 +67,15 @@
   .period { flex-direction: column; align-items: flex-start; gap: 4px; padding: 9px; }
   .period > small { font-size: 8px; }
   .fiscal { font-size: 8px; }
-  .connection { height: 98px; width: 58px; padding: 0; justify-content: flex-start; }
+  .connection { height: 270px; width: 100%; padding: 100px 0 0; justify-content: flex-start; flex: none; }
   .brand { width: 58px; height: 58px; border-radius: 17px; }
   .brand > svg { width: 30px; }
   .brand::after { border-radius: 23px; }
-  .flow { width: 2px; height: 22px; left: calc(50% - 1px); right: auto; top: -22px; background: repeating-linear-gradient(#5147ff 0 4px,transparent 4px 8px); }
-  .flowOut { top: auto; bottom: -22px; }
-  .flow::after { width: 14px; height: 14px; left: -6px; font-size: 16px; animation-name: comparison-flow-down; }
-  .connection > span { top: 70px; font-size: 11px; }
+  .flow { width: 2px; height: 72px; left: calc(50% - 1px); right: auto; top: 28px; background: repeating-linear-gradient(#5147ff 0 4px,transparent 4px 8px); }
+  .flowOut { top: 194px; height: 76px; bottom: auto; }
+  .flow::after { width: 20px; height: 20px; left: -9px; font-size: 20px; animation: comparison-flow-down 2s linear infinite; }
+  .connection > span { top: 170px; font-size: 12px; }
+  .flowOut::after { animation-delay: -1s; }
   .swords { display: none; }
   .verdict { width: 100%; padding: 25px 22px; border-radius: 15px; }
   .verdict h3 { font-size: 26px; }
@@ -87,4 +89,5 @@
   .action > a { width: 100%; }
   .action > p { font-size: 10px; }
 }
+@media(max-width:743px) and (prefers-reduced-motion:reduce) { .flow::after { top: 50%; left: -9px !important; transform: rotate(90deg); } }
 @media(prefers-reduced-motion:reduce) { .brand::after { animation: none; opacity: .4; } .flow::after { animation: none; left: 50%; opacity: 1; } .action > a { transition: none; } }

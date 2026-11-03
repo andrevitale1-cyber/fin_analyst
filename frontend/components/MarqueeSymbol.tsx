@@ -14,7 +14,7 @@ export default function MarqueeSymbol({ index, visible }: { index: number; visib
     const sync = () => {
       if (!ready || !instance) return;
       if (reduce.matches) { instance.pause(); instance.scrub(instance.animationNames, 1); }
-      else instance.play();
+      else instance.play(instance.stateMachineNames);
     };
     const resize = new ResizeObserver(() => instance?.resizeDrawingSurfaceToCanvas(Math.min(devicePixelRatio, 2)));
     resize.observe(canvas.current);
@@ -22,7 +22,7 @@ export default function MarqueeSymbol({ index, visible }: { index: number; visib
       if (disposed || !canvas.current) return;
       RuntimeLoader.setWasmUrl("/reference/clearstreet/rive.wasm");
       instance = new Rive({ canvas: canvas.current, src: `/reference/clearstreet/marquee-${index}.riv`,
-        autoplay: false, layout: new Layout({ fit: Fit.Contain }),
+        autoplay: false, stateMachines: "State Machine 1", layout: new Layout({ fit: Fit.Contain }),
         onLoad: () => { ready = true; instance?.resizeDrawingSurfaceToCanvas(Math.min(devicePixelRatio, 2)); sync(); },
       });
     });
