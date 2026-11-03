@@ -13,6 +13,7 @@ import MetaAnalysisSection from "@/components/MetaAnalysisSection";
 import CallAnalysisSection from "@/components/CallAnalysisSection";
 import FullReportShowcase from "@/components/FullReportShowcase";
 import ComparisonShowcase from "@/components/ComparisonShowcase";
+import SiteCredit from "@/components/SiteCredit";
 import PricingSection from "@/components/PricingSection";
 import benefitsStyles from "@/components/BenefitsLayout.module.css";
 import { Link } from "@/i18n/routing";
@@ -102,6 +103,7 @@ function LandingPageContent({ locale }: { locale: string }) {
               {locale === "en" ? "© 2026 FinAnalyzer Inc. All rights reserved." : "© 2026 FinAnalyzer Inc. Todos os direitos reservados."}
             </p>
           </div>
+          <SiteCredit locale={locale} />
         </div>
       </footer>
     </div>
