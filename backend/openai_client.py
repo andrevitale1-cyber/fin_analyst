@@ -112,10 +112,12 @@ class OpenAIClient:
             result = self._request(client, "responses", json={
                 "model": self.model,
                 **self._model_options(),
+                "instructions": "Return only the requested JSON array. Use exact, undecorated URLs from search results. No Markdown or commentary. Only include the requested issuer and fiscal period.",
                 "input": query + '\nReturn only JSON: [{"title":"...","url":"https://..."}]. Find up to ' + ("5" if document_type == "transcript" else "8") + ' ' + target + '. Do not invent URLs.',
                 "tools": [{"type": "web_search", "search_context_size": "low"}],
                 "tool_choice": "required",
-                "max_output_tokens": 700,
+                "include": ["web_search_call.action.sources"],
+                "max_output_tokens": 2500,
                 "store": False,
             }, timeout=30 if document_type == "transcript" else 90)
         text = "".join(part.get("text", "")
@@ -123,13 +125,26 @@ class OpenAIClient:
                        for part in item.get("content", []) if part.get("type") == "output_text")
         import json
         try:
+            if result.get("status") == "incomplete":
+                raise ValueError
             # Search can append prose after its JSON array; only decode the complete leading value.
             links, _ = json.JSONDecoder().raw_decode(text.strip().removeprefix("```json").removeprefix("```").lstrip())
             if not isinstance(links, list):
                 raise ValueError
             return [item for item in links[:5 if document_type == "transcript" else 8] if isinstance(item, dict) and isinstance(item.get("url"), str)]
         except (ValueError, TypeError):
-            raise OpenAIError("A pesquisa web retornou uma resposta inválida.") from None
+            # Tool sources retain complete URLs even when the model's presentation is truncated.
+            sources = []
+            for item in result.get("output", []):
+                if item.get("type") != "web_search_call": continue
+                for source in (item.get("action") or {}).get("sources", []):
+                    url = source.get("url") if isinstance(source, dict) else None
+                    if isinstance(url, str) and url.startswith("https://") and not any(row["url"] == url for row in sources):
+                        sources.append({"title": source.get("title") or "Official " + document_type, "url": url})
+            if sources:
+                return sources[:8]
+            raise OpenAIError("A pesquisa web retornou uma resposta inválida.",
+                              code="search_output_truncated" if result.get("status") == "incomplete" else "invalid_search_json") from None
 
     def analyze_transcript(self, prompt, text):
         if not text.strip():

@@ -37,6 +37,7 @@ class AutoFetcher:
         "PNVL3": ("Panvel", "Dimed"),
         "AAPL": ("Apple",), "MSFT": ("Microsoft",), "GOOGL": ("Alphabet", "Google"),
         "AMZN": ("Amazon",), "META": ("Meta", "Facebook"), "NVDA": ("Nvidia",), "TSLA": ("Tesla",),
+        "MCD": ("McDonald's", "McDonald’s", "McDonalds"),
         "ITUB4": ("Itaú Unibanco", "Itaú"), "ITSA4": ("Itaúsa",), "BBAS3": ("Banco do Brasil",),
         "BBDC4": ("Bradesco",), "SANB11": ("Santander Brasil", "Santander"),
         "PETR4": ("Petrobras",), "VALE3": ("Vale",), "ABEV3": ("Ambev",), "WEGE3": ("WEG",),

@@ -8,6 +8,7 @@ from urllib.parse import quote, urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
+from openai_client import OpenAIClient, OpenAIError
 
 
 @dataclass
@@ -90,6 +91,15 @@ class SECFetcher:
                     if i < len(report_dates) and (batch["accessionNumber"][i], report_dates[i]) in fiscal_filings:
                         matching.append((batch, i, report_dates[i]))
             if not matching:
+                # Earnings releases can precede the 10-Q/10-K and its XBRL fiscal tags.
+                candidates = [(batch, i) for batch in batches for i, form in enumerate(batch.get("form", []))
+                              if form == "8-K" and "2.02" in batch.get("items", [""] * len(batch["form"]))[i]
+                              and year - 1 <= date.fromisoformat(batch["filingDate"][i]).year <= year + 1]
+                candidates.sort(key=lambda row: row[0]["filingDate"][row[1]], reverse=True)
+                for batch, i in candidates[:8]:
+                    document = self._filing_document(batch, i, cik, exhibit=True)
+                    if document and self._release_matches(document, year, quarter):
+                        return document
                 return None
             # An annual filing is not a standalone fourth-quarter result; require an explicit release.
             for batch, index, report_date in matching:
@@ -105,7 +115,7 @@ class SECFetcher:
                         if form == "8-K" and "2.02" not in items:
                             continue
                         document = self._filing_document(release_batch, i, cik, exhibit=True)
-                        if document and self._mentions_quarter(document.text, year, quarter):
+                        if document and self._release_matches(document, year, quarter):
                             return document
                 if quarter < 4:
                     document = self._filing_document(batch, index, cik)
@@ -115,15 +125,24 @@ class SECFetcher:
             return None
         return None
 
+    def _release_matches(self, document, year, quarter):
+        try:
+            text = document.text or OpenAIClient.extract_text(document.pdf_bytes)
+            return self._mentions_quarter(text, year, quarter)
+        except OpenAIError:
+            return False
+
     @staticmethod
     def _mentions_quarter(text, year, quarter):
         if not text:
             return False
-        head = text[:10000]
-        if re.search(rf"(?:{quarter}[TQ]|[TQ]{quarter})\s*{year}", head, re.I):
-            return True
-        ordinal = ("first", "second", "third", "fourth")[quarter - 1]
-        return bool(re.search(rf"\b{ordinal}\s+(?:fiscal\s+)?quarter\b.{{0,80}}\b(?:fiscal\s+)?{year}\b", head, re.I))
+        head = " ".join(text[:10000].split())
+        periods = []
+        for match in re.finditer(r"\b(?:([1-4])[TQ]|[TQ]([1-4]))\s*(?:FY\s*)?(20\d{2})\b", head, re.I):
+            periods.append((match.start(), int(match[3]), int(match[1] or match[2])))
+        for match in re.finditer(r"\b(first|second|third|fourth)\s+(?:fiscal\s+)?quarter\b.{0,80}?\b(20\d{2})\b", head, re.I):
+            periods.append((match.start(), int(match[2]), ("first","second","third","fourth").index(match[1].lower()) + 1))
+        return bool(periods and min(periods)[1:] == (year, quarter))
 
     def _filing_document(self, batch, i, cik, exhibit=False):
         accession = batch["accessionNumber"][i].replace("-", "")

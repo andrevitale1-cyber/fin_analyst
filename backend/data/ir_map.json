@@ -62,5 +62,6 @@
     "AMZN": "https://ir.aboutamazon.com/quarterly-results/default.aspx",
     "META": "https://investor.fb.com/investor-events/default.aspx",
     "NVDA": "https://investor.nvidia.com/financial-info/quarterly-results/default.aspx",
-    "TSLA": "https://ir.tesla.com/press-releases"
+    "TSLA": "https://ir.tesla.com/press-releases",
+    "MCD": "https://corporate.mcdonalds.com/corpmcd/investors/financial-information.html"
 }
