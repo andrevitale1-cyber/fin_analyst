@@ -28,7 +28,8 @@ class AutoFetcher:
     # Query Vivara's verified catalogue without depending on the RI site's certificate chain.
     mziq_catalogs = {"VIVA3": ("61a4df2d-a461-44d6-9128-da74058019db", "release-de-resultados"),
                      "TFCO4": ("8e49886e-dded-49c0-b8db-c35451e75eed", "central_release_de_resultados "),
-                     "PNVL3": ("d19425c2-0ba6-490e-af3b-87fc04d4fc88", "press_release")}
+                     "PNVL3": ("d19425c2-0ba6-490e-af3b-87fc04d4fc88", "press_release"),
+                     "ITUB4": ("42787847-4cf6-4461-94a5-40ed237dca33", "central_analise_gerencial_da_operacao")}
     transcript_issuers = {
         "CAVA": ("CAVA Group", "CAVA"), "NKE": ("NIKE",), "MU": ("Micron", "Micron Technology"),
         "SK HYNIX": ("SK hynix",),

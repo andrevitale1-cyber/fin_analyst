@@ -141,3 +141,20 @@ def test_release_header_takes_precedence_over_highlight_comparison(monkeypatch, 
     text = f"RESULTADOS 2025\nReceita +17,5% vs. 4T24\nVIVARA {header} | RELEASE DE RESULTADOS\nResultados 4T25."
     monkeypatch.setattr(OpenAIClient, "extract_text", staticmethod(lambda _: text))
     assert (AutoFetcher()._download_release(VIVARA_PDF, 2025, 4) is not None) is accepted
+
+
+def test_itau_uses_exact_official_catalog_without_blocked_ri_or_paid_search(tmp_path, monkeypatch):
+    company, category = AutoFetcher.mziq_catalogs["ITUB4"]
+    url = f"https://filemanager-cdn.mziq.com/published/{company}/official-release"
+    row = {**ROW, "company_id": company, "internal_name": category,
+           "file_url": url, "file_quarter": 3}
+    monkeypatch.setattr(requests, "post", Mock(return_value=Mock(json=lambda: {
+        "success": True, "data": {"document_metas": [{**row, "file_quarter": 2}, row]}})))
+    get = Mock(return_value=Mock(url=url, content=b"%PDF-itau"))
+    monkeypatch.setattr(requests, "get", get)
+    monkeypatch.setattr(OpenAIClient, "extract_text", staticmethod(lambda _: "Itaú Unibanco Resultados 3T26"))
+    fetcher = AutoFetcher(tmp_path)
+    fetcher.search_client.search_financial_reports = Mock(side_effect=AssertionError("No paid search"))
+    fetcher._fetch_equibles = Mock(side_effect=AssertionError("No vendor needed"))
+    assert fetcher.fetch_result_pdf("ITUB4", 2026, "3T").url == url
+    get.assert_called_once_with(url, timeout=30)

@@ -123,7 +123,8 @@ class OpenAIClient:
                        for part in item.get("content", []) if part.get("type") == "output_text")
         import json
         try:
-            links = json.loads(text.strip().removeprefix("```json").removesuffix("```").strip())
+            # Search can append prose after its JSON array; only decode the complete leading value.
+            links, _ = json.JSONDecoder().raw_decode(text.strip().removeprefix("```json").removeprefix("```").lstrip())
             if not isinstance(links, list):
                 raise ValueError
             return [item for item in links[:5 if document_type == "transcript" else 8] if isinstance(item, dict) and isinstance(item.get("url"), str)]

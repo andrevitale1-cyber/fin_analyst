@@ -52,6 +52,8 @@ class SearchClient:
             logger.info("release_search issuer=%s year=%s quarter=%s provider=openai candidates=%d", ticker, ano, trimestre, len(results))
             return results
         except (OpenAIError, TimeoutError) as exc:
+            logger.warning("release_search issuer=%s year=%s quarter=%s provider=openai outcome=failed error=%s status=%s code=%s",
+                           ticker, ano, trimestre, type(exc).__name__, getattr(exc, "status_code", None), getattr(exc, "code", None))
             raise SearchError("O serviço de busca de resultados está indisponível. Tente novamente em instantes ou envie o PDF oficial.") from exc
 
     def search_transcripts(self, company, year, quarter, allow_openai=False):
