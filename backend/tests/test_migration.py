@@ -18,6 +18,13 @@ from agents.sec_fetcher import FetchedDocument, SECFetcher
 from report_generator import _parse_sections, generate_report_html
 
 
+def official_release(company='Apple', year=2025, quarter=1):
+    return FetchedDocument('https://www.sec.gov/report.htm','SEC',text=
+        f'{company} reports Q{quarter} {year} financial results. Revenue increased to 100 million. '+
+        'Net income increased to 20 million, operating income 25 million. '+
+        'Consolidated quarterly revenue and net income, currency USD. '*6)
+
+
 ANALYSIS = "\n".join(f"Seção {i}: Teste\nResultados do trimestre.\nNota Seção {i}: 4/5" for i in range(1, 5)) + '\nSeção 5: Conclusão\nEmpresa com resultados consistentes.\nNota Geral: 4/5\n```json\n[{"name":"1T25","receita":100,"lucro":20,"margemBruta":40,"margemLiquida":20,"segmentos":[{"nome":"Serviços","valor":100}]}]\n```'
 
 
@@ -202,7 +209,7 @@ def test_transcript_search_uses_company_name_and_selected_quarter(tmp_path):
     ])
     fetcher._download_transcript = Mock(return_value=document)
     assert fetcher.fetch_transcript("Itaú Unibanco", "2025", "1T") == document
-    fetcher._download_transcript.assert_called_once_with("https://example.com/1q25-transcript.pdf", 2025, 1, "Itaú Unibanco")
+    fetcher._download_transcript.assert_called_once_with("https://example.com/1q25-transcript.pdf", 2025, 1, "ITUB4")
 
 
 @pytest.mark.parametrize("selected", ["file:///secret.pdf", "https://other.test/1T25.pdf", None])
@@ -297,7 +304,7 @@ def test_unrateable_quarterly_analysis_is_not_saved_or_charged(api, monkeypatch,
     conn.cursor.return_value.fetchone.return_value = None
     monkeypatch.setattr(main, 'get_db_connection', lambda: conn)
     monkeypatch.setattr(OpenAIClient, 'analyze_document', lambda *a, **k: 'Section Score 1: Not rateable\nOverall Score: Not rateable')
-    monkeypatch.setattr(AutoFetcher, 'fetch_result_pdf', lambda *a: FetchedDocument('https://www.sec.gov/release.htm', 'SEC', text='Amazon third quarter 2026'))
+    monkeypatch.setattr(AutoFetcher, 'fetch_result_pdf', lambda *a: official_release('Amazon',2026,3))
     response = client.post('/api/'+route, data={'ticker':'AMZN','empresa':'AMZN','ano':'2026','trimestre':'3T','user_id':'test','locale':'en'}, files={'file':('release.pdf',b'%PDF-test')})
     assert response.status_code == 422
     assert 'No analysis was saved or charged' in response.json()['detail']
@@ -310,7 +317,7 @@ def test_missing_event_prices_stop_before_ai_save_and_charge(api,monkeypatch,ope
     import market_data
     main,client=api
     monkeypatch.setattr(main,'reaction_prompt',Mock(side_effect=market_data.MarketDataUnavailable()))
-    monkeypatch.setattr(AutoFetcher,'fetch_result_pdf',lambda *a:FetchedDocument('https://www.sec.gov/release.htm','SEC',text='Amazon October 29, 2026 announces results'))
+    monkeypatch.setattr(AutoFetcher,'fetch_result_pdf',lambda *a:official_release('Amazon',2026,3))
     monkeypatch.setattr(OpenAIClient,'extract_text',lambda *a:'Amazon October 29, 2026 announces results')
     analyze=Mock()
     complete=Mock()
@@ -363,6 +370,8 @@ def api(monkeypatch):
     monkeypatch.setattr("psycopg2.connect", Mock())
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
     main = importlib.import_module("main")
+    monkeypatch.setattr('release_pipeline.issuer_identity',lambda symbol:{'symbol':symbol})
+    monkeypatch.setattr('release_pipeline.stored',lambda *a,**kw:None)
     from fastapi.testclient import TestClient
     main.app.dependency_overrides[main.analysis_access] = lambda: None
     main.app.dependency_overrides[main.require_active_user] = lambda: "test"
@@ -391,7 +400,7 @@ def test_manual_auto_same_parser_and_saved_format(api, monkeypatch, openai_clien
     monkeypatch.setattr(main, "get_db_connection", lambda: conn)
     analyze = Mock(return_value=ANALYSIS)
     monkeypatch.setattr(OpenAIClient, "analyze_document", analyze)
-    monkeypatch.setattr(AutoFetcher, "fetch_result_pdf", lambda *a: FetchedDocument("https://www.sec.gov/report.htm", "SEC", text="SEC earnings"))
+    monkeypatch.setattr(AutoFetcher, "fetch_result_pdf", lambda *a: official_release())
     data = {"empresa": "AAPL", "ticker": "AAPL", "ano": "2025", "trimestre": "1T", "user_id": "test"}
     manual = client.post("/api/analyze", data=data, files={"file": ("report.pdf", b"%PDF-test")})
     automatic = client.post("/api/analyze-auto", data=data)
@@ -402,7 +411,7 @@ def test_manual_auto_same_parser_and_saved_format(api, monkeypatch, openai_clien
     history_insert = next(call for call in reversed(conn.cursor.return_value.execute.call_args_list) if "INSERT INTO historico" in call.args[0])
     saved = json.loads(history_insert.args[1][3])
     assert set(saved) == {"metadata", "data", "analise_completa"}
-    assert analyze.call_args.kwargs["pdf_text"] == "SEC earnings"
+    assert analyze.call_args.kwargs["pdf_text"] == official_release().text
     assert len(factory.call_args_list) == 2
     assert all(call.kwargs == {"task": "analysis"} for call in factory.call_args_list)
 
@@ -456,7 +465,7 @@ def test_auto_reuses_public_analysis_for_another_user(api, monkeypatch, openai_c
     monkeypatch.setattr(main, "note_official_result", lambda *a, **k: None)
     analyze = Mock(return_value=ANALYSIS)
     monkeypatch.setattr(OpenAIClient, "analyze_document", analyze)
-    monkeypatch.setattr(AutoFetcher, "fetch_result_pdf", lambda *a: FetchedDocument("https://www.sec.gov/report.htm", "SEC", text="Apple earnings"))
+    monkeypatch.setattr(AutoFetcher, "fetch_result_pdf", lambda *a: official_release())
     data = {"ticker": "AAPL", "ano": "2025", "trimestre": "1T", "user_id": "first", "locale": "pt"}
     first = client.post("/api/analyze-auto", data=data)
     second = client.post("/api/analyze-auto", data={**data, "user_id": "second"})
@@ -475,6 +484,35 @@ def test_auto_search_outage_is_retryable_instead_of_report_not_found(api, monkey
     result = client.post("/api/analyze-auto", data={"company": "Weg", "ano": "2026", "trimestre": "1T", "user_id": "test"})
     assert result.status_code == 503
     assert "temporariamente" in result.json()["detail"] and "PROVIDER_PRIVATE_DETAIL" not in result.text
+
+
+def test_auto_partial_category_is_saved_cached_and_never_shown_as_zero(api,monkeypatch,openai_client):
+    main,client=api
+    conn=Mock();conn.cursor.return_value.fetchone.return_value=(7,)
+    monkeypatch.setattr(main,'get_db_connection',lambda:conn)
+    monkeypatch.setattr(AutoFetcher,'fetch_result_pdf',lambda *a:official_release())
+    response=ANALYSIS.replace('Nota Seção 3: 4/5','**Nota Seção 3:** N/A')
+    monkeypatch.setattr(OpenAIClient,'analyze_document',lambda *a,**kw:response)
+    completed=Mock();monkeypatch.setattr(main,'complete_usage',completed)
+    result=client.post('/api/analyze-auto',data={'ticker':'AAPL','ano':'2025','trimestre':'1T','user_id':'test'})
+    assert result.status_code==200
+    assert result.json()['data']['divida_nota'] is None
+    assert result.json()['data']['rated_fundamentals']==3
+    sql=[call.args[0] for call in conn.cursor.return_value.execute.call_args_list]
+    assert any('INSERT INTO public_quarterly_cache' in statement for statement in sql)
+    assert any('INSERT INTO historico' in statement for statement in sql)
+    completed.assert_called_once()
+
+
+def test_wrong_source_is_rejected_before_ai_history_and_usage(api,monkeypatch,openai_client):
+    main,client=api
+    conn=Mock();monkeypatch.setattr(main,'get_db_connection',lambda:conn)
+    monkeypatch.setattr(AutoFetcher,'fetch_result_pdf',lambda *a:official_release('Suzano'))
+    analyze=Mock();monkeypatch.setattr(OpenAIClient,'analyze_document',analyze)
+    completed=Mock();monkeypatch.setattr(main,'complete_usage',completed)
+    result=client.post('/api/analyze-auto',data={'ticker':'AAPL','ano':'2025','trimestre':'1T','user_id':'test'})
+    assert result.status_code==422 and result.headers['x-error-code']=='issuer_mismatch'
+    analyze.assert_not_called();completed.assert_not_called()
 
 
 def test_report_invalid_chart_data():

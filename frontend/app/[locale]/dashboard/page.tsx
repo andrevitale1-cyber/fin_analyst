@@ -370,6 +370,7 @@ export default function FinancialDashboard() {
       } else if (isAuto) {
         urlBackend = `${API_BASE}/api/analyze-auto`;
         formData.append("ticker", selectedCompany.ticker);
+        formData.append("market", selectedCompany.market);
       } else if (isTranscript) {
         urlBackend = `${API_BASE}/api/analyze-call`;
         formData.append("empresa", selectedCompany.ticker);
@@ -386,7 +387,6 @@ export default function FinancialDashboard() {
 
       if (response.status === 403) { setLoading(false); setShowUpgradeModal(true); return; }
       if (!response.ok) {
-        if (response.status === 503) throw new Error(t("newAnalysis.serviceUnavailable"));
         let errorMsg = "Erro na API do Servidor.";
         try {
           const err = await response.json();
@@ -472,6 +472,7 @@ export default function FinancialDashboard() {
   }, [tableData, sortConfig]);
 
   const renderCellContent = (item: any, key: string, colDef: any) => {
+    if (item[key] === null || item[key] === undefined) return <span className="text-slate-400">—</span>;
     if (key === 'empresa') return <span className={`${colDef.color || 'text-slate-900'} font-bold`}>{item[key]?.toString().toUpperCase()}</span>;
     if (key === 'last_analysed_quarter') return <span className={colDef.color}>{formatPeriod(item[key], locale)}</span>;
     if (key === 'trimestre') return <span className="bg-sky-50 text-sky-700 py-1 px-2 rounded text-xs font-bold border border-blue-500/20">{formatPeriod(item[key], locale)}</span>;
@@ -769,7 +770,7 @@ export default function FinancialDashboard() {
               {/* Só mostra a nota geral se não for um Earnings Call */}
               {result.metadata?.tipo !== "Earnings Call" && (
                 <div className="flex items-center gap-6 bg-white/90 p-6 rounded-2xl border border-slate-200 w-full md:w-auto justify-between md:justify-start">
-                  <div className="text-right"><p className="text-sm text-slate-500 font-medium uppercase">{t("result.aiScore")}</p><p className="text-xs text-slate-500">{t("result.basedOn")}</p></div>
+                  <div className="text-right"><p className="text-sm text-slate-500 font-medium uppercase">{t("result.aiScore")}</p><p className="text-xs text-slate-500">{t("result.basedOn", {count: [result.data?.receita_nota, result.data?.lucro_nota, result.data?.divida_nota, result.data?.rentabilidade_nota].filter(value => Number(value) >= 1 && Number(value) <= 5).length})}</p></div>
                   <div className={`text-4xl font-bold ${Number(result.data?.nota_geral || 0) >= 4 ? 'text-emerald-700' : Number(result.data?.nota_geral || 0) >= 3 ? 'text-amber-700' : 'text-red-600'}`}>
                     {result.data?.nota_geral}<span className="text-lg text-slate-400">/5</span>
                   </div>
@@ -783,7 +784,7 @@ export default function FinancialDashboard() {
                 {[{ label: "netRevenue", val: result.data?.receita_nota, icon: <DollarSign size={20} className="text-sky-700" /> }, { label: "netIncome", val: result.data?.lucro_nota, icon: <Percent size={20} className="text-purple-600" /> }, { label: "netDebt", val: result.data?.divida_nota, icon: <AlertCircle size={20} className="text-red-600" /> }, { label: "profitability", val: result.data?.rentabilidade_nota, icon: <TrendingUp size={20} className="text-emerald-700" /> }].map((item, idx) => (
                   <div key={idx} className="bg-white/90 border border-slate-200 p-6 rounded-2xl hover:border-slate-300 transition-all duration-300">
                     <div className="flex items-center justify-between mb-4"><span className="text-slate-500 text-sm font-medium">{t(item.label as any)}</span><div className="bg-slate-100 p-2 rounded-lg">{item.icon}</div></div>
-                    <div className="flex items-end gap-2"><span className="text-3xl font-bold text-slate-900">{item.val}</span><span className="text-slate-400 text-sm mb-1">/5</span></div>
+                    <div className="flex items-end gap-2"><span className="text-3xl font-bold text-slate-900">{Number(item.val) >= 1 ? item.val : '—'}</span><span className="text-slate-400 text-sm mb-1">{Number(item.val) >= 1 ? '/5' : (locale === 'en' ? 'Not disclosed' : 'Não divulgado')}</span></div>
                     <div className="w-full bg-slate-100 h-1 mt-4 rounded-full overflow-hidden"><div className={`h-full ${Number(item.val || 0) >= 4 ? 'bg-green-500' : Number(item.val || 0) >= 3 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${(Number(item.val || 0) / 5) * 100}%` }} /></div>
                   </div>
                 ))}

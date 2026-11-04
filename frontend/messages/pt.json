@@ -135,7 +135,7 @@
       "exploreFullReport": "Explorar relatório completo",
       "analysisReport": "Relatório de Análise",
       "aiScore": "Score IA",
-      "basedOn": "Baseado em 4 fundamentos",
+      "basedOn": "Baseado em {count} fundamentos",
       "transcriptAnalysis": "Transcrição e Análise",
       "investmentThesis": "Tese de Investimento"
     }

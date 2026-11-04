@@ -502,6 +502,8 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
     ]
 
     def _pillar(p):
+        if not 1 <= p['nota'] <= 5:
+            return f'<div class="pillar"><div class="pillar-nota">—</div><div class="pillar-label">{p["label"]}</div><p>{"Not disclosed" if en else "Não divulgado"}</p></div>'
         t   = _score_theme(p["nota"], locale)
         pct = int(p["nota"] / 5 * 100)
         return f"""<div class="pillar" style="border-top:3px solid {t['bar']}">

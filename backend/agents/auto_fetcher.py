@@ -54,6 +54,7 @@ class AutoFetcher:
         self.equibles_client = EquiblesClient()
         self.cache_dir = Path(cache_dir or os.getenv("REPORT_CACHE_DIR", str(Path(tempfile.gettempdir()) / "finanalyzer-releases")))
         self._transcript_download_failed = False
+        self.allow_web = True
 
     def resolve_ticker(self, ticker):
         """Accept common Brazilian symbols typed without their share-class suffix."""
@@ -175,8 +176,10 @@ class AutoFetcher:
         if ticker == original_ticker and ticker != "SK HYNIX" and ticker not in self.ir_urls and not re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
             ticker = SECFetcher().resolve_name(ticker) or self._resolve_b3_name(ticker) or ticker
         logger.info("release_lookup issuer=%s year=%s quarter=%s", ticker, year, quarter)
-        cache_path = self.cache_dir / f"fiscal-v3-{ticker}-{year}-{quarter}.json"
+        cache_path = self.cache_dir / f"fiscal-v4-{ticker}-{year}-{quarter}.json"
         try:
+            if time.time() - cache_path.stat().st_mtime > 3600:
+                raise ValueError("Expired release cache")
             cached = json.loads(cache_path.read_text(encoding="utf-8"))
             cached["pdf_bytes"] = base64.b64decode(cached["pdf_bytes"], validate=True)
             document = FetchedDocument(**cached)
@@ -187,8 +190,6 @@ class AutoFetcher:
             pass
         if re.fullmatch(r"[A-Z]{1,5}(?:[-.][A-Z])?", ticker):
             document = SECFetcher().fetch(ticker.replace(".", "-"), year, quarter)
-            if not document:
-                document = self._fetch_equibles(ticker, year, quarter)
             if not document:
                 candidate = self._fetch_b3(ticker, year, quarter)
                 if candidate:
@@ -421,7 +422,7 @@ class AutoFetcher:
             return None
         return None
 
-    def _fetch_b3(self, ticker, year, quarter):
+    def _fetch_ir(self, ticker, year, quarter):
         if ticker == "SK HYNIX":
             url = f"https://news.skhynix.com/en/q{quarter}-{year}-business-results/"
             document = self._download_release(url, year, quarter, depth=1, timeout=10)
@@ -447,12 +448,19 @@ class AutoFetcher:
                 for candidate in self._candidates(candidates, year, quarter)[:12]:
                     document = self._download_release(candidate["url"], year, quarter)
                     if document and self._release_company_matches(document, ticker):
+                        document.sources = [*document.sources, {'name':'RI catalogue', 'url':ir_url}]
                         return document
             except requests.RequestException:
                 pass
-        # Direct issuer catalogues are faster than an unsupported vendor or a paid web search.
+        return None
+
+    def _fetch_b3(self, ticker, year, quarter):
+        if document := self._fetch_ir(ticker, year, quarter):
+            return document
         if document := self._fetch_equibles(ticker, year, quarter):
             return document
+        if not self.allow_web:
+            return None
         results = self.search_client.search_financial_reports(ticker, year, f"{quarter}T")
         candidates = self._candidates(results, year, quarter)
         for candidate in candidates[:12]:
@@ -471,7 +479,7 @@ class AutoFetcher:
         scripts = "\n".join(script.get_text() for script in soup.find_all("script"))
         company = re.search(r"\b(?:fmId|company_id)\s*=\s*['\"]([a-fA-F0-9-]{36})['\"]", scripts)
         categories = re.findall(r"internal_name\s*:\s*['\"]([a-zA-Z0-9_ -]+)['\"]", scripts)
-        categories = list(dict.fromkeys(name for name in categories if re.search(r"release|earnings", name, re.I)))
+        categories = list(dict.fromkeys(name for name in categories if re.search(r"release|earnings|analise_gerencial", name, re.I)))
         if not company or not categories:
             return []
         return self._mziq_catalog_candidates(company[1], categories, year, quarter)

@@ -45,6 +45,8 @@ from call_analysis import without_key_moments
 from full_reports import router as full_reports_router, create_tables as create_full_report_tables, save_analysis_document
 from agents.auto_fetcher import AutoFetcher
 from agents.search_client import SearchError
+from release_pipeline import fetch_release, ReleaseError, create_tables as create_release_tables
+from release_prefetch import start as start_release_prefetch, stop as stop_release_prefetch
 from agents.prompt_builder import PromptBuilder
 from agents.x_bot_router import router as x_bot_router
 from account_limits import analysis_access, complete_usage, access_snapshot, require_active_user, create_tables as create_usage_tables
@@ -73,11 +75,13 @@ async def market_reaction_context(symbol, text="", pdf_bytes=b""):
 async def lifespan(app):
     start_worker()
     start_comparison_worker()
+    start_release_prefetch()
     try:
         yield
     finally:
         stop_report_worker.set()
         stop_comparison_worker.set()
+        stop_release_prefetch.set()
 
 
 app = FastAPI(title="API Analisador Financeiro", lifespan=lifespan)
@@ -205,6 +209,7 @@ def init_db():
         create_job_tables(cur)
         create_feedback_tables(cur)
         create_price_cache_tables(cur)
+        create_release_tables(cur)
         create_comparison_tables(cur)
         conn.commit()
         print("[DB] Banco de dados inicializado com sucesso!")
@@ -249,81 +254,7 @@ def extract_text_from_pdf_bytes(file_bytes, max_pages=30):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Erro ao extrair texto do PDF: {str(e)}")
     
-def quarterly_thesis(text):
-    prefix = r"^[ \t]*(?:#{1,6}[ \t]*)?\*{0,2}"
-    section = r"(?:Se[cç][aã]o|Section)[ \t]*"
-    match = re.search(
-        rf"{prefix}{section}5[ \t]*[:–-][^\n]*\n(.*?)(?={prefix}{section}[67]\b|{prefix}(?:Nota\s+Geral|Overall\s+Score)\b|^```|\Z)",
-        text or "", re.DOTALL | re.IGNORECASE | re.MULTILINE,
-    )
-    if match and match[1].strip():
-        return match[1].strip()
-    prose = re.sub(r"```[\s\S]*?```", "", text or "").strip()
-    intro = re.split(rf"{prefix}{section}1\b", prose, maxsplit=1, flags=re.IGNORECASE | re.MULTILINE)[0].strip()
-    return intro or prose
-
-
-def parse_results(text):
-    def get_note(pattern, txt):
-        match = re.search(pattern, txt, re.DOTALL | re.IGNORECASE)
-        if match:
-            try:
-                return int(match.group(1))
-            except:
-                return 0.0
-        return 0.0
-
-    def get_chart_data(txt):
-        try:
-            m = re.search(r"```json\s*([\s\S]*?)\s*```", txt or "", re.IGNORECASE)
-            if not m: return []
-            raw = json.loads(m.group(1))
-            if not isinstance(raw, list): return []
-            cleaned = []
-            for item in raw:
-                if not isinstance(item, dict): continue
-                def to_float(v, default=0.0):
-                    try:
-                        s = str(v).strip()
-                        if not s or s.lower() == 'null' or s.lower() == 'none': return default
-                        return float(s.replace(',', '.'))
-                    except: return default
-                
-                receita = to_float(item.get("receita"))
-                if receita == 0: continue
-                
-                cleaned.append({
-                    "name": item.get("name") or item.get("periodo") or item.get("label") or "",
-                    "receita": receita,
-                    "lucro": to_float(item.get("lucro")),
-                    "divida": to_float(item.get("divida")),
-                    "ebitda": to_float(item.get("ebitda")),
-                    "margemBruta": to_float(item.get("margemBruta")),
-                    "margemLiquida": to_float(item.get("margemLiquida")),
-                    "segmentos": item.get("segmentos", []),
-                    "composicao_receita": item.get("composicao_receita", {}), 
-                    "despesas_var": item.get("despesas_var", [])
-                })
-            return cleaned
-        except: return []
-
-    return {
-        "receita_nota": get_note(r'(?:Nota Seção 1|Section Score 1):\s*([1-5])\s*/\s*5', text),
-        "rentabilidade_nota": get_note(r'(?:Nota Seção 2|Section Score 2):\s*([1-5])\s*/\s*5', text),
-        "divida_nota": get_note(r'(?:Nota Seção 3|Section Score 3):\s*([1-5])\s*/\s*5', text),
-        "lucro_nota": get_note(r'(?:Nota Seção 4|Section Score 4):\s*([1-5])\s*/\s*5', text),
-        "nota_geral": get_note(r'(?:Nota Geral|Overall Score):\s*([1-5])\s*/\s*5', text),
-        "tese_investimento": quarterly_thesis(text),
-        "chart_data": get_chart_data(text),
-    }
-
-
-def validate_quarterly_result(data, locale):
-    if not all(data.get(key) and 1 <= data[key] <= 5 for key in
-               ("receita_nota", "rentabilidade_nota", "divida_nota", "lucro_nota", "nota_geral")):
-        message = ("The source did not provide enough information for a complete analysis. No analysis was saved or charged. Please try again or upload the earnings release."
-                   if locale == "en" else "A fonte não permitiu uma análise completa. Nenhuma análise foi salva ou cobrada. Tente novamente ou envie o release de resultados.")
-        raise HTTPException(422, message)
+from quarterly_results import quarterly_thesis, parse_results, validate_quarterly_result
 
 # --- ROTAS ---
 @app.get("/")
@@ -416,6 +347,7 @@ async def analyze_report(
 async def analyze_report_auto(
     ticker: str = Form(default=""),
     company: str = Form(default=""),
+    market: str = Form(default=""),
     ano: str = Form(...),
     trimestre: str = Form(...),
     user_id: str = Form(...),
@@ -436,13 +368,21 @@ async def analyze_report_auto(
     
     try:
         document = await asyncio.wait_for(
-            asyncio.to_thread(fetcher.fetch_result_pdf, ticker, ano, trimestre), timeout=180.0,
+            asyncio.to_thread(fetch_release, ticker, ano, trimestre, connection=get_db_connection, market=market), timeout=180.0,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from None
     except SearchError:
         raise HTTPException(status_code=503, detail="The report search service is temporarily unavailable. Please try again shortly or upload the official PDF." if locale == "en" else
                             "O serviço de busca de resultados está temporariamente indisponível. Tente novamente em instantes ou envie o PDF oficial.") from None
+    except ReleaseError as exc:
+        messages = {
+            'not_found': ('No official release was found for this company and fiscal period. It may not be published yet. You can upload the official PDF.', 'Não foi localizado um release oficial desta empresa e período fiscal. Ele pode ainda não ter sido publicado. Faça o upload manual do PDF oficial.'),
+            'search_unavailable': ('Official sources did not return the release and the web search is temporarily unavailable. No analysis was charged.', 'As fontes oficiais não retornaram o release e a pesquisa web está temporariamente indisponível. Nenhuma análise foi cobrada.'),
+        }
+        en, pt = messages.get(exc.code, ('The retrieved document could not be verified for this company and fiscal period. No analysis was charged. Upload the official release.', 'O documento encontrado não pôde ser validado para esta empresa e período fiscal. Nenhuma análise foi cobrada. Envie o release oficial.'))
+        raise HTTPException(503 if exc.code == 'search_unavailable' else 404 if exc.code == 'not_found' else 422,
+                            en if locale == 'en' else pt, headers={'X-Analysis-Stage':'document', 'X-Error-Code':exc.code}) from None
     except (asyncio.TimeoutError, TimeoutError):
         raise HTTPException(status_code=504, detail="A busca demorou muito. Faça o upload manual do PDF.") from None
     if not document:
@@ -479,12 +419,13 @@ async def analyze_report_auto(
     try:
         conn = get_db_connection()
         cur = conn.cursor()
+        # Wait outside the event loop; identical public requests share one paid analysis across instances.
+        cur.execute("SET LOCAL statement_timeout = '180s'")
+        await asyncio.wait_for(asyncio.to_thread(cur.execute, "SELECT pg_advisory_xact_lock(hashtextextended(%s,0))", (cache_key,)), timeout=185)
         cur.execute("SELECT response_text FROM public_quarterly_cache WHERE cache_key=%s AND created_at > NOW() - INTERVAL '30 days'", (cache_key,))
         cached = cur.fetchone()
         response_text = cached[0] if cached and isinstance(cached[0], str) else None
         cur.close()
-        conn.close()
-        conn = None
         if not response_text:
             response_text = await asyncio.wait_for(
                 asyncio.to_thread(analysis_client.analyze_document, prompt,
@@ -500,15 +441,16 @@ async def analyze_report_auto(
             "data": dados_estruturados,
             "analise_completa": response_text
         }
+        if document.sources:
+            objeto_final['financial_sources'] = document.sources
         if brapi_data:
-            objeto_final["financial_sources"] = [{"name": "brapi · " + kind, "url": "https://brapi.dev/docs/acoes/" + page,
+            objeto_final["financial_sources"] = objeto_final.get('financial_sources', []) + [{"name": "brapi · " + kind, "url": "https://brapi.dev/docs/acoes/" + page,
                                                     "period": brapi_data["endDate"]}
                                                    for kind, page in (("income-statement", "dre"), ("balance-sheet", "balanco-patrimonial"), ("cash-flow", "fluxo-de-caixa"))
                                                    if kind in brapi_data["statements"]]
 
-        conn = get_db_connection()
         cur = conn.cursor()
-        if not (cached and isinstance(cached[0], str)) and all(dados_estruturados.get(key) for key in ("receita_nota", "rentabilidade_nota", "divida_nota", "lucro_nota", "nota_geral", "tese_investimento")):
+        if not (cached and isinstance(cached[0], str)):
             cur.execute("""INSERT INTO public_quarterly_cache (cache_key,response_text) VALUES (%s,%s)
                         ON CONFLICT (cache_key) DO UPDATE SET response_text=EXCLUDED.response_text,created_at=NOW()""", (cache_key, response_text))
         cur.execute(
@@ -701,10 +643,10 @@ def get_table_data(user_id: str, user: str = Depends(require_active_user)):
                         'ultimo_ano': row[1],
                         'ultimo_trimestre': row[2],
                         'ultima_nota': nota_geral,
-                        'last_receita': safe_float(data_content.get('receita_nota')),
-                        'last_lucro': safe_float(data_content.get('lucro_nota')),
-                        'last_divida': safe_float(data_content.get('divida_nota')),
-                        'last_roe': safe_float(data_content.get('rentabilidade_nota')),
+                        'last_receita': safe_float(data_content.get('receita_nota')) if data_content.get('receita_nota') is not None else None,
+                        'last_lucro': safe_float(data_content.get('lucro_nota')) if data_content.get('lucro_nota') is not None else None,
+                        'last_divida': safe_float(data_content.get('divida_nota')) if data_content.get('divida_nota') is not None else None,
+                        'last_roe': safe_float(data_content.get('rentabilidade_nota')) if data_content.get('rentabilidade_nota') is not None else None,
                         'notas': []
                     }
                 grouped_data[empresa]['notas'].append(nota_geral)

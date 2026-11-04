@@ -135,7 +135,7 @@
       "exploreFullReport": "Explore full report",
       "analysisReport": "Analysis Report",
       "aiScore": "AI Score",
-      "basedOn": "Based on 4 fundamentals",
+      "basedOn": "Based on {count} fundamentals",
       "transcriptAnalysis": "Transcript and Analysis",
       "investmentThesis": "Investment Thesis"
     }

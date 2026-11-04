@@ -52,6 +52,13 @@ def test_untrusted_markup_is_literal_and_cannot_load_files():
     assert not reader.pages[0].get('/Annots')
 
 
+def test_missing_category_is_not_exported_as_zero_or_none():
+    result=sample();result['data']['divida_nota']=None
+    reader=PdfReader(io.BytesIO(generate_analysis_pdf(result,'en')))
+    text='\n'.join(page.extract_text() for page in reader.pages)
+    assert 'N/A/5' in text and 'None/5' not in text and '0/5' not in text
+
+
 @pytest.fixture
 def client(monkeypatch):
     app = FastAPI()

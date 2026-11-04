@@ -1,0 +1,30 @@
+name: Earnings discovery regression
+on:
+  push:
+    paths: ['backend/**', '.github/workflows/release-regression.yml']
+  pull_request:
+    paths: ['backend/**', '.github/workflows/release-regression.yml']
+jobs:
+  verified-releases:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: backend
+      OPENAI_CALL_AGENT_ID: ''
+      RELEASE_PREFETCH_ENABLED: '0'
+      REPORT_JOB_WORKER: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - run: pip install -r backend/requirements.txt pytest
+      - name: Test without live services or AI billing
+        run: >-
+          pytest backend/tests/test_release_pipeline.py backend/tests/test_release_retrieval.py
+          backend/tests/test_mziq_releases.py backend/tests/test_sec_fresh_release.py
+          backend/tests/test_search_response.py backend/tests/test_company_catalog.py
+          backend/tests/test_equibles.py backend/tests/test_transcripts.py
+          backend/tests/test_analysis_pdf.py backend/tests/test_migration.py
+          -q -p no:cacheprovider

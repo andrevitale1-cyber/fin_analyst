@@ -202,6 +202,7 @@ REGRAS CRÍTICAS:
 3. {section_rule}
 4. Confirme o período do documento antes de analisar. Se divergir do período solicitado, destaque a divergência; não misture trimestres nem apresente dados de outro período como se fossem do solicitado.
 5. Diferencie fatos divulgados, cálculos derivados e interpretação. Para cada número relevante, informe período, unidade e, quando identificável, página ou tabela de origem. Nunca invente uma referência.
+6. Se uma categoria não tiver evidência suficiente mesmo após consultar os anexos fornecidos, escreva sua etiqueta de nota seguida de N/A. Não atribua 3/5 ou outra nota neutra por falta de dados. As demais categorias continuam avaliáveis. Fundamente a nota geral somente nas dimensões com evidência, redistribuindo seus pesos; se não houver base global suficiente, use N/A também na nota geral.
 
 {QUALITY_RULES}
 

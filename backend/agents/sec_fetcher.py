@@ -1,5 +1,5 @@
 """Balanços e releases SEC pelo trimestre fiscal do emissor."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 import re
 import time
@@ -17,6 +17,7 @@ class FetchedDocument:
     source: str
     pdf_bytes: bytes = b""
     text: str = ""
+    sources: list = field(default_factory=list)
 
 
 class SECFetcher:
@@ -68,7 +69,10 @@ class SECFetcher:
                 return None
             cik = int(company["cik_str"])
             filings = self._get(f"https://data.sec.gov/submissions/CIK{cik:010d}.json").json()["filings"]
-            facts = self._get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json").json().get("facts", {})
+            try:
+                facts = self._get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json").json().get("facts", {})
+            except (requests.RequestException, ValueError):
+                facts = {}  # A delayed XBRL endpoint must not hide an already published 8-K.
             fiscal_period = f"Q{quarter}" if quarter < 4 else "FY"
             fiscal_filings = set()
             for taxonomy in facts.values():

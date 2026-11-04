@@ -44,7 +44,7 @@ def generate_analysis_pdf(result: dict, locale='pt') -> bytes:
     if not is_call:
         labels = ['Overall', 'Revenue', 'Net income', 'Net debt', 'Profitability'] if en else ['Geral', 'Receita', 'Lucro líquido', 'Dívida líquida', 'Rentabilidade']
         keys = ['nota_geral', 'receita_nota', 'lucro_nota', 'divida_nota', 'rentabilidade_nota']
-        scores = Table([[Paragraph(inline(f'{label}\n{data.get(key, "-")}/5').replace('\n', '<br/>'), styles['Score'])
+        scores = Table([[Paragraph(inline(f'{label}\n{data.get(key) if data.get(key) is not None else "N/A"}/5').replace('\n', '<br/>'), styles['Score'])
                          for label, key in zip(labels, keys)]], colWidths=[doc.width/5]*5)
         scores.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,-1),colors.HexColor('#f1f5f9')),
                                     ('TOPPADDING',(0,0),(-1,-1),12), ('BOTTOMPADDING',(0,0),(-1,-1),12),
