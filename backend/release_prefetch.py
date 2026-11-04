@@ -6,7 +6,7 @@ from threading import Event, Thread
 
 from psycopg2 import Error as DatabaseError
 from database import get_db_connection
-from release_pipeline import fetch_release, ReleaseError, issuer_identity
+from release_pipeline import fetch_release, ReleaseError, issuer_identity, VERSION
 
 stop = Event()
 logger = logging.getLogger('uvicorn.error')
@@ -30,7 +30,7 @@ def refresh_once(connection=get_db_connection):
             if not cur.fetchone()[0]:
                 return
             cur.execute('''SELECT symbol,fiscal_year,fiscal_quarter FROM official_release_cache
-                WHERE checked_at<NOW()-INTERVAL '1 hour' ORDER BY checked_at LIMIT 12''')
+                WHERE version<>%s OR checked_at<NOW()-INTERVAL '1 hour' ORDER BY checked_at LIMIT 12''', (VERSION,))
             tasks = cur.fetchall()
             if not tasks:
                 cur.execute('SELECT COUNT(*) FROM official_release_cache')

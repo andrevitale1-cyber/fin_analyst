@@ -98,6 +98,16 @@ def test_supplement_inherits_fiscal_period_only_when_reporting_end_matches_paren
     assert len(pipeline.supplements(doc,2026,3).sources)==2
 
 
+def test_sec_verified_fiscal_year_does_not_use_calendar_year_of_period_end():
+    doc=document('Microsoft','quarter ended September 30, 2026')
+    doc.url='https://www.sec.gov/Archives/edgar/data/789019/0001/msft-20260930.htm'
+    doc.fiscal_year,doc.fiscal_quarter,doc.issuer_cik=2027,1,'0000789019'
+    identity={'symbol':'MSFT','name':'Microsoft','cik':'0000789019'}
+    assert pipeline.validate_document(doc,AutoFetcher(),identity,2027,1)==doc.text
+    with pytest.raises(pipeline.ReleaseError,match='period_mismatch'):
+        pipeline.validate_document(doc,AutoFetcher(),identity,2026,1)
+
+
 def test_source_index_without_financial_numbers_is_rejected():
     doc=document();doc.text='McDonalds third quarter 2026 investor relations navigation links. '*12
     with pytest.raises(pipeline.ReleaseError,match='financial_content_missing'):

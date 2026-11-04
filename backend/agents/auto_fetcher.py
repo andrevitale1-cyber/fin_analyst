@@ -176,7 +176,7 @@ class AutoFetcher:
         if ticker == original_ticker and ticker != "SK HYNIX" and ticker not in self.ir_urls and not re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
             ticker = SECFetcher().resolve_name(ticker) or self._resolve_b3_name(ticker) or ticker
         logger.info("release_lookup issuer=%s year=%s quarter=%s", ticker, year, quarter)
-        cache_path = self.cache_dir / f"fiscal-v4-{ticker}-{year}-{quarter}.json"
+        cache_path = self.cache_dir / f"fiscal-v5-{ticker}-{year}-{quarter}.json"
         try:
             if time.time() - cache_path.stat().st_mtime > 3600:
                 raise ValueError("Expired release cache")

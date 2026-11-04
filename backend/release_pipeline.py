@@ -1,6 +1,6 @@
-"""Verified public releases, bounded supplements and a durable shared cache. No AI calls here."""
+"""Verified public releases, bounded supplements and durable caching before analysis starts."""
 import base64
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from functools import lru_cache
 import hashlib
 import json
@@ -20,7 +20,7 @@ from agents.search_client import SearchError
 from openai_client import OpenAIClient, OpenAIError
 
 logger = logging.getLogger('uvicorn.error')
-VERSION = 'verified-release-v1'
+VERSION = 'verified-release-v2'
 
 
 class ReleaseError(RuntimeError):
@@ -57,19 +57,19 @@ def issuer_identity(symbol):
             response = requests.get('https://sistemaswebb3-listados.b3.com.br/listedCompaniesProxy/CompanyCall/GetInitialCompanies/' + query, timeout=5)
             response.raise_for_status()
             payload = response.json()
-            rows = [r for r in payload.get('results', []) if r.get('issuingCompany') == symbol[:4]
+            rows = [r for r in payload.get('results', []) if isinstance(r,dict) and r.get('issuingCompany') == symbol[:4]
                     and r.get('status') == 'A' and r.get('type') == '1']
             if len(rows) == 1 and payload.get('page', {}).get('totalPages') == 1:
                 row = rows[0]
                 result.update(market='B3', name=row['companyName'], cvm=row.get('codeCVM'), cnpj=row.get('cnpj'))
         else:
-            rows = [r for r in SECFetcher()._catalog() if r.get('ticker') == symbol.replace('.', '-')]
+            rows = [r for r in SECFetcher()._catalog() if isinstance(r,dict) and r.get('ticker') == symbol.replace('.', '-')]
             if len(rows) == 1:
                 result.update(market='US', name=rows[0]['title'], cik=str(int(rows[0]['cik_str'])).zfill(10))
                 info = SECFetcher()._get(f'https://data.sec.gov/submissions/CIK{result["cik"]}.json').json()
                 result['domains'] = [urlparse(info.get(field) or '').hostname for field in ('website','investorWebsite') if info.get(field)]
                 result['fiscal_year_end'] = info.get('fiscalYearEnd')
-    except (requests.RequestException, ValueError, TypeError, KeyError):
+    except (requests.RequestException, ValueError, TypeError, KeyError, AttributeError):
         logger.info('release_identity issuer=%s outcome=catalog_unavailable', symbol)
     if len(_issuers) > 4096:
         _issuers.clear()
@@ -117,10 +117,14 @@ def validate_document(document, fetcher, identity, year, quarter):
     period_text = re.sub(r'(?<![A-Z0-9])([1-4])\s+([TQ])', r'\1\2', text[:4000].upper())
     period_text = re.sub(r'(?<![A-Z0-9])([1-4][TQ])\s*((?:\d\s+){1,3}\d)(?!\d)',
                          lambda m: m[1] + re.sub(r'\s+', '', m[2]), period_text)
-    if not fetcher._period_matches(period_text, year, quarter):
+    fiscal_proof = (parsed.hostname == 'www.sec.gov' and sec_path
+                    and document.fiscal_year == year and document.fiscal_quarter == quarter
+                    and document.issuer_cik == identity.get('cik')
+                    and document.issuer_cik is not None and int(sec_path[1]) == int(document.issuer_cik))
+    if not fiscal_proof and not fetcher._period_matches(period_text, year, quarter):
         raise ReleaseError('period_mismatch')
     primary_period = fetcher._transcript_period(period_text)
-    if primary_period and primary_period not in ((quarter, year), (quarter, year % 100)):
+    if not fiscal_proof and primary_period and primary_period not in ((quarter, year), (quarter, year % 100)):
         raise ReleaseError('period_mismatch')
     metrics = re.findall(r'net income|operating income|revenues?|net sales|lucro|receita|margem|ebitda', text, re.I)
     if len(metrics) < 2 or not re.search(r'\d', text):
@@ -174,7 +178,7 @@ def supplements(document, year, quarter):
             if len(sources) == 3:
                 break
         if len(parts) > 1:
-            document = FetchedDocument(document.url, document.source, text='\n'.join(parts)[:180000], sources=sources)
+            document = replace(document, pdf_bytes=b'', text='\n'.join(parts)[:180000], sources=sources)
         logger.info('release_supplements issuer_path=%s count=%d', directory, len(sources)-1)
     except (requests.RequestException, OpenAIError, ValueError, TypeError):
         logger.info('release_supplements outcome=unavailable')
@@ -246,10 +250,10 @@ def fetch_release(symbol, year, quarter, *, connection=None, refresh=False, allo
             text = validate_document(document, fetcher, identity, year, quarter)
             document = supplements(document, year, quarter)
             text = document.text or text
-            document = FetchedDocument(document.url, document.source, text=text, sources=document.sources)
+            document = replace(document, pdf_bytes=b'', text=text)
             fingerprint = hashlib.sha256(text.encode()).hexdigest()
             # Only verified public documents enter the shared cache; no uploaded/private files.
-            cached_document = asdict(FetchedDocument(document.url, document.source, text=text, sources=document.sources))
+            cached_document = asdict(document)
             cached_document.pop('pdf_bytes')
             status = 'found'
             return document

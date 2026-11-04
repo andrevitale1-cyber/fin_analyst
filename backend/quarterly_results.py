@@ -42,10 +42,10 @@ def parse_results(text):
                         if not s or s.lower() == 'null' or s.lower() == 'none': return default
                         return float(s.replace(',', '.'))
                     except: return default
-                
+
                 receita = to_float(item.get("receita"))
                 if receita == 0: continue
-                
+
                 cleaned.append({
                     "name": item.get("name") or item.get("periodo") or item.get("label") or "",
                     "receita": receita,
@@ -55,7 +55,7 @@ def parse_results(text):
                     "margemBruta": to_float(item.get("margemBruta")),
                     "margemLiquida": to_float(item.get("margemLiquida")),
                     "segmentos": item.get("segmentos", []),
-                    "composicao_receita": item.get("composicao_receita", {}), 
+                    "composicao_receita": item.get("composicao_receita", {}),
                     "despesas_var": item.get("despesas_var", [])
                 })
             return cleaned
@@ -96,4 +96,3 @@ def validate_quarterly_result(data, locale):
         if key not in valid:
             data[key] = None
     data['rated_fundamentals'] = len(valid)
-

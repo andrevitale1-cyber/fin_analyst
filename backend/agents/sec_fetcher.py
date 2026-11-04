@@ -18,6 +18,9 @@ class FetchedDocument:
     pdf_bytes: bytes = b""
     text: str = ""
     sources: list = field(default_factory=list)
+    fiscal_year: int | None = None
+    fiscal_quarter: int | None = None
+    issuer_cik: str | None = None
 
 
 class SECFetcher:
@@ -124,6 +127,9 @@ class SECFetcher:
                 if quarter < 4:
                     document = self._filing_document(batch, index, cik)
                     if document:
+                        # Preserve the XBRL fiscal mapping: a Q1 FY2027 filing can end in September 2026.
+                        document.fiscal_year, document.fiscal_quarter = year, quarter
+                        document.issuer_cik = str(cik).zfill(10)
                         return document
         except (requests.RequestException, ValueError, KeyError, IndexError, TypeError):
             return None

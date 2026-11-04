@@ -12,6 +12,8 @@ with an annual statement or another quarter. Global coverage depends on accessib
 `release_pipeline` verifies issuer, fiscal year/quarter, usable text and financial content before AI.
 SEC supplements are limited to two financial attachments inside the same filing directory and must
 identify the requested period. No audio, private uploads or third-party company documents enter this cache.
+The SEC's verified XBRL fiscal-year/quarter mapping is retained with the CIK; a calendar reporting date
+does not override it. This proof is accepted only for the corresponding issuer's SEC filing.
 
 `official_release_cache` stores verified public text, source links, issuer identifiers, content SHA-256,
 lookup status and duration. Positive documents expire after one hour. A refresh replaces the fingerprint;
