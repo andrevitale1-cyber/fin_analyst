@@ -14,7 +14,7 @@ from psycopg2 import Error as DatabaseError
 from database import get_db_connection
 from agents.prompt_builder import MARKET_REACTION_RULES
 
-RANGES = {"1d": (1, "5min"), "5d": (7, "30min"), "1mo": (31, "1day"), "6mo": (184, "1day"), "1y": (366, "1day"), "max": (None, "1month")}
+RANGES = {"1d": (1, "5min"), "5d": (7, "30min"), "1mo": (31, "1day"), "6mo": (184, "1day"), "1y": (366, "1day"), "5y": (1827, "1day"), "max": (None, "1month")}
 _cache = {}
 logger = logging.getLogger('uvicorn.error')
 
@@ -222,7 +222,7 @@ def yahoo_market_snapshot(symbol, period):
     interval = {"1d": "5m", "5d": "30m", "max": "1mo"}.get(period, "1d")
     payload = _json("https://query1.finance.yahoo.com/v8/finance/chart/" + symbol,
                     {"range": period, "interval": interval},
-                    {"User-Agent": "FinAnalyzer/1.0 contact@finanalyser.com.br"})
+                    {"User-Agent": "Mozilla/5.0"})
     rows = (payload.get("chart") or {}).get("result") or []
     if not rows or rows[0].get("meta", {}).get("symbol", "").upper() != symbol:
         return {}
@@ -235,7 +235,8 @@ def yahoo_market_snapshot(symbol, period):
                   if number(close) is not None and number(close) > 0]
     except (KeyError, IndexError, TypeError, ValueError):
         points = []
-    price, previous = number(meta.get("regularMarketPrice")), number(meta.get("previousClose") or meta.get("chartPreviousClose"))
+    price = number(meta.get("regularMarketPrice"))
+    previous = number(meta.get("previousClose") or (meta.get("chartPreviousClose") if period == "1d" else None))
     return {"symbol": symbol, "price": price, "changePercent": (price / previous - 1) * 100 if price and previous else None,
             "asOf": meta.get("regularMarketTime"), "currency": meta.get("currency"), "points": points,
             "interval": interval, "source": "Yahoo Finance", "sourceUrl": "https://finance.yahoo.com/quote/" + symbol + "/history/"}
@@ -256,12 +257,11 @@ def _market_snapshot(symbol, period, quote_only=False):
         return _cache[key][1]
     b3 = bool(re.fullmatch(r"[A-Z]{4}\d{1,2}", symbol))
     token = os.getenv("BRAPI_API_KEY" if b3 else "TWELVE_DATA_API_KEY", "").strip()
-    if not token:
-        return {"symbol": symbol, "available": False}
     try:
         if b3:
             headers = {"Authorization": f"Bearer {token}"}
             def get(path, params):
+                if not token: return None
                 body = _json("https://brapi.dev/api/v2/stocks/" + path, params, headers, preserve_plan_error=True)
                 if body.get('code'): return body
                 return next((row.get("data", row) for row in body.get("results", []) if row.get("symbol") == symbol), None)
@@ -290,6 +290,7 @@ def _market_snapshot(symbol, period, quote_only=False):
         else:
             headers = {"Authorization": f"apikey {token}"}
             def get(path, params):
+                if not token: return {}
                 return _json("https://api.twelvedata.com/" + path, params, headers)
             quote = _cached_quote("twelve", symbol, lambda: get("quote", {"symbol": symbol}))
             if quote.get('symbol') and quote['symbol'].upper() != symbol:
@@ -298,18 +299,24 @@ def _market_snapshot(symbol, period, quote_only=False):
             params = {"symbol": symbol, "interval": interval, "outputsize": 5000, "timezone": "UTC"}
             if days:
                 params["start_date"] = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%d")
+            if period == "5y":
+                today = datetime.now(timezone.utc)
+                params["start_date"] = today.replace(year=today.year - 5, day=min(today.day, 28) if today.month == 2 else today.day).strftime("%Y-%m-%d")
             history = {} if quote_only else get("time_series", params)
             meta = history.get("meta", {})
             if meta.get("symbol") and meta["symbol"].upper() != symbol:
                 return {"symbol": symbol, "available": False}
             points = [{"time": row["datetime"], "close": number(row.get("close"))} for row in history.get("values", []) if isinstance(row, dict) and row.get("datetime") and number(row.get("close")) is not None and number(row.get("close")) > 0]
             result = {"symbol": symbol, "price": number(quote.get("close")), "changePercent": number(quote.get("percent_change")), "asOf": quote.get("datetime"), "currency": quote.get("currency") or meta.get("currency"), "points": points, "source": "Twelve Data", "sourceUrl": "https://twelvedata.com/docs#time-series"}
-        if not b3 and (result["price"] is None or (not quote_only and len(result["points"]) < 2)):
-            fallback = yahoo_market_snapshot(symbol, "1d" if quote_only else period)
+        needs_intraday = b3 and period in ("1d", "5d") and result.get("interval") == "1d"
+        if result["price"] is None or (not quote_only and (len(result["points"]) < 2 or needs_intraday)):
+            fallback = yahoo_market_snapshot(symbol + ".SA" if b3 else symbol, "1d" if quote_only else period)
             if fallback and (fallback.get("price") is not None or fallback.get("points")):
                 # Keep each snapshot's quote, history and attribution from one source.
-                if (fallback.get("price") is not None and len(fallback.get("points", [])) > 1) or (result["price"] is None and not result["points"]):
+                if (number(fallback.get("price")) is not None and fallback["price"] > 0
+                        and (quote_only or len(fallback.get("points", [])) > 1)):
                     result = fallback
+                    result["symbol"] = symbol
         result["points"].sort(key=lambda row: row["time"])
         if result["price"] is None and result["points"]:
             result["price"] = result["points"][-1]["close"]

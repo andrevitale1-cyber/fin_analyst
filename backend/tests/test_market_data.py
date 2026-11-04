@@ -4,6 +4,7 @@ import market_data
 
 @pytest.mark.parametrize('period', ['1d', '5d'])
 def test_b3_retries_restricted_intraday_with_daily_closes(monkeypatch, period):
+    monkeypatch.setattr(market_data, 'yahoo_market_snapshot', lambda *args: {})
     monkeypatch.setenv('BRAPI_API_KEY', 'test')
     market_data._cache.clear()
     responses = []
@@ -25,6 +26,7 @@ def test_b3_retries_restricted_intraday_with_daily_closes(monkeypatch, period):
     assert get.call_args.kwargs['params']['interval'] == '1d'
 
 def test_b3_range_denial_preserves_quote_without_substituting_another_period(monkeypatch):
+    monkeypatch.setattr(market_data, 'yahoo_market_snapshot', lambda *args: {})
     monkeypatch.setenv('BRAPI_API_KEY', 'test')
     market_data._cache.clear()
     quote = Mock(); quote.json.return_value = {'results': [{'symbol': 'TFCO4', 'data': {'regularMarketPrice': 9.8}}]}
@@ -259,3 +261,83 @@ def test_sidebar_quote_skips_history_and_reuses_quote_for_full_chart(monkeypatch
     assert market_data.market_snapshot('MSFT','1d',quote_only=True)==result
     full=market_data.market_snapshot('MSFT','1mo')
     assert len(full['points'])==2 and len(calls)==2 and calls[-1].endswith('/time_series')
+
+
+@pytest.mark.parametrize('period,interval', [('1d','5m'),('5d','30m'),('1mo','1d'),
+    ('6mo','1d'),('1y','1d'),('5y','1d'),('max','1mo')])
+def test_b3_blocked_history_uses_matching_complete_yahoo_snapshot_and_cache(monkeypatch, period, interval):
+    monkeypatch.setenv('BRAPI_API_KEY','test')
+    market_data._cache.clear()
+    calls=[]
+    def get(url, params, headers, **kwargs):
+        calls.append((url,params,headers))
+        if url.endswith('/quote'):
+            return {'results':[{'symbol':'ITUB4','data':{'regularMarketPrice':40,'currency':'BRL'}}]}
+        if 'brapi' in url:
+            return {'code':'INVALID_RANGE'}
+        return {'chart':{'result':[{'meta':{'symbol':'ITUB4.SA','currency':'BRL',
+            'regularMarketPrice':42,'regularMarketTime':1793797200,'previousClose':41,
+            'exchangeTimezoneName':'America/Sao_Paulo'},'timestamp':[1793710800,1793797200],
+            'indicators':{'quote':[{'close':[40,42]}]}}]}}
+    monkeypatch.setattr(market_data,'_json',get)
+    result=market_data.market_snapshot('ITUB4',period)
+    assert result['symbol']=='ITUB4' and result['source']=='Yahoo Finance'
+    assert result['price']==42 and len(result['points'])==2 and result['range']==period
+    assert result['interval']==interval and result['changePercent']==pytest.approx(100/41)
+    assert calls[-1][0].endswith('/ITUB4.SA')
+    assert calls[-1][1]=={'range':period,'interval':interval}
+    assert 'Authorization' not in calls[-1][2]
+    assert market_data.market_snapshot('ITUB4',period)==result and len(calls)==3
+
+
+def test_usable_b3_history_does_not_call_fallback(monkeypatch):
+    monkeypatch.setenv('BRAPI_API_KEY','test')
+    market_data._cache.clear()
+    def get(url,*args,**kwargs):
+        return {'results':[{'symbol':'ITUB4','data':{'regularMarketPrice':42,
+            'historicalDataPrice':[{'date':1793710800,'close':40},{'date':1793797200,'close':42}]}}]}
+    monkeypatch.setattr(market_data,'_json',get)
+    fallback=Mock(side_effect=AssertionError('Primary history is sufficient'))
+    monkeypatch.setattr(market_data,'yahoo_market_snapshot',fallback)
+    assert market_data.market_snapshot('ITUB4','5y')['source']=='brapi'
+    fallback.assert_not_called()
+
+
+def test_b3_daily_substitute_tries_intraday_fallback_without_losing_primary_on_failure(monkeypatch):
+    monkeypatch.setenv('BRAPI_API_KEY','test')
+    market_data._cache.clear()
+    monkeypatch.setattr(market_data,'_json',lambda *a,**kw:{'results':[{'symbol':'ITUB4','data':{
+        'regularMarketPrice':42,'usedInterval':'1d','historicalDataPrice':[
+            {'date':1793710800,'close':40},{'date':1793797200,'close':42}]}}]})
+    fallback=Mock(return_value={})
+    monkeypatch.setattr(market_data,'yahoo_market_snapshot',fallback)
+    result=market_data.market_snapshot('ITUB4','1d')
+    fallback.assert_called_once_with('ITUB4.SA','1d')
+    assert result['source']=='brapi' and result['price']==42 and len(result['points'])==2
+
+
+def test_public_fallback_works_without_primary_key(monkeypatch):
+    monkeypatch.delenv('BRAPI_API_KEY',raising=False)
+    market_data._cache.clear()
+    fallback=Mock(return_value={'symbol':'ITUB4.SA','price':42,'points':[{'time':'2021-11-04','close':20},
+        {'time':'2026-11-04','close':42}],'source':'Yahoo Finance'})
+    monkeypatch.setattr(market_data,'yahoo_market_snapshot',fallback)
+    assert market_data.market_snapshot('ITUB4','5y')['symbol']=='ITUB4'
+    fallback.assert_called_once_with('ITUB4.SA','5y')
+
+
+def test_international_five_years_uses_calendar_start_date(monkeypatch):
+    from datetime import datetime,timezone
+    monkeypatch.setenv('TWELVE_DATA_API_KEY','test')
+    market_data._cache.clear()
+    calls=[]
+    def get(url,params,*args,**kwargs):
+        calls.append((url,params))
+        return {'symbol':'AAPL','close':'42'} if url.endswith('/quote') else {
+            'meta':{'symbol':'AAPL'},'values':[{'datetime':'2021-11-04','close':'20'},
+            {'datetime':'2026-11-04','close':'42'}]}
+    monkeypatch.setattr(market_data,'_json',get)
+    assert len(market_data.market_snapshot('AAPL','5y')['points'])==2
+    now=datetime.now(timezone.utc)
+    assert calls[-1][1]['start_date']==now.replace(year=now.year-5,day=min(now.day,28) if now.month==2 else now.day).strftime('%Y-%m-%d')
+    assert calls[-1][1]['interval']=='1day'
