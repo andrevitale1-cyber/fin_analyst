@@ -11,6 +11,7 @@ import CompanyLogo from "../../../components/CompanyLogo";
 import AnalysisMarketChart from "../../../components/AnalysisMarketChart";
 import ExportAnalysisPdf from "../../../components/ExportAnalysisPdf";
 import CompanyComparison from "../../../components/CompanyComparison";
+import DetailedQuarterlyAnalysis from "../../../components/DetailedQuarterlyAnalysis";
 import ConfirmDeleteDialog from "../../../components/ConfirmDeleteDialog";
 import {
   LayoutDashboard, History, UploadCloud, FileText, ChevronLeft,
@@ -802,6 +803,7 @@ export default function FinancialDashboard() {
                 {translationStatus === 'error' && <span className="mt-3 block text-sm text-amber-700" role="status">{locale === 'en' ? 'Translation unavailable; showing the original analysis.' : 'Tradução indisponível; exibindo a análise original.'}</span>}
               </div>
             </div>
+            {isPremium && result.id && result.metadata?.tipo !== 'Earnings Call' && <DetailedQuarterlyAnalysis key={`detailed-${result.id}-${locale}`} analysisId={result.id} locale={locale} onUsageChange={() => setAccessRetry(value => value + 1)}/>}
             {result.id && <ReportFeedback key={`feedback-${result.id}`} reportId={String(result.id)} kind="analysis" locale={locale}/>}
           </div>
         )}

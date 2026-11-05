@@ -12,6 +12,7 @@ jobs:
       OPENAI_CALL_AGENT_ID: ''
       RELEASE_PREFETCH_ENABLED: '0'
       REPORT_JOB_WORKER: '0'
+      DETAILED_ANALYSIS_WORKER: '0'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,4 +28,5 @@ jobs:
           backend/tests/test_search_response.py backend/tests/test_company_catalog.py
           backend/tests/test_equibles.py backend/tests/test_transcripts.py
           backend/tests/test_analysis_pdf.py backend/tests/test_migration.py
+          backend/tests/test_detailed_analysis.py
           -q -p no:cacheprovider
