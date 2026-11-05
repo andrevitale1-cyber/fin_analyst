@@ -20,7 +20,7 @@ from agents.search_client import SearchError
 from openai_client import OpenAIClient, OpenAIError
 
 logger = logging.getLogger('uvicorn.error')
-VERSION = 'verified-release-v2'
+VERSION = 'verified-release-v3'
 
 
 class ReleaseError(RuntimeError):
@@ -114,9 +114,7 @@ def validate_document(document, fetcher, identity, year, quarter):
     if not verified:
         raise ReleaseError('issuer_mismatch')
     # Use the primary document's heading, never a supplemental comparison year.
-    period_text = re.sub(r'(?<![A-Z0-9])([1-4])\s+([TQ])', r'\1\2', text[:4000].upper())
-    period_text = re.sub(r'(?<![A-Z0-9])([1-4][TQ])\s*((?:\d\s+){1,3}\d)(?!\d)',
-                         lambda m: m[1] + re.sub(r'\s+', '', m[2]), period_text)
+    period_text = fetcher._release_period_text(text, document.url, year, quarter)
     fiscal_proof = (parsed.hostname == 'www.sec.gov' and sec_path
                     and document.fiscal_year == year and document.fiscal_quarter == quarter
                     and document.issuer_cik == identity.get('cik')

@@ -36,6 +36,7 @@ class AutoFetcher:
         "TFCO4": ("Track & Field", "Track and Field", "TRACK FIELD"),
         "PNVL3": ("Panvel", "Dimed"),
         "RADL3": ("RD Saúde", "RDsaúde", "Raia Drogasil", "RaiaDrogasil"),
+        "BBSE3": ("BB Seguridade", "BB Seguros"),
         "AAPL": ("Apple",), "MSFT": ("Microsoft",), "GOOGL": ("Alphabet", "Google"),
         "AMZN": ("Amazon",), "META": ("Meta", "Facebook"), "NVDA": ("Nvidia",), "TSLA": ("Tesla",),
         "MCD": ("McDonald's", "McDonald’s", "McDonalds"),
@@ -71,6 +72,7 @@ class AutoFetcher:
             "VIVARA PARTICIPACOES": "VIVA3", "VIVARA PARTICIPACOES S.A.": "VIVA3", "VIVARA PARTICIPACOES S A": "VIVA3",
             "LOCALIZA": "RENT3", "LOJAS RENNER": "LREN3", "B3": "B3SA3",
             "RD SAUDE": "RADL3", "RDSAUDE": "RADL3", "RAIA DROGASIL": "RADL3", "RAIA DROGASIL S.A.": "RADL3", "RAIADROGASIL": "RADL3",
+            "BB SEGURIDADE": "BBSE3", "BB SEGURIDADE PARTICIPACOES": "BBSE3",
             "CAVA GROUP": "CAVA", "CAVA GROUP INC": "CAVA", "CAVA GROUP, INC": "CAVA", "CAVA GROUP, INC.": "CAVA",
             "APPLE": "AAPL", "MICROSOFT": "MSFT", "GOOGLE": "GOOGL", "ALPHABET": "GOOGL",
             "AMAZON": "AMZN", "META": "META", "FACEBOOK": "META", "NVIDIA": "NVDA", "TESLA": "TSLA",
@@ -178,7 +180,7 @@ class AutoFetcher:
         if ticker == original_ticker and ticker != "SK HYNIX" and ticker not in self.ir_urls and not re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
             ticker = SECFetcher().resolve_name(ticker) or self._resolve_b3_name(ticker) or ticker
         logger.info("release_lookup issuer=%s year=%s quarter=%s", ticker, year, quarter)
-        cache_path = self.cache_dir / f"fiscal-v5-{ticker}-{year}-{quarter}.json"
+        cache_path = self.cache_dir / f"fiscal-v6-{ticker}-{year}-{quarter}.json"
         try:
             if time.time() - cache_path.stat().st_mtime > 3600:
                 raise ValueError("Expired release cache")
@@ -437,6 +439,8 @@ class AutoFetcher:
                 if (document := self._download_release(candidate["url"], year, quarter)) and self._release_company_matches(document, ticker):
                     return document
         ir_url = self.ir_urls.get(ticker)
+        if ticker == 'BBSE3' and ir_url:
+            ir_url = f'{ir_url.rstrip("/")}/{year}'
         if ir_url and self._valid_url(ir_url):
             try:
                 response = requests.get(ir_url, timeout=15)
@@ -444,7 +448,7 @@ class AutoFetcher:
                 if not self._valid_url(response.url):
                     raise requests.RequestException("Redirecionamento inválido")
                 soup = BeautifulSoup(response.text, "html.parser")
-                candidates = [{"title": a.get_text(" ", strip=True), "url": urljoin(response.url, a["href"])}
+                candidates = self._table_release_candidates(soup, response.url, year, quarter) + [{"title": a.get_text(" ", strip=True), "url": urljoin(response.url, a["href"])}
                               for a in soup.find_all("a", href=True)]
                 candidates = ([] if catalog else self._mziq_release_candidates(soup, year, quarter)) + candidates
                 for candidate in self._candidates(candidates, year, quarter)[:12]:
@@ -476,6 +480,27 @@ class AutoFetcher:
             if document and self._release_company_matches(document, ticker):
                 return document
         return None
+
+    def _table_release_candidates(self, soup, base_url, year, quarter):
+        # Icon-only PDF links inherit the document type and fiscal period from their table row/column.
+        candidates = []
+        for table in soup.find_all('table'):
+            rows = table.find_all('tr')
+            if not rows:
+                continue
+            headers = rows[0].find_all(['th', 'td'], recursive=False)
+            for index, header in enumerate(headers):
+                period = header.get_text(' ', strip=True)
+                if not self._period_matches(period, year, quarter):
+                    continue
+                for row in rows[1:]:
+                    cells = row.find_all(['td', 'th'], recursive=False)
+                    if len(cells) != len(headers):
+                        continue
+                    title = cells[0].get_text(' ', strip=True)
+                    for link in cells[index].find_all('a', href=True):
+                        candidates.append({'title': f'{title} {period}', 'url': urljoin(base_url, link['href'])})
+        return candidates
 
     def _mziq_release_candidates(self, soup, year, quarter):
         scripts = "\n".join(script.get_text() for script in soup.find_all("script"))
@@ -537,10 +562,25 @@ class AutoFetcher:
             return (
                 not self._period_matches(text + " " + candidate["url"], year, quarter),
                 standalone_statements,
-                not bool(re.search(r"earnings release|press release|results presentation|apresenta[cç][aã]o.*resultado|an[aá]lise gerencial|coment[aá]rios? sobre os resultados", text, re.I)),
+                not bool(re.search(r"earnings release|press release|results presentation|apresenta[cç][aã]o.*resultado|an[aá]lise (?:gerencial|d[oe] desempenho)|coment[aá]rios? sobre os resultados", text, re.I)),
                 not bool(re.search(r"\.pdf(?:$|[?#])", candidate["url"], re.I)),
             )
         return sorted(candidates, key=rank)
+
+    @staticmethod
+    def _release_period_text(text, url, year, quarter):
+        # BB's current official PDF retains one obsolete template footer on its otherwise empty cover.
+        parsed = urlparse(url)
+        expected = f'{quarter}T{str(year)[-2:]}'
+        headers = list(re.finditer(r'BB Seguridade Participa[çc][õo]es S\.A\.\s*\|\s*An[áa]lise do Desempenho\s+([1-4]T\d{2})\s+\d+', text, re.I))
+        if (parsed.hostname == 'www.bbseguridaderi.com.br'
+                and re.search(rf'/docs/bb-seguridade-{year}-{int(quarter)*3:02d}-(?:30|31)-', parsed.path)
+                and len(headers) >= 4 and headers[0][1].upper() != expected
+                and all(match[1].upper() == expected for match in headers[1:])):
+            text = text[:headers[0].start()] + text[headers[0].end():]
+        period_text = re.sub(r'(?<![A-Z0-9])([1-4])\s+([TQ])', r'\1\2', text[:4000].upper())
+        return re.sub(r'(?<![A-Z0-9])([1-4][TQ])\s*((?:\d\s+){1,3}\d)(?!\d)',
+                      lambda match: match[1] + re.sub(r'\s+', '', match[2]), period_text)
 
     def _download_release(self, url, year, quarter, depth=0, *, timeout=30):
         if not self._valid_url(url):
@@ -571,7 +611,7 @@ class AutoFetcher:
                         return document if self._period_matches(OpenAIClient.extract_text(document.pdf_bytes)[:10000], year, quarter) else None
                     return document if self._period_matches(document.text[:10000], year, quarter) else None
                 if depth == 0:
-                    linked = catalog + [
+                    linked = catalog + self._table_release_candidates(soup, response.url, year, quarter) + [
                         {"title": a.get_text(" ", strip=True), "url": urljoin(response.url, a["href"])}
                         for a in soup.find_all("a", href=True)]
                     for candidate in self._candidates(linked, year, quarter)[:8]:
@@ -583,9 +623,7 @@ class AutoFetcher:
                 text = soup.get_text("\n", strip=True)
                 pdf_bytes = b""
             # PDF cover typography can extract "1 T 2 6" before comparative figures in footnotes.
-            period_text = re.sub(r"(?<![A-Z0-9])([1-4])\s+([TQ])", r"\1\2", text[:4000].upper())
-            period_text = re.sub(r"(?<![A-Z0-9])([1-4][TQ])\s*((?:\d\s+){1,3}\d)(?!\d)",
-                                 lambda match: match[1] + re.sub(r"\s+", "", match[2]), period_text)
+            period_text = self._release_period_text(text, response.url, year, quarter)
             if not self._period_matches(period_text, year, quarter):
                 logger.info("release_document_rejected year=%s quarter=%s reason=period_not_found", year, quarter)
                 return None
