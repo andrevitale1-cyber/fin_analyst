@@ -50,6 +50,14 @@ def test_auth_ownership_and_source_before_quota(setup):
     assert db.execute('SELECT COUNT(*) FROM account_usage').fetchone()[0]==0
 
 
+def test_opening_status_does_not_queue_or_charge_an_analysis(setup):
+    db,_,http=setup
+    for _ in range(3):
+        assert http.get('/api/detailed-analysis/1?locale=en').json()['state']=='not_started'
+    assert db.execute('SELECT COUNT(*) FROM detailed_analyses').fetchone()[0]==0
+    assert db.execute('SELECT COUNT(*) FROM account_usage').fetchone()[0]==0
+
+
 def process_job(db, monkeypatch, failure=False):
     row=db.execute('SELECT id,user_id,analysis_id,locale,agent_id,source_hash,ticket FROM detailed_analyses').fetchone()
     db.execute("UPDATE detailed_analyses SET state='running'"); db.commit()
@@ -120,6 +128,36 @@ def test_source_change_during_generation_discards_result_and_refunds(setup,monke
     assert db.execute('SELECT state FROM account_usage').fetchone()[0]=='failed'
 
 
+@pytest.mark.parametrize('running',[False,True])
+def test_cancel_pending_or_running_refunds_and_stale_worker_cannot_publish(setup,monkeypatch,running):
+    db,_,http=setup
+    first=http.post('/api/detailed-analysis/1',json={}).json()
+    row=db.execute('SELECT id,user_id,analysis_id,locale,agent_id,source_hash,ticket FROM detailed_analyses').fetchone()
+    if running:
+        db.execute("UPDATE detailed_analyses SET state='running',session_id='session-live'");db.commit()
+    remote=Mock();monkeypatch.setattr(detailed,'cancel_session',remote)
+    assert http.post('/api/detailed-analysis/1/cancel',json={'id':first['id']}).json()['state']=='cancelled'
+    assert db.execute('SELECT state FROM account_usage').fetchone()[0]=='failed'
+    assert http.get('/api/detailed-analysis/1').json()['state']=='cancelled'
+    retry=http.post('/api/detailed-analysis/1',json={}).json()
+    assert retry['id']!=first['id']
+    run=Mock();monkeypatch.setattr(detailed,'run_agent',run)
+    detailed.process(row)
+    run.assert_not_called()
+    assert db.execute('SELECT state,content FROM detailed_analyses').fetchone()==('queued',None)
+
+
+def test_cancel_requires_owner_and_does_not_refund_completed_work(setup,monkeypatch):
+    db,app,http=setup
+    first=http.post('/api/detailed-analysis/1',json={}).json()
+    app.dependency_overrides[require_report_user]=lambda:SessionUser('other',plan='premium')
+    assert http.post('/api/detailed-analysis/1/cancel',json={'id':first['id']}).status_code==404
+    app.dependency_overrides[require_report_user]=lambda:SessionUser('owner',plan='premium')
+    process_job(db,monkeypatch)
+    assert http.post('/api/detailed-analysis/1/cancel',json={'id':first['id']}).status_code==409
+    assert db.execute('SELECT state FROM account_usage').fetchone()[0]=='completed'
+
+
 @pytest.mark.parametrize('status,text',[('completed','word '*500),('failed','word '*500),('completed','partial')])
 def test_exact_saved_agent_locale_no_overrides_and_session_cleanup(monkeypatch,status,text):
     monkeypatch.setenv('OPENAI_API_KEY','test-key')
@@ -137,6 +175,8 @@ def test_exact_saved_agent_locale_no_overrides_and_session_cleanup(monkeypatch,s
         with pytest.raises(Exception): detailed.run_agent(detailed.AGENT_ID,source,'en',remember)
     args=sdk.beta.agents.sessions.create.call_args.kwargs
     assert args['agent_id']==detailed.AGENT_ID and 'agent' not in args
+    assert args['environment']=={'type':'none'}
+    assert 'Do not create files' in json.loads(args['input'])['task']
     payload=json.loads(args['input'])
     assert payload['language']=='English' and payload['source_document_untrusted_data']==source['text']
     sdk.beta.agents.sessions.delete.assert_called_once_with('session-test')
