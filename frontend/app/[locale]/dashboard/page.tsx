@@ -12,6 +12,7 @@ import AnalysisMarketChart from "../../../components/AnalysisMarketChart";
 import ExportAnalysisPdf from "../../../components/ExportAnalysisPdf";
 import CompanyComparison from "../../../components/CompanyComparison";
 import DetailedQuarterlyAnalysis from "../../../components/DetailedQuarterlyAnalysis";
+import AnalysisWaitEstimate from "../../../components/AnalysisWaitEstimate";
 import ConfirmDeleteDialog from "../../../components/ConfirmDeleteDialog";
 import {
   LayoutDashboard, History, UploadCloud, FileText, ChevronLeft,
@@ -647,6 +648,7 @@ export default function FinancialDashboard() {
                 <Loader2 className="mb-5 h-12 w-12 animate-spin text-sky-500" />
                 <h2 className="text-2xl font-semibold text-slate-900">{t("newAnalysis.analyzing")}</h2>
                 <p className="mt-2 max-w-lg text-sm text-slate-500">{t("newAnalysis.processing")}</p>
+                <AnalysisWaitEstimate kind="traditional" locale={locale}/>
               </div>
             ) : (
               <>

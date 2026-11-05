@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { ChevronDown, ChevronUp, Loader2, Sparkles } from 'lucide-react';
 import { splitBold } from '../lib/analysisText';
+import AnalysisWaitEstimate from './AnalysisWaitEstimate';
 
 const API = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api-finanalyzer.onrender.com';
 type Job = {id?: string; state: string; content?: string; error_code?: string};
@@ -102,6 +103,7 @@ export default function DetailedQuarterlyAnalysis({analysisId, locale, onUsageCh
     {error && <p role="alert" className="mt-4 text-sm text-amber-800">{error}</p>}
     {job.state === 'failed' && <p role="alert" className="mt-4 text-sm text-amber-800">{en ? 'The detailed analysis could not be completed. No analysis was charged. You can try again.' : 'Não foi possível concluir o detalhamento. Nenhuma análise foi cobrada. Você pode tentar novamente.'}</p>}
     {busy && <p role="status" className="mt-5 text-sm text-slate-500">{en ? 'You can leave this page. Your detailed analysis will be saved here.' : 'Você pode sair desta página. A análise detalhada ficará salva aqui.'}</p>}
+    {busy && <AnalysisWaitEstimate kind="detailed" locale={locale}/>}
     {open && saved && job.content && <div className="mt-7 border-t border-slate-100 pt-7"><Content text={job.content}/></div>}
   </section>;
 }
