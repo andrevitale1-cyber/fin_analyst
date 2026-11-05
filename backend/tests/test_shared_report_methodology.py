@@ -19,13 +19,15 @@ def test_full_report_uses_active_quarterly_field_instructions_without_quarter_ou
     quarterly = builder.build_prompt("WEGE3", "release", locale, "1T/2026")
     company = builder.company_field_rules("WEGE3", locale)
     for instruction in QUARTERLY_FIELDS.values():
-        assert instruction in quarterly and instruction in company
-    for rule in ("Separe crescimento orgânico de crescimento adquirido", "Não transforme ausência de dado em nota máxima"):
+        assert instruction in company
+    for rule in ("Separe crescimento orgânico de crescimento adquirido", "Ausência de uma métrica não é evidência negativa"):
         assert rule in quarterly and rule in company
     assert "Backlog" in company and "industrial_logistica" in company
     assert "company-wide, multi-year" in company and "do not import" in company
     assert "Seção 6:" not in company and "Section 6:" not in company and "Seção 7:" not in company
-    assert QUALITY_RULES in quarterly
+    assert 'mostre a conta ou os valores usados' in company
+    assert 'mostre a conta ou os valores usados' not in quarterly
+    assert 'sem exibir fórmulas ou memória de cálculo' in quarterly
 
 
 @pytest.mark.parametrize("ticker,sector_metric", [("ITUB4", "Basileia"), ("TOTS3", "Rule of 40"), ("EGIE3", "Dívida Líquida/EBITDA")])

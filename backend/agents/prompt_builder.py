@@ -21,6 +21,23 @@ EDITORIAL_RULES = """PADRÃO EDITORIAL E FORMATAÇÃO:
 - Contextualize aquisições separando crescimento orgânico da consolidação de M&As; não reduza a nota apenas pela existência de M&A.
 - Todas as notas são inteiros: 1, 2, 3, 4 ou 5. Não use decimais nas notas."""
 
+QUARTERLY_READING_RULES = """LEITURA ECONÔMICA DOS DESTAQUES TRIMESTRAIS:
+- Identifique no documento como a empresa ganha dinheiro e a fase de seu ciclo operacional. Selecione os indicadores que explicam o resultado; não imponha métricas de bancos a seguradoras, de software a telecomunicações ou de outro modelo de negócio. Use somente os documentos fornecidos, incluindo suas notas e explicações.
+- Em cada bloco das seções 1 a 4, encadeie número atual e comparação útil, causa documentada e consequência para o negócio. Explique como preço, volume, mix, despesas, segmentos e resultado financeiro se compensaram. Não transforme uma sequência de indicadores em diagnóstico sem estabelecer essas relações. Atribua explicações da administração quando relevante; se a conexão for inferência da IA, deixe isso claro e não apresente hipótese como causa comprovada.
+- Preserve período, base contábil, perímetro e denominador: trimestre, acumulado ou LTM; gerencial ou IFRS; reportado ou ajustado; receita bruta ou líquida. Explique diferenças materiais entre essas bases e não confunda mudança de apresentação com crescimento econômico. Identifique a data da divulgação, sem usar a data da reunião de resultados, do encerramento fiscal ou da cotação de referência como substituta.
+- Investigue a composição antes de julgar: margem estável pode esconder ganhos absorvidos por despesas; queda de caixa pode refletir capital de giro, comparação excepcional ou investimentos; melhora de lucro pode vir do financeiro ou de efeitos pontuais. Explique essas relações somente com evidência e preserve pressões materiais mesmo quando houver uma explicação estratégica. Em caixa e dívida, diferencie disponibilidade bruta, dívida líquida e definições ajustadas, inclusive recebíveis descontados, arrendamentos e créditos de desinvestimentos quando divulgados.
+- Use indicadores próprios do ciclo quando divulgados: vendas nas mesmas lojas e maturação no varejo; vendas, distratos, obras e margem a apropriar em incorporação; safra, entregas e recebimentos no agro; locação e renovação/venda de ativos em locadoras; prêmios, sinistralidade e solvência em seguros. Explique sua relação econômica sem presumir que sazonalidade ou expansão eliminam risco.
+- Materialidade governa as ressalvas: não enumere dados ausentes nem acrescente um aviso genérico ao fim de cada parágrafo. Cite uma lacuna apenas quando impedir uma conclusão relevante ou a atribuição de uma nota, delimitando o que não se pode concluir. Falta de TIR numérica, SBC, payback ou rentabilidade isolada de uma iniciativa não é, por si só, contraponto ao desempenho observado. Não use ausência de informação como motivo para reduzir nota; use N/A quando uma dimensão inteira não puder ser avaliada.
+- Tabelas são condicionadas à existência de dados comparáveis úteis, mesmo quando as instruções gerais sugerirem uma tabela. Não crie tabelas repletas de 'não divulgado', não misture receita, prêmios, reservas e lucro como se fossem participações na mesma receita e não repita números sem função explicativa."""
+
+QUARTERLY_CONCLUSION_RULES = """Produza uma síntese econômica integrada e compacta, em vez de uma segunda passagem por todas as seções. Antes da reação de mercado, use no máximo um parágrafo curto de 60–100 palavras se houver um mecanismo importante que exija explicação adicional; caso contrário, vá diretamente à reação de mercado. Não crie blocos separados para expansão, digital, investimentos, balanço e riscos apenas para preencher tópicos.
+
+Depois do parágrafo de reação do mercado exigido abaixo, encerre com um único parágrafo iniciado por "Conclusão IA:" / "AI Conclusion:", com 150–190 palavras, ou menos quando a fonte for limitada. Só o rótulo deve ficar em negrito. Abra classificando o resultado e identificando a mensagem central: o que o trimestre revelou sobre o negócio além da variação do lucro. Construa uma cadeia de raciocínio: principal motor operacional; como outros fatores absorveram, reforçaram ou compensaram esse motor; impacto na rentabilidade e no caixa; implicação para a execução futura. Sustente a interpretação com valores e variações ao longo do parágrafo: em um documento completo, selecione em geral 4 a 7 evidências numéricas materiais, sem transformar essa referência em cota quando faltarem dados. Combine o resultado central com os números que explicam seus motores, compensações e principal limitação; não deixe a conclusão composta apenas de afirmações qualitativas nem repita todos os destaques. Formate de modo compacto, com a unidade e a base da comparação: "R$ 2,43 bilhões (-5,1% a/a)", "prêmios -19,0% a/a", "margem de 7,8% (-0,1 p.p.)" ou "captação de R$ 1,7 bilhão, ante saída de R$ 3,9 bilhões". Esses exemplos são somente de redação, nunca dados para copiar: use exclusivamente os números do documento da empresa e período analisados. Não misture números do trimestre com acumulados sem identificá-los. Use a moeda original e, em inglês, adapte separadores e abreviações ao idioma. Valores e variações devem integrar a explicação econômica, sem fórmulas, páginas ou lista de indicadores.
+
+Dê peso proporcional aos fatos: distinga margem praticamente estável de deterioração relevante e explique efeitos de base, capital de giro e investimentos antes de julgar o caixa. Reconheça capacidade financeira quando comprovada, sem usá-la para apagar fraqueza operacional. Não force equilíbrio entre positivos e negativos nem termine com ressalvas genéricas sobre dados ausentes. Sustente a nota pelo desempenho e pelos riscos materiais, não por uma lista de indicadores não divulgados.
+
+Feche com a condição que mais importa para a evolução do negócio ou o principal fator que limita o resultado, quando houver evidência para isso. Diferencie sinais de maturação, contratos e guidance de receita ou lucro realizados, sem repetir essa advertência para cada iniciativa. Não invente metas, prazos, causalidade, vantagens competitivas ou expectativas de consenso. Retome o julgamento da reação de mercado em uma frase curta conforme as regras abaixo, sem usá-lo para alterar as notas. Use linguagem direta e proporcional, sem metáforas dramáticas, adjetivos promocionais ou recomendação de compra/venda. Na seção 6, imprima somente a nota geral e a classificação; toda justificativa deve estar na conclusão."""
+
 QUARTERLY_FIELDS = {'revenue': 'Analise Receita Líquida, Carteira de Crédito ou Volume de Vendas. Discuta preço versus volume e '
             'desconstrua o crescimento pelo mix de negócios: valor, participação de cada segmento na '
             'receita, variação comparável e contribuição para o crescimento total. Inclua tabela Markdown '
@@ -44,7 +61,8 @@ MARKET_REACTION_RULES = """Antes da Conclusão IA, inclua um parágrafo de 70–
 Identifique a data da divulgação no release e use apenas o CONTEXTO DE MERCADO VERIFICADO para comparar o fechamento do último pregão anterior à divulgação com o fechamento do primeiro pregão posterior. Use a variação calculada nextVsPreRelease; não confunda com a variação diária nextVsPrevious. Dia seguinte significa próximo pregão, incluindo fins de semana e feriados. Informe a data da divulgação, as duas datas/preços e a variação percentual, sem recitar os demais pregões.
 Com preços, datas e fundamentos disponíveis, dê obrigatoriamente um julgamento fundamentalista direto: **queda exagerada** / **excessive sell-off** (movimento pessimista exagerado), **alta exagerada** / **excessive rally** (movimento otimista exagerado) ou **reação justa** / **fair reaction** (movimento coerente). Justifique por que a direção e a intensidade parecem exageradas ou coerentes com pelo menos dois fatos materiais do resultado, considerando também seu efeito de longo prazo: guidance, demanda, contratos/backlog, adoção, vantagens competitivas, capex, financiamento, diluição e riscos de execução. Inclua o contraponto mais relevante. Não limite o julgamento ao lucro líquido ou ao FCL de um trimestre; considere itens não recorrentes e a maturação dos investimentos. Não trate capex como positivo automaticamente nem anúncios qualitativos como receita contratada; separe projeções de resultados realizados.
 O horário exato da divulgação, consenso de analistas e benchmark NÃO são pré-requisitos para esse julgamento fundamentalista da janela definida. A ausência deles não justifica classificar como inconclusiva nem evitar o veredito. Não invente surpresa contra consenso, causalidade exclusiva, valor justo da ação ou certeza sobre retornos futuros. Apresente a classificação como avaliação da IA baseada no resultado e nas perspectivas divulgadas, não como recomendação de compra/venda. Somente se faltarem a data de divulgação, um dos fechamentos ou fundamentos essenciais, diga brevemente que não foi possível avaliar, sem inventar preços ou um veredito.
-Não mencione Twelve Data, brapi, nome do provedor, URL ou citação de fonte nesse parágrafo ou na conclusão; a origem permanece nos dados internos. Retome o julgamento em uma frase na Conclusão IA, sem usar a oscilação da ação para modificar as notas operacionais."""
+Não mencione Twelve Data, brapi, nome do provedor, URL ou citação de fonte nesse parágrafo ou na conclusão; a origem permanece nos dados internos. Retome o julgamento em uma frase na Conclusão IA, sem usar a oscilação da ação para modificar as notas operacionais.
+O limite de 70–110 palavras aplica-se quando houver dados para avaliar a reação. Se faltarem dados essenciais, use uma única frase curta indicando a impossibilidade de avaliar, sem recapitular fundamentos nem repetir a lista de preços ausentes na conclusão."""
 
 
 class PromptBuilder:
@@ -158,6 +176,7 @@ include a page/table reference only when actually identifiable, never invent one
 
     def build_prompt(self, ticker, pdf_text, locale="pt", periodo=None):
         sector = self.get_sector(ticker)
+        quality_rules = QUALITY_RULES.replace(' e mostre a conta ou os valores usados', ' internamente, sem exibir fórmulas ou memória de cálculo')
 
         sector_rules = self.sector_rules(ticker)
 
@@ -201,10 +220,12 @@ REGRAS CRÍTICAS:
 2. NUNCA USE 'Empresa Fictícia S.A.' ou dados de exemplo.
 3. {section_rule}
 4. Confirme o período do documento antes de analisar. Se divergir do período solicitado, destaque a divergência; não misture trimestres nem apresente dados de outro período como se fossem do solicitado.
-5. Diferencie fatos divulgados, cálculos derivados e interpretação. Para cada número relevante, informe período, unidade e, quando identificável, página ou tabela de origem. Nunca invente uma referência.
+5. Diferencie fatos divulgados, cálculos derivados e interpretação. Informe períodos, unidades e bases comparáveis, mas não imprima páginas, números de tabelas, fórmulas, divisões ou memória de cálculo. Faça a conferência internamente; apresente o valor e a variação prontos para leitura.
 6. Se uma categoria não tiver evidência suficiente mesmo após consultar os anexos fornecidos, escreva sua etiqueta de nota seguida de N/A. Não atribua 3/5 ou outra nota neutra por falta de dados. As demais categorias continuam avaliáveis. Fundamente a nota geral somente nas dimensões com evidência, redistribuindo seus pesos; se não houver base global suficiente, use N/A também na nota geral.
 
-{QUALITY_RULES}
+{quality_rules}
+
+{QUARTERLY_READING_RULES}
 
 CRITÉRIOS DAS NOTAS:
 Avalie a qualidade do resultado trimestral e sua contribuição para o negócio, não a atratividade da ação nem sua cotação. Use sempre a mesma régua entre novas análises da mesma empresa. Para a nota geral, atribua internamente notas de 1 a 5 a quatro dimensões e calcule: 40% capacidade estrutural de crescimento e durabilidade competitiva (tendência de demanda, share, backlog, contratos, parcerias e guidance com evidência), 25% execução operacional realizada no trimestre e no ciclo recente, 20% rentabilidade e conversão em caixa (considerando investimentos de crescimento e itens não recorrentes), e 15% balanço, diluição e riscos de execução/concentração. Arredonde a média ponderada para o inteiro mais próximo e explique os fatores que a puxam para cima ou para baixo; não conte o mesmo fato duas vezes. Leading indicators divulgados pela empresa podem sustentar nota mais alta antes de aparecerem na DRE, desde que sejam concretos, quantificados e plausíveis; identifique-os como prospectivos e não os contabilize como receita ou lucro já realizados. Um lucro líquido pressionado por aquisições, SBC ou custos extraordinários não deve, isoladamente, sobrepor uma trajetória operacional de longo prazo robusta, mas seus efeitos de caixa, diluição, contingências e execução devem reduzir a nota na proporção do risco. Não premie anúncios vagos, pipeline não contratado ou guidance sem base verificável. Compare períodos e considere sazonalidade:
@@ -221,27 +242,29 @@ REGRAS SETORIAIS PARA {sector.upper()}:
 {editorial_rules}
 
 ESTRUTURA OBRIGATÓRIA (USE OS NOMES DAS SEÇÕES ABAIXO):
-[Parágrafo introdutório sem título]
-Escreva três a cinco linhas resumindo o trimestre, classificando-o como sólido, fraco ou desafiador e explicando o principal motor do desempenho.
+Comece exatamente com <!-- compact-quarterly -->. As etiquetas de seção e notas abaixo servem à extração de dados e serão removidas da apresentação. Não escreva introdução, tabelas, listas ou títulos adicionais. Esta regra específica prevalece sobre sugestões gerais de tabelas ou bullets.
+O texto público deve ter 4 a 6 parágrafos de destaques, de aproximadamente 60–90 palavras cada, seguidos de uma única Conclusão IA e da nota final. Abra cada destaque com uma frase em negrito contendo indicador, valor e comparação; complete o mesmo parágrafo com as causas e a interpretação, sem subtítulos. Distribua os destaques entre atividade/receita, margens/resultado operacional, financeiro/lucro, caixa e dívida, conforme a relevância e os dados do negócio. Preserve as quatro etiquetas de notas, mesmo quando um destaque complementar tratar de resultado financeiro ou caixa.
 
 {section_labels[0]}
-{QUARTERLY_FIELDS["revenue"]}
+Escreva um parágrafo sobre atividade e receita, usando os indicadores adequados ao negócio. Explique crescimento, mix e comparação sem construir tabela nem demonstrar contas.
 {score_labels[0]}
 
 {section_labels[1]}
-{QUARTERLY_FIELDS["margins"]}
+Escreva um parágrafo sobre resultado operacional e margens. Explique os fatores que se compensaram. Se material, acrescente um parágrafo próprio sobre resultado financeiro, antes de seguir.
 {score_labels[1]}
 
-{section_labels[2]}
-{QUARTERLY_FIELDS["capital_risk"]}
-{score_labels[2]}
-
 {section_labels[3]}
-{QUARTERLY_FIELDS["net_income"]}
+Escreva um parágrafo sobre lucro, separando reportado e ajustado e explicando efeitos materiais. Não repita a análise das margens ou todas as contas anteriores.
 {score_labels[3]}
 
+{section_labels[2]}
+Quando divulgados e materiais, escreva um parágrafo próprio sobre fluxo de caixa operacional e livre, com valores e comparação, e outro sobre dívida e alavancagem. Não deixe a queda ou expansão relevante do caixa apenas implícita na conclusão. Explique capital de giro e investimentos e indique claramente quais componentes são somados ou abatidos da dívida ajustada. Para instituições financeiras, use capital/solvência e os indicadores adequados ao negócio.
+{score_labels[2]}
+
 {section_labels[4]}
-Escreva uma conclusão editorial no padrão de uma nota de resultados fundamentalista: 4 a 6 parágrafos curtos, analíticos e fluidos, sem repetir mecanicamente as seções anteriores. Cada parágrafo deve começar com uma frase de destaque em negrito, específica e apoiada em um dado/indicador do release, seguida da interpretação e implicação. Cubra os principais motores de longo prazo, qualidade do crescimento e participação dos segmentos, margem/lucro versus investimentos de crescimento, caixa e balanço, riscos/contrapontos e o que monitorar. Encerre com um parágrafo iniciado por "Conclusão IA:" / "AI Conclusion:" que dê o veredito equilibrado e explique a nota. Não invente expectativas; só diga que superou ou frustrou expectativas quando o release apresentar uma referência explícita. Quando mencionar guidance, backlog, contratos ou parcerias, separe claramente evidência prospectiva de receita/lucro já reconhecidos. Sem recomendação de compra/venda ou opinião de valuation.
+{QUARTERLY_CONCLUSION_RULES}
+
+FORMATO FINAL ESPECÍFICO: não escreva parágrafo estratégico adicional. Depois dos destaques e da reação de mercado, escreva somente um parágrafo de Conclusão IA com 150–190 palavras, no máximo 190; use menos se a fonte for limitada. Não inclua páginas, tabelas de origem ou fórmulas em nenhuma parte. O parágrafo deve interpretar o conjunto, sem recapitular todos os indicadores. Termine pela principal condição ou limitação material da evolução do negócio; não acrescente ressalvas genéricas. Esta orientação de tamanho prevalece sobre os limites anteriores.
 
 {MARKET_REACTION_RULES}
 

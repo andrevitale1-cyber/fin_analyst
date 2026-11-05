@@ -421,7 +421,7 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
     tese = data.get("tese_investimento", "")
 
     tg   = _score_theme(g, locale)
-    secs = _parse_sections(analise) if not is_call else []
+    secs = _parse_sections(analise) if not is_call and '<!-- compact-quarterly -->' not in analise else []
     # Replace section title placeholders based on locale
     section_titles_i18n = {
         1: "Revenue & Top Line" if en else "Evolução Operacional e Top Line",

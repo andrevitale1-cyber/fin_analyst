@@ -4,6 +4,12 @@ import re
 from fastapi import HTTPException
 
 def quarterly_thesis(text):
+    if '<!-- compact-quarterly -->' in (text or ''):
+        prose = re.sub(r'<!--[\s\S]*?-->', '', text)
+        prose = re.sub(r'(?im)^[ \t]*(?:#{1,6}[ \t]*)?\*{0,2}(?:Se[cç][aã]o|Section)\s*[1-6]\s*[:–-][^\n]*\n?', '', prose)
+        prose = re.sub(r'(?im)^[ \t]*\*{0,2}(?:Nota Seção [1-4]|Section Score [1-4]|Classificação do Trimestre|Quarter Classification):[^\n]*\n?', '', prose)
+        prose = prose.replace('Nota Geral:', 'Nota IA do Trimestre:').replace('Overall Score:', 'AI Quarter Score:')
+        return re.sub(r'\n{3,}', '\n\n', prose).strip()
     prefix = r"^[ \t]*(?:#{1,6}[ \t]*)?\*{0,2}"
     section = r"(?:Se[cç][aã]o|Section)[ \t]*"
     match = re.search(
