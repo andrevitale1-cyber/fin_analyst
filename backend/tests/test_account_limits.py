@@ -78,6 +78,27 @@ def test_trial_has_ten_shared_analyses_and_no_full_report_generation(database):
     assert not snapshot["can_analyze"] and snapshot["resets_at"] is None
 
 
+def test_configured_account_is_unlimited_without_changing_other_accounts(database, monkeypatch):
+    db, factory = database
+    monkeypatch.setenv('UNLIMITED_ANALYSIS_USER_IDS', ' user_unlimited ')
+    owner = SessionUser('user_unlimited', plan='premium')
+    other = SessionUser('user_other', plan='premium')
+    for _ in range(55):
+        finish(factory, limits.reserve_usage(owner, 'analysis'))
+    snapshot = limits.access_snapshot(owner)
+    assert snapshot['analysis_unlimited'] and snapshot['can_analyze']
+    assert snapshot['analysis_remaining'] is None and snapshot['analysis_limit'] is None
+    assert snapshot['resets_at'] is None
+    assert db.execute("SELECT COUNT(*) FROM account_usage WHERE user_id='user_unlimited' AND state='completed'").fetchone()[0] == 55
+    for _ in range(50):
+        finish(factory, limits.reserve_usage(other, 'analysis'))
+    with pytest.raises(HTTPException) as error:
+        limits.reserve_usage(other, 'analysis')
+    assert error.value.status_code == 429
+    assert not limits.access_snapshot(other)['analysis_unlimited']
+    assert not limits.unlimited_analyses(SessionUser('user_unlimited_extra', plan='premium'))
+
+
 def test_failure_releases_trial_allowance_and_pending_reservations_count(database):
     db, factory = database; user = SessionUser("user_free", plan="free")
     for _ in range(9): finish(factory, limits.reserve_usage(user, "analysis"))

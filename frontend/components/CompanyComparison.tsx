@@ -20,8 +20,8 @@ function Copy({text}: {text: string}) {
   return <>{splitBold(text).map((part, i) => part.bold ? <strong key={i} className="font-semibold text-slate-900">{part.text}</strong> : part.text)}</>;
 }
 
-export default function CompanyComparison({ premium, onUpgrade, onOpenAnalysis, onUsageChange }: {
-  premium: boolean; onUpgrade: () => void; onOpenAnalysis: (id: number) => void; onUsageChange: () => void;
+export default function CompanyComparison({ premium, unlimited = false, onUpgrade, onOpenAnalysis, onUsageChange }: {
+  premium: boolean; unlimited?: boolean; onUpgrade: () => void; onOpenAnalysis: (id: number) => void; onUsageChange: () => void;
 }) {
   const locale = useLocale(), en = locale === 'en';
   const { getToken } = useAuth();
@@ -171,7 +171,7 @@ export default function CompanyComparison({ premium, onUpgrade, onOpenAnalysis, 
         </div>
       </div>
       <div role="tabpanel" id="comparison-panel-duel" aria-labelledby="comparison-tab-duel" hidden={tab!=='duel'}>
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7"><h2 className="flex items-center gap-2 text-xl font-semibold text-slate-900"><Swords size={21} className="text-sky-600"/>{en ? 'Which company delivered the better quarter?' : 'Qual empresa entregou o melhor trimestre?'}</h2><p className="mt-3 text-sm leading-6 text-slate-500">{en ? 'One new duel uses one of your 50 monthly analyses. Reopening a saved duel is free. Failed or inconclusive duels do not use your allowance.' : 'Um duelo novo usa uma das suas 50 análises mensais. Reabrir um duelo salvo é gratuito. Falhas ou duelos inconclusivos não consomem sua franquia.'}</p>
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7"><h2 className="flex items-center gap-2 text-xl font-semibold text-slate-900"><Swords size={21} className="text-sky-600"/>{en ? 'Which company delivered the better quarter?' : 'Qual empresa entregou o melhor trimestre?'}</h2><p className="mt-3 text-sm leading-6 text-slate-500">{unlimited ? (en ? 'Your account has unlimited analyses, including results duels.' : 'Sua conta tem análises ilimitadas, incluindo duelos de resultados.') : en ? 'One new duel uses one of your 50 monthly analyses. Reopening a saved duel is free. Failed or inconclusive duels do not use your allowance.' : 'Um duelo novo usa uma das suas 50 análises mensais. Reabrir um duelo salvo é gratuito. Falhas ou duelos inconclusivos não consomem sua franquia.'}</p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">{(['A','B'] as const).map((side,index)=>{
             const symbol=index===0?leftSymbol:rightSymbol, id=index===0?leftId:rightId, other=index===0?rightSymbol:leftSymbol;
             const setSymbol=index===0?setLeftSymbol:setRightSymbol, setId=index===0?setLeftId:setRightId;

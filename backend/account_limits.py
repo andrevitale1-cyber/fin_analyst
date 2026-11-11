@@ -129,6 +129,11 @@ def require_premium_user(user: str = Depends(require_active_user)):
     return user
 
 
+def unlimited_analyses(user):
+    # Match only the authenticated Clerk ID configured on the server, never a submitted email.
+    return str(user) in {value.strip() for value in os.getenv('UNLIMITED_ANALYSIS_USER_IDS', '').split(',') if value.strip()}
+
+
 def reserve_usage(user, kind, locale="pt"):
     plan = plan_for(user)
     if kind == 'full_report':
@@ -141,7 +146,7 @@ def reserve_usage(user, kind, locale="pt"):
         with conn.cursor() as cur:
             cur.execute("SELECT pg_advisory_xact_lock(%s)", (key,))
             start, end, limit = entitlement_window(cur, user, plan, now)
-            if usage_count(cur, user, kind, start, end) >= limit:
+            if not unlimited_analyses(user) and usage_count(cur, user, kind, start, end) >= limit:
                 detail = (('Your 50 monthly analyses have been used. The allowance renews next month.' if locale == 'en' else 'Você utilizou as 50 análises mensais. O limite renova no próximo mês.') if plan == 'premium' else
                           ('You have used the 10 analyses included in Free. Upgrade to continue analyzing.' if locale == 'en' else 'Você utilizou as 10 análises incluídas no Grátis. Assine o Premium para continuar analisando.'))
                 raise HTTPException(429, detail)
@@ -189,18 +194,19 @@ def analysis_access(user_id: str = Form(...), locale: str = Form(default="pt"), 
 
 def access_snapshot(user):
     plan = plan_for(user)
+    unlimited = unlimited_analyses(user)
     now = datetime.now(TIMEZONE)
     conn = connection()
     try:
         with conn.cursor() as cur:
             start, end, limit = entitlement_window(cur, user, plan, now)
-            remaining = max(0, limit - usage_count(cur, user, 'analysis', start, end))
+            remaining = None if unlimited else max(0, limit - usage_count(cur, user, 'analysis', start, end))
         conn.commit()
     finally:
         conn.close()
     return {"plan": plan, "status": plan, "has_access": True,
-            "can_analyze": remaining > 0, "can_generate_full_report": plan == 'premium',
+            "can_analyze": unlimited or remaining > 0, "can_generate_full_report": plan == 'premium',
             "days_left": None, "trial_end": None,
-            "analysis_remaining": remaining, "analysis_limit": limit,
+            "analysis_remaining": remaining, "analysis_limit": None if unlimited else limit, "analysis_unlimited": unlimited,
             "full_report_remaining": None if plan == 'premium' else 0, "full_report_limit": None if plan == 'premium' else 0,
-            "resets_at": end.isoformat() if plan == 'premium' else None}
+            "resets_at": end.isoformat() if plan == 'premium' and not unlimited else None}

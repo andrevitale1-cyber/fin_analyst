@@ -122,6 +122,7 @@ export default function FinancialDashboard() {
   // --- TRIAL STATE ---
   const [trialState, setTrialState] = useState<{ userId: string; status: 'pending' | 'active' | 'expired' | 'unavailable'; daysLeft: number | null }>({ userId: '', status: 'pending', daysLeft: null });
   const [dailyRemaining, setDailyRemaining] = useState<{ analysis: number | null; full: number | null }>({ analysis: null, full: null });
+  const [unlimitedAnalyses, setUnlimitedAnalyses] = useState(false);
   const [accessRetry, setAccessRetry] = useState(0);
 
   const [result, setResult] = useState<any>(null);
@@ -249,6 +250,7 @@ export default function FinancialDashboard() {
         const status = data.has_access ? 'active' : 'expired';
         setTrialState({ userId, status, daysLeft: typeof data.days_left === 'number' ? data.days_left : null });
         setDailyRemaining({ analysis: data.analysis_remaining ?? null, full: data.full_report_remaining ?? null });
+        setUnlimitedAnalyses(data.analysis_unlimited === true);
       })
       .catch(() => {
         if (active) setTrialState({ userId, status: 'unavailable', daysLeft: null });
@@ -508,8 +510,8 @@ export default function FinancialDashboard() {
           <div className="mt-auto mb-6 px-2">
             <div className="rounded-xl border border-white/10 bg-white/[0.04] p-4">
               <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold uppercase tracking-wider text-white/60">{locale === 'en' ? 'Your plan' : 'Seu plano'}</p><span className="rounded-full bg-white/10 px-2 py-1 text-[10px] font-bold text-white">{isPremium ? 'PREMIUM' : locale === 'en' ? 'FREE' : 'GRÁTIS'}</span></div>
-              <div className="mt-4 flex items-end justify-between gap-2"><div><p className="text-sm font-semibold text-white">{locale === 'en' ? 'Analyses remaining' : 'Análises restantes'}</p><p className="mt-1 text-xs leading-4 text-slate-400">{locale === 'en' ? (isPremium ? 'Results, calls and duels' : 'Quarterly results and calls') : (isPremium ? 'Resultados, calls e duelos' : 'Resultados trimestrais e calls')}</p></div><span className="whitespace-nowrap text-lg font-bold text-white">{dailyRemaining.analysis ?? '—'}<span className="text-xs font-normal text-slate-400"> / {isPremium ? 50 : 10}</span></span></div>
-              <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-4 text-slate-400">{isPremium ? (locale === 'en' ? '50 analyses per calendar month.' : '50 análises por mês calendário.') : (locale === 'en' ? '10 analyses in total, with no expiry date. No automatic reset.' : '10 análises no total, sem prazo de validade. Sem renovação automática.')}</p>
+              <div className="mt-4 flex items-end justify-between gap-2"><div><p className="text-sm font-semibold text-white">{locale === 'en' ? 'Analyses remaining' : 'Análises restantes'}</p><p className="mt-1 text-xs leading-4 text-slate-400">{locale === 'en' ? (isPremium ? 'Results, calls and duels' : 'Quarterly results and calls') : (isPremium ? 'Resultados, calls e duelos' : 'Resultados trimestrais e calls')}</p></div><span className="whitespace-nowrap text-lg font-bold text-white">{unlimitedAnalyses ? (locale === 'en' ? 'Unlimited' : 'Ilimitadas') : <>{dailyRemaining.analysis ?? '—'}<span className="text-xs font-normal text-slate-400"> / {isPremium ? 50 : 10}</span></>}</span></div>
+              <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-4 text-slate-400">{unlimitedAnalyses ? (locale === 'en' ? 'Unlimited analyses enabled for your account.' : 'Análises ilimitadas liberadas para sua conta.') : isPremium ? (locale === 'en' ? '50 analyses per calendar month.' : '50 análises por mês calendário.') : (locale === 'en' ? '10 analyses in total, with no expiry date. No automatic reset.' : '10 análises no total, sem prazo de validade. Sem renovação automática.')}</p>
               {!isPremium && <button onClick={() => setShowUpgradeModal(true)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-md bg-[#1a1aff] px-3 py-2.5 text-xs font-bold text-white transition hover:bg-[#4032ff]"><Sparkles size={14} />{t("sidebar.goPremium")}</button>}
             </div>
           </div>
@@ -525,7 +527,7 @@ export default function FinancialDashboard() {
           </div>
         </div>
 
-        {currentView === 'comparison' && <CompanyComparison key={`${user?.id}:${locale}`} premium={isPremium} onUpgrade={() => setShowUpgradeModal(true)} onOpenAnalysis={id => void openComparedAnalysis(id)} onUsageChange={() => setAccessRetry(value => value+1)} />}
+        {currentView === 'comparison' && <CompanyComparison key={`${user?.id}:${locale}`} premium={isPremium} unlimited={unlimitedAnalyses} onUpgrade={() => setShowUpgradeModal(true)} onOpenAnalysis={id => void openComparedAnalysis(id)} onUsageChange={() => setAccessRetry(value => value+1)} />}
         {currentView === 'table' && (
           <div className="animate-in fade-in duration-500 max-w-6xl mx-auto pb-20">
             <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 rounded-[2rem] border border-slate-200 bg-white/90 p-6 md:p-10 shadow-[0_24px_70px_rgba(38,57,94,0.10)]">
@@ -805,7 +807,7 @@ export default function FinancialDashboard() {
                 {translationStatus === 'error' && <span className="mt-3 block text-sm text-amber-700" role="status">{locale === 'en' ? 'Translation unavailable; showing the original analysis.' : 'Tradução indisponível; exibindo a análise original.'}</span>}
               </div>
             </div>
-            {isPremium && result.id && result.metadata?.tipo !== 'Earnings Call' && <DetailedQuarterlyAnalysis key={`detailed-${result.id}-${locale}`} analysisId={result.id} locale={locale} onUsageChange={() => setAccessRetry(value => value + 1)}/>}
+            {isPremium && result.id && result.metadata?.tipo !== 'Earnings Call' && <DetailedQuarterlyAnalysis key={`detailed-${result.id}-${locale}`} analysisId={result.id} locale={locale} unlimited={unlimitedAnalyses} onUsageChange={() => setAccessRetry(value => value + 1)}/>}
             {result.id && <ReportFeedback key={`feedback-${result.id}`} reportId={String(result.id)} kind="analysis" locale={locale}/>}
           </div>
         )}

@@ -27,7 +27,7 @@ function Content({text}: {text: string}) {
   })}</div>;
 }
 
-export default function DetailedQuarterlyAnalysis({analysisId, locale, onUsageChange}: {analysisId: number; locale: string; onUsageChange: () => void}) {
+export default function DetailedQuarterlyAnalysis({analysisId, locale, unlimited = false, onUsageChange}: {analysisId: number; locale: string; unlimited?: boolean; onUsageChange: () => void}) {
   const {getToken} = useAuth();
   const en = locale === 'en';
   const [job, setJob] = useState<Job>({state: 'loading'});
@@ -94,7 +94,7 @@ export default function DetailedQuarterlyAnalysis({analysisId, locale, onUsageCh
   const saved = job.state === 'completed';
   return <section className="mt-7 rounded-3xl border border-sky-200 bg-white p-6 md:p-10" aria-label={en ? 'Detailed quarterly analysis' : 'Análise trimestral detalhada'}>
     <div className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
-      <div><span className="text-xs font-semibold uppercase tracking-widest text-sky-700">Premium</span><h3 className="mt-2 text-xl font-bold text-slate-900">{en ? 'Go deeper into this quarter' : 'Aprofunde a análise deste trimestre'}</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{saved ? (en ? 'Saved analysis. Reopen it at no extra cost.' : 'Análise salva. Reabra sem consumir outra análise.') : (en ? 'Understand the numbers, management’s explanations and outlook. Uses 1 monthly analysis only when completed.' : 'Entenda os números, as explicações da gestão e as perspectivas. Consome 1 análise mensal somente ao concluir.')}</p></div>
+      <div><span className="text-xs font-semibold uppercase tracking-widest text-sky-700">Premium</span><h3 className="mt-2 text-xl font-bold text-slate-900">{en ? 'Go deeper into this quarter' : 'Aprofunde a análise deste trimestre'}</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{saved ? (en ? 'Saved analysis. Reopen it at no extra cost.' : 'Análise salva. Reabra sem consumir outra análise.') : unlimited ? (en ? 'Understand the numbers, management’s explanations and outlook. Your account has unlimited analyses.' : 'Entenda os números, as explicações da gestão e as perspectivas. Sua conta tem análises ilimitadas.') : (en ? 'Understand the numbers, management’s explanations and outlook. Uses 1 monthly analysis only when completed.' : 'Entenda os números, as explicações da gestão e as perspectivas. Consome 1 análise mensal somente ao concluir.')}</p></div>
       <button type="button" disabled={busy || job.state === 'loading'} onClick={() => saved ? setOpen(value => !value) : job.state === 'unavailable' ? (setError(''), setRevision(value => value + 1)) : void generate()} className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:opacity-60">
         {busy ? <Loader2 size={18} className="animate-spin"/> : <Sparkles size={18}/>}{busy ? (en ? 'Preparing detailed analysis…' : 'Preparando análise detalhada…') : saved ? (en ? 'View detailed analysis' : 'Ver análise detalhada') : job.state === 'unavailable' ? (en ? 'Check again' : 'Verificar novamente') : (en ? 'Generate detailed analysis' : 'Gerar análise detalhada')}{saved && (open ? <ChevronUp size={16}/> : <ChevronDown size={16}/>)}</button>
     </div>
