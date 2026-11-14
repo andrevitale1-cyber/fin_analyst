@@ -17,7 +17,8 @@ import SiteCredit from "@/components/SiteCredit";
 import PricingSection from "@/components/PricingSection";
 import benefitsStyles from "@/components/BenefitsLayout.module.css";
 import { Link } from "@/i18n/routing";
-import { BarChart3, ArrowRight } from "lucide-react";
+import BrandLogo from "../../components/BrandLogo";
+import { ArrowRight } from "lucide-react";
 
 export default function LandingPage() {
   const locale = useLocale();
@@ -78,9 +79,7 @@ function LandingPageContent({ locale }: { locale: string }) {
 
           <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20">
-                <BarChart3 className="text-white w-6 h-6" />
-              </div>
+              <BrandLogo size={48} />
               <span className="text-2xl font-bold text-white tracking-tight">FinAnalyzer.AI</span>
             </div>
 

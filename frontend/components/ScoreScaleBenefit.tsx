@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import { useInView } from "framer-motion";
-import { BarChart3, CircleAlert, DollarSign, Percent, TrendingUp } from "lucide-react";
+import BrandLogo from "./BrandLogo";
+import { CircleAlert, DollarSign, Percent, TrendingUp } from "lucide-react";
 import cardStyles from "./SearchBenefit.module.css";
 import styles from "./ScoreScaleBenefit.module.css";
 
@@ -25,7 +26,7 @@ export default function ScoreScaleBenefit({ locale }: { locale: string }) {
           <div className={styles.carrier}><div style={{ rotate: `${-index * 90}deg` }}><span className={styles.score}><Icon style={{ color }} /><span>{label}</span></span></div></div>
         </div>)}
       </div>
-      <div className={styles.logo} aria-hidden="true"><div className={styles.logoContent}><BarChart3 /><span>AI</span></div></div>
+      <div className={styles.logo} aria-hidden="true"><div className={styles.logoContent}><BrandLogo size={64} /></div></div>
       <div className={styles.result} aria-hidden="true">
         <div><span>AI SCORE</span><small>{english ? "Based on 4 fundamentals" : "Com base em 4 fundamentos"}</small></div>
         <strong>5<small>/5</small></strong>

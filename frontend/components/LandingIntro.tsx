@@ -5,7 +5,8 @@ import { useInView } from "framer-motion";
 import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowDown, BarChart3, Search, X } from "lucide-react";
+import BrandLogo from "./BrandLogo";
+import { ArrowDown, Search, X } from "lucide-react";
 import MarqueeSymbol from "./MarqueeSymbol";
 import { Link } from "@/i18n/routing";
 import "lenis/dist/lenis.css";
@@ -83,7 +84,7 @@ export default function LandingIntro({ locale }: { locale: string }) {
     <header ref={header} className={styles.navigation}>
       <nav className={styles.pill} aria-label={english ? "Main navigation" : "Navegação principal"}>
         <Link href="/" className={styles.brand} aria-label="FinAnalyzer home" onClick={close}>
-          <BarChart3 aria-hidden="true" size={24} /><span>FinAnalyzer</span>
+          <BrandLogo size={32} /><span>FinAnalyzer</span>
         </Link>
         <div className={styles.desktopLinks}>
           {links.map(link => <a key={link.href} href={link.href} onClick={close}>{link.text}</a>)}
