@@ -33,6 +33,15 @@ export async function generateMetadata({
       ? "Find official company earnings releases and earnings call transcripts automatically. Analyze financial performance with AI, clear metrics, and source links."
       : "Encontre releases de resultados e transcripts de empresas automaticamente. Analise o desempenho financeiro com IA, indicadores claros e links para as fontes.",
     applicationName: "FinAnalyzer",
+    icons: {
+      icon: [
+        { url: "/brand/favicon-v3-48.png", type: "image/png", sizes: "48x48" },
+        { url: "/brand/favicon-v3-192.png", type: "image/png", sizes: "192x192" },
+        { url: "/brand/favicon-v3-512.png", type: "image/png", sizes: "512x512" },
+      ],
+      shortcut: "/favicon.ico?v=3",
+      apple: { url: "/brand/apple-touch-icon-v3.png", sizes: "180x180", type: "image/png" },
+    },
     openGraph: {
       type: "website",
       siteName: "FinAnalyzer",
