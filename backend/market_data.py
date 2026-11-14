@@ -112,6 +112,8 @@ def reaction_prompt(symbol, text):
         prefix = text[max(0,match.start()-100):match.start()]
         return bool(re.search(r'(?:quarter|months?|year|period)\s+(?:ended|ending)\s*$|(?:trimestre|meses|ano|per[ií]odo)\s+encerrad[oa]s?\s+(?:em\s+)?$', prefix, re.I))
     months = {name: i for i, name in enumerate(('january','february','march','april','may','june','july','august','september','october','november','december'), 1)}
+    months.update({name[:3]: value for name, value in list(months.items())})
+    months['sept'] = 9
     candidates = set()
     pt_months = {name: i for i, name in enumerate(('janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'), 1)}
     for match in re.finditer(r'\b(\d{1,2})\s+de\s+(' + '|'.join(pt_months) + r')\s+de\s+(20\d{2})', text[:5000], re.I):
@@ -123,11 +125,11 @@ def reaction_prompt(symbol, text):
             candidates.add(datetime(int(match[3]),pt_months[match[2].lower()],int(match[1]),tzinfo=timezone.utc).date().isoformat())
         except ValueError:
             pass
-    for match in re.finditer(r"\b(" + '|'.join(months) + r")\s+(\d{1,2}),?\s+(20\d{2})", text[:5000], re.I):
+    for match in re.finditer(r"\b(" + '|'.join(months) + r")\.?\s+(\d{1,2}),?\s+(20\d{2})", text[:5000], re.I):
         if period_end(match):
             continue
         nearby = text[max(0,match.start()-150):match.end()+200]
-        if not re.search(r'announc|newswire|press release|published', nearby, re.I):
+        if not re.search(r'announc|newswire|press release|published|today\s+reported|reports?\s+(?:financial\s+|quarterly\s+)?results', nearby, re.I):
             continue
         try:
             candidates.add(datetime(int(match[3]), months[match[1].lower()], int(match[2]), tzinfo=timezone.utc).date().isoformat())

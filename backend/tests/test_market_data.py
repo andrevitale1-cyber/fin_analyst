@@ -104,11 +104,13 @@ def test_quarterly_prompt_requires_market_judgment_and_long_term_evidence(locale
 
 
 @pytest.mark.parametrize('text,event', [
+    ('SANTA CLARA, Calif., Nov. 12, 2026 — Applied Materials, Inc. (NASDAQ: AMAT) today reported results for its fourth quarter and fiscal year ended Oct. 25, 2026.', '2026-11-12'),
+    ('Sept. 10, 2026 Company reports quarterly results for the quarter ended Jun. 30, 2026.', '2026-09-10'),
     ('SEATTLE—(BUSINESS WIRE) October 29, 2026—Amazon today announced financial results for its third quarter ended September 30, 2026.', '2026-10-29'),
     ('São Paulo, 29 de outubro de 2026 — divulga os resultados do trimestre encerrado em 30 de setembro de 2026.', '2026-10-29'),
 ])
 def test_publication_date_is_not_confused_with_quarter_end(monkeypatch, text, event):
-    prices = Mock(return_value={'points':[{'time':'2026-10-28','close':100},
+    prices = Mock(return_value={'points':[{'time':'2026-09-09','close':100}, {'time':'2026-09-11','close':101}, {'time':'2026-10-28','close':100},
         {'time':'2026-10-29','close':98},{'time':'2026-10-30','close':99}],
         'source':'Twelve Data','sourceUrl':'https://twelvedata.com/docs'})
     monkeypatch.setattr(market_data,'earnings_prices',prices)
