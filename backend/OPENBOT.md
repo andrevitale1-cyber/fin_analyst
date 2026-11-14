@@ -22,7 +22,8 @@ Return the original `symbol`, numeric `fiscal_year`, numeric `fiscal_quarter`,
 `temporarily_unavailable`) and `source_url` (direct HTTPS document URL or empty).
 Never echo credentials in chat or store them in a command history/file.
 
-Discovery waits at most 70 seconds; callback credentials expire after 90 seconds.
+Discovery waits at most 70 seconds; callback credentials expire after 10 minutes.
+Late results remain available for the next lookup and must pass the same validation.
 Concurrent requests share an existing discovery for that company/fiscal period/type.
 Only known issuer and regulator hosts are downloaded, with redirects checked individually.
 The existing independent issuer/fiscal period/financial content validation still applies.

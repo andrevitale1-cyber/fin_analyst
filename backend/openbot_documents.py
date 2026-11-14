@@ -73,7 +73,7 @@ def discover(symbol, year, quarter, document_type):
                 request_id = row[0]
             else:
                 cur.execute('INSERT INTO openbot_document_requests(id,request_key,token_hash,query,expires_at,created_at) VALUES(%s,%s,%s,%s,%s,%s)',
-                            (request_id, key, hashlib.sha256(token.encode()).hexdigest(), key, now + 90, now))
+                            (request_id, key, hashlib.sha256(token.encode()).hexdigest(), key, now + 600, now))
         conn.commit()
     finally:
         conn.close()
@@ -92,8 +92,8 @@ def discover(symbol, year, quarter, document_type):
             conn = get_db_connection()
             try:
                 with conn.cursor() as cur:
-                    cur.execute('UPDATE openbot_document_requests SET result=%s WHERE id=%s',
-                                (json.dumps({'status': 'temporarily_unavailable'}), request_id))
+                    cur.execute('UPDATE openbot_document_requests SET result=%s,expires_at=%s WHERE id=%s',
+                                (json.dumps({'status': 'temporarily_unavailable'}), time.time() + 30, request_id))
                 conn.commit()
             finally:
                 conn.close()
