@@ -21,8 +21,7 @@
 .flowOut { left: calc(50% + 43px); }
 .flow::after { content: "›"; position: absolute; top: -10px; left: 0; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #4134ff; color: white; box-shadow: 0 0 12px #5147ff66; font: 22px/1 sans-serif; font-style: normal; animation: comparison-flow 2.8s linear infinite; }
 .flowOut::after { animation-delay: -1.4s; }
-.brand { display: grid; place-items: center; width: 86px; height: 86px; border-radius: 25px; color: white; background: linear-gradient(145deg,#6359ff,#2518f8); box-shadow: 0 0 0 8px #3428ff06,0 14px 50px #3428ff26; position: relative; }
-.brand::after { content: ""; position: absolute; inset: -7px; border: 1px solid #665cff33; border-radius: 31px; animation: comparison-pulse 3.6s ease-out infinite; }
+.brand { display: grid; place-items: center; width: 86px; height: 86px; position: relative; }
 .connection > span { position: absolute; top: 99px; font-size: 13px; font-weight: 700; letter-spacing: -.03em; }
 .swords { position: absolute; top: 126px; color: #8079cf; }
 .verdict { position: relative; z-index: 1; padding: 30px; border: 1px solid #c5d8f222; border-radius: 18px; background: #0e1b2f; box-shadow: 0 18px 44px #14254217; color: white; }
@@ -68,9 +67,7 @@
   .period > small { font-size: 8px; }
   .fiscal { font-size: 8px; }
   .connection { height: 270px; width: 100%; padding: 100px 0 0; justify-content: flex-start; flex: none; }
-  .brand { width: 58px; height: 58px; border-radius: 17px; }
-  .brand > svg { width: 30px; }
-  .brand::after { border-radius: 23px; }
+  .brand { width: 64px; height: 64px; }
   .flow { width: 2px; height: 72px; left: calc(50% - 1px); right: auto; top: 28px; background: repeating-linear-gradient(#5147ff 0 4px,transparent 4px 8px); }
   .flowOut { top: 194px; height: 76px; bottom: auto; }
   .flow::after { width: 20px; height: 20px; left: -9px; font-size: 20px; animation: comparison-flow-down 2s linear infinite; }
@@ -90,4 +87,4 @@
   .action > p { font-size: 10px; }
 }
 @media(max-width:743px) and (prefers-reduced-motion:reduce) { .flow::after { top: 50%; left: -9px !important; transform: rotate(90deg); } }
-@media(prefers-reduced-motion:reduce) { .brand::after { animation: none; opacity: .4; } .flow::after { animation: none; left: 50%; opacity: 1; } .action > a { transition: none; } }
+@media(prefers-reduced-motion:reduce) { .flow::after { animation: none; left: 50%; opacity: 1; } .action > a { transition: none; } }
