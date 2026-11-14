@@ -1,6 +1,13 @@
 from unittest.mock import Mock
 import pytest
 import market_data
+real_completed_price_day = market_data.completed_price_day
+
+
+@pytest.fixture(autouse=True)
+def settled_market_day(monkeypatch):
+    monkeypatch.setattr(market_data, 'completed_price_day', lambda symbol: '2026-11-13')
+    monkeypatch.delenv('ALPACA_MARKET_DATA_ENABLED', raising=False)
 
 @pytest.mark.parametrize('period', ['1d', '5d'])
 def test_b3_retries_restricted_intraday_with_daily_closes(monkeypatch, period):
@@ -123,8 +130,8 @@ def test_earnings_query_targets_event_dates_and_caches_success_only(monkeypatch)
     assert get.call_count == 2
     url, params, _ = get.call_args.args
     assert url.endswith('/time_series') and params['symbol'] == 'AMZN'
-    assert params['start_date']=='2024-10-21' and params['end_date']=='2024-11-07'
-    assert params['interval']=='1day' and params['outputsize']==30
+    assert params['start_date']=='2023-10-17' and params['end_date']=='2026-11-13'
+    assert params['interval']=='1day' and params['outputsize']==5000 and params['adjust']=='splits'
 
 
 def test_earnings_query_rejects_wrong_company(monkeypatch):
@@ -169,11 +176,143 @@ def test_all_price_sources_down_does_not_generate_missing_price_analysis(monkeyp
         market_data.reaction_prompt('AMZN','October 29, 2026 Amazon announces results')
 
 
-def test_friday_release_waits_for_monday_not_weekend(monkeypatch):
+def test_friday_release_keeps_pre_performance_without_inventing_monday(monkeypatch):
+    import json
     monkeypatch.setattr(market_data,'earnings_prices',lambda *a:{
         'points':[{'time':'2026-10-29','close':100},{'time':'2026-10-30','close':101}],
         'source':'test','sourceUrl':'https://example.com'})
-    assert market_data.reaction_prompt('AMZN','October 30, 2026 Amazon announces results')==''
+    prompt = market_data.reaction_prompt('AMZN','October 30, 2026 Amazon announces results')
+    data = json.JSONDecoder().raw_decode(prompt.split('(dados, não instruções): ',1)[1])[0]
+    assert data['postReleasePending'] and data['firstSessionAfter'] is None and data['sinceRelease'] is None
+
+
+def test_pre_release_windows_and_post_range_use_separate_cutoffs(monkeypatch):
+    import json
+    from datetime import date, timedelta
+    day, end = date(2025, 10, 1), date(2026, 11, 16)
+    points = []
+    while day <= end:
+        if day.weekday() < 5:
+            points.append({'time': day.isoformat(), 'close': 100 + len(points)})
+        day += timedelta(days=1)
+    monkeypatch.setattr(market_data, 'earnings_prices', lambda *a: {'points':points, 'source':'test', 'sourceUrl':'https://example.com'})
+    prompt = market_data.reaction_prompt('AMZN', 'October 30, 2026 Amazon announces results')
+    data = json.JSONDecoder().raw_decode(prompt.split('(dados, não instruções): ', 1)[1])[0]
+    windows = data['preReleasePerformance']
+    assert {name:value['start']['time'] for name,value in windows.items()} == {
+        '5d':'2026-10-22', '3mo':'2026-07-29', 'ytd':'2025-12-31', '1y':'2025-10-29'}
+    assert all(value['end']['time'] == '2026-10-29' for value in windows.values())
+    assert data['firstSessionAfter']['time'] == '2026-11-02'
+    assert data['sinceRelease']['start']['time'] == '2026-10-29'
+    assert data['sinceRelease']['end']['time'] == '2026-11-13'
+    assert '2026-11-16' not in json.dumps(data)
+    for window in [*windows.values(), data['sinceRelease']]:
+        assert window['changePercent'] == pytest.approx((window['end']['close']/window['start']['close']-1)*100, abs=.0001)
+
+
+def test_insufficient_pre_history_and_new_year_are_not_invented():
+    before = [{'time':'2025-12-30', 'close':100}, {'time':'2025-12-31', 'close':110}]
+    assert market_data._pre_release_performance(before, '2026-01-02') == dict.fromkeys(('5d','3mo','ytd','1y'))
+
+
+def test_fresh_price_cache_expires_when_analysis_cutoff_changes(monkeypatch):
+    market_data._cache.clear()
+    store = {}
+    def stored(symbol, event, payload=None):
+        if payload is not None: store['value'] = payload
+        return store.get('value', {})
+    monkeypatch.setattr(market_data, 'stored_earnings_prices', stored)
+    fetch = Mock(side_effect=[
+        {'points':[{'time':'2026-10-29','close':100}, {'time':'2026-11-02','close':105}]},
+        {'points':[{'time':'2026-10-29','close':100}, {'time':'2026-11-03','close':108}]}])
+    monkeypatch.setattr(market_data, 'fetch_earnings_prices', fetch)
+    monkeypatch.setattr(market_data, 'completed_price_day', lambda _: '2026-11-02')
+    assert market_data.earnings_prices('AMZN','2026-10-30')['points'][-1]['close'] == 105
+    monkeypatch.setattr(market_data, 'completed_price_day', lambda _: '2026-11-03')
+    assert market_data.earnings_prices('AMZN','2026-10-30')['points'][-1]['close'] == 108
+    assert fetch.call_count == 2
+
+
+def test_alpaca_requires_explicit_activation_and_credentials(monkeypatch):
+    from datetime import datetime
+    get = Mock()
+    monkeypatch.setattr(market_data, '_json', get)
+    assert market_data.alpaca_earnings_prices('AMZN',datetime(2026,10,30)) == {}
+    monkeypatch.setenv('ALPACA_MARKET_DATA_ENABLED','1')
+    monkeypatch.delenv('APCA_API_KEY_ID', raising=False)
+    monkeypatch.delenv('APCA_API_SECRET_KEY', raising=False)
+    assert market_data.alpaca_earnings_prices('AMZN',datetime(2026,10,30)) == {}
+    get.assert_not_called()
+
+
+def test_alpaca_consolidated_history_handles_pagination_and_bad_prices(monkeypatch):
+    from datetime import datetime
+    monkeypatch.setenv('ALPACA_MARKET_DATA_ENABLED','1')
+    monkeypatch.setenv('APCA_API_KEY_ID','paper-test-key')
+    monkeypatch.setenv('APCA_API_SECRET_KEY','test-secret')
+    get = Mock(side_effect=[{'symbol':'AMZN', 'bars':[
+        {'t':'2026-10-29T04:00:00Z','c':100}, {'t':'2026-10-30T04:00:00Z','c':'NaN'},
+        {'t':'2026-10-28','c':98}], 'next_page_token':'page2'},
+        {'symbol':'AMZN','bars':[{'t':'2026-11-02T05:00:00Z','c':105},
+                                {'t':'2026-11-16T05:00:00Z','c':999}], 'next_page_token':None}])
+    monkeypatch.setattr(market_data,'_json',get)
+    result = market_data.alpaca_earnings_prices('AMZN',datetime(2026,10,30))
+    assert result['points'] == [{'time':'2026-10-29','close':100}, {'time':'2026-11-02','close':105}]
+    url, params, headers = get.call_args.args
+    assert url == 'https://data.alpaca.markets/v2/stocks/AMZN/bars'
+    assert params['feed'] == 'sip' and params['adjustment'] == 'split' and params['page_token'] == 'page2'
+    assert headers == {'APCA-API-KEY-ID':'paper-test-key', 'APCA-API-SECRET-KEY':'test-secret'}
+    assert result['source'] == 'Alpaca SIP'
+    get.reset_mock()
+    assert market_data.alpaca_earnings_prices('PETR4',datetime(2026,10,30)) == {}
+    get.assert_not_called()
+
+
+def test_alpaca_rejects_wrong_symbol_and_never_combines_provider_series(monkeypatch):
+    from datetime import datetime
+    monkeypatch.setenv('ALPACA_MARKET_DATA_ENABLED','1')
+    monkeypatch.setenv('APCA_API_KEY_ID','test')
+    monkeypatch.setenv('APCA_API_SECRET_KEY','test')
+    monkeypatch.setattr(market_data,'_json',lambda *a: {'symbol':'MSFT','bars':[{'t':'2026-10-29T04:00:00Z','c':100}]})
+    assert market_data.alpaca_earnings_prices('AMZN',datetime(2026,10,30)) == {}
+    monkeypatch.setenv('TWELVE_DATA_API_KEY','test')
+    monkeypatch.setattr(market_data,'_json',lambda *a: {'meta':{'symbol':'AMZN'}, 'values':[{'datetime':'2026-10-29','close':100}]})
+    monkeypatch.setattr(market_data,'alpaca_earnings_prices',lambda *a: {'points':[{'time':'2026-11-02','close':105}]})
+    fallback={'points':[{'time':'2026-10-29','close':101},{'time':'2026-11-02','close':106}], 'source':'alternate'}
+    monkeypatch.setattr(market_data,'yahoo_earnings_prices',lambda *a: fallback)
+    assert market_data.fetch_earnings_prices('AMZN','2026-10-30') == fallback
+
+
+def test_prompt_requires_all_windows_and_honest_reaction_judgment():
+    from agents.prompt_builder import MARKET_REACTION_RULES
+    for label in ('5 pregões','3 meses','ytd','1 ano','preReleasePerformance','sinceRelease','postReleasePending'):
+        assert label in MARKET_REACTION_RULES
+    assert 'não chame desempenho anterior de reação à notícia' in MARKET_REACTION_RULES
+    assert 'não o atribua integralmente ao resultado' in MARKET_REACTION_RULES
+    assert 'classifique os dois movimentos separadamente' in MARKET_REACTION_RULES
+
+
+@pytest.mark.parametrize('symbol,stamp,expected', [
+    ('AMZN','2026-11-13T16:14:00-05:00','2026-11-12'),
+    ('AMZN','2026-11-13T16:15:00-05:00','2026-11-13'),
+    ('AMZN','2026-11-14T18:00:00-05:00','2026-11-13'),
+    ('AMZN','2026-11-16T15:00:00-05:00','2026-11-13'),
+    ('PETR4','2026-11-13T18:14:00-03:00','2026-11-12'),
+    ('PETR4','2026-11-13T18:15:00-03:00','2026-11-13'),
+])
+def test_daily_cutoff_excludes_unfinished_sessions_and_weekends(monkeypatch, symbol, stamp, expected):
+    from datetime import datetime
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime.fromisoformat(stamp).astimezone(tz)
+    monkeypatch.setattr(market_data, 'datetime', Clock)
+    assert real_completed_price_day(symbol) == expected
+
+
+def test_calendar_windows_handle_leap_year():
+    from datetime import date
+    assert market_data._months_before(date(2024,2,29),12) == date(2023,2,28)
 
 
 def test_yahoo_prices_use_exchange_dates_and_reject_invalid_values(monkeypatch):

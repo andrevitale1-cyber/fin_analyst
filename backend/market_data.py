@@ -1,5 +1,6 @@
 """Bounded, cached market data. Never infer that a recent move was an earnings reaction."""
 from datetime import datetime, timedelta, timezone
+from calendar import monthrange
 import math
 from functools import lru_cache
 from threading import Lock
@@ -55,6 +56,38 @@ def complete_event_prices(snapshot, event):
     points = snapshot.get('points', [])
     return any(p['time'][:10]<event for p in points) and any(p['time'][:10]>event for p in points)
 
+
+def completed_price_day(symbol):
+    b3 = bool(re.fullmatch(r'[A-Z]{4}\d{1,2}', symbol.replace('.SA', '')))
+    now = datetime.now(ZoneInfo('America/Sao_Paulo' if b3 else 'America/New_York'))
+    # Exclude an unfinished daily candle; allow time for the delayed consolidated feed to settle.
+    day = now.date() if (now.hour, now.minute) >= ((18, 15) if b3 else (16, 15)) else now.date() - timedelta(days=1)
+    while day.weekday() >= 5:
+        day -= timedelta(days=1)
+    return day.isoformat()
+
+
+def _months_before(day, months):
+    year, month = divmod(day.year * 12 + day.month - 1 - months, 12)
+    return day.replace(year=year, month=month + 1, day=min(day.day, monthrange(year, month + 1)[1]))
+
+
+def _performance(start, end):
+    if not start or not end or start['close'] <= 0:
+        return None
+    return {'start': start, 'end': end, 'changePercent': round((end['close'] / start['close'] - 1) * 100, 4)}
+
+
+def _pre_release_performance(before, event):
+    end = before[-1]
+    day = datetime.strptime(end['time'][:10], '%Y-%m-%d').date()
+    baseline = lambda target: next((p for p in reversed(before) if p['time'][:10] <= target), None)
+    event_year = int(event[:4])
+    return {'5d': _performance(before[-6] if len(before) >= 6 else None, end),
+            '3mo': _performance(baseline(_months_before(day, 3).isoformat()), end),
+            'ytd': _performance(baseline(f'{event_year - 1}-12-31'), end) if day.year == event_year else None,
+            '1y': _performance(baseline(_months_before(day, 12).isoformat()), end)}
+
 def _json(url, params, headers, preserve_plan_error=False):
     try:
         response = requests.get(url, params=params, headers=headers, timeout=7)
@@ -104,13 +137,25 @@ def reaction_prompt(symbol, text):
         logger.info('market_reaction issuer=%s outcome=publication_date_unresolved candidates=%s', symbol, len(candidates))
         return ""
     event = next(iter(candidates))
+    if event > datetime.now(ZoneInfo('America/Sao_Paulo' if re.fullmatch(r'[A-Z]{4}\d{1,2}', symbol) else 'America/New_York')).date().isoformat():
+        return ''
     snapshot = earnings_prices(symbol, event)
-    points = snapshot.get('points', [])
+    cutoff = completed_price_day(symbol)
+    points = []
+    for point in snapshot.get('points', []):
+        try:
+            day = datetime.fromisoformat(point['time'].replace('Z', '+00:00')).date().isoformat()
+            close = number(point.get('close'))
+            if day <= cutoff and close is not None and close > 0:
+                points.append({'time': day, 'close': close})
+        except (KeyError, ValueError, TypeError, AttributeError):
+            continue
+    points = sorted({p['time']: p for p in points}.values(), key=lambda p: p['time'])
     if not points:
         raise MarketDataUnavailable('Event prices unavailable')
     before = [p for p in points if p['time'][:10] < event]
     after = [p for p in points if p['time'][:10] >= event]
-    if not before or not any(p['time'][:10] > event for p in after):
+    if not before:
         logger.info('market_reaction issuer=%s event=%s outcome=event_prices_unavailable', symbol, event)
         return ""
     next_sessions = [p for p in after if p['time'][:10] > event]
@@ -121,6 +166,10 @@ def reaction_prompt(symbol, text):
     window = {'publicationDateFromRelease':event, 'publicationTimeVerified':False,
               'sessionBeforeEve':previous_session, 'before':before[-1], 'releaseSession':release_session,
               'firstSessionAfter':following, 'followingSessions':after[:3],
+              'preReleasePerformance':_pre_release_performance(before, event),
+              'sinceRelease':_performance(before[-1], next_sessions[-1]) if next_sessions else None,
+              'postReleasePending':not bool(next_sessions), 'lastCompletedClose':points[-1],
+              'analysisAsOf':datetime.now(timezone.utc).isoformat(),
               'calculatedChangesPercent':{'eveVsPrevious':percent(previous_session,before[-1]),
                   'releaseVsEve':percent(before[-1],release_session),
                   'nextVsPrevious':percent(release_session or before[-1],following),
@@ -142,18 +191,20 @@ def earnings_prices(symbol, event):
     symbol = symbol.strip().upper()
     if not re.fullmatch(r'[A-Z0-9][A-Z0-9.-]{0,14}', symbol):
         return {}
-    key = ('earnings', symbol, event)
+    cutoff = completed_price_day(symbol)
+    key = ('earnings-v2', symbol, event, cutoff)
     if key in _cache and _cache[key][0] > time.monotonic():
         return _cache[key][1]
     stored = stored_earnings_prices(symbol,event)
-    if complete_event_prices(stored,event):
-        _cache[key] = (time.monotonic()+86400,stored)
+    if stored.get('reactionWindowVersion') == 2 and stored.get('historyAsOf') == cutoff and stored.get('points'):
+        _cache[key] = (time.monotonic()+3600,stored)
         return stored
     result = fetch_earnings_prices(symbol,event)
-    if complete_event_prices(result,event):
+    if any(p['time'][:10] < event for p in result.get('points', [])):
         if len(_cache) > 1000:
             _cache.clear()
-        _cache[key] = (time.monotonic()+86400,result)
+        result.update(reactionWindowVersion=2, historyAsOf=cutoff)
+        _cache[key] = (time.monotonic()+3600,result)
         stored_earnings_prices(symbol,event,result)
     return result
 
@@ -161,32 +212,71 @@ def earnings_prices(symbol, event):
 def fetch_earnings_prices(symbol,event):
     day = datetime.strptime(event, '%Y-%m-%d')
     if re.fullmatch(r'[A-Z]{4}\d{1,2}', symbol):
-        snapshot = market_snapshot(symbol,'1y')
+        snapshot = market_snapshot(symbol,'5y')
         return snapshot if complete_event_prices(snapshot,event) else yahoo_earnings_prices(symbol+'.SA',day)
     token = os.getenv('TWELVE_DATA_API_KEY', '').strip()
-    if not token:
-        logger.info('market_reaction issuer=%s outcome=market_key_missing', symbol)
-        return yahoo_earnings_prices(symbol,day)
     data = _json('https://api.twelvedata.com/time_series', {
-        'symbol':symbol, 'interval':'1day', 'outputsize':30, 'timezone':'Exchange',
-        'start_date':(day-timedelta(days=10)).strftime('%Y-%m-%d'),
-        'end_date':(day+timedelta(days=7)).strftime('%Y-%m-%d'),
-    }, {'Authorization':f'apikey {token}'})
+        'symbol':symbol, 'interval':'1day', 'outputsize':5000, 'timezone':'Exchange', 'adjust':'splits',
+        'start_date':(day-timedelta(days=380)).strftime('%Y-%m-%d'),
+        'end_date':completed_price_day(symbol),
+    }, {'Authorization':f'apikey {token}'}) if token else {}
     meta = data.get('meta', {})
-    if not meta.get('symbol') or meta['symbol'].upper() != symbol:
-        return yahoo_earnings_prices(symbol,day)
+    if str(meta.get('symbol', '')).upper() != symbol:
+        data = {}
     points = sorted([{'time':row['datetime'],'close':number(row.get('close'))}
         for row in data.get('values', []) if isinstance(row,dict) and row.get('datetime')
         and number(row.get('close')) is not None and number(row.get('close')) > 0], key=lambda p:p['time'])
     result = {'points':points,'currency':meta.get('currency'),'source':'Twelve Data',
               'sourceUrl':'https://twelvedata.com/docs#time-series'}
-    return result if complete_event_prices(result,event) else yahoo_earnings_prices(symbol,day) or result
+    if complete_event_prices(result,event):
+        return result
+    for fetch in (alpaca_earnings_prices, yahoo_earnings_prices):
+        candidate = fetch(symbol, day)
+        if complete_event_prices(candidate, event):
+            return candidate
+        if len(candidate.get('points', [])) > len(result['points']):
+            result = candidate
+    return result if result.get('points') else {}
+
+
+def alpaca_earnings_prices(symbol, day):
+    """Historical consolidated prices only; no brokerage or order endpoints."""
+    key, secret = os.getenv('APCA_API_KEY_ID', '').strip(), os.getenv('APCA_API_SECRET_KEY', '').strip()
+    if os.getenv('ALPACA_MARKET_DATA_ENABLED') != '1' or not key or not secret or not re.fullmatch(r'[A-Z]{1,5}(?:[.-][A-Z])?', symbol):
+        return {}
+    cutoff = completed_price_day(symbol)
+    end = min(datetime.fromisoformat(cutoff).replace(hour=23, minute=59, tzinfo=timezone.utc),
+              datetime.now(timezone.utc) - timedelta(minutes=16))
+    params = {'timeframe':'1Day', 'start':(day-timedelta(days=380)).date().isoformat(),
+              'end':end.isoformat(), 'adjustment':'split', 'feed':'sip', 'limit':10000, 'sort':'asc'}
+    points = []
+    for _ in range(2):
+        data = _json(f'https://data.alpaca.markets/v2/stocks/{symbol}/bars', params,
+                     {'APCA-API-KEY-ID':key, 'APCA-API-SECRET-KEY':secret})
+        if data.get('symbol') != symbol or not isinstance(data.get('bars'), list):
+            return {}
+        for row in data['bars']:
+            try:
+                stamp = datetime.fromisoformat(row['t'].replace('Z', '+00:00'))
+                if stamp.tzinfo is None:
+                    continue
+                date = stamp.astimezone(ZoneInfo('America/New_York')).date().isoformat()
+                close = number(row.get('c'))
+                if params['start'] <= date <= cutoff and close is not None and close > 0:
+                    points.append({'time':date, 'close':close})
+            except (KeyError, TypeError, ValueError, AttributeError):
+                continue
+        if not data.get('next_page_token'):
+            return {'points':sorted({p['time']:p for p in points}.values(), key=lambda p:p['time']),
+                    'currency':'USD', 'source':'Alpaca SIP', 'sourceUrl':'https://docs.alpaca.markets/us/reference/stockbars'}
+        params['page_token'] = data['next_page_token']
+    return {}
 
 
 def yahoo_earnings_prices(symbol,day):
     data = _json('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol, {
-        'period1':int((day.replace(tzinfo=timezone.utc)-timedelta(days=10)).timestamp()),
-        'period2':int((day.replace(tzinfo=timezone.utc)+timedelta(days=8)).timestamp()),'interval':'1d',
+        'period1':int((day.replace(tzinfo=timezone.utc)-timedelta(days=380)).timestamp()),
+        'period2':int((datetime.fromisoformat(completed_price_day(symbol)).replace(tzinfo=timezone.utc)+timedelta(days=1)).timestamp()),'interval':'1d',
     }, {'User-Agent':'FinAnalyzer/1.0 contact@finanalyser.com.br'})
     rows = (data.get('chart') or {}).get('result') or []
     if not rows or rows[0].get('meta',{}).get('symbol','').upper()!=symbol:
