@@ -180,7 +180,7 @@ class AutoFetcher:
         if ticker == original_ticker and ticker != "SK HYNIX" and ticker not in self.ir_urls and not re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
             ticker = SECFetcher().resolve_name(ticker) or self._resolve_b3_name(ticker) or ticker
         logger.info("release_lookup issuer=%s year=%s quarter=%s", ticker, year, quarter)
-        cache_path = self.cache_dir / f"fiscal-v6-{ticker}-{year}-{quarter}.json"
+        cache_path = self.cache_dir / f"fiscal-v7-{ticker}-{year}-{quarter}.json"
         try:
             if time.time() - cache_path.stat().st_mtime > 3600:
                 raise ValueError("Expired release cache")
@@ -506,7 +506,7 @@ class AutoFetcher:
         scripts = "\n".join(script.get_text() for script in soup.find_all("script"))
         company = re.search(r"\b(?:fmId|company_id)\s*=\s*['\"]([a-fA-F0-9-]{36})['\"]", scripts)
         categories = re.findall(r"internal_name\s*:\s*['\"]([a-zA-Z0-9_ -]+)['\"]", scripts)
-        categories = list(dict.fromkeys(name for name in categories if re.search(r"release|earnings|analise_gerencial", name, re.I)))
+        categories = list(dict.fromkeys(name for name in categories if re.search(r"release|earnings|analise_gerencial|sumario[-_]resultado", name, re.I)))
         if not company or not categories:
             return []
         return self._mziq_catalog_candidates(company[1], categories, year, quarter)
@@ -627,13 +627,11 @@ class AutoFetcher:
             if not self._period_matches(period_text, year, quarter):
                 logger.info("release_document_rejected year=%s quarter=%s reason=period_not_found", year, quarter)
                 return None
-            periods = re.findall(r"(?<![A-Z0-9])(?:[1-4][TQ]|[TQ][1-4])[\s_./-]*(?:20\d{2}|\d{2})(?!\d)", period_text)
             # A release header identifies its own period; opening highlight cards may cite last year's quarter first.
             headers = re.findall(r"(?<![A-Z0-9])((?:[1-4][TQ]|[TQ][1-4])[\s_./-]*(?:20\d{2}|\d{2}))[ \t]*[|·][ \t]*(?:RELEASE|RESULTADOS)", period_text)
-            if headers:
-                periods = headers
-            if periods and not self._period_matches(periods[0], year, quarter):
-                logger.info("release_document_rejected year=%s quarter=%s reason=cover_period_mismatch found=%s", year, quarter, periods[0])
+            primary_period = self._transcript_period(headers[0] if headers else period_text)
+            if primary_period and primary_period not in ((quarter, year), (quarter, year % 100)):
+                logger.info("release_document_rejected year=%s quarter=%s reason=cover_period_mismatch found=%s", year, quarter, primary_period)
                 return None
             return FetchedDocument(response.url, "RI", pdf_bytes=pdf_bytes, text="" if pdf_bytes else text[:180000])
         except (requests.RequestException, OpenAIError):

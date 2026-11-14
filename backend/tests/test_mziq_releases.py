@@ -18,6 +18,22 @@ ROW = {"company_id": COMPANY, "internal_name": CATEGORY, "file_year": 2026, "fil
        "is_published": True, "file_url": PDF, "file_title": "Release de Resultados 1T26"}
 
 
+@pytest.mark.parametrize('quarter,expected', [(3,True),(2,False)])
+def test_bb_summary_catalog_uses_opening_period_before_comparison_figures(monkeypatch,quarter,expected):
+    category='sumario-resultado'
+    html=HTML.replace(CATEGORY,category)
+    page=Mock(url='https://ri.bb.com.br/en/financial-information/results-center/',text=html)
+    pdf=Mock(url=PDF,content=b'%PDF-official-bb')
+    monkeypatch.setattr(requests,'get',Mock(side_effect=[page,pdf]))
+    row={**ROW,'internal_name':category,'file_quarter':quarter,'file_title':f'Sumário do Resultado {quarter}T26'}
+    monkeypatch.setattr(requests,'post',Mock(return_value=Mock(json=lambda:{'success':True,'data':{'document_metas':[row]}})))
+    monkeypatch.setattr(OpenAIClient,'extract_text',lambda _: 'Banco do Brasil S.A. Sumário do Resultado. O Lucro Líquido Ajustado do terceiro trimestre de 2026 alcançou R$ 1,3 bilhão, redução frente ao 3T25 e 2T26. Receita de serviços R$ 9 bilhões.')
+    document=AutoFetcher()._fetch_ir('BBAS3',2026,quarter)
+    assert bool(document) is expected
+    if document:
+        assert document.url==PDF and document.sources[0]['name']=='RI catalogue'
+
+
 def test_weg_dynamic_catalog_finds_exact_period_without_paid_search_and_caches(tmp_path, monkeypatch):
     page = Mock(url="https://ri.weg.net/informacoes-financeiras/central-de-resultados/", text=HTML)
     pdf = Mock(url=PDF, content=b"%PDF-official-weg")

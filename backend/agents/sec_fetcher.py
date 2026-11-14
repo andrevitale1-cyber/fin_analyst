@@ -100,7 +100,7 @@ class SECFetcher:
             if not matching:
                 # Earnings releases can precede the 10-Q/10-K and its XBRL fiscal tags.
                 candidates = [(batch, i) for batch in batches for i, form in enumerate(batch.get("form", []))
-                              if form == "8-K" and "2.02" in batch.get("items", [""] * len(batch["form"]))[i]
+                              if (form == "6-K" or (form == "8-K" and "2.02" in batch.get("items", [""] * len(batch["form"]))[i]))
                               and year - 1 <= date.fromisoformat(batch["filingDate"][i]).year <= year + 1]
                 candidates.sort(key=lambda row: row[0]["filingDate"][row[1]], reverse=True)
                 for batch, i in candidates[:8]:

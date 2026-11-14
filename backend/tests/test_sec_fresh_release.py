@@ -4,11 +4,12 @@ from agents.sec_fetcher import FetchedDocument, SECFetcher
 from openai_client import OpenAIClient
 
 
-def test_fresh_earnings_exhibit_is_found_before_xbrl_and_quarterly_filing(monkeypatch):
+@pytest.mark.parametrize('form,items', [('8-K','2.02,9.01'),('6-K','')])
+def test_fresh_earnings_exhibit_is_found_before_xbrl_and_quarterly_filing(monkeypatch,form,items):
     fetcher=SECFetcher()
     monkeypatch.setattr(fetcher,'_catalog',lambda:[{'ticker':'MCD','cik_str':63908}])
-    batch={'form':['8-K'],'filingDate':['2026-11-04'],'reportDate':['2026-11-04'],
-           'accessionNumber':['new-release'],'primaryDocument':['cover.htm'],'items':['2.02,9.01']}
+    batch={'form':[form],'filingDate':['2026-11-04'],'reportDate':['2026-11-04'],
+           'accessionNumber':['new-release'],'primaryDocument':['cover.htm'],'items':[items]}
     monkeypatch.setattr(fetcher,'_get',lambda url:Mock(json=lambda:
         {'facts':{}} if 'companyfacts' in url else {'filings':{'recent':batch}}))
     doc=FetchedDocument('https://www.sec.gov/earnings.pdf','SEC',pdf_bytes=b'%PDF-test')
