@@ -58,6 +58,7 @@ from agents.brapi_client import FREE_TICKERS, quarterly_context
 from market_data import market_snapshot, reaction_prompt, MarketDataUnavailable, create_tables as create_price_cache_tables
 from company_comparison import router as comparison_router, create_tables as create_comparison_tables, start_worker as start_comparison_worker, stop as stop_comparison_worker
 from detailed_analysis import router as detailed_router, create_tables as create_detailed_tables, start_worker as start_detailed_worker, stop as stop_detailed_worker
+from openbot_documents import router as openbot_router, create_tables as create_openbot_tables
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
@@ -97,6 +98,7 @@ app.include_router(feedback_router)
 app.include_router(x_bot_router)
 app.include_router(comparison_router)
 app.include_router(detailed_router)
+app.include_router(openbot_router)
 
 @app.get("/api/company-suggestions")
 async def company_suggestions(q: str = "", user: str = Depends(require_active_user)):
@@ -216,6 +218,7 @@ def init_db():
         create_release_tables(cur)
         create_comparison_tables(cur)
         create_detailed_tables(cur)
+        create_openbot_tables(cur)
         conn.commit()
         print("[DB] Banco de dados inicializado com sucesso!")
     except Exception as e:

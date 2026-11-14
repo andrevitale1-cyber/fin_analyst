@@ -18,6 +18,7 @@ from agents.search_client import SearchClient, SearchError
 from agents.equibles_client import EquiblesClient
 from agents.sec_fetcher import FetchedDocument, SECFetcher
 from openai_client import OpenAIClient, OpenAIError
+from openbot_documents import fetch_document as fetch_openbot_document
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -256,6 +257,8 @@ class AutoFetcher:
             pass
         self._transcript_download_failed = False
         document = self._fetch_transcript_ir(issuer, issuer, year, quarter)
+        if not document and self.allow_web:
+            document = fetch_openbot_document(self, issuer, year, quarter, 'transcript')
         seen = set()
         for allow_openai in (False, True):
             if document:
@@ -467,6 +470,8 @@ class AutoFetcher:
             return document
         if not self.allow_web:
             return None
+        if document := fetch_openbot_document(self, ticker, year, quarter, 'release'):
+            return document
         results = self.search_client.search_financial_reports(ticker, year, f"{quarter}T")
         candidates = self._candidates(results, year, quarter)
         for candidate in candidates[:12]:
