@@ -16,7 +16,20 @@ ttq.load("${TIKTOK_PIXEL_ID}");
 }(window,document,"ttq");`;
 
 declare global {
-  interface Window { ttq?: { page: () => void } }
+  interface Window { ttq?: { page: () => void; track: (event: string, properties: Record<string, unknown>, options: {event_id: string}) => void } }
+}
+
+export type TikTokEvent = "CompleteRegistration" | "FirstAnalysisCompleted" | "InitiateCheckout" | "ViewContent";
+export function requestTikTokEvent(event: TikTokEvent, content?: "premium_pricing" | "public_report" | "monthly" | "yearly") {
+  if (!["finanalyser.com.br", "www.finanalyser.com.br"].includes(window.location.hostname)) return;
+  window.dispatchEvent(new CustomEvent("finanalyser:tiktok", {detail: {event, event_id: crypto.randomUUID(), content}}));
+}
+
+const conversions = new Set<string>();
+export function trackTikTokConversion(event: string, event_id: string, properties: Record<string, unknown>) {
+  if (!window.ttq || conversions.has(event_id)) return;
+  window.ttq.track(event, properties, {event_id});
+  conversions.add(event_id);
 }
 
 let lastPath: string | undefined;

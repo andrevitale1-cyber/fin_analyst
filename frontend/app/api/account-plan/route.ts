@@ -8,7 +8,7 @@ export async function GET() {
   try {
     const user = await currentUser();
     if (!user || user.id !== userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401, headers });
-    return NextResponse.json({ user_id: userId, plan: user.publicMetadata.plan === "premium" ? "premium" : "free" }, { headers });
+    return NextResponse.json({ user_id: userId, created_at: user.createdAt, plan: user.publicMetadata.plan === "premium" ? "premium" : "free" }, { headers });
   } catch {
     return NextResponse.json({ error: "Plan unavailable" }, { status: 503, headers });
   }

@@ -14,6 +14,7 @@ import CompanyComparison from "../../../components/CompanyComparison";
 import DetailedQuarterlyAnalysis from "../../../components/DetailedQuarterlyAnalysis";
 import AnalysisWaitEstimate from "../../../components/AnalysisWaitEstimate";
 import ConfirmDeleteDialog from "../../../components/ConfirmDeleteDialog";
+import { requestTikTokEvent } from "../../../lib/tiktokPixel";
 import {
   LayoutDashboard, History, UploadCloud, FileText, ChevronLeft,
   BarChart3, TrendingUp, DollarSign, Percent, Loader2,
@@ -59,10 +60,12 @@ function UpgradeModal({ onClose, userId, billingCycle: initialBillingCycle = 'mo
   const locale = useLocale();
   const en = locale === 'en';
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(initialBillingCycle);
+  useEffect(() => { requestTikTokEvent('ViewContent', 'premium_pricing'); }, []);
   const handleCheckout = () => {
     const url = new URL(billingCycle === 'yearly' ? STRIPE_CHECKOUT_URL_YEARLY : STRIPE_CHECKOUT_URL_MONTHLY);
     if (userId) url.searchParams.set('client_reference_id', userId);
-    window.open(url.toString(), '_blank');
+    const checkout = window.open(url.toString(), '_blank');
+    if (checkout) requestTikTokEvent('InitiateCheckout', billingCycle);
   };
   const plans = [
     { premium: true, name: 'Premium', description: en ? 'More tools for your investment research.' : 'Mais ferramentas para suas pesquisas de investimento.', features: en ? ['50 monthly analyses: results, calls and duels', 'Aggregated table and analysis history', 'Public and private company reports', 'Company comparison and PDF export'] : ['50 análises mensais: resultados, calls e duelos', 'Tabela agregada e histórico de análises', 'Relatórios públicos e privados', 'Comparação de empresas e exportação em PDF'] },
@@ -403,6 +406,7 @@ export default function FinancialDashboard() {
 
       const data = await response.json();
       setResult({ ...data, id: data.id });
+      requestTikTokEvent('FirstAnalysisCompleted');
       setCurrentView('result');
       fetchHistory();
       fetchTableData();

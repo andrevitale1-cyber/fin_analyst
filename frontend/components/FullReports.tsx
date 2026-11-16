@@ -17,6 +17,7 @@ import { splitBold } from "../lib/analysisText";
 import { type ReportMetric } from "../lib/reportNumbers";
 import { analystTargetsOnly } from "../lib/reportPresentation";
 import { publishedReportsForLocale, publishedReportForCompany } from "../lib/publishedReports";
+import { requestTikTokEvent } from "../lib/tiktokPixel";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "https://api-finanalyzer.onrender.com";
 const SECTION_IDS = ["thesis", "business", "financials", "moat", "management", "risks", "valuation"] as const;
@@ -269,6 +270,9 @@ export default function FullReports() {
   };
 
   const visibleReport = reportOwnerId === userId && report ? analystTargetsOnly(report) : null;
+  useEffect(() => {
+    if (visibleReport?.is_public) requestTikTokEvent('ViewContent', 'public_report');
+  }, [visibleReport?.id, visibleReport?.is_public]);
   const visibleReports = libraryOwnerId === userId ? reports : [];
   const filteredReports = useMemo(() => {
     const term = query.trim().toLocaleLowerCase();

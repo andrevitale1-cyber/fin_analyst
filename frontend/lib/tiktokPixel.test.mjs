@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
-import { TIKTOK_BOOTSTRAP, TIKTOK_PIXEL_ID, trackTikTokVisit } from './tiktokPixel.ts';
+import { readFileSync } from 'node:fs';
+import { TIKTOK_BOOTSTRAP, TIKTOK_PIXEL_ID, trackTikTokVisit, trackTikTokConversion } from './tiktokPixel.ts';
 
 const scripts = [];
 const browser = { location: { hostname: 'localhost' } };
@@ -26,3 +27,21 @@ assert.deepEqual(Array.from(browser.ttq, event => Array.from(event)), [['page'],
 assert.equal(scripts.length, 1, 'Navigation must reuse the vendor script');
 assert.equal(JSON.stringify(browser.ttq).includes('identify'), false, 'No personal matching data is sent');
 console.log('TikTok Pixel: official bootstrap, correct ID, page visits, route deduplication and no identification passed.');
+trackTikTokConversion('InitiateCheckout', 'same-occurrence', {currency:'BRL', value:29});
+trackTikTokConversion('InitiateCheckout', 'same-occurrence', {currency:'BRL', value:29});
+const tracks = browser.ttq.filter(event => event[0] === 'track');
+assert.equal(tracks.length, 1);
+assert.equal(tracks[0][3].event_id, 'same-occurrence');
+assert.equal(tracks[0][2].value, 29);
+const reportPixel = readFileSync(new URL('../public/tiktok-public-report.js', import.meta.url), 'utf8');
+const publicBrowser = {};
+const calls = [];
+vm.runInNewContext(reportPixel, {window: publicBrowser, document, location: {hostname:'finanalyser.com.br'},
+  crypto: {randomUUID:()=> 'public-occurrence'}, fetch:(url,options)=>{calls.push(JSON.parse(options.body));return Promise.resolve({ok:true});}});
+const reportEvent = publicBrowser.ttq.find(event => event[0] === 'track');
+assert.equal(reportEvent[1], 'ViewContent');
+assert.equal(reportEvent[3].event_id, calls[0].event_id);
+assert.equal(calls[0].content, 'public_report');
+for (const name of ['aapl-20261022','aapl-20261022-en','nvda-20261022','nvda-20261022-en']) {
+  assert.equal(readFileSync(new URL(`../public/published-reports/${name}.html`, import.meta.url),'utf8').split('/tiktok-public-report.js').length, 2);
+}
