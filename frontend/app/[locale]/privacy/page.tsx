@@ -38,7 +38,7 @@ export default function Privacy() {
             {en ? 'Privacy Policy' : 'Política de Privacidade'}
           </h1>
           <p className="text-gray-500 text-sm">
-            {en ? 'Last updated: November 15, 2026' : 'Última atualização: 15 de novembro de 2026'}
+            {en ? 'Last updated: November 16, 2026' : 'Última atualização: 16 de novembro de 2026'}
           </p>
         </div>
 
@@ -53,6 +53,7 @@ export default function Privacy() {
               <li><strong className="text-gray-300">{en ? 'Account data:' : 'Dados de conta:'}</strong> {en ? 'name and email address collected via Clerk for authentication.' : 'nome e endereço de e-mail coletados via Clerk para autenticação.'}</li>
               <li><strong className="text-gray-300">{en ? 'Payment data:' : 'Dados de pagamento:'}</strong> {en ? 'billing information processed securely by Stripe. We never store card numbers.' : 'informações de cobrança processadas com segurança pelo Stripe. Nunca armazenamos números de cartão.'}</li>
               <li><strong className="text-gray-300">{en ? 'Usage data:' : 'Dados de uso:'}</strong> {en ? 'analyses performed and analysis history, linked to your account ID.' : 'análises realizadas e histórico de análises, vinculados ao seu ID de conta.'}</li>
+              <li><strong className="text-gray-300">TikTok Pixel:</strong> {en ? 'page visits and browser/device signals for advertising measurement and attribution. This integration does not explicitly send your account email, phone number or analysis content to TikTok.' : 'visitas às páginas e sinais do navegador/dispositivo para mensuração e atribuição publicitária. Esta integração não envia explicitamente seu e-mail de conta, telefone ou conteúdo das análises ao TikTok.'}</li>
               <li><strong className="text-gray-300">Reddit Pixel:</strong> {en ? 'page visits and browser/device signals for advertising measurement. For signed-in users, we also send a normalized SHA-256 hash of the primary account email for attribution matching. A hash is a pseudonymous identifier, not anonymous data. We do not include analysis content, uploaded documents or financial results in pixel event payloads.' : 'visitas às páginas e sinais do navegador/dispositivo para mensuração publicitária. Para usuários autenticados, também enviamos um hash SHA-256 do e-mail principal normalizado para correspondência de atribuição. O hash é um identificador pseudonimizado, não um dado anônimo. Não incluímos conteúdo das análises, documentos enviados ou resultados financeiros nos dados dos eventos do pixel.'}</li>
               <li><strong className="text-gray-300">{en ? 'Uploaded documents:' : 'Documentos enviados:'}</strong> {en ? 'PDF files submitted for analysis. These are processed in memory and not permanently stored on our servers.' : 'arquivos PDF enviados para análise. Esses arquivos são processados em memória e não armazenados permanentemente em nossos servidores.'}</li>
             </ul>
@@ -66,11 +67,11 @@ export default function Privacy() {
               <li>{en ? 'Manage your subscription and billing.' : 'Gerenciar sua assinatura e cobrança.'}</li>
               <li>{en ? 'Store your analysis history for future reference.' : 'Armazenar seu histórico de análises para referência futura.'}</li>
               <li>{en ? 'Send transactional emails (e.g., payment confirmations).' : 'Enviar e-mails transacionais (ex.: confirmações de pagamento).'}</li>
-              <li>{en ? 'Measure Reddit advertising campaign performance and match site visits to advertising interactions.' : 'Medir o desempenho das campanhas no Reddit e associar visitas ao site a interações com anúncios.'}</li>
+              <li>{en ? 'Measure Reddit and TikTok advertising campaign performance and match site visits to advertising interactions.' : 'Medir o desempenho das campanhas no Reddit e no TikTok e associar visitas ao site a interações com anúncios.'}</li>
             </ul>
             <p className="mt-3 font-semibold text-gray-300">{en
-              ? 'We do not sell or rent your personal data. We share the advertising signals described above with Reddit for campaign measurement and attribution.'
-              : 'Não vendemos nem alugamos seus dados pessoais. Compartilhamos com o Reddit os sinais publicitários descritos acima para mensuração e atribuição de campanhas.'
+              ? 'We do not sell or rent your personal data. We share the advertising signals described above with Reddit and TikTok for campaign measurement and attribution.'
+              : 'Não vendemos nem alugamos seus dados pessoais. Compartilhamos com o Reddit e o TikTok os sinais publicitários descritos acima para mensuração e atribuição de campanhas.'
             }</p>
           </Section>
 
@@ -83,6 +84,7 @@ export default function Privacy() {
               {[
                 { name: 'Clerk', role: en ? 'Authentication and user management' : 'Autenticação e gerenciamento de usuários', url: 'https://clerk.com' },
                 { name: 'Stripe', role: en ? 'Payment processing' : 'Processamento de pagamentos', url: 'https://stripe.com' },
+                { name: 'TikTok', role: en ? 'Page-visit advertising measurement through the TikTok Pixel' : 'Mensuração publicitária de visitas por meio do TikTok Pixel', url: 'https://www.tiktok.com/legal/page/row/privacy-policy/en' },
                 { name: 'Reddit', role: en ? 'Advertising measurement and attribution through the Reddit Pixel, including hashed account email matching for signed-in users' : 'Mensuração e atribuição publicitária por meio do Reddit Pixel, incluindo correspondência por hash do e-mail de usuários autenticados', url: 'https://www.reddit.com/policies/privacy-policy' },
                 { name: 'Google Gemini (AI)', role: en ? 'AI analysis generation — documents are processed but not used to train their models' : 'Geração de análises por IA — documentos são processados mas não usados para treinar seus modelos', url: 'https://ai.google.dev' },
                 { name: 'Vercel', role: en ? 'Frontend hosting and delivery' : 'Hospedagem e entrega do frontend', url: 'https://vercel.com' },
