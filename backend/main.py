@@ -59,6 +59,7 @@ from market_data import market_snapshot, reaction_prompt, MarketDataUnavailable,
 from company_comparison import router as comparison_router, create_tables as create_comparison_tables, start_worker as start_comparison_worker, stop as stop_comparison_worker
 from detailed_analysis import router as detailed_router, create_tables as create_detailed_tables, start_worker as start_detailed_worker, stop as stop_detailed_worker
 from tiktok_events import router as tiktok_router, create_tables as create_tiktok_tables
+from reddit_events import router as reddit_events_router, create_tables as create_reddit_event_tables
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
@@ -99,6 +100,7 @@ app.include_router(x_bot_router)
 app.include_router(comparison_router)
 app.include_router(detailed_router)
 app.include_router(tiktok_router)
+app.include_router(reddit_events_router)
 
 @app.get("/api/company-suggestions")
 async def company_suggestions(q: str = "", user: str = Depends(require_active_user)):
@@ -219,6 +221,7 @@ def init_db():
         create_comparison_tables(cur)
         create_detailed_tables(cur)
         create_tiktok_tables(cur)
+        create_reddit_event_tables(cur)
         conn.commit()
         print("[DB] Banco de dados inicializado com sucesso!")
     except Exception as e:

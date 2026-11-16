@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { hashRedditEmail, trackRedditVisit } from './redditPixel.ts';
+import { hashRedditEmail, requestRedditGetStarted, signupConversionId, trackRedditConversion, trackRedditVisit } from './redditPixel.ts';
 
 const scripts = [];
 globalThis.window = { location: { hostname: 'localhost' } };
@@ -26,4 +26,34 @@ assert.deepEqual(window.rdt.callQueue, [
 assert.equal(JSON.stringify(window.rdt.callQueue).includes('example.com'), false);
 trackRedditVisit('/pt');
 assert.equal(window.rdt.callQueue.length, 5, 'Returning to a previous page is a new visit');
+const storage = new Map();
+globalThis.localStorage = {getItem:key=>storage.get(key),setItem:(key,value)=>storage.set(key,value)};
+window.location.pathname = '/pt';
+assert.equal(await signupConversionId('user_old', Date.parse('2026-01-01')),undefined);
+assert.equal(await signupConversionId('user_future', Date.now()+100000),undefined);
+const signupId = await signupConversionId('user_new',Date.parse('2026-11-16T00:10:00Z'));
+assert.equal(signupId.length,64);
+const before = window.rdt.callQueue.length;
+trackRedditConversion('SignUp',{conversionId:signupId},hash);
+trackRedditConversion('SignUp',{conversionId:signupId},hash);
+trackRedditConversion('Purchase',{conversionId:'a'.repeat(64),value:29,currency:'BRL'},hash);
+trackRedditConversion('Purchase',{conversionId:'a'.repeat(64),value:29,currency:'BRL'},hash);
+trackRedditConversion('Purchase',{conversionId:'b'.repeat(64),value:0,currency:'BRL'},hash);
+trackRedditConversion('Purchase',{conversionId:'c'.repeat(64),value:29,currency:'USD'},hash);
+assert.equal(window.rdt.callQueue.length,before+2);
+assert.equal(storage.size,2);
+assert.deepEqual(window.rdt.callQueue.at(-1),['track','Purchase',{conversionId:'a'.repeat(64),value:29,currency:'BRL',email:hash}]);
+console.log('New-user-only signup, confirmed payment payloads and conversion deduplication passed.');
 console.log('Reddit Pixel: hashed email, single initialization, route visits and duplicate protection passed.');
+
+const requests = [];
+globalThis.fetch = async (url, options) => {requests.push({url, body:JSON.parse(options.body), keepalive:options.keepalive}); return {ok:true};};
+requestRedditGetStarted();
+await new Promise(resolve => setTimeout(resolve, 30));
+assert.equal(requests.length,1);
+assert.equal(requests[0].body.event,'AddToCart');
+assert.equal(requests[0].keepalive,true);
+const cart = window.rdt.callQueue.at(-1);
+assert.equal(cart[1],'AddToCart');
+const expectedHash = await crypto.subtle.digest('SHA-256',new TextEncoder().encode('reddit-click:'+requests[0].body.event_id));
+assert.equal(cart[2].conversionId,Array.from(new Uint8Array(expectedHash),b=>b.toString(16).padStart(2,'0')).join(''));

@@ -9,6 +9,7 @@ import BrandLogo from "./BrandLogo";
 import { ArrowDown, Search, X } from "lucide-react";
 import MarqueeSymbol from "./MarqueeSymbol";
 import { Link } from "@/i18n/routing";
+import { requestRedditGetStarted } from "@/lib/redditPixel";
 import "lenis/dist/lenis.css";
 import styles from "./LandingIntro.module.css";
 
@@ -92,7 +93,7 @@ export default function LandingIntro({ locale }: { locale: string }) {
         <div className={styles.actions}>
           <Link href="/dashboard" className={styles.search} aria-label={english ? "Search a company" : "Buscar uma empresa"}><Search size={21} /></Link>
           <Link href="/dashboard" className={styles.login}>{english ? "Sign in" : "Entrar"}</Link>
-          <Link href="/dashboard" className={styles.primary}>{english ? "Get started" : "Começar"}</Link>
+          <Link href="/dashboard" onClick={requestRedditGetStarted} className={styles.primary}>{english ? "Get started" : "Começar"}</Link>
         </div>
         <button ref={menuButton} className={styles.menuButton} aria-expanded={menu === "mobile"} aria-controls="landing-mobile-menu" onClick={() => setMenu(menu === "mobile" ? null : "mobile")}>
           {menu === "mobile" ? <><X size={15} /><span className={styles.srOnly}>{english ? "Close menu" : "Fechar menu"}</span></> : "Menu"}

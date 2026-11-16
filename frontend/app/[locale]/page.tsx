@@ -17,6 +17,7 @@ import SiteCredit from "@/components/SiteCredit";
 import PricingSection from "@/components/PricingSection";
 import benefitsStyles from "@/components/BenefitsLayout.module.css";
 import { Link } from "@/i18n/routing";
+import { requestRedditGetStarted } from "@/lib/redditPixel";
 import BrandLogo from "../../components/BrandLogo";
 import { ArrowRight } from "lucide-react";
 
@@ -56,7 +57,7 @@ function LandingPageContent({ locale }: { locale: string }) {
                 <CompanyLogosBenefit locale={locale} />
                 <div className={benefitsStyles.cta}>
                   <h3>{locale === "en" ? "Ready to turn reports into clearer insights?" : "Pronto para transformar relatórios em mais clareza?"}</h3>
-                  <Link href="/dashboard">{locale === "en" ? "Get started" : "Começar agora"}<ArrowRight size={16} /></Link>
+                  <Link href="/dashboard" onClick={requestRedditGetStarted}>{locale === "en" ? "Get started" : "Começar agora"}<ArrowRight size={16} /></Link>
                 </div>
               </div>
             </div>
