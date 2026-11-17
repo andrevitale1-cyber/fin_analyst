@@ -282,6 +282,23 @@ export default function FinancialDashboard() {
     } catch (error) { console.error("Erro histórico", error); }
   };
 
+  // Poll history for the analysis the server saved after the browser lost the response.
+  const recoverSavedAnalysis = async (company: string, period: string, afterId: number) => {
+    for (let attempt = 0; attempt < 36 && user; attempt++) {
+      await new Promise(resolve => setTimeout(resolve, 10000));
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API_BASE}/api/history?user_id=${user.id}`, {headers:{Authorization:`Bearer ${token}`}});
+        if (!res.ok) continue;
+        const items = await res.json();
+        setHistoryList(items);
+        const saved = items.find((item: any) => Number(item.id) > afterId && item.empresa === company && item.periodo === period);
+        if (saved) return Number(saved.id);
+      } catch { /* still offline; try again */ }
+    }
+    return null;
+  };
+
   const fetchTableData = async () => {
     if (!user) return;
     try {
@@ -363,6 +380,11 @@ export default function FinancialDashboard() {
 
     if (dailyRemaining.analysis === 0) { setAnalysisError(locale === 'en' ? 'Your analysis allowance has been used.' : 'Você utilizou as análises incluídas no seu plano.'); if (!isPremium) setShowUpgradeModal(true); return; }
     setLoading(true);
+    // Snapshot the newest saved id before analyzing, so recovery never opens an older analysis.
+    const lastSavedId = getToken().then(token => fetch(`${API_BASE}/api/history?user_id=${user.id}`, {headers:{Authorization:`Bearer ${token}`}}))
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then((items: any[]) => Math.max(0, ...items.map(item => Number(item.id) || 0)))
+      .catch(() => null);
     try {
       const formData = new FormData();
       formData.append("ano", ano);
@@ -414,6 +436,21 @@ export default function FinancialDashboard() {
       setAccessRetry(value => value + 1);
     } catch (error: any) {
       console.error(error);
+      // Mobile browsers drop long requests (e.g. "Load failed" when the tab is backgrounded) while the server finishes and saves.
+      if (error instanceof TypeError) {
+        setAnalysisError(locale === 'en' ? 'The connection dropped while the analysis was running. Waiting for it to finish…' : 'A conexão caiu durante a análise. Aguardando a conclusão…');
+        const afterId = await lastSavedId;
+        const savedId = afterId === null ? null : await recoverSavedAnalysis(selectedCompany.ticker, `${trimestre}/${ano}`, afterId);
+        if (savedId) {
+          setAnalysisError("");
+          void openComparedAnalysis(savedId);
+          fetchTableData();
+          setAccessRetry(value => value + 1);
+        } else {
+          setAnalysisError(locale === 'en' ? 'The connection dropped. If the analysis finished, it will appear in your history.' : 'A conexão caiu. Se a análise tiver sido concluída, ela aparecerá no seu histórico.');
+        }
+        return;
+      }
       setAnalysisError(error.message || t("newAnalysis.genericError"));
     } finally {
       setLoading(false);

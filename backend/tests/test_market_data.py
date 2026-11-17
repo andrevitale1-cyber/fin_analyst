@@ -521,3 +521,12 @@ def test_compact_thesis_keeps_reaction_table(monkeypatch):
     prompt = _reaction_prompt_for_table(monkeypatch)
     text = market_data.with_reaction_table('<!-- compact-quarterly -->\nSeção 5: Conclusão\n**Reação do mercado:**\nSubiu.\n\nSeção 6: Nota Final\nNota Geral: 4/5', prompt)
     assert '| Reação (1º pregão) |' in quarterly_thesis(text)
+
+
+def test_call_transcript_date_anchors_the_reaction_window(monkeypatch):
+    _reaction_prompt_for_table(monkeypatch)
+    transcript = 'Fras-le S.A. (FRAS3) Q3 2026 Earnings Call Transcript\nNov 5, 2026\nOperator: Good morning.'
+    assert market_data.reaction_prompt('FRAS3', transcript) == ''
+    assert '"publicationDateFromRelease": "2026-11-05"' in market_data.reaction_prompt('FRAS3', transcript, True)
+    pt = 'Transcrição da teleconferência de resultados do 3T26 – 5 de novembro de 2026'
+    assert '"publicationDateFromRelease": "2026-11-05"' in market_data.reaction_prompt('FRAS3', pt, True)

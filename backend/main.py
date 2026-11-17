@@ -63,11 +63,11 @@ from reddit_events import router as reddit_events_router, create_tables as creat
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
 
-async def market_reaction_context(symbol, text="", pdf_bytes=b""):
+async def market_reaction_context(symbol, text="", pdf_bytes=b"", call=False):
     try:
         if not text and pdf_bytes:
             text = await asyncio.to_thread(OpenAIClient.extract_text, pdf_bytes)
-        return await asyncio.to_thread(reaction_prompt, AutoFetcher().resolve_ticker(symbol), text)
+        return await asyncio.to_thread(reaction_prompt, AutoFetcher().resolve_ticker(symbol), text, call)
     except MarketDataUnavailable:
         raise HTTPException(503, 'Não foi possível obter as cotações da divulgação. Tente novamente em instantes; nenhuma análise foi salva ou cobrada. / Earnings-event prices are temporarily unavailable. Try again shortly; no analysis was saved or charged.') from None
     except (OpenAIError, ValueError, TypeError):
@@ -521,7 +521,7 @@ async def analyze_earnings_call_auto(
                    f"Não foi encontrada uma transcrição pública de {company} para {trimestre}/{ano}. Envie o PDF manualmente.")
         raise HTTPException(status_code=404, detail=message)
     prompt = PromptBuilder().build_call_prompt(company, f"{trimestre}/{ano}", locale=locale)
-    prompt += await market_reaction_context(company, document.text)
+    prompt += await market_reaction_context(company, document.text, call=True)
     try:
         response_text = await asyncio.wait_for(asyncio.to_thread(
             OpenAIClient(task="analysis").analyze_transcript, prompt, document.text,
@@ -577,7 +577,7 @@ async def analyze_earnings_call(
             texto_transcricao = ""
 
         prompt = PromptBuilder().build_call_prompt(empresa, f"{trimestre}/{ano}", locale=locale)
-        prompt += await market_reaction_context(empresa, texto_transcricao or "", contents)
+        prompt += await market_reaction_context(empresa, texto_transcricao or "", contents, call=True)
 
         response_text = await asyncio.wait_for(
             (asyncio.to_thread(OpenAIClient(task="analysis").analyze_transcript, prompt, texto_transcricao)

@@ -107,7 +107,9 @@ def _json(url, params, headers, preserve_plan_error=False):
         logger.info('market_provider endpoint=%s outcome=request_failed', url.rsplit('/',1)[-1])
         return {}
 
-def reaction_prompt(symbol, text):
+def reaction_prompt(symbol, text, call=False):
+    # Transcripts rarely restate the release date; the call date (same day or the next) anchors the window instead.
+    call_words = r'|earnings call|conference call|teleconfer[eê]ncia|webcast|transcri' if call else ''
     def period_end(match):
         prefix = text[max(0,match.start()-100):match.start()]
         return bool(re.search(r'(?:quarter|months?|year|period)\s+(?:ended|ending)\s*$|(?:trimestre|meses|ano|per[ií]odo)\s+encerrad[oa]s?\s+(?:em\s+)?$', prefix, re.I))
@@ -119,7 +121,7 @@ def reaction_prompt(symbol, text):
     for match in re.finditer(r'\b(\d{1,2})\s+de\s+(' + '|'.join(pt_months) + r')\s+de\s+(20\d{2})', text[:5000], re.I):
         if period_end(match):
             continue
-        if not re.search(r'anuncia|divulga|release', text[max(0,match.start()-150):match.end()+200], re.I):
+        if not re.search(r'anuncia|divulga|release' + call_words, text[max(0,match.start()-150):match.end()+200], re.I):
             continue
         try:
             candidates.add(datetime(int(match[3]),pt_months[match[2].lower()],int(match[1]),tzinfo=timezone.utc).date().isoformat())
@@ -129,7 +131,7 @@ def reaction_prompt(symbol, text):
         if period_end(match):
             continue
         nearby = text[max(0,match.start()-150):match.end()+200]
-        if not re.search(r'announc|newswire|press release|published|today\s+reported|reports?\s+(?:financial\s+|quarterly\s+)?results', nearby, re.I):
+        if not re.search(r'announc|newswire|press release|published|today\s+reported|reports?\s+(?:financial\s+|quarterly\s+)?results' + call_words, nearby, re.I):
             continue
         try:
             candidates.add(datetime(int(match[3]), months[match[1].lower()], int(match[2]), tzinfo=timezone.utc).date().isoformat())
