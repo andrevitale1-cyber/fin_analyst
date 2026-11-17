@@ -24,7 +24,7 @@ export default function CallAnalysisSection({ locale }: { locale: string }) {
       </div>
       <article className={reportStyles.report} aria-label={english ? "SpaceX earnings call analysis preview" : "Prévia da análise do earnings call da SpaceX"}>
         <header className={reportStyles.reportHeader}>
-          <div className={reportStyles.company}><div className={`${reportStyles.logo} ${styles.monogram}`} aria-hidden="true">SX</div><div><h3>SpaceX <span>SPCX</span></h3><p>{period} · Earnings Call</p></div></div>
+          <div className={reportStyles.company}><div className={`${reportStyles.logo} ${styles.fullLogo}`}><img src="/benefits/company-logos/SPCX.webp" alt="" width={50} height={50} /></div><div><h3>SpaceX <span>SPCX</span></h3><p>{period} · Earnings Call</p></div></div>
         </header>
         <h4 className={reportStyles.thesisHeading}><FileText size={22} />{english ? "Call Analysis" : "Análise do call"}</h4>
         <ExampleAnalysis className={reportStyles.text} text={english ? spcxCall.en : spcxCall.pt}

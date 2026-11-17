@@ -38,3 +38,8 @@ body {
 @media (max-width: 743px) {
   #meta-analysis-heading, #call-analysis-heading { scroll-margin-top: 110px; }
 }
+
+/* Clean scrollbars: thin, light thumb, no track. */
+* { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
