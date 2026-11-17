@@ -8,12 +8,12 @@
 .frame[data-scrolled="true"] .hint { opacity: 0; transform: translate(-50%, 8px); }
 @keyframes nudge { 0%, 100% { transform: translateY(-3px); } 50% { transform: translateY(3px); } }
 .content { padding-bottom: 72px; }
-.content h5 { margin: 22px 0 10px; color: #152035; font-size: 15px; font-weight: 700; line-height: 1.5; }
+.content h5 { margin: 24px 0 12px; color: #152035; font-size: 17px; font-weight: 700; line-height: 1.5; }
 .content h5:first-child { margin-top: 4px; }
 .content ul { margin: 0 0 22px; padding-left: 18px; list-style: disc; }
-.content li { margin-bottom: 12px; font-size: 14px; line-height: 1.7; color: #56657c; }
+.content li { margin-bottom: 12px; font-size: 15px; line-height: 1.75; color: #56657c; }
 .tableWrap { margin: 0 0 22px; overflow-x: auto; border: 1px solid #e8edf4; border-radius: 12px; }
-.tableWrap table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 12px; }
+.tableWrap table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 13px; }
 .tableWrap th { padding: 9px 10px; background: #f8fafc; color: #687c96; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-align: left; text-transform: uppercase; }
 .tableWrap td { padding: 9px 10px; border-top: 1px solid #eef2f7; color: #56657c; line-height: 1.5; vertical-align: top; font-variant-numeric: tabular-nums; }
 .tableWrap td:first-child { color: #152035; font-weight: 600; }
