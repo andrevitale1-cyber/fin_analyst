@@ -32,3 +32,9 @@ def test_saved_call_export_omits_legacy_section_and_retains_timestamps():
 def test_hour_timestamp_is_a_single_badge():
     html = _clean_md("- **Guidance:** Demand remains strong. [01:12:35]")
     assert "[01:12:35]</span>" in html
+
+
+def test_agent_file_notice_is_hidden_from_users():
+    analysis = "**1. What explains the results**\n- Revenue grew 15.3%."
+    notice = "Saved the analysis to [PNVL3_3T_2026_analysis.md](/workspace/outputs/PNVL3_3T_2026_analysis.md).\n\n"
+    assert without_key_moments(notice + analysis) == analysis
