@@ -16,7 +16,7 @@ export default function Terms() {
           <Link href="/" className="flex items-center gap-2.5">
             <BrandLogo />
             <span className="text-xl font-bold tracking-tight text-white">
-              FinAnalyzer <span className="text-blue-500">.AI</span>
+              FinAnalyser <span className="text-blue-500">.AI</span>
             </span>
           </Link>
           <Link href="/" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
@@ -47,15 +47,15 @@ export default function Terms() {
 
           <Section icon={<Scale size={18} className="text-blue-400" />} title={en ? '1. Acceptance of Terms' : '1. Aceitação dos Termos'}>
             <p>{en
-              ? 'By accessing or using FinAnalyzer.AI ("the Platform"), you agree to be bound by these Terms of Use. If you do not agree with any part of these terms, you must not use the Platform. These terms apply to all users, including visitors, registered users, and subscribers.'
-              : 'Ao acessar ou utilizar o FinAnalyzer.AI ("a Plataforma"), você concorda em se vincular a estes Termos de Uso. Caso não concorde com qualquer parte destes termos, você não deverá utilizar a Plataforma. Estes termos se aplicam a todos os usuários, incluindo visitantes, usuários registrados e assinantes.'
+              ? 'By accessing or using FinAnalyser ("the Platform"), you agree to be bound by these Terms of Use. If you do not agree with any part of these terms, you must not use the Platform. These terms apply to all users, including visitors, registered users, and subscribers.'
+              : 'Ao acessar ou utilizar o FinAnalyser ("a Plataforma"), você concorda em se vincular a estes Termos de Uso. Caso não concorde com qualquer parte destes termos, você não deverá utilizar a Plataforma. Estes termos se aplicam a todos os usuários, incluindo visitantes, usuários registrados e assinantes.'
             }</p>
           </Section>
 
           <Section icon={<BarChart3 size={18} className="text-blue-400" />} title={en ? '2. Description of Service' : '2. Descrição do Serviço'}>
             <p>{en
-              ? 'FinAnalyzer.AI is an artificial intelligence-powered financial analysis tool that processes quarterly earnings reports (PDFs) and earnings call transcripts provided by the user. The Platform generates automated reports, scores, and investment theses based on the submitted documents.'
-              : 'O FinAnalyzer.AI é uma ferramenta de análise financeira baseada em inteligência artificial que processa relatórios de resultados trimestrais (PDFs) e transcrições de earnings calls fornecidos pelo usuário. A Plataforma gera relatórios automatizados, notas e teses de investimento com base nos documentos enviados.'
+              ? 'FinAnalyser is an artificial intelligence-powered financial analysis tool that processes quarterly earnings reports (PDFs) and earnings call transcripts provided by the user. The Platform generates automated reports, scores, and investment theses based on the submitted documents.'
+              : 'O FinAnalyser é uma ferramenta de análise financeira baseada em inteligência artificial que processa relatórios de resultados trimestrais (PDFs) e transcrições de earnings calls fornecidos pelo usuário. A Plataforma gera relatórios automatizados, notas e teses de investimento com base nos documentos enviados.'
             }</p>
             <p className="mt-3">{en
               ? 'The analyses generated are for informational and educational purposes only. They do not constitute investment advice, financial recommendations, or solicitation to buy or sell any securities.'
@@ -93,15 +93,15 @@ export default function Terms() {
               : 'A PLATAFORMA FORNECE INFORMAÇÕES GERADAS POR INTELIGÊNCIA ARTIFICIAL E NÃO OFERECE GARANTIAS, EXPRESSAS OU IMPLÍCITAS, QUANTO À PRECISÃO, INTEGRIDADE OU ADEQUAÇÃO DAS INFORMAÇÕES PARA QUALQUER FINALIDADE ESPECÍFICA.'
             }</p>
             <p className="mt-3">{en
-              ? 'FinAnalyzer.AI and its operators shall not be liable for any direct, indirect, incidental, or consequential damages resulting from investment decisions made based on the Platform\'s analyses. Past performance data displayed is not indicative of future results.'
-              : 'O FinAnalyzer.AI e seus operadores não serão responsáveis por quaisquer danos diretos, indiretos, incidentais ou consequenciais resultantes de decisões de investimento tomadas com base nas análises da Plataforma. Dados de desempenho passado exibidos não são indicativos de resultados futuros.'
+              ? 'FinAnalyser and its operators shall not be liable for any direct, indirect, incidental, or consequential damages resulting from investment decisions made based on the Platform\'s analyses. Past performance data displayed is not indicative of future results.'
+              : 'O FinAnalyser e seus operadores não serão responsáveis por quaisquer danos diretos, indiretos, incidentais ou consequenciais resultantes de decisões de investimento tomadas com base nas análises da Plataforma. Dados de desempenho passado exibidos não são indicativos de resultados futuros.'
             }</p>
           </Section>
 
           <Section icon={<FileText size={18} className="text-blue-400" />} title={en ? '6. Intellectual Property' : '6. Propriedade Intelectual'}>
             <p>{en
-              ? 'All content, technology, design, and AI models comprising the Platform are the exclusive property of FinAnalyzer.AI. You retain ownership of the documents you upload. By submitting documents, you grant FinAnalyzer.AI a limited, non-exclusive license to process them solely for the purpose of providing the Service.'
-              : 'Todo o conteúdo, tecnologia, design e modelos de IA que compõem a Plataforma são propriedade exclusiva do FinAnalyzer.AI. Você mantém a propriedade dos documentos que envia. Ao enviar documentos, você concede ao FinAnalyzer.AI uma licença limitada e não exclusiva para processá-los exclusivamente com o objetivo de fornecer o Serviço.'
+              ? 'All content, technology, design, and AI models comprising the Platform are the exclusive property of FinAnalyser. You retain ownership of the documents you upload. By submitting documents, you grant FinAnalyser a limited, non-exclusive license to process them solely for the purpose of providing the Service.'
+              : 'Todo o conteúdo, tecnologia, design e modelos de IA que compõem a Plataforma são propriedade exclusiva do FinAnalyser. Você mantém a propriedade dos documentos que envia. Ao enviar documentos, você concede ao FinAnalyser uma licença limitada e não exclusiva para processá-los exclusivamente com o objetivo de fornecer o Serviço.'
             }</p>
           </Section>
 

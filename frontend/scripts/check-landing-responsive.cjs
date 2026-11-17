@@ -36,7 +36,7 @@ const base = process.env.LANDING_URL || 'http://localhost:3012';
       if (width >= 2000) assert.ok(Math.abs(geometry.font - width * .032) < 1);
     }
 
-    const marquee = page.getByRole('region', { name: 'What FinAnalyzer helps you do' });
+    const marquee = page.getByRole('region', { name: 'What FinAnalyser helps you do' });
     await marquee.scrollIntoViewIfNeeded();
     const track = marquee.locator('> div');
     const before = await track.evaluate(element => getComputedStyle(element).transform);
@@ -70,7 +70,7 @@ const base = process.env.LANDING_URL || 'http://localhost:3012';
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.waitForTimeout(200);
-    const staticTrack = page.getByRole('region', { name: 'Como o FinAnalyzer ajuda você' }).locator('> div');
+    const staticTrack = page.getByRole('region', { name: 'Como o FinAnalyser ajuda você' }).locator('> div');
     assert.equal(await staticTrack.evaluate(element => getComputedStyle(element).animationName), 'none');
     assert.equal(await staticTrack.locator('ul[aria-hidden="true"]').isVisible(), false);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);

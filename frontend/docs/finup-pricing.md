@@ -6,7 +6,7 @@ Inspected at 1440×1000 and 390×844. Source uses Manrope, dark `#0a0a1f` backgr
 
 Reused the locally stored Finup Manrope 500/600/700 fonts. Added regular weight from `https://cdn.prod.website-files.com/6783bb98f24526592fa4e9d4/68917cd4fbf92e334346f39f_manrope-v19-latin-regular.woff2` as `public/reference/finup/manrope-400.woff2`.
 
-Adaptations: two existing FinAnalyzer plans rather than Finup's three; 7-day trial and Premium R$29/month or R$290/year retained, along with existing included features. A monthly/yearly selector changes both the price and the billing footnote. Premium badge says “Full access”, without claiming popularity statistics. CTAs use the established radial button treatment and route to the locale-aware dashboard. Cards fit a centered 848px grid to accommodate two plans. No new checkout or sales-contact workflow.
+Adaptations: two existing FinAnalyser plans rather than Finup's three; 7-day trial and Premium R$29/month or R$290/year retained, along with existing included features. A monthly/yearly selector changes both the price and the billing footnote. Premium badge says “Full access”, without claiming popularity statistics. CTAs use the established radial button treatment and route to the locale-aware dashboard. Cards fit a centered 848px grid to accommodate two plans. No new checkout or sales-contact workflow.
 
 Removed the old AI Score, Asset Comparator, Earnings Calls, Full History and report-export sections between AI Analysis and Pricing, and their unused private demos and mock data. Kept the benefits, aggregated table, AI Analysis, navigation and footer.
 

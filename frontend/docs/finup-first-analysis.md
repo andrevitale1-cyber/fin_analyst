@@ -11,6 +11,6 @@ Reused source assets, stored under `public/reference/finup/`:
 - `manrope-600.woff2`: `https://cdn.prod.website-files.com/6783bb98f24526592fa4e9d4/68917cd46c7e13efd87455e0_manrope-v19-latin-600.woff2`
 - `manrope-700.woff2`: `https://cdn.prod.website-files.com/6783bb98f24526592fa4e9d4/68917cd4999f186d81890d8b_manrope-v19-latin-700.woff2`
 
-Intentional adaptations: FinAnalyzer copy; one centered link to the locale-aware `/dashboard`; no coupon, price, or copy-code control. Glow overlap adjusted for the removed promo instructions. Text stays visible without a reveal dependency. Existing story video playback and captions are unchanged. AVIF files bypass locale middleware so the glow loads as an image instead of redirecting to an HTML route.
+Intentional adaptations: FinAnalyser copy; one centered link to the locale-aware `/dashboard`; no coupon, price, or copy-code control. Glow overlap adjusted for the removed promo instructions. Text stays visible without a reveal dependency. Existing story video playback and captions are unchanged. AVIF files bypass locale middleware so the glow loads as an image instead of redirecting to an HTML route.
 
 Validation: production Webpack build; source/local desktop and mobile screenshots; 320, 390, 1440 and 1920px browser checks for overflow, CTA destination, asset loading, removed orbit videos, preserved inline/muted/loop attributes. Physical iPhone playback and paid OpenAI calls were not tested for this change.

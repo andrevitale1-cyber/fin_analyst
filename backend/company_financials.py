@@ -9,7 +9,7 @@ import re
 import requests
 
 
-_HEADERS = {"User-Agent": "FinAnalyzer contact@finanalyser.com.br", "Accept": "application/json"}
+_HEADERS = {"User-Agent": "FinAnalyser contact@finanalyser.com.br", "Accept": "application/json"}
 _TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 _FACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
 _SYMBOL = re.compile(r"[A-Z]{1,5}(?:\.[A-Z])?\Z")

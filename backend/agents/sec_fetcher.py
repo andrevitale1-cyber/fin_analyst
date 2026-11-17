@@ -24,7 +24,7 @@ class FetchedDocument:
 
 
 class SECFetcher:
-    headers = {"User-Agent": "FinAnalyzer contact@finanalyser.com.br"}
+    headers = {"User-Agent": "FinAnalyser contact@finanalyser.com.br"}
     _company_catalog = None
     _catalog_expires = 0
 

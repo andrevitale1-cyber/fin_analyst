@@ -1,4 +1,4 @@
-# FinAnalyzer
+# FinAnalyser
 
 ## Desenvolvimento local
 

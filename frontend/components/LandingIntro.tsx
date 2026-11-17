@@ -84,8 +84,8 @@ export default function LandingIntro({ locale }: { locale: string }) {
   return <>
     <header ref={header} className={styles.navigation}>
       <nav className={styles.pill} aria-label={english ? "Main navigation" : "Navegação principal"}>
-        <Link href="/" className={styles.brand} aria-label="FinAnalyzer home" onClick={close}>
-          <BrandLogo size={32} /><span>FinAnalyzer</span>
+        <Link href="/" className={styles.brand} aria-label="FinAnalyser home" onClick={close}>
+          <BrandLogo size={32} /><span>FinAnalyser</span>
         </Link>
         <div className={styles.desktopLinks}>
           {links.map(link => <a key={link.href} href={link.href} onClick={close}>{link.text}</a>)}
@@ -112,10 +112,10 @@ export default function LandingIntro({ locale }: { locale: string }) {
           <p>{english
             ? "Official reports, AI analysis, company comparisons and saved research in one platform. Understand results faster and revisit every analysis with ease."
             : "Relatórios oficiais, análise por IA, comparação de empresas e histórico em uma plataforma. Entenda os resultados mais rápido e consulte cada análise com facilidade."}</p>
-          <a href="#clients" className={styles.scrollDown} aria-label={english ? "Explore FinAnalyzer" : "Conhecer o FinAnalyzer"}><ArrowDown size={26} /></a>
+          <a href="#clients" className={styles.scrollDown} aria-label={english ? "Explore FinAnalyser" : "Conhecer o FinAnalyser"}><ArrowDown size={26} /></a>
         </div>
       </div>
-      <div ref={marquee} className={styles.marquee} data-visible={marqueeVisible} role="region" aria-label={english ? "What FinAnalyzer helps you do" : "Como o FinAnalyzer ajuda você"}>
+      <div ref={marquee} className={styles.marquee} data-visible={marqueeVisible} role="region" aria-label={english ? "What FinAnalyser helps you do" : "Como o FinAnalyser ajuda você"}>
         <div className={styles.track}>
           {[false, true].map(duplicate => <ul key={String(duplicate)} aria-hidden={duplicate || undefined}>
             {highlights.map(({ title, description }, index) => <li key={title}>

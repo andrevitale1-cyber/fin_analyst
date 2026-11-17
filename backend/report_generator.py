@@ -1,5 +1,5 @@
 """
-report_generator.py  —  FinAnalyzer v4
+report_generator.py  —  FinAnalyser v4
 ════════════════════════════════════════════════════════════════
 Adicione ao main.py (2 linhas):
 
@@ -665,7 +665,7 @@ def generate_report_html(resultado: dict, locale: str = "pt") -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{_h.escape(empresa.title())} · {_h.escape(periodo)} · FinAnalyzer</title>
+<title>{_h.escape(empresa.title())} · {_h.escape(periodo)} · FinAnalyser</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
@@ -911,7 +911,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
     <div class="tb-cube">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"/></svg>
     </div>
-    <span class="tb-name">FinAnalyzer</span>
+    <span class="tb-name">FinAnalyser</span>
   </div>
   <nav class="tb-nav">
     <a href="#analise" class="tb-link">{'Analysis' if en else 'Análise'}</a>
@@ -961,7 +961,7 @@ body{{font-family:'DM Sans',system-ui,sans-serif;background:#F1F5F9;color:#11182
 </div>
 
 <div class="footer no-print">
-  <span>Gerado pelo <strong style="color:#6B7280">FinAnalyzer</strong> · Documento Oficial · Não é recomendação de investimento</span>
+  <span>Gerado pelo <strong style="color:#6B7280">FinAnalyser</strong> · Documento Oficial · Não é recomendação de investimento</span>
   <span>{_h.escape(empresa.title())} · {_h.escape(periodo)}</span>
 </div>
 

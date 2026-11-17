@@ -44,7 +44,7 @@ export default function CallAnalysisSection({ locale }: { locale: string }) {
         <span className={reportStyles.eyebrow}>{english ? "INSIDE THE CALL ANALYSIS" : "DENTRO DA ANÁLISE DO CALL"}</span>
         <ul>{features.map(feature => <li key={feature}><Check size={15} aria-hidden="true" />{feature}</li>)}</ul>
         <Link className={reportStyles.start} href="/dashboard">{english ? "Analyze an earnings call" : "Analisar um earnings call"}<ArrowRight size={17} aria-hidden="true" /></Link>
-        <p className={reportStyles.caption}>{english ? "Example: Microsoft · 2Q/2026 · FinAnalyzer call analysis" : "Exemplo: Microsoft · 2Q/2026 · Análise de call do FinAnalyzer"}</p>
+        <p className={reportStyles.caption}>{english ? "Example: Microsoft · 2Q/2026 · FinAnalyser call analysis" : "Exemplo: Microsoft · 2Q/2026 · Análise de call do FinAnalyser"}</p>
       </div>
       <article className={reportStyles.report} aria-label={english ? "Microsoft earnings call analysis preview" : "Prévia da análise do earnings call da Microsoft"}>
         <header className={reportStyles.reportHeader}>

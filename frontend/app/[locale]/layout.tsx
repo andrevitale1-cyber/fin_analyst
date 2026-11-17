@@ -28,14 +28,14 @@ export async function generateMetadata({
     metadataBase: new URL("https://finanalyser.com.br"),
     title: {
       default: isEnglish
-        ? "FinAnalyzer | AI-powered financial statement analysis"
-        : "FinAnalyzer | Análise de resultados financeiros com IA",
-      template: "%s | FinAnalyzer",
+        ? "FinAnalyser | AI-powered financial statement analysis"
+        : "FinAnalyser | Análise de resultados financeiros com IA",
+      template: "%s | FinAnalyser",
     },
     description: isEnglish
       ? "Find official company earnings releases and earnings call transcripts automatically. Analyze financial performance with AI, clear metrics, and source links."
       : "Encontre releases de resultados e transcripts de empresas automaticamente. Analise o desempenho financeiro com IA, indicadores claros e links para as fontes.",
-    applicationName: "FinAnalyzer",
+    applicationName: "FinAnalyser",
     icons: {
       icon: [
         { url: "/brand/favicon-v3-48.png", type: "image/png", sizes: "48x48" },
@@ -47,11 +47,11 @@ export async function generateMetadata({
     },
     openGraph: {
       type: "website",
-      siteName: "FinAnalyzer",
+      siteName: "FinAnalyser",
       locale: isEnglish ? "en_US" : "pt_BR",
       title: isEnglish
-        ? "FinAnalyzer | AI-powered financial analysis"
-        : "FinAnalyzer | Análise financeira com inteligência artificial",
+        ? "FinAnalyser | AI-powered financial analysis"
+        : "FinAnalyser | Análise financeira com inteligência artificial",
       description: isEnglish
         ? "Analyze company earnings releases and call transcripts with AI and traceable sources."
         : "Analise releases de resultados e transcripts de calls com IA e fontes verificáveis.",
@@ -59,8 +59,8 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title: isEnglish
-        ? "FinAnalyzer | AI-powered financial analysis"
-        : "FinAnalyzer | Análise financeira com inteligência artificial",
+        ? "FinAnalyser | AI-powered financial analysis"
+        : "FinAnalyser | Análise financeira com inteligência artificial",
       description: isEnglish
         ? "Find and analyze company earnings documents with AI and source links."
         : "Encontre e analise documentos financeiros com IA e links para as fontes.",

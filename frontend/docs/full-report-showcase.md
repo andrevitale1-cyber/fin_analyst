@@ -21,6 +21,6 @@ Source editions: `public/published-reports/aapl-20261022.html` and `aapl-2026102
 
 ## Intentional adaptations
 
-FinAnalyzer content and Apple data replace Finup payment features. Controls stop at the first/last card; they do not wrap. Mobile has visible 44px navigation buttons below the cards, in addition to native horizontal touch scrolling. Arrow keys work when the rail is focused. Smooth scrolling respects reduced-motion preferences. No new carousel dependency, automatic scrolling, duplicate slides, financial forecast or valuation was added.
+FinAnalyser content and Apple data replace Finup payment features. Controls stop at the first/last card; they do not wrap. Mobile has visible 44px navigation buttons below the cards, in addition to native horizontal touch scrolling. Arrow keys work when the rail is focused. Smooth scrolling respects reduced-motion preferences. No new carousel dependency, automatic scrolling, duplicate slides, financial forecast or valuation was added.
 
 Validation: production Webpack build and TypeScript check; browser review at 1440px, 1920px, 390px and 320px; arrow boundaries, keyboard navigation, PT/EN links, matching report anchors, source-data reconciliation and absence of page-level horizontal overflow. Local visual checks used an isolated preview because the application’s private Clerk key is not configured locally; application authentication was preserved. Physical-device touch behavior was not tested.

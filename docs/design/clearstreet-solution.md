@@ -1,4 +1,4 @@
-# Clear Street solution scene → FinAnalyzer
+# Clear Street solution scene → FinAnalyser
 
 Source: https://www.clearstreet.io/ (global-market video-container).
 Destination: /en and /pt, AnalysisStory solution section.

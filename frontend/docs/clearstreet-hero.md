@@ -2,7 +2,7 @@
 
 Source: https://www.clearstreet.io/ — inspected live through the adjacent `design-reference-cloner/.agents/skills/clone-website` workflow on October 13, 2026.
 
-Destination: the existing FinAnalyzer `/en` and `/pt` homepages. Local preview: http://localhost:3012/en.
+Destination: the existing FinAnalyser `/en` and `/pt` homepages. Local preview: http://localhost:3012/en.
 
 ## Ownership and references
 
@@ -18,13 +18,13 @@ The Meta report animation, image layers and hero pinning remain excluded at the 
 
 ## Responsive and motion update — October 17, 2026
 
-The Clear Street source was inspected again through the clone command and its motion guide. Above 2000 CSS pixels, it switches to viewport-based typography: the hero and Reasons headings use `3.2vw`. FinAnalyzer now follows that rule for its hero and story titles, and scales supporting text, header spacing, icons and the adjacent solution section proportionally. This covers wide monitors and the expanded CSS viewport produced by reducing browser zoom. Below that boundary the existing desktop/mobile typography remains.
+The Clear Street source was inspected again through the clone command and its motion guide. Above 2000 CSS pixels, it switches to viewport-based typography: the hero and Reasons headings use `3.2vw`. FinAnalyser now follows that rule for its hero and story titles, and scales supporting text, header spacing, icons and the adjacent solution section proportionally. This covers wide monitors and the expanded CSS viewport produced by reducing browser zoom. Below that boundary the existing desktop/mobile typography remains.
 
 The source's statistics-loop uses two equal content groups with a linear 24-second cycle and a `translateX(-50%)` endpoint. The local marquee uses that geometry with user-approved mixed content: a benefit followed by the corresponding feature. It uses real capabilities rather than invented client numbers or time-saving statistics. Its second group is hidden from assistive technology; reduced-motion users get a static wrapping list. Offscreen animation pauses.
 
-The source's Reasons section retains three 100vh title panels, the sinusoidal overlay fade and its CustomEase title curve. Its global scroller uses Lenis 1.1.13, `lerp: 0.1`, `wheelMultiplier: 1`, `smoothWheel: true`, `syncTouch: false`, synchronized with GSAP. FinAnalyzer uses the same library and wheel parameters on fine-pointer desktop devices. Mobile and reduced-motion scrolling remain native. The two report previews opt out so their own scroll areas still work. Cleanup removes the wheel handler and GSAP callback when leaving the landing or changing device/motion preferences.
+The source's Reasons section retains three 100vh title panels, the sinusoidal overlay fade and its CustomEase title curve. Its global scroller uses Lenis 1.1.13, `lerp: 0.1`, `wheelMultiplier: 1`, `smoothWheel: true`, `syncTouch: false`, synchronized with GSAP. FinAnalyser uses the same library and wheel parameters on fine-pointer desktop devices. Mobile and reduced-motion scrolling remain native. The two report previews opt out so their own scroll areas still work. Cleanup removes the wheel handler and GSAP callback when leaving the landing or changing device/motion preferences.
 
-The user-requested section order is shared by desktop and mobile: Clients, Benefits, Aggregated table, AI analysis, Calls, Pricing. The separate FinAnalyzer AI dashboard link and the brand's .AI suffix are removed. Mobile Menu opens a scrollable navigation sheet; selecting a destination, clicking outside or pressing Escape closes it. Search, sign-in and primary actions lead to the existing dashboard. Section anchors reserve space for the fixed header.
+The user-requested section order is shared by desktop and mobile: Clients, Benefits, Aggregated table, AI analysis, Calls, Pricing. The separate FinAnalyser AI dashboard link and the brand's .AI suffix are removed. Mobile Menu opens a scrollable navigation sheet; selecting a destination, clicking outside or pressing Escape closes it. Search, sign-in and primary actions lead to the existing dashboard. Section anchors reserve space for the fixed header.
 
 ## Verification and remaining differences
 

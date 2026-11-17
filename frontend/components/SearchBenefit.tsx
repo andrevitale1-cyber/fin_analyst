@@ -19,7 +19,7 @@ export default function SearchBenefit({ locale }: { locale: string }) {
     </div>
     <div className={styles.copy}>
       <h3>{english ? "Find the report without the manual search" : "Encontre o balanço sem procurar manualmente"}</h3>
-      <p>{english ? "Enter the company, year and quarter. FinAnalyzer finds the official document for that period so you can start your analysis, without having to locate and download the file yourself." : "Informe a empresa, o ano e o trimestre. O FinAnalyzer busca o documento oficial do período para você começar a análise, sem precisar localizar e baixar o arquivo por conta própria."}</p>
+      <p>{english ? "Enter the company, year and quarter. FinAnalyser finds the official document for that period so you can start your analysis, without having to locate and download the file yourself." : "Informe a empresa, o ano e o trimestre. O FinAnalyser busca o documento oficial do período para você começar a análise, sem precisar localizar e baixar o arquivo por conta própria."}</p>
     </div>
   </motion.article>;
 }

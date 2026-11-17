@@ -19,9 +19,9 @@ export default function DashboardSidebar({ active, open, collapsed, onClose, onC
     {open && <div className="fixed inset-0 z-40 bg-black/60 md:hidden" onClick={onClose} />}
     <aside aria-label={locale === "en" ? "Main navigation" : "Navegação principal"} className={`fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col overflow-y-auto border-r border-white/10 bg-[#0b1526] p-6 text-white transition-transform md:sticky md:top-0 md:h-screen md:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"} ${collapsed ? "md:w-20 md:px-3" : ""}`}>
       <div className="mb-10 flex items-center justify-between gap-2">
-        <a href={`/${locale}`} aria-label={locale === "en" ? "FinAnalyzer home" : "Início FinAnalyzer"} className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-sky-400">
+        <a href={`/${locale}`} aria-label={locale === "en" ? "FinAnalyser home" : "Início FinAnalyser"} className="flex min-w-0 items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-sky-400">
           <BrandLogo />
-          {!collapsed && <span className="text-xl font-bold tracking-tight">FinAnalyzer<span className="text-blue-500">.AI</span></span>}
+          {!collapsed && <span className="text-xl font-bold tracking-tight">FinAnalyser<span className="text-blue-500">.AI</span></span>}
         </a>
         <button onClick={onClose} aria-label={locale === "en" ? "Close menu" : "Fechar menu"} className="p-1 text-slate-400 md:hidden"><X size={21}/></button>
         {!collapsed && <button onClick={() => onCollapse(true)} aria-label={locale === "en" ? "Collapse menu" : "Recolher menu"} className="hidden p-1 text-slate-400 hover:text-white md:block"><ChevronLeft size={20}/></button>}

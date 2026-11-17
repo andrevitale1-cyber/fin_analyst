@@ -16,7 +16,7 @@ export default function Privacy() {
           <Link href="/" className="flex items-center gap-2.5">
             <BrandLogo />
             <span className="text-xl font-bold tracking-tight text-white">
-              FinAnalyzer <span className="text-blue-500">.AI</span>
+              FinAnalyser <span className="text-blue-500">.AI</span>
             </span>
           </Link>
           <Link href="/" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">

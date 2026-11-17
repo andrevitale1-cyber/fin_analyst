@@ -19,7 +19,7 @@ export default function ComparisonShowcase({ locale }: { locale: string }) {
     caveat: "Cash generation and outlook remain insufficient for a comparable verdict.",
     benefits: ["Compare two quarterly results with AI", "Track scores for up to three companies", "Understand the evidence behind the verdict"],
     action: "Compare companies", premium: "A Premium feature. A new duel uses one monthly analysis; reopening a saved duel is free.",
-    flow: "Two saved results feed into FinAnalyzer's comparison, which explains the verdict and its limits.",
+    flow: "Two saved results feed into FinAnalyser's comparison, which explains the verdict and its limits.",
   } : {
     title: "Compare resultados com clareza.",
     intro: "Coloque empresas lado a lado. Acompanhe as notas ao longo do tempo e entenda qual trimestre foi mais forte — e por quê.",
@@ -30,7 +30,7 @@ export default function ComparisonShowcase({ locale }: { locale: string }) {
     caveat: "Geração de caixa e perspectivas têm evidência insuficiente para um veredito comparável.",
     benefits: ["Compare dois resultados trimestrais com IA", "Acompanhe as notas de até três empresas", "Entenda as evidências por trás do veredito"],
     action: "Comparar empresas", premium: "Um recurso Premium. Um novo duelo usa uma análise mensal; reabrir um duelo salvo é gratuito.",
-    flow: "Dois resultados salvos entram no comparador do FinAnalyzer, que explica o veredito e seus limites.",
+    flow: "Dois resultados salvos entram no comparador do FinAnalyser, que explica o veredito e seus limites.",
   };
 
   return <section id="comparar-resultados" className={styles.section} aria-labelledby="comparison-showcase-title">
@@ -43,7 +43,7 @@ export default function ComparisonShowcase({ locale }: { locale: string }) {
             <p className={styles.periodLabel}>{text.period}</p><div className={styles.period}><span>{en ? "3Q/2026" : "3T/2026"}</span><small>{en ? "Nov 2, 2026" : "2 de nov. de 2026"}</small></div><small className={styles.fiscal}>{text.fiscal}</small>
           </article>)}
         </div>
-        <div className={styles.connection} aria-hidden="true"><i className={`${styles.flow} ${styles.flowIn}`} /><i className={`${styles.flow} ${styles.flowOut}`} /><div className={styles.brand}><BrandLogo size={64} /></div><span>FinAnalyzer</span><Swords className={styles.swords} size={19} /></div>
+        <div className={styles.connection} aria-hidden="true"><i className={`${styles.flow} ${styles.flowIn}`} /><i className={`${styles.flow} ${styles.flowOut}`} /><div className={styles.brand}><BrandLogo size={64} /></div><span>FinAnalyser</span><Swords className={styles.swords} size={19} /></div>
         <article className={styles.verdict} aria-label={text.winner}>
           <p className={styles.eyebrow}><Trophy size={17} />{text.verdict}</p><h3>{text.winner}</h3><p className={styles.meta}>AMZN · {en ? "3Q/2026" : "3T/2026"}<span />GOOGL · {en ? "3Q/2026" : "3T/2026"}</p><p className={styles.confidence}>{text.confidence}</p>
           <p className={styles.summary}>{text.summary}</p><div className={styles.dimensions}>{text.dimensions.map(label => <span key={label}><CheckMark />{label}</span>)}</div><p className={styles.caveat}>{text.caveat}</p>

@@ -65,7 +65,7 @@ export default function MetaAnalysisSection({ locale }: { locale: string }) {
 
   return <section className={styles.section} aria-labelledby="meta-analysis-heading">
     <div className={styles.layout}>
-      <article className={styles.report} aria-label={english ? "FinAnalyzer report preview: META, 1Q/2026" : "Prévia do relatório FinAnalyzer: META, 1Q/2026"}>
+      <article className={styles.report} aria-label={english ? "FinAnalyser report preview: META, 1Q/2026" : "Prévia do relatório FinAnalyser: META, 1Q/2026"}>
         <header className={styles.reportHeader}>
           <div className={styles.company}><div className={styles.logo}><img src="/benefits/company-logos/META.webp" alt="" width={34} height={34} /></div><div><h3>Meta <span>META</span></h3><p>1Q/2026 · {english ? "Analysis Report" : "Relatório de análise"}</p></div></div>
           <div className={styles.finalScore}><span>AI SCORE</span><strong>5<small>/5</small></strong><small>{english ? "Based on 4 fundamentals" : "Com base em 4 fundamentos"}</small></div>
@@ -85,7 +85,7 @@ export default function MetaAnalysisSection({ locale }: { locale: string }) {
         <span className={styles.eyebrow}>{english ? "INSIDE THE AI ANALYSIS" : "DENTRO DA ANÁLISE DE IA"}</span>
         <ul>{features.map(feature => <li key={feature}><Check size={15} />{feature}</li>)}</ul>
         <Link className={styles.start} href="/dashboard">{english ? "Explore your next analysis" : "Explore sua próxima análise"}<ArrowRight size={17} /></Link>
-        <p className={styles.caption}>{english ? "Example: Meta · 1Q/2026 · FinAnalyzer analysis" : "Exemplo: Meta · 1Q/2026 · Análise do FinAnalyzer"}</p>
+        <p className={styles.caption}>{english ? "Example: Meta · 1Q/2026 · FinAnalyser analysis" : "Exemplo: Meta · 1Q/2026 · Análise do FinAnalyser"}</p>
       </div>
     </div>
   </section>;

@@ -352,7 +352,7 @@ def yahoo_earnings_prices(symbol,day):
     data = _json('https://query1.finance.yahoo.com/v8/finance/chart/'+symbol, {
         'period1':int((day.replace(tzinfo=timezone.utc)-timedelta(days=380)).timestamp()),
         'period2':int((datetime.fromisoformat(completed_price_day(symbol)).replace(tzinfo=timezone.utc)+timedelta(days=1)).timestamp()),'interval':'1d',
-    }, {'User-Agent':'FinAnalyzer/1.0 contact@finanalyser.com.br'})
+    }, {'User-Agent':'FinAnalyser/1.0 contact@finanalyser.com.br'})
     rows = (data.get('chart') or {}).get('result') or []
     if not rows or rows[0].get('meta',{}).get('symbol','').upper()!=symbol:
         return {}

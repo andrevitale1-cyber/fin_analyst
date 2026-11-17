@@ -16,7 +16,7 @@ export default function Refund() {
           <Link href="/" className="flex items-center gap-2.5">
             <BrandLogo />
             <span className="text-xl font-bold tracking-tight text-white">
-              FinAnalyzer <span className="text-blue-500">.AI</span>
+              FinAnalyser <span className="text-blue-500">.AI</span>
             </span>
           </Link>
           <Link href="/" className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
@@ -65,8 +65,8 @@ export default function Refund() {
 
           <Section icon={<CheckCircle size={18} className="text-emerald-400" />} title={en ? '1. 7-Day Money-Back Guarantee' : '1. Garantia de Devolução em 7 Dias'}>
             <p>{en
-              ? 'We stand behind the quality of FinAnalyzer.AI. If you are not satisfied with the service for any reason, you may request a full refund within 7 calendar days of your first paid subscription charge.'
-              : 'Acreditamos na qualidade do FinAnalyzer.AI. Se você não estiver satisfeito com o serviço por qualquer motivo, poderá solicitar reembolso integral em até 7 dias corridos a partir da data do primeiro pagamento de assinatura.'
+              ? 'We stand behind the quality of FinAnalyser. If you are not satisfied with the service for any reason, you may request a full refund within 7 calendar days of your first paid subscription charge.'
+              : 'Acreditamos na qualidade do FinAnalyser. Se você não estiver satisfeito com o serviço por qualquer motivo, poderá solicitar reembolso integral em até 7 dias corridos a partir da data do primeiro pagamento de assinatura.'
             }</p>
             <p className="mt-3">{en
               ? 'Note: The Free plan requires no payment. The refund guarantee applies to your first Premium subscription payment.'

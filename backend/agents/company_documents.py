@@ -48,7 +48,7 @@ def collect_petrobras_filings(as_of):
     """Discover actual SEC primary filenames; never guess a translated release URL."""
     try:
         response = requests.get("https://data.sec.gov/submissions/CIK0001119639.json",
-                                headers={"User-Agent": "FinAnalyzer contact@finanalyser.com.br"},
+                                headers={"User-Agent": "FinAnalyser contact@finanalyser.com.br"},
                                 timeout=12, allow_redirects=False)
         response.raise_for_status()
         recent = response.json()["filings"]["recent"]
@@ -82,7 +82,7 @@ def collect_petrobras_market_sources():
     for page in ("history", "forecast"):
         url = f"https://stockanalysis.com/quote/bvmf/PETR4/{page}/"
         try:
-            with requests.get(url, headers={"User-Agent": "FinAnalyzer contact@finanalyser.com.br"},
+            with requests.get(url, headers={"User-Agent": "FinAnalyser contact@finanalyser.com.br"},
                               timeout=(3, 12), allow_redirects=False, stream=True) as response:
                 if response.status_code != 200:
                     continue
@@ -116,7 +116,7 @@ def collect_petrobras_calibration_sources():
     for sid, title, url, basis, kind, marker in pages:
         try:
             with requests.get(url, timeout=(3, 12), allow_redirects=False, stream=True,
-                              headers={"User-Agent": "FinAnalyzer contact@finanalyser.com.br"}) as response:
+                              headers={"User-Agent": "FinAnalyser contact@finanalyser.com.br"}) as response:
                 if response.status_code != 200:
                     continue
                 body = bytearray()
@@ -199,7 +199,7 @@ def hydrate_company_documents(company, sources):
     def fetch(candidate):
         source, kind, primary = candidate
         try:
-            with requests.get(source["url"], headers={"User-Agent": "FinAnalyzer contact@finanalyser.com.br"},
+            with requests.get(source["url"], headers={"User-Agent": "FinAnalyser contact@finanalyser.com.br"},
                               timeout=(3, 10), allow_redirects=False, stream=True) as response:
                 if response.status_code != 200:
                     return source
@@ -269,7 +269,7 @@ def with_petrobras_policy_evidence(sources):
             raise ReportValidationError("Policy context requires the verified original Petrobras filing")
         def fetch():
             with requests.get(source["url"], timeout=(3, 20), allow_redirects=False, stream=True,
-                              headers={"User-Agent": "FinAnalyzer contact@finanalyser.com.br"}) as response:
+                              headers={"User-Agent": "FinAnalyser contact@finanalyser.com.br"}) as response:
                 response.raise_for_status()
                 body = bytearray()
                 for chunk in response.iter_content(65536):
