@@ -1,0 +1,20 @@
+.frame { position: relative; }
+.progress { position: absolute; inset: 0 0 auto; height: 3px; background: #eef2f7; z-index: 2; }
+.progress i { display: block; height: 100%; background: linear-gradient(90deg, #3428ff, #62a0ff); transform-origin: left; transition: transform .12s linear; }
+.fade { pointer-events: none; position: absolute; inset: auto 0 0; height: 96px; background: linear-gradient(to bottom, #fff0, #fff 85%); transition: opacity .3s; }
+.frame[data-end="true"] .fade { opacity: 0; }
+.hint { pointer-events: none; position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: #10192b; color: white; font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: 0 8px 24px #10192b40; transition: opacity .3s, transform .3s; }
+.hint svg { animation: nudge 1.4s ease-in-out infinite; }
+.frame[data-scrolled="true"] .hint { opacity: 0; transform: translate(-50%, 8px); }
+@keyframes nudge { 0%, 100% { transform: translateY(-3px); } 50% { transform: translateY(3px); } }
+.content { padding-bottom: 72px; }
+.content h5 { margin: 22px 0 10px; color: #152035; font-size: 15px; font-weight: 700; line-height: 1.5; }
+.content h5:first-child { margin-top: 4px; }
+.content ul { margin: 0 0 22px; padding-left: 18px; list-style: disc; }
+.content li { margin-bottom: 12px; font-size: 14px; line-height: 1.7; color: #56657c; }
+.tableWrap { margin: 0 0 22px; overflow-x: auto; border: 1px solid #e8edf4; border-radius: 12px; }
+.tableWrap table { width: 100%; min-width: 560px; border-collapse: collapse; font-size: 12px; }
+.tableWrap th { padding: 9px 10px; background: #f8fafc; color: #687c96; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-align: left; text-transform: uppercase; }
+.tableWrap td { padding: 9px 10px; border-top: 1px solid #eef2f7; color: #56657c; line-height: 1.5; vertical-align: top; font-variant-numeric: tabular-nums; }
+.tableWrap td:first-child { color: #152035; font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { .hint svg { animation: none; } .progress i { transition: none; } }
