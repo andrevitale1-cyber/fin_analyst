@@ -1,4 +1,5 @@
 import os
+import re
 import logging
 import requests
 from dotenv import load_dotenv
@@ -9,6 +10,10 @@ logger = logging.getLogger("uvicorn.error")
 
 class SearchError(RuntimeError):
     pass
+
+# Sites that block bots or paywall transcripts: they only produce 403s, never a document.
+BLOCKED_TRANSCRIPT_DOMAINS = ["seekingalpha.com", "investing.com"]
+
 
 class SearchClient:
     def __init__(self):
@@ -56,7 +61,7 @@ class SearchClient:
                            ticker, ano, trimestre, type(exc).__name__, getattr(exc, "status_code", None), getattr(exc, "code", None))
             raise SearchError("O serviço de busca de resultados está indisponível. Tente novamente em instantes ou envie o PDF oficial.") from exc
 
-    def search_transcripts(self, company, year, quarter, allow_openai=False):
+    def search_transcripts(self, company, year, quarter, allow_openai=False, ticker=None):
         if allow_openai:
             query = f'"{company}" Q{quarter} FY{year} {quarter}Q{str(year)[-2:]} {quarter}T{str(year)[-2:]} full earnings call transcript transcrição teleconferência'
             try:
@@ -69,12 +74,15 @@ class SearchClient:
             f'"{company}" Q{quarter} {year} earnings call transcript',
             f'"{company}" {quarter}T{str(year)[-2:]} transcrição teleconferência resultados',
         ]
+        if ticker and re.fullmatch(r"[A-Z]{4}\d{1,2}", ticker):
+            queries.append(f'{ticker} {quarter}T{str(year)[-2:]} transcrição teleconferência')
         results, seen, failures = [], set(), 0
         for query in queries:
             try:
                 response = requests.post(self.base_url, json={
                     "api_key": self.api_key, "query": query,
                     "search_depth": "advanced", "max_results": 5,
+                    "exclude_domains": BLOCKED_TRANSCRIPT_DOMAINS,
                 }, timeout=10)
                 response.raise_for_status()
                 data = response.json()

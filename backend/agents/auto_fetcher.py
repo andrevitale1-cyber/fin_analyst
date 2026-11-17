@@ -14,7 +14,7 @@ from urllib.parse import unquote, urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup
-from agents.search_client import SearchClient, SearchError
+from agents.search_client import BLOCKED_TRANSCRIPT_DOMAINS, SearchClient, SearchError
 from agents.equibles_client import EquiblesClient
 from agents.sec_fetcher import FetchedDocument, SECFetcher
 from openai_client import OpenAIClient, OpenAIError
@@ -261,7 +261,7 @@ class AutoFetcher:
             if document:
                 break
             try:
-                results = self.search_client.search_transcripts(query_name, year, quarter, allow_openai=allow_openai)
+                results = self.search_client.search_transcripts(query_name, year, quarter, allow_openai=allow_openai, ticker=issuer)
             except SearchError:
                 if allow_openai:
                     raise
@@ -269,7 +269,8 @@ class AutoFetcher:
             for item in results[:8]:
                 url = item.get("url", "")
                 evidence = f"{item.get('title', '')} {url}"
-                if not self._valid_url(url) or url in seen:
+                host = (urlparse(url).hostname or "").lower()
+                if not self._valid_url(url) or url in seen or any(host == d or host.endswith("." + d) for d in BLOCKED_TRANSCRIPT_DOMAINS):
                     continue
                 if self._transcript_period(evidence) and not self._transcript_period_matches(evidence, year, quarter):
                     continue
@@ -420,7 +421,8 @@ class AutoFetcher:
             if not re.search(r"/transcripts/?$", urlparse(response.url).path) and self._valid_transcript(text, company, year, quarter):
                 return FetchedDocument(response.url, "Earnings Call Transcript", text=text[:180000])
         except requests.RequestException as exc:
-            if not isinstance(exc, requests.HTTPError) or exc.response is None or exc.response.status_code != 404:
+            # An HTTP answer (403 paywall, 404, 500 page) means "no document here"; only network failures are retryable.
+            if not isinstance(exc, requests.HTTPError):
                 self._transcript_download_failed = True
         except OpenAIError:
             return None

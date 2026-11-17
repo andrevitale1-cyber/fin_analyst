@@ -345,3 +345,40 @@ def test_archive_rejects_other_issuer_even_if_requested_company_is_mentioned(mon
     get = Mock(side_effect=AssertionError("foreign issuer must not be downloaded"))
     monkeypatch.setattr("requests.get", get)
     assert AutoFetcher()._download_transcript("https://stockanalysis.com/stocks/sbux/transcripts/10-q1-2026/", 2026, 1, "CAVA") is None
+
+
+def test_blocked_source_is_not_found_not_unavailable(tmp_path, monkeypatch):
+    fetcher = AutoFetcher(tmp_path)
+    fetcher._fetch_transcript_ir = Mock(return_value=None)
+    error = requests.HTTPError(response=Mock(status_code=403))
+    monkeypatch.setattr("requests.get", Mock(return_value=Mock(raise_for_status=Mock(side_effect=error))))
+    fetcher.search_client.search_transcripts = Mock(side_effect=[[
+        {"title": "Panvel 3T26 transcrição teleconferência", "url": "https://seekingalpha.com/article/1-panvel-3t26-transcript"},
+        {"title": "Panvel 3T26 transcrição teleconferência", "url": "https://example.com/panvel-3t26-transcricao"},
+    ], []])
+    assert fetcher.fetch_transcript("PNVL3", 2026, "3T") is None
+    calls = fetcher.search_client.search_transcripts.call_args_list
+    assert calls[0].kwargs["ticker"] == "PNVL3"
+    assert requests.get.call_count == 1  # the paywalled host is skipped without a download
+
+
+def test_network_failure_is_reported_as_unavailable(tmp_path, monkeypatch):
+    fetcher = AutoFetcher(tmp_path)
+    fetcher._fetch_transcript_ir = Mock(return_value=None)
+    monkeypatch.setattr("requests.get", Mock(side_effect=requests.ConnectionError("offline")))
+    fetcher.search_client.search_transcripts = Mock(return_value=[
+        {"title": "Panvel 3T26 transcrição", "url": "https://example.com/panvel-3t26-transcricao"}])
+    with pytest.raises(SearchError):
+        fetcher.fetch_transcript("PNVL3", 2026, "3T")
+
+
+def test_b3_ticker_adds_query_and_excludes_paywalled_domains(monkeypatch):
+    from agents.search_client import SearchClient
+    client = SearchClient()
+    client.api_key = "test-placeholder"
+    post = Mock(return_value=Mock(raise_for_status=lambda: None, json=lambda: {"results": []}))
+    monkeypatch.setattr("requests.post", post)
+    client.search_transcripts("Panvel", 2026, 3, ticker="PNVL3")
+    bodies = [call.kwargs["json"] for call in post.call_args_list]
+    assert any(body["query"].startswith("PNVL3 3T26") for body in bodies)
+    assert all("seekingalpha.com" in body["exclude_domains"] for body in bodies)
