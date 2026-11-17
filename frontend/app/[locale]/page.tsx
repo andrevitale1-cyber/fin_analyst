@@ -20,6 +20,7 @@ import { Link } from "@/i18n/routing";
 import { requestRedditGetStarted } from "@/lib/redditPixel";
 import BrandLogo from "../../components/BrandLogo";
 import { ArrowRight } from "lucide-react";
+import NvidiaPromo from "@/components/NvidiaPromo";
 
 export default function LandingPage() {
   const locale = useLocale();
@@ -31,6 +32,8 @@ function LandingPageContent({ locale }: { locale: string }) {
 
   return (
     <div className="min-h-screen bg-[#0A0D14] text-gray-100 font-sans antialiased selection:bg-blue-500/30 overflow-x-clip">
+
+      <NvidiaPromo locale={locale} />
 
       <LandingIntro locale={locale} />
 

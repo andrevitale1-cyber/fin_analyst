@@ -207,8 +207,13 @@ export default function FinancialDashboard() {
     const view = params.get("view");
     if (view === "history" || view === "table" || view === "comparison") setCurrentView(view);
     const company = params.get("company")?.trim() || "";
-    if (company && company.length <= 100 && !/[\u0000-\u001f]/.test(company)) setEmpresa(company);
-  }, []);
+    const known = QUICK_COMPANIES.find(item => item.ticker === company.toUpperCase());
+    if (known) chooseCompany(known);
+    else if (company && company.length <= 100 && !/[\u0000-\u001f]/.test(company)) setEmpresa(company);
+    const year = params.get("ano"), quarter = params.get("trimestre");
+    if (year && /^20\d{2}$/.test(year)) setAno(year);
+    if (quarter && /^[1-4]T$/.test(quarter)) setTrimestre(quarter);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- read the link once on arrival
 
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('analysis');
