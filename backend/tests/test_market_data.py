@@ -482,3 +482,42 @@ def test_international_five_years_uses_calendar_start_date(monkeypatch):
     now=datetime.now(timezone.utc)
     assert calls[-1][1]['start_date']==now.replace(year=now.year-5,day=min(now.day,28) if now.month==2 else now.day).strftime('%Y-%m-%d')
     assert calls[-1][1]['interval']=='1day'
+
+
+def _reaction_prompt_for_table(monkeypatch, currency='BRL'):
+    points = [{'time': day, 'close': close} for day, close in (
+        ('2025-11-03', 9.45), ('2025-12-30', 9.31), ('2026-08-04', 12.45), ('2026-10-28', 10.78), ('2026-10-29', 10.70),
+        ('2026-10-30', 10.66), ('2026-11-02', 10.60), ('2026-11-03', 10.55), ('2026-11-04', 10.48),
+        ('2026-11-05', 10.90), ('2026-11-06', 11.37), ('2026-11-16', 11.00))]
+    monkeypatch.setattr(market_data, 'earnings_prices', lambda *args: {'points': points, 'source': 'brapi', 'sourceUrl': 'https://brapi.dev', 'currency': currency})
+    monkeypatch.setattr(market_data, 'completed_price_day', lambda symbol: '2026-11-16')
+    return market_data.reaction_prompt('PNVL3', 'São Paulo, 5 de novembro de 2026 – A Panvel anuncia seus resultados')
+
+
+def test_reaction_table_uses_verified_prices_in_portuguese(monkeypatch):
+    prompt = _reaction_prompt_for_table(monkeypatch)
+    analysis = '<!-- compact-quarterly -->\nTexto.\n\n**Reação do mercado:** A ação subiu.\n\n**Conclusão IA:** Bom.'
+    result = market_data.with_reaction_table(analysis, prompt)
+    lines = result.splitlines()
+    start = lines.index('**Reação do mercado:**')
+    assert lines[start + 2] == '| Janela | De | Até | Variação |'
+    assert '| Reação (1º pregão) | 04/11/2026 · R$ 10,48 | 06/11/2026 · R$ 11,37 | +8,5% |' in lines
+    assert '| Desde a divulgação | 04/11/2026 · R$ 10,48 | 16/11/2026 · R$ 11,00 | +5,0% |' in lines
+    assert '| 5 pregões antes | 28/10/2026 · R$ 10,78 | 04/11/2026 · R$ 10,48 | −2,8% |' in lines
+    assert 'A ação subiu.' in result and result.index('| Janela') < result.index('A ação subiu.')
+    assert market_data.with_reaction_table(result, prompt) == result
+
+
+def test_reaction_table_in_english_and_skips_without_data(monkeypatch):
+    prompt = _reaction_prompt_for_table(monkeypatch, 'USD')
+    result = market_data.with_reaction_table('**Market reaction:**\n\nShares rose.', prompt)
+    assert '| Reaction (1st session) | Nov 4, 2026 · $10.48 | Nov 6, 2026 · $11.37 | +8.5% |' in result
+    assert market_data.with_reaction_table('**Market reaction:** n/a', '') == '**Market reaction:** n/a'
+    assert market_data.with_reaction_table('No heading', prompt) == 'No heading'
+
+
+def test_compact_thesis_keeps_reaction_table(monkeypatch):
+    from quarterly_results import quarterly_thesis
+    prompt = _reaction_prompt_for_table(monkeypatch)
+    text = market_data.with_reaction_table('<!-- compact-quarterly -->\nSeção 5: Conclusão\n**Reação do mercado:**\nSubiu.\n\nSeção 6: Nota Final\nNota Geral: 4/5', prompt)
+    assert '| Reação (1º pregão) |' in quarterly_thesis(text)

@@ -3,12 +3,13 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, useUser, UserButton } from "@clerk/nextjs";
 import { useTranslations, useLocale } from "next-intl";
-import { formatPeriod, splitBold } from "../../../lib/analysisText";
+import { formatPeriod } from "../../../lib/analysisText";
 import DashboardSidebar from "../../../components/DashboardSidebar";
 import ReportFeedback from "../../../components/ReportFeedback";
 import LanguageSwitcher from "../../../components/LanguageSwitcher";
 import CompanyLogo from "../../../components/CompanyLogo";
 import AnalysisMarketChart from "../../../components/AnalysisMarketChart";
+import AnalysisText from "../../../components/AnalysisText";
 import ExportAnalysisPdf from "../../../components/ExportAnalysisPdf";
 import CompanyComparison from "../../../components/CompanyComparison";
 import DetailedQuarterlyAnalysis from "../../../components/DetailedQuarterlyAnalysis";
@@ -807,7 +808,7 @@ export default function FinancialDashboard() {
                 {result.metadata?.tipo === "Earnings Call" ? t('result.transcriptAnalysis') : t('result.investmentThesis')}
               </h3>
               <div className="prose prose-lg max-w-none text-slate-600 leading-relaxed whitespace-pre-line">
-                {translationStatus === 'loading' ? (locale === 'en' ? 'Translating analysis…' : 'Traduzindo análise…') : splitBold(translatedThesis || result.data?.tese_investimento || result.analise_completa || (locale === 'en' ? 'No analysis text available.' : 'Sem análise textual disponível.')).map((part, index) => part.bold ? <strong key={index} className="font-bold text-slate-900">{part.text}</strong> : <React.Fragment key={index}>{part.text}</React.Fragment>)}
+                {translationStatus === 'loading' ? (locale === 'en' ? 'Translating analysis…' : 'Traduzindo análise…') : <AnalysisText text={translatedThesis || result.data?.tese_investimento || result.analise_completa || (locale === 'en' ? 'No analysis text available.' : 'Sem análise textual disponível.')}/>}
                 {translationStatus === 'error' && <span className="mt-3 block text-sm text-amber-700" role="status">{locale === 'en' ? 'Translation unavailable; showing the original analysis.' : 'Tradução indisponível; exibindo a análise original.'}</span>}
               </div>
             </div>

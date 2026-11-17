@@ -55,7 +55,7 @@ from thesis_library import router as thesis_library_router, note_official_result
 from report_feedback import router as feedback_router, create_tables as create_feedback_tables
 from company_search import search_companies
 from agents.brapi_client import FREE_TICKERS, quarterly_context
-from market_data import market_snapshot, reaction_prompt, MarketDataUnavailable, create_tables as create_price_cache_tables
+from market_data import market_snapshot, reaction_prompt, with_reaction_table, MarketDataUnavailable, create_tables as create_price_cache_tables
 from company_comparison import router as comparison_router, create_tables as create_comparison_tables, start_worker as start_comparison_worker, stop as stop_comparison_worker
 from detailed_analysis import router as detailed_router, create_tables as create_detailed_tables, start_worker as start_detailed_worker, stop as stop_detailed_worker
 from tiktok_events import router as tiktok_router, create_tables as create_tiktok_tables
@@ -313,6 +313,7 @@ async def analyze_report(
 
         if not response_text.strip():
             raise HTTPException(status_code=500, detail="A IA retornou uma resposta vazia. Tente novamente.")
+        response_text = with_reaction_table(response_text, prompt)
         
         print("⚙️ [PASSO 6] Parseando os resultados para JSON...")
         dados_estruturados = parse_results(response_text)
@@ -443,6 +444,7 @@ async def analyze_report_auto(
                                   pdf_bytes=document.pdf_bytes, pdf_text=document.text),
                 timeout=180.0,
             )
+        response_text = with_reaction_table(response_text, prompt)
 
         # 6. Parse e Salvar
         dados_estruturados = parse_results(response_text)
@@ -524,6 +526,7 @@ async def analyze_earnings_call_auto(
         response_text = await asyncio.wait_for(asyncio.to_thread(
             OpenAIClient(task="analysis").analyze_transcript, prompt, document.text,
         ), timeout=180.0)
+        response_text = with_reaction_table(response_text, prompt)
         result = {"metadata": {"empresa": company, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call"}, "analise_completa": without_key_moments(response_text), "data": {}, "source": {"name": document.source, "url": document.url}}
         conn = get_db_connection()
         try:
@@ -584,6 +587,7 @@ async def analyze_earnings_call(
 
         if not response_text.strip():
             raise HTTPException(status_code=500, detail="A IA retornou uma resposta vazia. Tente novamente.")
+        response_text = with_reaction_table(response_text, prompt)
         
         objeto_final = {
             "metadata": { "empresa": empresa, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call" },

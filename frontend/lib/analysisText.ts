@@ -9,3 +9,33 @@ export function splitBold(text: string): { text: string; bold: boolean }[] {
     bold: part.startsWith('**') && part.endsWith('**') && part.length > 4,
   }));
 }
+
+export type AnalysisBlock = { kind: 'text'; text: string } | { kind: 'table'; header: string[]; rows: string[][] };
+
+// Split Markdown pipe tables out of analysis prose so they render as real tables.
+export function splitTables(text: string): AnalysisBlock[] {
+  const blocks: AnalysisBlock[] = [];
+  let prose: string[] = [];
+  let table: string[][] = [];
+  const cells = (line: string) => line.trim().replace(/^\||\|$/g, '').split('|').map(cell => cell.trim());
+  const flushProse = () => { if (prose.length) blocks.push({ kind: 'text', text: prose.join('\n') }); prose = []; };
+  const flushTable = () => {
+    if (table.length > 1) blocks.push({ kind: 'table', header: table[0], rows: table.slice(1) });
+    else if (table.length) prose.push(...table.map(row => `| ${row.join(' | ')} |`));
+    table = [];
+  };
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.length > 1) {
+      if (!table.length) flushProse();
+      const row = cells(trimmed);
+      if (!row.every(cell => /^:?-+:?$/.test(cell))) table.push(row);
+    } else {
+      if (table.length) flushTable();
+      prose.push(line);
+    }
+  }
+  flushTable();
+  flushProse();
+  return blocks;
+}
