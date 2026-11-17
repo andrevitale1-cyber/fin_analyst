@@ -6,6 +6,7 @@ import { getMessages } from 'next-intl/server';
 import "../globals.css";
 import RedditPixel from "../../components/RedditPixel";
 import TikTokPixel from "../../components/TikTokPixel";
+import GoogleAnalytics from "../../components/GoogleAnalytics";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -83,6 +84,7 @@ export default async function RootLayout({
         <body className={inter.className}>
           <RedditPixel />
           <TikTokPixel />
+          <GoogleAnalytics />
           <NextIntlClientProvider messages={messages}>
             {children}
           </NextIntlClientProvider>
