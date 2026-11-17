@@ -525,7 +525,7 @@ async def analyze_earnings_call_auto(
     try:
         response_text = await asyncio.wait_for(asyncio.to_thread(
             OpenAIClient(task="analysis").analyze_transcript, prompt, document.text,
-        ), timeout=180.0)
+        ), timeout=320.0)
         response_text = with_reaction_table(response_text, prompt)
         result = {"metadata": {"empresa": company, "periodo": f"{trimestre}/{ano}", "tipo": "Earnings Call"}, "analise_completa": without_key_moments(response_text), "data": {}, "source": {"name": document.source, "url": document.url}}
         conn = get_db_connection()
@@ -582,7 +582,7 @@ async def analyze_earnings_call(
         response_text = await asyncio.wait_for(
             (asyncio.to_thread(OpenAIClient(task="analysis").analyze_transcript, prompt, texto_transcricao)
              if texto_transcricao else asyncio.to_thread(OpenAIClient(task="analysis").analyze_document, prompt, pdf_bytes=contents)),
-            timeout=180.0,
+            timeout=320.0,
         )
 
         if not response_text.strip():

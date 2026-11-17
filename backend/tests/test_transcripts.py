@@ -199,10 +199,10 @@ def test_call_prompt_is_localized_and_places_verified_timestamps_inline():
         assert "[mm:ss]" in prompt and "[hh:mm:ss]" in prompt
         assert "Never estimate from text position" in prompt or "Nunca estime pela posição do texto" in prompt
         assert "voice, emotion, or body language" in prompt or "voz, emoção ou linguagem corporal" in prompt
-        assert "300–450" in prompt
+        assert "1,000–3,000 words" in prompt or "entre 1.000 e 3.000 palavras" in prompt
         assert "Markdown **bold**" in prompt or "Markdown **negrito**" in prompt
-        assert "up to three concise bullets" in prompt or "até três bullets concisos" in prompt
-        assert "up to two material questions" in prompt or "até duas perguntas" in prompt
+        assert "one bullet per material driver" in prompt or "um bullet por fator material" in prompt
+        assert "every material question" in prompt or "todas as perguntas e respostas materiais" in prompt
 
 
 def test_auto_transcript_route_keeps_body_out_of_prompt_and_sends_text_once(api, monkeypatch):
