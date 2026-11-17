@@ -198,6 +198,9 @@ def test_call_prompt_is_localized_and_places_verified_timestamps_inline():
         assert "Key moments" not in prompt and "Momentos principais" not in prompt
         assert "**7." in prompt and ("**Reação do mercado:**" in prompt or "**Market reaction:**" in prompt)
         assert "**3. Capital allocation**" in prompt or "**3. Alocação de capital**" in prompt
+        assert ("Metric | Current baseline | What management said | Type | Horizon | How to check next quarter" in prompt
+                or "Indicador | Base atual | O que a gestão disse | Tipo | Horizonte | Como conferir no próximo trimestre" in prompt)
+        assert "**8." in prompt
         assert "[mm:ss]" in prompt and "[hh:mm:ss]" in prompt
         assert "Never estimate from text position" in prompt or "Nunca estime pela posição do texto" in prompt
         assert "voice, emotion, or body language" in prompt or "voz, emoção ou linguagem corporal" in prompt
