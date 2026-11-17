@@ -214,6 +214,7 @@ def test_auto_transcript_route_keeps_body_out_of_prompt_and_sends_text_once(api,
     conn = Mock()
     conn.cursor.return_value.fetchone.return_value = (17,)
     monkeypatch.setattr(main, "get_db_connection", lambda: conn)
+    monkeypatch.setattr(main, "fetch_release", Mock(return_value=None))
     transcript = "Apple Q1 FY2026 transcript body " * 30
     monkeypatch.setattr(AutoFetcher, "fetch_transcript", Mock(return_value=FetchedDocument(
         "https://apple.com/call", "Earnings Call Transcript", text=transcript,
@@ -265,6 +266,7 @@ def test_manual_transcript_route_extracts_and_sends_text_once(api, monkeypatch):
     conn = Mock()
     conn.cursor.return_value.fetchone.return_value = (18,)
     monkeypatch.setattr(main, "get_db_connection", lambda: conn)
+    monkeypatch.setattr(main, "fetch_release", Mock(return_value=None))
     transcript = "Apple Q1 FY2026 transcript from uploaded PDF"
     monkeypatch.setattr(OpenAIClient, "extract_text", Mock(return_value=transcript))
     analyze = Mock(return_value="Analysis")
@@ -393,3 +395,17 @@ def test_call_reaction_label_receives_the_verified_price_table():
     prompt = PromptBuilder().build_call_prompt("PNVL3", "3T/2026") + REACTION_DATA_PREFIX + json.dumps(window)
     answer = "**6. Perguntas e respostas**\nTexto.\n\n**Reação do mercado:**\nReação justa.\n\n**7. Conclusão da IA**\nTom predominante: confiante."
     assert "| 5 pregões antes |" in with_reaction_table(answer, prompt)
+
+
+def test_call_market_context_uses_the_official_release_date_first(api, monkeypatch):
+    import asyncio
+    main, _ = api
+    release = FetchedDocument("https://ri.example/release.pdf", "Release", text="5 de novembro de 2026 – A Fras-le anuncia seus resultados")
+    monkeypatch.setattr(main, "fetch_release", Mock(return_value=release))
+    reaction = Mock(return_value="CONTEXT")
+    monkeypatch.setattr(main, "reaction_prompt", reaction)
+    assert asyncio.run(main.call_market_context("FRAS3", "2026", "3T", "transcript text")) == "CONTEXT"
+    assert reaction.call_args.args[1] == release.text and reaction.call_args.args[2] is False
+    monkeypatch.setattr(main, "fetch_release", Mock(side_effect=RuntimeError("offline")))
+    asyncio.run(main.call_market_context("FRAS3", "2026", "3T", "transcript text"))
+    assert reaction.call_args.args[1] == "transcript text" and reaction.call_args.args[2] is True

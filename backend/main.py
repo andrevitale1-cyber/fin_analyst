@@ -73,6 +73,21 @@ async def market_reaction_context(symbol, text="", pdf_bytes=b"", call=False):
     except (OpenAIError, ValueError, TypeError):
         return ""
 
+
+async def call_market_context(company, ano, trimestre, transcript="", pdf_bytes=b""):
+    """Date the call's market reaction from the official release, as the quarterly analysis does."""
+    try:
+        release = await asyncio.wait_for(asyncio.to_thread(
+            fetch_release, AutoFetcher().resolve_ticker(company), ano, trimestre, connection=get_db_connection), timeout=60.0)
+        if release and (context := await market_reaction_context(company, release.text, release.pdf_bytes)):
+            return context
+    except HTTPException:
+        raise
+    except Exception as exc:  # the release only dates the window; its absence must not fail the call analysis
+        print(f"call_market_release_unavailable issuer={company} error_type={type(exc).__name__}")
+    # No release available: fall back to the date of the call in the transcript.
+    return await market_reaction_context(company, transcript, pdf_bytes, call=True)
+
 # --- CONFIGURAÇÕES GERAIS ---
 @asynccontextmanager
 async def lifespan(app):
@@ -521,7 +536,7 @@ async def analyze_earnings_call_auto(
                    f"Não foi encontrada uma transcrição pública de {company} para {trimestre}/{ano}. Envie o PDF manualmente.")
         raise HTTPException(status_code=404, detail=message)
     prompt = PromptBuilder().build_call_prompt(company, f"{trimestre}/{ano}", locale=locale)
-    prompt += await market_reaction_context(company, document.text, call=True)
+    prompt += await call_market_context(company, ano, trimestre, document.text)
     try:
         response_text = await asyncio.wait_for(asyncio.to_thread(
             OpenAIClient(task="analysis").analyze_transcript, prompt, document.text,
@@ -577,7 +592,7 @@ async def analyze_earnings_call(
             texto_transcricao = ""
 
         prompt = PromptBuilder().build_call_prompt(empresa, f"{trimestre}/{ano}", locale=locale)
-        prompt += await market_reaction_context(empresa, texto_transcricao or "", contents, call=True)
+        prompt += await call_market_context(empresa, ano, trimestre, texto_transcricao or "", contents)
 
         response_text = await asyncio.wait_for(
             (asyncio.to_thread(OpenAIClient(task="analysis").analyze_transcript, prompt, texto_transcricao)
