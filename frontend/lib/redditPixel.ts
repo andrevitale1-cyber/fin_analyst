@@ -1,3 +1,5 @@
+import { hasTrackingConsent } from "./consent";
+
 const PIXEL_ID = "a2_jzugsawslzp2";
 type Pixel = ((...args: unknown[]) => void) & {
   sendEvent?: (...args: unknown[]) => void;
@@ -28,7 +30,7 @@ export async function signupConversionId(userId: string, createdAt: number) {
 }
 
 export function trackRedditVisit(path: string, email?: string) {
-  if (!["finanalyser.com.br", "www.finanalyser.com.br"].includes(window.location.hostname) || path === lastPath) return;
+  if (!hasTrackingConsent() || !["finanalyser.com.br", "www.finanalyser.com.br"].includes(window.location.hostname) || path === lastPath) return;
   if (!window.rdt) {
     const pixel = function (...args: unknown[]) {
       if (pixel.sendEvent) pixel.sendEvent(...args);
@@ -63,7 +65,7 @@ export function trackRedditConversion(event: "SignUp" | "Purchase" | "AddToCart"
 }
 
 export function requestRedditGetStarted() {
-  if (!["finanalyser.com.br", "www.finanalyser.com.br"].includes(window.location.hostname)) return;
+  if (!hasTrackingConsent() || !["finanalyser.com.br", "www.finanalyser.com.br"].includes(window.location.hostname)) return;
   const event_id = crypto.randomUUID();
   void (async () => {
     const conversionId = await hashValue("reddit-click:" + event_id);
