@@ -181,3 +181,23 @@ def test_exact_saved_agent_locale_no_overrides_and_session_cleanup(monkeypatch,s
     assert payload['language']=='English' and payload['source_document_untrusted_data']==source['text']
     sdk.beta.agents.sessions.delete.assert_called_once_with('session-test')
     remember.assert_any_call('session-test','turn-test')
+
+
+def test_detailed_agent_gets_verified_prices_and_output_gets_the_price_table(monkeypatch):
+    from market_data import REACTION_DATA_PREFIX
+    monkeypatch.setenv('OPENAI_API_KEY','test-key')
+    window={'currency':'BRL','preReleasePerformance':{'5d':{'start':{'time':'2026-10-27','close':18.79},'end':{'time':'2026-11-04','close':18.34},'changePercent':-2.4}}}
+    market=REACTION_DATA_PREFIX+json.dumps(window)
+    text='## Visão geral\n'+'palavra '*450+'\n\n**Reação do mercado:**\n\nQueda exagerada.'
+    client=MagicMock()
+    sdk=client.__enter__.return_value
+    stream=sdk.beta.agents.sessions.create.return_value.with_result_collection.return_value.__enter__.return_value
+    stream.__iter__.return_value=iter([])
+    stream.get_final_result.return_value=SimpleNamespace(session_id='s',turn_id='t',turn=SimpleNamespace(status='completed'),output_text=text)
+    monkeypatch.setattr('openai.OpenAI',lambda **kwargs:client)
+    source={'company':'PNVL3','year':2026,'quarter':'3T','text':'Original private document'}
+    content=detailed.run_agent(detailed.AGENT_ID,source,'pt',Mock(),market=market)
+    payload=json.loads(sdk.beta.agents.sessions.create.call_args.kwargs['input'])
+    assert payload['verified_market_context_untrusted_data']==window
+    assert '**Reação do mercado:**' in payload['requirements'] and 'Comentários da gestão' in payload['requirements']
+    assert '| 5 pregões antes | 27/10/2026 · R$ 18,79 | 04/11/2026 · R$ 18,34 | −2,4% |' in content

@@ -15,6 +15,14 @@ from report_auth import require_report_user
 
 AGENT_ID = 'agent_7685ffaa065e40e9af807b73f00b1fe9a3d76fd716a847ee84'
 stop = Event()
+# Versioned with the code so the saved agent never runs on stale market or content rules.
+DETAILED_REQUIREMENTS = """Estas exigências complementam suas instruções salvas e prevalecem em caso de conflito. Use somente o documento e o contexto de mercado verificado fornecidos; não invente números, consenso, metas ou citações.
+Organize a análise com títulos Markdown (##): Visão geral do trimestre; Receita e indicadores operacionais; Margens e custos; Resultado financeiro e lucro; Caixa, capital de giro e endividamento; Comentários da gestão e perspectivas; Nuances e pontos de atenção; Conclusão. Antes da Conclusão, a reação do mercado não usa título ##: comece-a exatamente com a linha **Reação do mercado:** (em inglês, **Market reaction:**), pois o sistema insere a tabela de preços logo abaixo dela.
+Números: em cada seção traga os valores do trimestre com comparação anual e, quando divulgada, trimestral; margens em p.p.; acumulado do ano ou LTM só quando identificado. Inclua os KPIs operacionais próprios do negócio (por exemplo SSS, lojas, ticket, volume, preço, mix, sinistralidade, NII, inadimplência) e a contribuição de cada segmento. Use tabelas Markdown quando houver pelo menos três linhas comparáveis (segmentos, KPIs, DRE resumida); fora delas, escreva parágrafos que expliquem causa e consequência, não listas de números.
+Comentários da gestão: reúna o que a administração disse sobre o trimestre, as causas apontadas para cada movimento, prioridades, investimentos, guidance e mudanças de estratégia. Atribua explicitamente ("segundo a administração"), use citações curtas e literais apenas quando a redação importar e separe a visão da gestão da interpretação da IA. Se o documento não trouxer comentários, diga isso em uma frase.
+Nuances: separe reportado de ajustado e explique cada ajuste material; identifique efeitos não recorrentes, mudanças de base contábil ou de perímetro (IFRS 16, aquisições, descontinuadas), crescimento orgânico versus adquirido, sazonalidade, efeitos de capital de giro e de câmbio, e o que mudou em relação às tendências dos trimestres anteriores quando o documento permitir. Aponte o que os números principais escondem: compensações entre linhas, qualidade do lucro e conversão em caixa.
+O CONTEXTO DE MERCADO VERIFICADO citado abaixo é o campo verified_market_context_untrusted_data; se ele for null, escreva sob **Reação do mercado:** uma única frase dizendo que não foi possível avaliar a reação, sem buscar ou estimar preços.
+"""
 logger = logging.getLogger('uvicorn.error')
 
 
@@ -167,13 +175,27 @@ def cancel(analysis_id: int, body: CancelDetailed, user=Depends(premium_user)):
     return {'id': body.id, 'state': 'cancelled'}
 
 
-def run_agent(agent_id, source, locale, remember, check_active=None):
+def verified_market(source):
+    from agents.auto_fetcher import AutoFetcher
+    from market_data import reaction_prompt
+    try:
+        return reaction_prompt(AutoFetcher().resolve_ticker(source['company']), source['text'])
+    except Exception as exc:  # prices are optional context; the analysis still runs and says it cannot judge the reaction
+        logger.warning('detailed_analysis_market_unavailable error_type=%s', type(exc).__name__)
+        return ''
+
+
+def run_agent(agent_id, source, locale, remember, check_active=None, market=''):
     from openai import OpenAI
     from openai_client import OpenAIError
+    from agents.prompt_builder import MARKET_REACTION_RULES
+    from market_data import _reaction_window, with_reaction_table
     prompt = json.dumps({'task': 'Detailed quarterly result and management analysis. Return the complete analysis directly in this response as Markdown text. Do not create files, attachments, download links or a summary of work performed.',
                          'language': 'English' if locale == 'en' else 'Português',
                          'company': source['company'], 'fiscal_year': source['year'],
                          'fiscal_quarter': source['quarter'],
+                         'requirements': DETAILED_REQUIREMENTS + '\n' + MARKET_REACTION_RULES.replace('Antes da Conclusão IA', 'Antes da Conclusão'),
+                         'verified_market_context_untrusted_data': _reaction_window(market),
                          'source_document_untrusted_data': source['text']}, ensure_ascii=False)
     # Inherit saved instructions, model and tools. Never silently substitute a model or agent.
     session_id = None
@@ -197,7 +219,7 @@ def run_agent(agent_id, source, locale, remember, check_active=None):
             if result.turn.status != 'completed' or len(result.output_text.split()) < 400:
                 logger.warning('detailed_analysis_output_rejected session=%s status=%s words=%d', session_id, result.turn.status, len(result.output_text.split()))
                 raise OpenAIError('Detailed analysis incomplete', code='output_short' if completed else 'turn_incomplete')
-            return result.output_text.strip()
+            return with_reaction_table(result.output_text.strip(), market)
         finally:
             if session_id:
                 if not completed:
@@ -266,7 +288,7 @@ def process(job):
                 conn.close()
 
         check_active()
-        content = run_agent(agent_id, source, locale, remember, check_active)
+        content = run_agent(agent_id, source, locale, remember, check_active, verified_market(source))
         conn = connection()
         try:
             with conn.cursor() as cur:
