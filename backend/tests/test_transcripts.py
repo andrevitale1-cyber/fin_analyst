@@ -195,7 +195,9 @@ def test_call_prompt_is_localized_and_places_verified_timestamps_inline():
     assert "Quando não houver minutagem, omita" in pt
     assert "When timing is unavailable, omit" in en
     for prompt in (pt, en):
-        assert "**5." not in prompt
+        assert "Key moments" not in prompt and "Momentos principais" not in prompt
+        assert "**7." in prompt and ("**Reação do mercado:**" in prompt or "**Market reaction:**" in prompt)
+        assert "**3. Capital allocation**" in prompt or "**3. Alocação de capital**" in prompt
         assert "[mm:ss]" in prompt and "[hh:mm:ss]" in prompt
         assert "Never estimate from text position" in prompt or "Nunca estime pela posição do texto" in prompt
         assert "voice, emotion, or body language" in prompt or "voz, emoção ou linguagem corporal" in prompt
@@ -382,3 +384,12 @@ def test_b3_ticker_adds_query_and_excludes_paywalled_domains(monkeypatch):
     bodies = [call.kwargs["json"] for call in post.call_args_list]
     assert any(body["query"].startswith("PNVL3 3T26") for body in bodies)
     assert all("seekingalpha.com" in body["exclude_domains"] for body in bodies)
+
+
+def test_call_reaction_label_receives_the_verified_price_table():
+    from market_data import REACTION_DATA_PREFIX, with_reaction_table
+    window = {"currency": "BRL", "preReleasePerformance": {"5d": {"start": {"time": "2026-10-27", "close": 18.79},
+              "end": {"time": "2026-11-04", "close": 18.34}, "changePercent": -2.4}}}
+    prompt = PromptBuilder().build_call_prompt("PNVL3", "3T/2026") + REACTION_DATA_PREFIX + json.dumps(window)
+    answer = "**6. Perguntas e respostas**\nTexto.\n\n**Reação do mercado:**\nReação justa.\n\n**7. Conclusão da IA**\nTom predominante: confiante."
+    assert "| 5 pregões antes |" in with_reaction_table(answer, prompt)
