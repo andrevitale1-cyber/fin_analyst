@@ -206,6 +206,7 @@ def test_call_prompt_is_localized_and_places_verified_timestamps_inline():
         assert "voice, emotion, or body language" in prompt or "voz, emoção ou linguagem corporal" in prompt
         assert "1,000–3,000 words" in prompt or "entre 1.000 e 3.000 palavras" in prompt
         assert "Markdown **bold**" in prompt or "Markdown **negrito**" in prompt
+        assert "filler sentences" in prompt or "frases de enchimento" in prompt
         assert "one bullet per material driver" in prompt or "um bullet por fator material" in prompt
         assert "every material question" in prompt or "todas as perguntas e respostas materiais" in prompt
 
