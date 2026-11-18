@@ -211,7 +211,7 @@ def test_detailed_requirements_english_has_new_sections_and_no_recommendation():
     assert '{metric_menu}' not in text and 'retail (' in text and '1,000–3,000 words' in text
     for heading in ('Key figures', 'Capital allocation and shareholder returns', 'Metrics to follow in the next results'):
         assert heading in text
-    assert 'do not recommend buying, selling or holding' in text and 'filler sentences' in text
+    assert 'do not recommend buying, selling or holding' in text and 'Never write about missing data' in text
 
 
 def test_prompts_ask_for_non_gaap_only_when_the_adjustment_matters():
@@ -220,5 +220,5 @@ def test_prompts_ask_for_non_gaap_only_when_the_adjustment_matters():
     assert 'Medidas ajustadas/não-GAAP' in quarterly and 'não crie ajustes próprios' in quarterly
     assert 'Quando o ajuste for pequeno' in quarterly and 'principais itens da conciliação' in quarterly
     pt, en = detailed.detailed_requirements('pt'), detailed.detailed_requirements('en')
-    assert 'Reportado | Ajustado' in pt and 'omita o tema' in pt
-    assert 'Reported | Adjusted' in en and 'leave the topic out' in en
+    assert 'Item | Lucro operacional | Lucro líquido' in pt and 'omita o tema' in pt and 'Converta todo intervalo' in pt
+    assert 'Item | Operating income | Net income' in en and 'leave the topic out' in en and 'Convert every' in en
