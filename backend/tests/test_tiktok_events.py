@@ -54,6 +54,8 @@ def test_first_analysis_requires_a_recent_saved_result(database):
     assert tracking.milestone('FirstAnalysisCompleted', 'user_a') is None
     database.fetchone.side_effect = [(now - timedelta(hours=2),), (now - timedelta(minutes=1),)]
     assert tracking.milestone('FirstAnalysisCompleted', 'user_a') == int((now - timedelta(minutes=1)).timestamp())
+    # The production column is TEXT: the query must cast it, or psycopg2 hands back a string.
+    assert 'CAST(data_criacao AS TIMESTAMPTZ)' in database.execute.call_args.args[0]
 
 
 def test_schema_does_not_accept_purchase_price_email_or_private_content():

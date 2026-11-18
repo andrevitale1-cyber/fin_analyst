@@ -102,7 +102,8 @@ def milestone(event, user):
             cur.execute('SELECT started_at FROM tiktok_rollout WHERE id=1')
             started = cur.fetchone()[0].timestamp()
             if event == 'FirstAnalysisCompleted':
-                cur.execute('SELECT MIN(data_criacao) FROM historico WHERE CAST(user_id AS TEXT)=%s', (str(user),))
+                # historico.data_criacao is a TEXT column; cast so psycopg2 returns a datetime.
+                cur.execute('SELECT MIN(CAST(data_criacao AS TIMESTAMPTZ)) FROM historico WHERE CAST(user_id AS TEXT)=%s', (str(user),))
                 created = cur.fetchone()[0]
                 if not created:
                     return None
