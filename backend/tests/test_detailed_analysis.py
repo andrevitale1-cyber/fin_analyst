@@ -220,5 +220,5 @@ def test_prompts_ask_for_non_gaap_only_when_the_adjustment_matters():
     assert 'Medidas ajustadas/não-GAAP' in quarterly and 'não crie ajustes próprios' in quarterly
     assert 'Quando o ajuste for pequeno' in quarterly and 'principais itens da conciliação' in quarterly
     pt, en = detailed.detailed_requirements('pt'), detailed.detailed_requirements('en')
-    assert 'Item | Lucro operacional | Lucro líquido' in pt and 'omita o tema' in pt and 'Converta todo intervalo' in pt
-    assert 'Item | Operating income | Net income' in en and 'leave the topic out' in en and 'Convert every' in en
+    assert 'Item | Lucro operacional | Lucro líquido' in pt and 'omita o tema' in pt and '74,8% ± 50 bps' in pt and 'direção explícita' in pt
+    assert 'Item | Operating income | Net income' in en and 'leave the topic out' in en and '74.8% ± 50 bps' in en and 'direction explicit' in en
