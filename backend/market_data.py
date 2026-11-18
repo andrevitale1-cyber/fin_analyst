@@ -219,7 +219,7 @@ def _table_change(value, lang):
     return text.replace('.', ',') if lang == 'pt' else text
 
 
-def with_reaction_table(text, prompt):
+def _with_reaction_table(text, prompt):
     """Insert the verified price windows as a table under the market-reaction heading.
 
     The numbers come from the backend window, never from the model, so the table always matches the data sent."""
@@ -252,6 +252,23 @@ def with_reaction_table(text, prompt):
         return text
     table = '\n'.join([_TABLE_HEADERS[lang], '|---|---|---|---:|', *rows])
     return f"{text[:match.end()]}\n\n{table}\n\n{text[match.end():].lstrip()}"
+
+_DISCLAIMERS = {'pt': 'Conteúdo educativo e informativo; não é recomendação de investimento.',
+                'en': 'Educational and informational content; not investment advice.'}
+_SECTION_START = re.compile(r'^\s*(?:#{1,6}\s|\*\*\s*\d+[.)]\s|(?:Seção|Section)\s+\d+|\*\*[^*\n]+\*\*\s*$)', re.I | re.M)
+
+
+def with_reaction_table(text, prompt):
+    """Insert the verified price table and close the market-reaction section with the not-advice notice."""
+    text = _with_reaction_table(text, prompt)
+    match = _REACTION_HEADING.search(text or '')
+    lang = 'en' if match and match[1].lower().startswith('market') else 'pt'
+    if not match or _DISCLAIMERS[lang] in text:
+        return text
+    following = _SECTION_START.search(text, match.end())
+    end = following.start() if following else len(text)
+    return f"{text[:end].rstrip()}\n\n{_DISCLAIMERS[lang]}\n\n{text[end:].lstrip()}".rstrip() + ('\n' if text.endswith('\n') else '')
+
 
 def number(value):
     try:

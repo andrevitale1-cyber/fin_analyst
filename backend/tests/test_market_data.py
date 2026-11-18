@@ -512,8 +512,17 @@ def test_reaction_table_in_english_and_skips_without_data(monkeypatch):
     prompt = _reaction_prompt_for_table(monkeypatch, 'USD')
     result = market_data.with_reaction_table('**Market reaction:**\n\nShares rose.', prompt)
     assert '| Reaction (1st session) | Nov 4, 2026 · $10.48 | Nov 6, 2026 · $11.37 | +8.5% |' in result
-    assert market_data.with_reaction_table('**Market reaction:** n/a', '') == '**Market reaction:** n/a'
+    assert market_data.with_reaction_table('**Market reaction:** n/a', '') == '**Market reaction:** n/a\n\nEducational and informational content; not investment advice.'
     assert market_data.with_reaction_table('No heading', prompt) == 'No heading'
+
+
+def test_reaction_section_ends_with_not_advice_notice_before_the_next_section():
+    notice = 'Conteúdo educativo e informativo; não é recomendação de investimento.'
+    text = '**Reação do mercado:**\n\nA ação caiu.\n\n**8. Conclusão da IA**\n\nTom: misto.'
+    result = market_data.with_reaction_table(text, '')
+    assert result.index('A ação caiu.') < result.index(notice) < result.index('**8. Conclusão da IA**')
+    assert result.count(notice) == 1 and market_data.with_reaction_table(result, '') == result
+    assert market_data.with_reaction_table('**Reação do mercado:** ok', '').endswith(notice)
 
 
 def test_compact_thesis_keeps_reaction_table(monkeypatch):
