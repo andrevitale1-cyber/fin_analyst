@@ -200,4 +200,15 @@ def test_detailed_agent_gets_verified_prices_and_output_gets_the_price_table(mon
     payload=json.loads(sdk.beta.agents.sessions.create.call_args.kwargs['input'])
     assert payload['verified_market_context_untrusted_data']==window
     assert '**Reação do mercado:**' in payload['requirements'] and 'Comentários da gestão' in payload['requirements']
+    assert 'entre 1.000 e 3.000 palavras' in payload['requirements'] and 'Métricas para acompanhar' in payload['requirements']
+    assert '{metric_menu}' not in payload['requirements'] and 'varejo (' in payload['requirements']
+
     assert '| 5 pregões antes | 27/10/2026 · R$ 18,79 | 04/11/2026 · R$ 18,34 | −2,4% |' in content
+
+
+def test_detailed_requirements_english_has_new_sections_and_no_recommendation():
+    text = detailed.detailed_requirements('en')
+    assert '{metric_menu}' not in text and 'retail (' in text and '1,000–3,000 words' in text
+    for heading in ('Key figures', 'Capital allocation and shareholder returns', 'Metrics to follow in the next results'):
+        assert heading in text
+    assert 'do not recommend buying, selling or holding' in text and 'filler sentences' in text
