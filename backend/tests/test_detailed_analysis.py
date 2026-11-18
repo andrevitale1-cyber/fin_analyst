@@ -212,3 +212,13 @@ def test_detailed_requirements_english_has_new_sections_and_no_recommendation():
     for heading in ('Key figures', 'Capital allocation and shareholder returns', 'Metrics to follow in the next results'):
         assert heading in text
     assert 'do not recommend buying, selling or holding' in text and 'filler sentences' in text
+
+
+def test_prompts_ask_for_non_gaap_only_when_the_adjustment_matters():
+    from agents.prompt_builder import PromptBuilder
+    quarterly = PromptBuilder().build_prompt('AAPL', 'Texto do release', 'pt', '3T/2026')
+    assert 'Medidas ajustadas/não-GAAP' in quarterly and 'não crie ajustes próprios' in quarterly
+    assert 'Quando o ajuste for pequeno' in quarterly and 'principais itens da conciliação' in quarterly
+    pt, en = detailed.detailed_requirements('pt'), detailed.detailed_requirements('en')
+    assert 'Reportado | Ajustado' in pt and 'omita o tema' in pt
+    assert 'Reported | Adjusted' in en and 'leave the topic out' in en
