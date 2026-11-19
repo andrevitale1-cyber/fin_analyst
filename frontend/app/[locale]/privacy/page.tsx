@@ -1,5 +1,6 @@
 "use client";
 import BrandLogo from "../../../components/BrandLogo";
+import { ResetCookieChoice } from "../../../components/CookieConsent";
 import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { ArrowLeft, Lock, Eye, Database, Server, Mail, UserCheck } from 'lucide-react';
@@ -136,9 +137,10 @@ export default function Privacy() {
 
           <Section icon={<Eye size={18} className="text-emerald-400" />} title={en ? '6. Cookies' : '6. Cookies'}>
             <p>{en
-              ? 'We use only essential cookies required for authentication (managed by Clerk) and session management. We do not use tracking or advertising cookies.'
-              : 'Utilizamos apenas cookies essenciais necessários para autenticação (gerenciados pelo Clerk) e gerenciamento de sessão. Não utilizamos cookies de rastreamento ou publicidade.'
+              ? 'Essential cookies for authentication (managed by Clerk) and session management are always active. Analytics cookies (Google Analytics) and advertising measurement cookies (TikTok Pixel and Reddit Pixel) are only used if you accept them in the cookie banner. If you decline, these tools are not loaded.'
+              : 'Os cookies essenciais de autenticação (gerenciados pelo Clerk) e de sessão ficam sempre ativos. Os cookies de análise de uso (Google Analytics) e de mensuração de anúncios (TikTok Pixel e Reddit Pixel) só são usados se você aceitá-los no aviso de cookies. Se você recusar, essas ferramentas não são carregadas.'
             }</p>
+            <ResetCookieChoice label={en ? 'Change cookie preferences' : 'Alterar preferências de cookies'} />
           </Section>
 
           <Section icon={<Lock size={18} className="text-emerald-400" />} title={en ? '7. Changes to This Policy' : '7. Alterações nesta Política'}>

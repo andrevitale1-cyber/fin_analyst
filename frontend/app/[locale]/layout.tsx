@@ -4,9 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import "../globals.css";
-import RedditPixel from "../../components/RedditPixel";
-import TikTokPixel from "../../components/TikTokPixel";
-import GoogleAnalytics from "../../components/GoogleAnalytics";
+import CookieConsent from "../../components/CookieConsent";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -82,9 +80,7 @@ export default async function RootLayout({
     <ClerkProvider>
       <html lang={locale} className={playfair.variable}>
         <body className={inter.className}>
-          <RedditPixel />
-          <TikTokPixel />
-          <GoogleAnalytics />
+          <CookieConsent locale={locale} />
           <NextIntlClientProvider messages={messages}>
             {children}
           </NextIntlClientProvider>

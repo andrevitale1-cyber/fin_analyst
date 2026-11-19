@@ -1,3 +1,5 @@
+import { hasTrackingConsent } from "./consent";
+
 export const TIKTOK_PIXEL_ID = "DBT8JPJC77UEEP3E4PS0";
 
 // Vendor bootstrap only; page events are sent separately for Next.js navigation.
@@ -21,7 +23,7 @@ declare global {
 
 export type TikTokEvent = "CompleteRegistration" | "FirstAnalysisCompleted" | "InitiateCheckout" | "ViewContent";
 export function requestTikTokEvent(event: TikTokEvent, content?: "premium_pricing" | "public_report" | "monthly" | "yearly") {
-  if (!["finanalyser.com.br", "www.finanalyser.com.br"].includes(window.location.hostname)) return;
+  if (!hasTrackingConsent() || !["finanalyser.com.br", "www.finanalyser.com.br"].includes(window.location.hostname)) return;
   window.dispatchEvent(new CustomEvent("finanalyser:tiktok", {detail: {event, event_id: crypto.randomUUID(), content}}));
 }
 
