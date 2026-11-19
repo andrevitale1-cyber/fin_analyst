@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CONSENT_KEY } from "../lib/consent";
 import GoogleAnalytics from "./GoogleAnalytics";
+import MetaPixel from "./MetaPixel";
 import RedditPixel from "./RedditPixel";
 import TikTokPixel from "./TikTokPixel";
 
@@ -22,7 +23,7 @@ export default function CookieConsent({ locale }: { locale: string }) {
     setChoice(value);
   };
 
-  if (choice === "granted") return <><GoogleAnalytics /><RedditPixel /><TikTokPixel /></>;
+  if (choice === "granted") return <><GoogleAnalytics /><RedditPixel /><TikTokPixel /><MetaPixel /></>;
   if (choice !== null) return null;
 
   return (
@@ -30,8 +31,8 @@ export default function CookieConsent({ locale }: { locale: string }) {
       className="fixed inset-x-3 bottom-3 z-[100] mx-auto max-w-3xl rounded-2xl border border-white/10 bg-[#111827] p-4 text-sm text-gray-300 shadow-2xl sm:flex sm:items-center sm:gap-4">
       <p className="flex-1">
         {en
-          ? "We use cookies for analytics (Google Analytics) and to measure our ads (TikTok and Reddit). Essential login cookies are always on. "
-          : "Usamos cookies para análise de uso (Google Analytics) e para medir nossos anúncios (TikTok e Reddit). Os cookies essenciais de login ficam sempre ativos. "}
+          ? "We use cookies for analytics (Google Analytics) and to measure our ads (Meta, TikTok and Reddit). Essential login cookies are always on. "
+          : "Usamos cookies para análise de uso (Google Analytics) e para medir nossos anúncios (Meta, TikTok e Reddit). Os cookies essenciais de login ficam sempre ativos. "}
         <Link href={`/${locale}/privacy`} className="text-blue-400 underline">{en ? "Privacy policy" : "Política de privacidade"}</Link>
       </p>
       <div className="mt-3 flex shrink-0 gap-2 sm:mt-0">
