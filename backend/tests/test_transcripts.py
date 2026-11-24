@@ -419,3 +419,13 @@ def test_jbs_resolves_to_its_nyse_ticker_after_leaving_b3():
     from agents.auto_fetcher import AutoFetcher
     fetcher = AutoFetcher()
     assert {fetcher.resolve_ticker(name) for name in ('JBS', 'jbs', 'JBSS3', 'JBSS32', 'JBS N.V.')} == {'JBS'}
+
+
+def test_renamed_b3_tickers_resolve_to_their_current_symbols():
+    from agents.auto_fetcher import AutoFetcher
+    fetcher = AutoFetcher()
+    expected = {'NTCO3': 'NATU3', 'EMBR3': 'EMBJ3', 'ELET3': 'AXIA3', 'ELET6': 'AXIA6', 'CCRO3': 'MOTV3',
+                'BRFS3': 'MBRF3', 'CPLE6': 'CPLE3', 'AZUL4': 'AZUL3', 'Embraer': 'EMBJ3', 'Eletrobras': 'AXIA3'}
+    assert {old: fetcher.resolve_ticker(old) for old in expected} == expected
+    assert 'CIEL3' not in fetcher.ir_urls
+

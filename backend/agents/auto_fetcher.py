@@ -81,6 +81,14 @@ class AutoFetcher:
             "PANVEL": "PNVL3", "GRUPO PANVEL": "PNVL3", "DIMED": "PNVL3",
             "SK HYNIX": "SK HYNIX", "SK HYNIX INC": "SK HYNIX", "SK HYNIX INC.": "SK HYNIX",
             "000660": "SK HYNIX", "000660.KS": "SK HYNIX",
+            # Tickers renamed or merged on B3 (2025-2026); old symbols and names keep working.
+            "NTCO3": "NATU3", "NATURA": "NATU3", "NATURA &CO": "NATU3", "NATURA&CO": "NATU3",
+            "EMBR3": "EMBJ3", "EMBRAER": "EMBJ3",
+            "ELET3": "AXIA3", "ELET5": "AXIA5", "ELET6": "AXIA6", "ELETROBRAS": "AXIA3", "AXIA ENERGIA": "AXIA3",
+            "CCRO3": "MOTV3", "CCR": "MOTV3", "MOTIVA": "MOTV3",
+            "BRFS3": "MBRF3", "MRFG3": "MBRF3", "BRF": "MBRF3", "MARFRIG": "MBRF3", "MBRF": "MBRF3",
+            "CPLE6": "CPLE3", "CPLE5": "CPLE3", "COPEL": "CPLE3",
+            "AZUL4": "AZUL3", "AZUL54": "AZUL3", "AZUL53": "AZUL3",
             # JBSS3 left B3 in June 2025; JBS N.V. trades on the NYSE as JBS (B3 BDR: JBSS32).
             "JBS": "JBS", "JBSS3": "JBS", "JBSS32": "JBS", "JBS N.V.": "JBS", "JBS NV": "JBS", "JBS N": "JBS", "JBS S.A.": "JBS", "JBS SA": "JBS",
             "ROBINHOOD": "HOOD", "ROBINHOOD MARKETS": "HOOD", "ROBINHOOD MARKETS INC": "HOOD",
