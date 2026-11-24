@@ -81,6 +81,8 @@ class AutoFetcher:
             "PANVEL": "PNVL3", "GRUPO PANVEL": "PNVL3", "DIMED": "PNVL3",
             "SK HYNIX": "SK HYNIX", "SK HYNIX INC": "SK HYNIX", "SK HYNIX INC.": "SK HYNIX",
             "000660": "SK HYNIX", "000660.KS": "SK HYNIX",
+            # JBSS3 left B3 in June 2025; JBS N.V. trades on the NYSE as JBS (B3 BDR: JBSS32).
+            "JBS": "JBS", "JBSS3": "JBS", "JBSS32": "JBS", "JBS N.V.": "JBS", "JBS NV": "JBS", "JBS N": "JBS", "JBS S.A.": "JBS", "JBS SA": "JBS",
             "ROBINHOOD": "HOOD", "ROBINHOOD MARKETS": "HOOD", "ROBINHOOD MARKETS INC": "HOOD",
         }
         normalized = " ".join("".join(c for c in unicodedata.normalize("NFKD", ticker) if not unicodedata.combining(c)).split())

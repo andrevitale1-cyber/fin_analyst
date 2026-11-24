@@ -413,3 +413,9 @@ def test_call_market_context_uses_the_official_release_date_first(api, monkeypat
     monkeypatch.setattr(main, "fetch_release", Mock(side_effect=RuntimeError("offline")))
     asyncio.run(main.call_market_context("FRAS3", "2026", "3T", "transcript text"))
     assert reaction.call_args.args[1] == "transcript text" and reaction.call_args.args[2] is True
+
+
+def test_jbs_resolves_to_its_nyse_ticker_after_leaving_b3():
+    from agents.auto_fetcher import AutoFetcher
+    fetcher = AutoFetcher()
+    assert {fetcher.resolve_ticker(name) for name in ('JBS', 'jbs', 'JBSS3', 'JBSS32', 'JBS N.V.')} == {'JBS'}
