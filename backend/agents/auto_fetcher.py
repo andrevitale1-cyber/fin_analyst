@@ -508,6 +508,9 @@ class AutoFetcher:
                 document.source = "CVM"
                 document.sources = [*(document.sources or []), {"name": "CVM IPE", "url": candidate["url"]}]
                 return document
+            # Every 3T/4T release is past its CVM deadline when checked, so a rejection here is a bug to fix.
+            logger.info("cvm_candidate_rejected issuer=%s year=%s quarter=%s title=%r url=%s", ticker, year, quarter,
+                        candidate["title"][:120], candidate["url"])
         logger.info("release_lookup issuer=%s year=%s quarter=%s source=cvm outcome=not_found candidates=%s", ticker, year, quarter, len(candidates))
         return None
 
