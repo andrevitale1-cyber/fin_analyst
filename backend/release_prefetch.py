@@ -6,10 +6,15 @@ from threading import Event, Thread
 
 from psycopg2 import Error as DatabaseError
 from database import get_db_connection
+from company_search import _load
 from release_pipeline import fetch_release, ReleaseError, issuer_identity, VERSION
 
 stop = Event()
 logger = logging.getLogger('uvicorn.error')
+def b3_universe():
+    return _load('b3')
+
+
 INITIAL = ('MSFT','NVDA','AAPL','GOOGL','AMZN','META','PETR4','WEGE3','VIVA3')
 
 
@@ -37,6 +42,13 @@ def refresh_once(connection=get_db_connection):
                 if cur.fetchone()[0] == 0:
                     now = datetime.now(timezone.utc)
                     tasks = [(symbol, *seed_period(symbol, now)) for symbol in INITIAL]
+            # Half of each batch adds IBOV/SMLL companies never checked, so official-source coverage is tested across B3.
+            cur.execute('SELECT DISTINCT symbol FROM official_release_cache')
+            known = {row[0] for row in cur.fetchall()}
+            missing = [symbol for symbol in dict.fromkeys(item['ticker'] for item in b3_universe()) if symbol not in known][:6]
+            if missing:
+                now = datetime.now(timezone.utc)
+                tasks = [(symbol, *seed_period(symbol, now)) for symbol in missing] + list(tasks)[:12 - len(missing)]
         for symbol, year, quarter in tasks:
             if stop.is_set():
                 break

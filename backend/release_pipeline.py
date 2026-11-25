@@ -240,6 +240,7 @@ def fetch_release(symbol, year, quarter, *, connection=None, refresh=False, allo
             except (ReleaseError, ValueError, TypeError) as exc:
                 logger.warning('release_pipeline issuer=%s stage=cache outcome=invalid reason=%s', symbol, getattr(exc,'code',type(exc).__name__))
         fetcher.allow_web = allow_web
+        fetcher.cvm_issuer = (identity.get('cvm'), identity.get('cnpj'))
         status, document, fingerprint = 'not_found', None, None
         try:
             document = fetcher.fetch_result_pdf(symbol, year, str(quarter))

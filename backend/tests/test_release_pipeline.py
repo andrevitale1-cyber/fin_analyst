@@ -152,9 +152,25 @@ def test_prefetch_disables_web_model_and_respects_worker_lock(monkeypatch):
     fetch=Mock()
     monkeypatch.setattr(release_prefetch,'fetch_release',fetch)
     monkeypatch.setattr(release_prefetch,'stop',Mock(is_set=lambda:False,wait=lambda _:False))
+    monkeypatch.setattr(release_prefetch,'b3_universe',lambda:[])
     release_prefetch.refresh_once(lambda:conn)
     assert fetch.call_args.kwargs['allow_web'] is False and fetch.call_args.kwargs['refresh'] is True
     conn.close.assert_called_once()
+
+
+def test_prefetch_adds_unchecked_b3_companies_before_rechecking_known_ones(monkeypatch):
+    import release_prefetch
+    conn=MagicMock();cur=conn.cursor.return_value.__enter__.return_value
+    cur.fetchone.return_value=(True,)
+    cur.fetchall.side_effect=[[(f'OLD{i}',2026,3) for i in range(12)],[('PETR4',),('OLD0',)]]
+    fetch=Mock()
+    monkeypatch.setattr(release_prefetch,'fetch_release',fetch)
+    monkeypatch.setattr(release_prefetch,'stop',Mock(is_set=lambda:False,wait=lambda _:False))
+    monkeypatch.setattr(release_prefetch,'seed_period',lambda symbol,now:(2026,3))
+    monkeypatch.setattr(release_prefetch,'b3_universe',lambda:[{'ticker':t} for t in ('PETR4','PRIO3','RADL3','PRIO3')])
+    release_prefetch.refresh_once(lambda:conn)
+    symbols=[c.args[0] for c in fetch.call_args_list]
+    assert symbols[:2]==['PRIO3','RADL3'] and len(symbols)==12 and 'PETR4' not in symbols
 
 
 @pytest.mark.parametrize('fiscal_end,expected',[('0630',(2027,1)),('1231',(2026,3)),('0831',(2026,4))])
@@ -163,3 +179,27 @@ def test_prefetch_uses_issuer_fiscal_calendar(monkeypatch,fiscal_end,expected):
     import release_prefetch
     monkeypatch.setattr(release_prefetch,'issuer_identity',lambda _: {'fiscal_year_end':fiscal_end})
     assert release_prefetch.seed_period('TEST',datetime(2026,11,4))==expected
+
+
+def test_cvm_ipe_returns_the_issuers_quarter_release_and_skips_call_invitations(monkeypatch, tmp_path):
+    import io, zipfile
+    from agents import cvm_ipe
+    from agents.auto_fetcher import AutoFetcher
+    header = 'CNPJ_Companhia;Nome_Companhia;Codigo_CVM;Data_Referencia;Categoria;Tipo;Especie;Assunto;Data_Entrega;Tipo_Apresentacao;Protocolo_Entrega;Versao;Link_Download'
+    rad = 'https://www.rad.cvm.gov.br/ENET/frmDownloadDocumento.aspx?numProtocolo='
+    lines = [header,
+        '12.345.678/0001-90;PRIO S.A.;22187;2026-11-05;Comunicado ao Mercado;Apresenta\xe7\xf5es;;Convite teleconfer\xeancia 3T26;2026-11-01;AP;1;1;'+rad+'1',
+        '12.345.678/0001-90;PRIO S.A.;22187;2026-11-05;Dados Econ\xf4mico-Financeiros;Press-release;;Release de Resultados 3T26;2026-11-05;AP;2;1;'+rad+'2',
+        '12.345.678/0001-90;PRIO S.A.;22187;2026-08-05;Dados Econ\xf4mico-Financeiros;Press-release;;Release de Resultados 2T26;2026-08-05;AP;3;1;'+rad+'3',
+        '99.999.999/0001-99;OUTRA S.A.;1;2026-11-05;Dados Econ\xf4mico-Financeiros;Press-release;;Release 3T26;2026-11-05;AP;4;1;'+rad+'4']
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w') as zipped:
+        zipped.writestr('ipe_cia_aberta_2026.csv', '\n'.join(lines).encode('latin-1'))
+    path = tmp_path / 'ipe.zip'; path.write_bytes(buffer.getvalue())
+    monkeypatch.setattr(cvm_ipe, '_archive', lambda year: zipfile.ZipFile(path) if year == 2026 else (_ for _ in ()).throw(ValueError('none')))
+    matches = AutoFetcher()._period_matches
+    found = cvm_ipe.release_candidates('022187', None, 2026, 3, matches)
+    assert [c['url'][-1] for c in found] == ['2']
+    assert [c['url'][-1] for c in cvm_ipe.release_candidates(None, '12345678000190', 2026, 3, matches)] == ['2']
+    assert cvm_ipe.release_candidates(None, None, 2026, 3, matches) == []
+

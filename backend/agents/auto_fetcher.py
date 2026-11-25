@@ -16,6 +16,7 @@ import requests
 from bs4 import BeautifulSoup
 from agents.search_client import BLOCKED_TRANSCRIPT_DOMAINS, SearchClient, SearchError
 from agents.equibles_client import EquiblesClient
+from agents import cvm_ipe
 from agents.sec_fetcher import FetchedDocument, SECFetcher
 from openai_client import OpenAIClient, OpenAIError
 
@@ -57,6 +58,7 @@ class AutoFetcher:
         self.cache_dir = Path(cache_dir or os.getenv("REPORT_CACHE_DIR", str(Path(tempfile.gettempdir()) / "finanalyzer-releases")))
         self._transcript_download_failed = False
         self.allow_web = True
+        self.cvm_issuer = (None, None)  # (CVM code, CNPJ) set by the release pipeline from B3's catalogue
 
     def resolve_ticker(self, ticker):
         """Accept common Brazilian symbols typed without their share-class suffix."""
@@ -477,6 +479,8 @@ class AutoFetcher:
             return document
         if document := self._fetch_equibles(ticker, year, quarter):
             return document
+        if document := self._fetch_cvm(ticker, year, quarter):
+            return document
         if not self.allow_web:
             return None
         results = self.search_client.search_financial_reports(ticker, year, f"{quarter}T")
@@ -491,6 +495,17 @@ class AutoFetcher:
             document = self._download_release(candidate["url"], year, quarter)
             if document and self._release_company_matches(document, ticker):
                 return document
+        return None
+
+    def _fetch_cvm(self, ticker, year, quarter):
+        candidates = cvm_ipe.release_candidates(*self.cvm_issuer, year, quarter, self._period_matches)
+        for candidate in candidates[:4]:
+            document = self._download_release(candidate["url"], year, quarter, timeout=25)
+            if document and self._release_company_matches(document, ticker):
+                logger.info("release_lookup issuer=%s year=%s quarter=%s source=cvm outcome=found", ticker, year, quarter)
+                document.source = "CVM"
+                return document
+        logger.info("release_lookup issuer=%s year=%s quarter=%s source=cvm outcome=not_found candidates=%s", ticker, year, quarter, len(candidates))
         return None
 
     def _table_release_candidates(self, soup, base_url, year, quarter):
