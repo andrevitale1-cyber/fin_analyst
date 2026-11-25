@@ -162,7 +162,7 @@ def test_prefetch_adds_unchecked_b3_companies_before_rechecking_known_ones(monke
     import release_prefetch
     conn=MagicMock();cur=conn.cursor.return_value.__enter__.return_value
     cur.fetchone.return_value=(True,)
-    cur.fetchall.side_effect=[[(f'OLD{i}',2026,3) for i in range(12)],[('PETR4',),('OLD0',)]]
+    cur.fetchall.side_effect=[[(f'OLD{i}',2026,3) for i in range(30)],[('PETR4',),('OLD0',)]]
     fetch=Mock()
     monkeypatch.setattr(release_prefetch,'fetch_release',fetch)
     monkeypatch.setattr(release_prefetch,'stop',Mock(is_set=lambda:False,wait=lambda _:False))
@@ -170,7 +170,7 @@ def test_prefetch_adds_unchecked_b3_companies_before_rechecking_known_ones(monke
     monkeypatch.setattr(release_prefetch,'b3_universe',lambda:[{'ticker':t} for t in ('PETR4','PRIO3','RADL3','PRIO3')])
     assert release_prefetch.refresh_once(lambda:conn) is True
     symbols=[c.args[0] for c in fetch.call_args_list]
-    assert symbols[:2]==['PRIO3','RADL3'] and len(symbols)==12 and 'PETR4' not in symbols
+    assert symbols[:2]==['PRIO3','RADL3'] and len(symbols)==30 and 'PETR4' not in symbols
 
 
 @pytest.mark.parametrize('fiscal_end,expected',[('0630',(2027,1)),('1231',(2026,3)),('0831',(2026,4))])
@@ -224,3 +224,22 @@ def test_cvm_filing_provenance_verifies_issuer_without_trade_name_match():
         raise AssertionError('unverified issuer accepted')
     except release_pipeline.ReleaseError as error:
         assert str(error) == 'issuer_mismatch'
+
+
+def test_cvm_ipe_matches_market_notices_about_results_and_marks_period_named(monkeypatch, tmp_path):
+    import io, zipfile
+    from agents import cvm_ipe
+    from agents.auto_fetcher import AutoFetcher
+    header = 'CNPJ_Companhia;Nome_Companhia;Codigo_CVM;Data_Referencia;Categoria;Tipo;Especie;Assunto;Data_Entrega;Tipo_Apresentacao;Protocolo_Entrega;Versao;Link_Download'
+    rad = 'https://www.rad.cvm.gov.br/ENET/frmDownloadDocumento.aspx?numProtocolo='
+    lines = [header,
+        '1;BCO X;906;2026-11-05;Comunicado ao Mercado;Outros;;Divulga\xe7\xe3o dos Resultados do 3T26;2026-11-05;AP;1;1;'+rad+'1',
+        '1;BCO X;906;2026-11-05;Comunicado ao Mercado;Outros;;Resultado da AGE de novembro;2026-11-06;AP;2;1;'+rad+'2']
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w') as zipped:
+        zipped.writestr('ipe.csv', '\n'.join(lines).encode('latin-1'))
+    path = tmp_path / 'ipe.zip'; path.write_bytes(buffer.getvalue())
+    cvm_ipe._index.clear()
+    monkeypatch.setattr(cvm_ipe, '_archive', lambda year: zipfile.ZipFile(path))
+    found = cvm_ipe.release_candidates('906', None, 2026, 3, AutoFetcher()._period_matches)
+    assert [(c['url'][-1], c['names_period']) for c in found] == [('1', True)]

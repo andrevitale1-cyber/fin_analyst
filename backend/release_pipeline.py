@@ -121,6 +121,10 @@ def validate_document(document, fetcher, identity, year, quarter):
                     and document.fiscal_year == year and document.fiscal_quarter == quarter
                     and document.issuer_cik == identity.get('cik')
                     and document.issuer_cik is not None and int(sec_path[1]) == int(document.issuer_cik))
+    # The issuer's own CVM filing subject naming this quarter is the same kind of proof as SEC fiscal metadata.
+    fiscal_proof = fiscal_proof or (parsed.hostname == 'www.rad.cvm.gov.br' and any(
+        isinstance(source, dict) and source.get('name') == 'CVM IPE' and source.get('names_period')
+        for source in document.sources or []))
     if not fiscal_proof and not fetcher._period_matches(period_text, year, quarter):
         raise ReleaseError('period_mismatch')
     primary_period = fetcher._transcript_period(period_text)

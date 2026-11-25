@@ -13,8 +13,8 @@ import requests
 
 BASE = "https://dados.cvm.gov.br/dados/CIA_ABERTA/DOC/IPE/DADOS"
 logger = logging.getLogger("uvicorn.error")
-RELEASE = re.compile(r"press[- ]?release|release de resultado|release|divulga.{0,6} de resultado|resultados? d[oe] \d|earnings", re.I)
-NOT_RELEASE = re.compile(r"convite|teleconfer|webcast|calend|transcri|agenda|aviso aos|data de divulga", re.I)
+RELEASE = re.compile(r"press|release|resultado|earnings|desempenho|an.lise econ|relat.rio d[ae] (?:administra|an.lise)", re.I)
+NOT_RELEASE = re.compile(r"convite|teleconfer|webcast|calend|transcri|agenda|aviso aos|data de divulga|assembl|\bAG[OE]\b|vota|leil|dividend|juros sobre|recompra|deb.nture|rating", re.I)
 
 
 def _archive(year):
@@ -98,5 +98,6 @@ def _matches(rows, code, digits, window, year, quarter, period_matches):
         url = (row.get("Link_Download") or "").strip()
         if url.startswith("https://www.rad.cvm.gov.br/") or url.startswith("http://www.rad.cvm.gov.br/"):
             rank = (0 if period_matches(row.get("Assunto") or "", year, quarter) else 1,
-                    0 if re.search(r"press", row.get("Tipo") or "", re.I) else 1, delivered)
-            yield rank, {"title": (row.get("Assunto") or row.get("Tipo") or "").strip(), "url": url.replace("http://", "https://", 1)}
+                    0 if re.search(r"press|release", label, re.I) else 1 if re.search(r"resultado", label, re.I) else 2, delivered)
+            yield rank, {"title": (row.get("Assunto") or row.get("Tipo") or "").strip(), "url": url.replace("http://", "https://", 1),
+                         "names_period": rank[0] == 0}

@@ -500,13 +500,14 @@ class AutoFetcher:
     def _fetch_cvm(self, ticker, year, quarter):
         candidates = cvm_ipe.release_candidates(*self.cvm_issuer, year, quarter, self._period_matches)
         for candidate in candidates[:4]:
-            document = self._download_release(candidate["url"], year, quarter, timeout=25)
+            # A filing whose CVM subject names the quarter overrides cover parsing (comparison tables can come first).
+            document = self._download_release(candidate["url"], year, quarter, timeout=45, period_named=candidate.get("names_period", False))
             # The filing was selected by the issuer's CVM code/CNPJ, so its provenance identifies the company;
             # trade names (Bradesco, BTG) often differ from the ticker the text check looks for.
             if document and urlparse(document.url).hostname == "www.rad.cvm.gov.br":
                 logger.info("release_lookup issuer=%s year=%s quarter=%s source=cvm outcome=found", ticker, year, quarter)
                 document.source = "CVM"
-                document.sources = [*(document.sources or []), {"name": "CVM IPE", "url": candidate["url"]}]
+                document.sources = [*(document.sources or []), {"name": "CVM IPE", "url": candidate["url"], "names_period": candidate.get("names_period", False)}]
                 return document
             # Every 3T/4T release is past its CVM deadline when checked, so a rejection here is a bug to fix.
             logger.info("cvm_candidate_rejected issuer=%s year=%s quarter=%s title=%r url=%s", ticker, year, quarter,
@@ -615,7 +616,7 @@ class AutoFetcher:
         return re.sub(r'(?<![A-Z0-9])([1-4][TQ])\s*((?:\d\s+){1,3}\d)(?!\d)',
                       lambda match: match[1] + re.sub(r'\s+', '', match[2]), period_text)
 
-    def _download_release(self, url, year, quarter, depth=0, *, timeout=30):
+    def _download_release(self, url, year, quarter, depth=0, *, timeout=30, period_named=False):
         if not self._valid_url(url):
             return None
         try:
@@ -663,7 +664,7 @@ class AutoFetcher:
             # A release header identifies its own period; opening highlight cards may cite last year's quarter first.
             headers = re.findall(r"(?<![A-Z0-9])((?:[1-4][TQ]|[TQ][1-4])[\s_./-]*(?:20\d{2}|\d{2}))[ \t]*[|·][ \t]*(?:RELEASE|RESULTADOS)", period_text)
             primary_period = self._transcript_period(headers[0] if headers else period_text)
-            if primary_period and primary_period not in ((quarter, year), (quarter, year % 100)):
+            if primary_period and primary_period not in ((quarter, year), (quarter, year % 100)) and not period_named:
                 logger.info("release_document_rejected year=%s quarter=%s reason=cover_period_mismatch found=%s", year, quarter, primary_period)
                 return None
             return FetchedDocument(response.url, "RI", pdf_bytes=pdf_bytes, text="" if pdf_bytes else text[:180000])

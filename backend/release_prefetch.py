@@ -35,20 +35,20 @@ def refresh_once(connection=get_db_connection):
             if not cur.fetchone()[0]:
                 return False
             cur.execute('''SELECT symbol,fiscal_year,fiscal_quarter FROM official_release_cache
-                WHERE version<>%s OR checked_at<NOW()-INTERVAL '1 hour' ORDER BY checked_at LIMIT 12''', (VERSION,))
+                WHERE version<>%s OR checked_at<NOW()-INTERVAL '1 hour' ORDER BY status='found', checked_at LIMIT 30''', (VERSION,))
             tasks = cur.fetchall()
             if not tasks:
                 cur.execute('SELECT COUNT(*) FROM official_release_cache')
                 if cur.fetchone()[0] == 0:
                     now = datetime.now(timezone.utc)
                     tasks = [(symbol, *seed_period(symbol, now)) for symbol in INITIAL]
-            # Most of each batch adds IBOV/SMLL companies never checked, so official-source coverage is tested across B3.
+            # Failures are rechecked first; each batch also adds IBOV/SMLL companies never checked, so official-source coverage is tested across B3.
             cur.execute('SELECT DISTINCT symbol FROM official_release_cache')
             known = {row[0] for row in cur.fetchall()}
             missing = [symbol for symbol in dict.fromkeys(item['ticker'] for item in b3_universe()) if symbol not in known][:8]
             if missing:
                 now = datetime.now(timezone.utc)
-                tasks = [(symbol, *seed_period(symbol, now)) for symbol in missing] + list(tasks)[:12 - len(missing)]
+                tasks = [(symbol, *seed_period(symbol, now)) for symbol in missing] + list(tasks)[:30 - len(missing)]
         for symbol, year, quarter in tasks:
             if stop.is_set():
                 break
