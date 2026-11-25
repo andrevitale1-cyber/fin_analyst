@@ -162,7 +162,7 @@ def test_prefetch_adds_unchecked_b3_companies_before_rechecking_known_ones(monke
     import release_prefetch
     conn=MagicMock();cur=conn.cursor.return_value.__enter__.return_value
     cur.fetchone.return_value=(True,)
-    cur.fetchall.side_effect=[[(f'OLD{i}',2026,3) for i in range(30)],[('PETR4',),('OLD0',)]]
+    cur.fetchall.side_effect=[[(f'OLD{i}',2026,3) for i in range(30)],[('PETR4',2026,3),('OLD0',2026,3)]]
     fetch=Mock()
     monkeypatch.setattr(release_prefetch,'fetch_release',fetch)
     monkeypatch.setattr(release_prefetch,'stop',Mock(is_set=lambda:False,wait=lambda _:False))
@@ -243,3 +243,15 @@ def test_cvm_ipe_matches_market_notices_about_results_and_marks_period_named(mon
     monkeypatch.setattr(cvm_ipe, '_archive', lambda year: zipfile.ZipFile(path))
     found = cvm_ipe.release_candidates('906', None, 2026, 3, AutoFetcher()._period_matches)
     assert [(c['url'][-1], c['names_period']) for c in found] == [('1', True)]
+
+
+def test_off_calendar_b3_issuers_use_their_own_quarter_labels():
+    from datetime import date, datetime
+    from agents import cvm_ipe
+    import release_prefetch
+    assert cvm_ipe.period_end('PETR4', 2026, 3) == date(2026, 9, 30)
+    assert cvm_ipe.period_end('CAML3', 2026, 2) == date(2026, 8, 31)   # Camil 2T26 = Jun-Aug 2026
+    assert cvm_ipe.period_end('SMTO3', 2027, 2) == date(2026, 9, 30)   # São Martinho 2T27 = Jul-Sep 2026
+    assert release_prefetch.seed_period('CAML3', datetime(2026, 11, 25)) == (2026, 2)
+    assert release_prefetch.seed_period('SMTO3', datetime(2026, 11, 25)) == (2027, 2)
+

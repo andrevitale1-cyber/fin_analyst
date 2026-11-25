@@ -6,6 +6,7 @@ from threading import Event, Thread
 
 from psycopg2 import Error as DatabaseError
 from database import get_db_connection
+from agents.cvm_ipe import OFF_CALENDAR, latest_released
 from company_search import _load
 from release_pipeline import fetch_release, ReleaseError, issuer_identity, VERSION
 
@@ -19,6 +20,8 @@ INITIAL = ('MSFT','NVDA','AAPL','GOOGL','AMZN','META','PETR4','WEGE3','VIVA3')
 
 
 def seed_period(symbol, now):
+    if symbol in OFF_CALENDAR:
+        return latest_released(symbol, now.date())
     end = issuer_identity(symbol).get('fiscal_year_end') or '1231'
     month = int(end[:2]) if len(end) == 4 and end.isdigit() and 1 <= int(end[:2]) <= 12 else 12
     fiscal_year = now.year + (now.month > month)
@@ -43,9 +46,13 @@ def refresh_once(connection=get_db_connection):
                     now = datetime.now(timezone.utc)
                     tasks = [(symbol, *seed_period(symbol, now)) for symbol in INITIAL]
             # Failures are rechecked first; each batch also adds IBOV/SMLL companies never checked, so official-source coverage is tested across B3.
-            cur.execute('SELECT DISTINCT symbol FROM official_release_cache')
-            known = {row[0] for row in cur.fetchall()}
-            missing = [symbol for symbol in dict.fromkeys(item['ticker'] for item in b3_universe()) if symbol not in known][:8]
+            cur.execute('SELECT DISTINCT symbol,fiscal_year,fiscal_quarter FROM official_release_cache')
+            pairs = {tuple(row) for row in cur.fetchall()}
+            known = {row[0] for row in pairs}
+            today = datetime.now(timezone.utc)
+            # Off-calendar issuers also need their latest labelled quarter, which the calendar seed never asks for.
+            missing = [symbol for symbol in dict.fromkeys(item['ticker'] for item in b3_universe())
+                       if symbol not in known or (symbol in OFF_CALENDAR and (symbol, *latest_released(symbol, today.date())) not in pairs)][:8]
             if missing:
                 now = datetime.now(timezone.utc)
                 tasks = [(symbol, *seed_period(symbol, now)) for symbol in missing] + list(tasks)[:30 - len(missing)]

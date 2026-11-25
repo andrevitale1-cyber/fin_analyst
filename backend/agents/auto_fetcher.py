@@ -498,7 +498,7 @@ class AutoFetcher:
         return None
 
     def _fetch_cvm(self, ticker, year, quarter):
-        candidates = cvm_ipe.release_candidates(*self.cvm_issuer, year, quarter, self._period_matches)
+        candidates = cvm_ipe.release_candidates(*self.cvm_issuer, year, quarter, self._period_matches, ticker)
         for candidate in candidates[:4]:
             # A filing whose CVM subject names the quarter overrides cover parsing (comparison tables can come first).
             document = self._download_release(candidate["url"], year, quarter, timeout=45, period_named=candidate.get("names_period", False))

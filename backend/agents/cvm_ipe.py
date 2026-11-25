@@ -52,6 +52,25 @@ def _rows(year):
             yield from csv.DictReader(io.TextIOWrapper(stream, encoding="latin-1"), delimiter=";")
 
 
+# B3 issuers whose fiscal year is not the calendar year: (first month, whether the label uses the start or end year).
+OFF_CALENDAR = {"CAML3": (3, "start"), "SMTO3": (4, "end"), "JALL3": (4, "end"), "RAIZ4": (4, "end")}
+
+
+def period_end(symbol, year, quarter):
+    """Last day of the issuer's labelled quarter (calendar quarters unless the issuer is off-calendar)."""
+    first, label = OFF_CALENDAR.get(symbol, (1, "start"))
+    start_year = year if label == "start" else year - 1
+    month_index = start_year * 12 + first - 1 + quarter * 3  # first month after the quarter
+    return date(month_index // 12, month_index % 12 + 1, 1) - timedelta(days=1)
+
+
+def latest_released(symbol, today):
+    """Most recent labelled quarter that ended at least 45 days ago, for off-calendar B3 issuers."""
+    labels = [(y, q) for y in range(today.year - 1, today.year + 2) for q in range(1, 5)]
+    return max((label for label in labels if period_end(symbol, *label) + timedelta(days=45) <= today),
+               key=lambda label: period_end(symbol, *label))
+
+
 _index = {}
 
 
@@ -66,13 +85,13 @@ def _releases(year):
     return rows
 
 
-def release_candidates(cvm_code, cnpj, year, quarter, period_matches):
+def release_candidates(cvm_code, cnpj, year, quarter, period_matches, symbol=""):
     """Return the issuer's CVM-filed release links for the quarter, most specific first."""
     code = int(cvm_code) if str(cvm_code or "").strip().isdigit() else None
     digits = re.sub(r"\D", "", str(cnpj or ""))
     if not code and len(digits) != 14:
         return []
-    quarter_end = date(year, quarter * 3, 30 if quarter in (2, 3) else 31)
+    quarter_end = period_end(symbol, year, quarter)
     window = (quarter_end + timedelta(days=5), quarter_end + timedelta(days=150))
     found = []
     for archive_year in sorted({window[0].year, min(window[1].year, date.today().year)}):
