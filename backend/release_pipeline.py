@@ -105,7 +105,9 @@ def validate_document(document, fetcher, identity, year, quarter):
     sec_path = re.match(r'/Archives/edgar/data/(\d+)/', parsed.path)
     if parsed.hostname == 'www.sec.gov' and sec_path and identity.get('cik') and int(sec_path[1]) != int(identity['cik']):
         raise ReleaseError('issuer_mismatch')
-    verified = fetcher._release_company_matches(document, identity['symbol'])
+    verified = (parsed.hostname == 'www.rad.cvm.gov.br' and any(
+        isinstance(source, dict) and source.get('name') == 'CVM IPE' for source in document.sources or [])
+    ) or fetcher._release_company_matches(document, identity['symbol'])
     if not verified and name:
         normalized = SECFetcher._company_name(name)
         verified = bool(normalized and normalized in SECFetcher._company_name(text[:12000]))

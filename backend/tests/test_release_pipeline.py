@@ -204,3 +204,23 @@ def test_cvm_ipe_returns_the_issuers_quarter_release_and_skips_call_invitations(
     assert [c['url'][-1] for c in cvm_ipe.release_candidates(None, '12345678000190', 2026, 3, matches)] == ['2']
     assert cvm_ipe.release_candidates(None, None, 2026, 3, matches) == []
 
+
+
+def test_cvm_filing_provenance_verifies_issuer_without_trade_name_match():
+    from types import SimpleNamespace
+    from agents.auto_fetcher import AutoFetcher
+    import release_pipeline
+    text = 'Resultado do 3T26. Lucro líquido recorrente cresceu. ' * 40
+    doc = SimpleNamespace(url='https://www.rad.cvm.gov.br/ENET/frmDownloadDocumento.aspx?numProtocolo=1', text=text, pdf_bytes=None,
+                          sources=[{'name': 'CVM IPE', 'url': 'https://www.rad.cvm.gov.br/x'}])
+    identity = {'symbol': 'BBDC4', 'name': 'BCO BRADESCO S.A.'}
+    try:
+        release_pipeline.validate_document(doc, AutoFetcher(), identity, 2026, 3)
+    except release_pipeline.ReleaseError as error:
+        assert str(error) != 'issuer_mismatch'
+    doc.sources = []
+    try:
+        release_pipeline.validate_document(doc, AutoFetcher(), identity, 2026, 3)
+        raise AssertionError('unverified issuer accepted')
+    except release_pipeline.ReleaseError as error:
+        assert str(error) == 'issuer_mismatch'

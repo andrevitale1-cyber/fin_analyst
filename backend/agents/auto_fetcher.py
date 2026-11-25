@@ -501,9 +501,12 @@ class AutoFetcher:
         candidates = cvm_ipe.release_candidates(*self.cvm_issuer, year, quarter, self._period_matches)
         for candidate in candidates[:4]:
             document = self._download_release(candidate["url"], year, quarter, timeout=25)
-            if document and self._release_company_matches(document, ticker):
+            # The filing was selected by the issuer's CVM code/CNPJ, so its provenance identifies the company;
+            # trade names (Bradesco, BTG) often differ from the ticker the text check looks for.
+            if document and urlparse(document.url).hostname == "www.rad.cvm.gov.br":
                 logger.info("release_lookup issuer=%s year=%s quarter=%s source=cvm outcome=found", ticker, year, quarter)
                 document.source = "CVM"
+                document.sources = [*(document.sources or []), {"name": "CVM IPE", "url": candidate["url"]}]
                 return document
         logger.info("release_lookup issuer=%s year=%s quarter=%s source=cvm outcome=not_found candidates=%s", ticker, year, quarter, len(candidates))
         return None
