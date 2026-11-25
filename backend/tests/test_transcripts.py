@@ -429,3 +429,16 @@ def test_renamed_b3_tickers_resolve_to_their_current_symbols():
     assert {old: fetcher.resolve_ticker(old) for old in expected} == expected
     assert 'CIEL3' not in fetcher.ir_urls
 
+
+def test_taurus_release_on_its_ir_site_counts_as_official():
+    from types import SimpleNamespace
+    from agents.auto_fetcher import AutoFetcher
+    import release_pipeline
+    fetcher = AutoFetcher()
+    assert fetcher.resolve_ticker('TASA4') == 'TASA4'
+    doc = SimpleNamespace(url='https://ri.taurusarmas.com.br/Download.aspx?Arquivo=x', text='Taurus Armas S.A. 3T26 ' * 40, pdf_bytes=None, sources=[])
+    try:
+        release_pipeline.validate_document(doc, fetcher, {'symbol': 'TASA4', 'name': 'TAURUS ARMAS S.A.'}, 2026, 3)
+    except release_pipeline.ReleaseError as error:
+        assert str(error) != 'source_unverified'
+
