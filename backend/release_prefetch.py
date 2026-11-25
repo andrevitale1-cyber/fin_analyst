@@ -33,7 +33,7 @@ def refresh_once(connection=get_db_connection):
             # A session lock prevents every web instance from starting its own refresh batch.
             cur.execute('SELECT pg_try_advisory_lock(20261104, 7201)')
             if not cur.fetchone()[0]:
-                return
+                return False
             cur.execute('''SELECT symbol,fiscal_year,fiscal_quarter FROM official_release_cache
                 WHERE version<>%s OR checked_at<NOW()-INTERVAL '1 hour' ORDER BY checked_at LIMIT 12''', (VERSION,))
             tasks = cur.fetchall()
@@ -42,10 +42,10 @@ def refresh_once(connection=get_db_connection):
                 if cur.fetchone()[0] == 0:
                     now = datetime.now(timezone.utc)
                     tasks = [(symbol, *seed_period(symbol, now)) for symbol in INITIAL]
-            # Half of each batch adds IBOV/SMLL companies never checked, so official-source coverage is tested across B3.
+            # Most of each batch adds IBOV/SMLL companies never checked, so official-source coverage is tested across B3.
             cur.execute('SELECT DISTINCT symbol FROM official_release_cache')
             known = {row[0] for row in cur.fetchall()}
-            missing = [symbol for symbol in dict.fromkeys(item['ticker'] for item in b3_universe()) if symbol not in known][:6]
+            missing = [symbol for symbol in dict.fromkeys(item['ticker'] for item in b3_universe()) if symbol not in known][:8]
             if missing:
                 now = datetime.now(timezone.utc)
                 tasks = [(symbol, *seed_period(symbol, now)) for symbol in missing] + list(tasks)[:12 - len(missing)]
@@ -61,17 +61,20 @@ def refresh_once(connection=get_db_connection):
                 break
     finally:
         conn.close()  # Releases the session advisory lock even on failure.
+    return bool(missing)
 
 
 def _run():
     if stop.wait(45):
         return
     while not stop.is_set():
+        pending = False
         try:
-            refresh_once()
+            pending = refresh_once()
         except (DatabaseError, ValueError, RuntimeError):
             logger.warning('release_prefetch outcome=unavailable')
-        if stop.wait(3600):
+        # While IBOV/SMLL companies remain unchecked, run every 5 minutes so the first full pass ends within hours.
+        if stop.wait(300 if pending else 3600):
             break
 
 

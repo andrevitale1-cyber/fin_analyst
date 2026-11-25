@@ -168,7 +168,7 @@ def test_prefetch_adds_unchecked_b3_companies_before_rechecking_known_ones(monke
     monkeypatch.setattr(release_prefetch,'stop',Mock(is_set=lambda:False,wait=lambda _:False))
     monkeypatch.setattr(release_prefetch,'seed_period',lambda symbol,now:(2026,3))
     monkeypatch.setattr(release_prefetch,'b3_universe',lambda:[{'ticker':t} for t in ('PETR4','PRIO3','RADL3','PRIO3')])
-    release_prefetch.refresh_once(lambda:conn)
+    assert release_prefetch.refresh_once(lambda:conn) is True
     symbols=[c.args[0] for c in fetch.call_args_list]
     assert symbols[:2]==['PRIO3','RADL3'] and len(symbols)==12 and 'PETR4' not in symbols
 
