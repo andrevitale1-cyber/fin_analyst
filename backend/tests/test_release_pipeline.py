@@ -196,6 +196,7 @@ def test_cvm_ipe_returns_the_issuers_quarter_release_and_skips_call_invitations(
     with zipfile.ZipFile(buffer, 'w') as zipped:
         zipped.writestr('ipe_cia_aberta_2026.csv', '\n'.join(lines).encode('latin-1'))
     path = tmp_path / 'ipe.zip'; path.write_bytes(buffer.getvalue())
+    cvm_ipe._index.clear()
     monkeypatch.setattr(cvm_ipe, '_archive', lambda year: zipfile.ZipFile(path) if year == 2026 else (_ for _ in ()).throw(ValueError('none')))
     matches = AutoFetcher()._period_matches
     found = cvm_ipe.release_candidates('022187', None, 2026, 3, matches)

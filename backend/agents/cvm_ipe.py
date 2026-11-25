@@ -52,6 +52,20 @@ def _rows(year):
             yield from csv.DictReader(io.TextIOWrapper(stream, encoding="latin-1"), delimiter=";")
 
 
+_index = {}
+
+
+def _releases(year):
+    """Release-like filings of the year, parsed once per archive refresh instead of once per lookup."""
+    path = Path(tempfile.gettempdir()) / "finanalyser-cvm-ipe" / f"ipe-{year}.zip"
+    cached = _index.get(year)
+    if cached and path.exists() and cached[0] == path.stat().st_mtime and time.time() - cached[0] <= 6 * 3600:
+        return cached[1]
+    rows = [row for row in _rows(year) if RELEASE.search(" ".join(row.get(k) or "" for k in ("Categoria", "Tipo", "Especie", "Assunto")))]
+    _index[year] = (path.stat().st_mtime if path.exists() else time.time(), rows)
+    return rows
+
+
 def release_candidates(cvm_code, cnpj, year, quarter, period_matches):
     """Return the issuer's CVM-filed release links for the quarter, most specific first."""
     code = int(cvm_code) if str(cvm_code or "").strip().isdigit() else None
@@ -61,9 +75,9 @@ def release_candidates(cvm_code, cnpj, year, quarter, period_matches):
     quarter_end = date(year, quarter * 3, 30 if quarter in (2, 3) else 31)
     window = (quarter_end + timedelta(days=5), quarter_end + timedelta(days=150))
     found = []
-    for archive_year in sorted({window[0].year, window[1].year}):
+    for archive_year in sorted({window[0].year, min(window[1].year, date.today().year)}):
         try:
-            found.extend(_matches(_rows(archive_year), code, digits, window, year, quarter, period_matches))
+            found.extend(_matches(_releases(archive_year), code, digits, window, year, quarter, period_matches))
         except (requests.RequestException, ValueError, OSError, zipfile.BadZipFile, csv.Error) as exc:
             logger.info("cvm_ipe_lookup year=%s outcome=unavailable reason=%s", archive_year, type(exc).__name__)
     # Releases naming the quarter first, then press-release filings, earliest delivery first (later ones are often re-filings).
