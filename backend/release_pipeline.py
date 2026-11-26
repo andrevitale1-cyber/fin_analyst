@@ -43,6 +43,9 @@ def _lock(symbol, year, quarter):
 
 
 _issuers = {}
+# Brazilian companies listed in the US that also file with CVM (BDRs): their Portuguese release backs up the SEC 6-K.
+BRAZIL_ABROAD = {'INTR': r'INTER\s*&\s*CO', 'NU': r'NU HOLDINGS', 'XP': r'^XP INC', 'STNE': r'STONECO',
+                 'PAGS': r'PAGSEGURO', 'VTEX': r'^VTEX', 'AFYA': r'^AFYA', 'MELI': r'MERCADOLIBRE'}
 
 
 def issuer_identity(symbol):
@@ -106,7 +109,7 @@ def validate_document(document, fetcher, identity, year, quarter):
     if parsed.hostname == 'www.sec.gov' and sec_path and identity.get('cik') and int(sec_path[1]) != int(identity['cik']):
         raise ReleaseError('issuer_mismatch')
     verified = (parsed.hostname == 'www.rad.cvm.gov.br' and any(
-        isinstance(source, dict) and source.get('name') == 'CVM IPE' for source in document.sources or [])
+        isinstance(source, dict) and source.get('name') in ('CVM IPE', 'CVM ITR') for source in document.sources or [])
     ) or fetcher._release_company_matches(document, identity['symbol'])
     if not verified and name:
         normalized = SECFetcher._company_name(name)
@@ -123,7 +126,7 @@ def validate_document(document, fetcher, identity, year, quarter):
                     and document.issuer_cik is not None and int(sec_path[1]) == int(document.issuer_cik))
     # The issuer's own CVM filing subject naming this quarter is the same kind of proof as SEC fiscal metadata.
     fiscal_proof = fiscal_proof or (parsed.hostname == 'www.rad.cvm.gov.br' and any(
-        isinstance(source, dict) and source.get('name') == 'CVM IPE' and source.get('names_period')
+        isinstance(source, dict) and source.get('name') in ('CVM IPE', 'CVM ITR') and source.get('names_period')
         for source in document.sources or []))
     if not fiscal_proof and not fetcher._period_matches(period_text, year, quarter):
         raise ReleaseError('period_mismatch')
@@ -247,6 +250,7 @@ def fetch_release(symbol, year, quarter, *, connection=None, refresh=False, allo
                 logger.warning('release_pipeline issuer=%s stage=cache outcome=invalid reason=%s', symbol, getattr(exc,'code',type(exc).__name__))
         fetcher.allow_web = allow_web
         fetcher.cvm_issuer = (identity.get('cvm'), identity.get('cnpj'))
+        fetcher.cvm_name = BRAZIL_ABROAD.get(identity['symbol'])
         status, document, fingerprint = 'not_found', None, None
         try:
             document = fetcher.fetch_result_pdf(symbol, year, str(quarter))

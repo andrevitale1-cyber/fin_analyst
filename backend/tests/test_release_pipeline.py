@@ -255,3 +255,49 @@ def test_off_calendar_b3_issuers_use_their_own_quarter_labels():
     assert release_prefetch.seed_period('CAML3', datetime(2026, 11, 25)) == (2026, 2)
     assert release_prefetch.seed_period('SMTO3', datetime(2026, 11, 25)) == (2027, 2)
 
+
+
+def test_itr_statements_become_an_official_quarterly_document(monkeypatch, tmp_path):
+    import io, zipfile
+    from datetime import date
+    from agents import cvm_itr
+    index = 'CNPJ_CIA;DT_REFER;VERSAO;DENOM_CIA;CD_CVM;CATEG_DOC;ID_DOC;DT_RECEB;LINK_DOC\n' \
+            '03.847.461/0001-92;2026-09-30;1;BRADESPAR S.A.;18724;ITR;1;2026-11-12;https://www.rad.cvm.gov.br/ENETCONSULTA/frmGerenciaPaginaFRE.aspx?NumeroSequencialDocumento=9\n' \
+            '03.847.461/0001-92;2026-09-30;2;BRADESPAR S.A.;18724;ITR;2;2026-11-13;https://www.rad.cvm.gov.br/ENETCONSULTA/frmGerenciaPaginaFRE.aspx?NumeroSequencialDocumento=10\n'
+    head = 'CNPJ_CIA;DT_REFER;VERSAO;DENOM_CIA;CD_CVM;GRUPO_DFP;MOEDA;ESCALA_MOEDA;ORDEM_EXERC;DT_INI_EXERC;DT_FIM_EXERC;CD_CONTA;DS_CONTA;VL_CONTA;ST_CONTA_FIXA\n'
+    dre = head + '\n'.join([
+        '03.847.461/0001-92;2026-09-30;2;BRADESPAR;18724;DRE;REAL;MIL;ÚLTIMO;2026-07-01;2026-09-30;3.04.06;Resultado de Equivalência Patrimonial;213240;S',
+        '03.847.461/0001-92;2026-09-30;2;BRADESPAR;18724;DRE;REAL;MIL;PENÚLTIMO;2025-07-01;2025-09-30;3.04.06;Resultado de Equivalência Patrimonial;500850;S',
+        '03.847.461/0001-92;2026-09-30;2;BRADESPAR;18724;DRE;REAL;MIL;ÚLTIMO;2026-01-01;2026-09-30;3.11;Lucro/Prejuízo do Período;900000;S',
+        '03.847.461/0001-92;2026-09-30;2;BRADESPAR;18724;DRE;REAL;MIL;ÚLTIMO;2026-07-01;2026-09-30;3.11;Lucro/Prejuízo do Período;173130;S',
+        '03.847.461/0001-92;2026-09-30;1;BRADESPAR;18724;DRE;REAL;MIL;ÚLTIMO;2026-07-01;2026-09-30;3.11;Lucro antigo;1;S'])
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w') as zipped:
+        zipped.writestr('itr_cia_aberta_2026.csv', index.encode('utf-8'))
+        zipped.writestr('itr_cia_aberta_DRE_ind_2026.csv', dre.encode('utf-8'))
+    path = tmp_path / 'itr.zip'; path.write_bytes(buffer.getvalue())
+    monkeypatch.setattr(cvm_itr, '_archive', lambda year: zipfile.ZipFile(path))
+    link, text = cvm_itr.quarterly_statements('03847461000192', date(2026, 9, 30), '3T26')
+    assert link.endswith('NumeroSequencialDocumento=10') and 'versão 2' in text and 'BRADESPAR S.A.' in text
+    assert '3.11 Lucro/Prejuízo do Período | 173,1 | -' in text and '3.04.06 Resultado de Equivalência Patrimonial | 213,2 | 500,9' in text
+    assert 'Lucro antigo' not in text and '900,0' not in text
+    assert cvm_itr.quarterly_statements('03847461000192', date(2026, 12, 31), '4T26') is None
+
+
+def test_brazilian_issuer_listed_abroad_is_matched_by_cvm_registrant_name(monkeypatch, tmp_path):
+    import io, zipfile
+    from agents import cvm_ipe
+    from agents.auto_fetcher import AutoFetcher
+    import release_pipeline
+    header = 'CNPJ_Companhia;Nome_Companhia;Codigo_CVM;Data_Referencia;Categoria;Tipo;Especie;Assunto;Data_Entrega;Tipo_Apresentacao;Protocolo_Entrega;Versao;Link_Download'
+    rad = 'https://www.rad.cvm.gov.br/ENET/frmDownloadDocumento.aspx?numProtocolo='
+    lines = [header, ';INTER & CO, INC.;80217;2026-11-12;Comunicado ao Mercado;Outros;;Resultados 3T26;2026-11-12;AP;1;1;'+rad+'1',
+             ';INTER CONSTRUTORA S.A.;1;2026-11-12;Comunicado ao Mercado;Outros;;Resultados 3T26;2026-11-12;AP;2;1;'+rad+'2']
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, 'w') as zipped:
+        zipped.writestr('ipe.csv', '\n'.join(lines).encode('latin-1'))
+    path = tmp_path / 'ipe.zip'; path.write_bytes(buffer.getvalue())
+    cvm_ipe._index.clear()
+    monkeypatch.setattr(cvm_ipe, '_archive', lambda year: zipfile.ZipFile(path))
+    found = cvm_ipe.release_candidates(None, None, 2026, 3, AutoFetcher()._period_matches, 'INTR', name=release_pipeline.BRAZIL_ABROAD['INTR'])
+    assert [c['url'][-1] for c in found] == ['1']

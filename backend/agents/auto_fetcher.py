@@ -1,4 +1,5 @@
 import base64
+import csv
 import hashlib
 from dataclasses import asdict
 import json
@@ -9,6 +10,7 @@ from pathlib import Path
 import re
 import tempfile
 import time
+import zipfile
 import unicodedata
 from urllib.parse import unquote, urljoin, urlparse
 
@@ -16,7 +18,7 @@ import requests
 from bs4 import BeautifulSoup
 from agents.search_client import BLOCKED_TRANSCRIPT_DOMAINS, SearchClient, SearchError
 from agents.equibles_client import EquiblesClient
-from agents import cvm_ipe
+from agents import cvm_ipe, cvm_itr
 from agents.sec_fetcher import FetchedDocument, SECFetcher
 from openai_client import OpenAIClient, OpenAIError
 
@@ -59,6 +61,7 @@ class AutoFetcher:
         self._transcript_download_failed = False
         self.allow_web = True
         self.cvm_issuer = (None, None)  # (CVM code, CNPJ) set by the release pipeline from B3's catalogue
+        self.cvm_name = None  # CVM registrant name pattern for Brazilian issuers listed abroad
 
     def resolve_ticker(self, ticker):
         """Accept common Brazilian symbols typed without their share-class suffix."""
@@ -209,7 +212,8 @@ class AutoFetcher:
             if not document:
                 candidate = self._fetch_b3(ticker, year, quarter)
                 if candidate:
-                    if self._release_company_matches(candidate, ticker):
+                    if any(isinstance(item, dict) and item.get("name") in ("CVM IPE", "CVM ITR") for item in candidate.sources) \
+                            or self._release_company_matches(candidate, ticker):
                         document = candidate
         else:
             document = self._fetch_b3(ticker, year, quarter)
@@ -481,6 +485,8 @@ class AutoFetcher:
             return document
         if document := self._fetch_cvm(ticker, year, quarter):
             return document
+        if document := self._fetch_itr(ticker, year, quarter):
+            return document
         if not self.allow_web:
             return None
         results = self.search_client.search_financial_reports(ticker, year, f"{quarter}T")
@@ -498,7 +504,7 @@ class AutoFetcher:
         return None
 
     def _fetch_cvm(self, ticker, year, quarter):
-        candidates = cvm_ipe.release_candidates(*self.cvm_issuer, year, quarter, self._period_matches, ticker)
+        candidates = cvm_ipe.release_candidates(*self.cvm_issuer, year, quarter, self._period_matches, ticker, name=self.cvm_name)
         for candidate in candidates[:4]:
             # A filing whose CVM subject names the quarter overrides cover parsing (comparison tables can come first).
             document = self._download_release(candidate["url"], year, quarter, timeout=45, period_named=candidate.get("names_period", False))
@@ -514,6 +520,19 @@ class AutoFetcher:
                         candidate["title"][:120], candidate["url"])
         logger.info("release_lookup issuer=%s year=%s quarter=%s source=cvm outcome=not_found candidates=%s", ticker, year, quarter, len(candidates))
         return None
+
+    def _fetch_itr(self, ticker, year, quarter):
+        # Holdings such as Bradespar file no earnings release; their ITR statements are the official quarterly report.
+        try:
+            result = cvm_itr.quarterly_statements(self.cvm_issuer[1], cvm_ipe.period_end(ticker, year, quarter), f"{quarter}T{year % 100:02d}")
+        except (requests.RequestException, ValueError, OSError, zipfile.BadZipFile, csv.Error) as exc:
+            logger.info("release_lookup issuer=%s year=%s quarter=%s source=cvm_itr outcome=unavailable reason=%s", ticker, year, quarter, type(exc).__name__)
+            return None
+        logger.info("release_lookup issuer=%s year=%s quarter=%s source=cvm_itr outcome=%s", ticker, year, quarter, "found" if result else "not_found")
+        if not result:
+            return None
+        link, text = result
+        return FetchedDocument(link, "CVM ITR", text=text, sources=[{"name": "CVM ITR", "url": link, "names_period": True}])
 
     def _table_release_candidates(self, soup, base_url, year, quarter):
         # Icon-only PDF links inherit the document type and fiscal period from their table row/column.

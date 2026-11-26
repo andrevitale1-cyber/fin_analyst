@@ -8,7 +8,7 @@ from psycopg2 import Error as DatabaseError
 from database import get_db_connection
 from agents.cvm_ipe import OFF_CALENDAR, latest_released
 from company_search import _load
-from release_pipeline import fetch_release, ReleaseError, issuer_identity, VERSION
+from release_pipeline import BRAZIL_ABROAD, fetch_release, ReleaseError, issuer_identity, VERSION
 
 stop = Event()
 logger = logging.getLogger('uvicorn.error')
@@ -51,7 +51,7 @@ def refresh_once(connection=get_db_connection):
             known = {row[0] for row in pairs}
             today = datetime.now(timezone.utc)
             # Off-calendar issuers also need their latest labelled quarter, which the calendar seed never asks for.
-            missing = [symbol for symbol in dict.fromkeys(item['ticker'] for item in b3_universe())
+            missing = [symbol for symbol in dict.fromkeys([*(item['ticker'] for item in b3_universe()), *BRAZIL_ABROAD])
                        if symbol not in known or (symbol in OFF_CALENDAR and (symbol, *latest_released(symbol, today.date())) not in pairs)][:8]
             if missing:
                 now = datetime.now(timezone.utc)

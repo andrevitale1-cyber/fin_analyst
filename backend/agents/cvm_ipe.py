@@ -85,30 +85,31 @@ def _releases(year):
     return rows
 
 
-def release_candidates(cvm_code, cnpj, year, quarter, period_matches, symbol=""):
+def release_candidates(cvm_code, cnpj, year, quarter, period_matches, symbol="", name=None):
     """Return the issuer's CVM-filed release links for the quarter, most specific first."""
     code = int(cvm_code) if str(cvm_code or "").strip().isdigit() else None
     digits = re.sub(r"\D", "", str(cnpj or ""))
-    if not code and len(digits) != 14:
+    if not code and len(digits) != 14 and not name:
         return []
     quarter_end = period_end(symbol, year, quarter)
     window = (quarter_end + timedelta(days=5), quarter_end + timedelta(days=150))
     found = []
     for archive_year in sorted({window[0].year, min(window[1].year, date.today().year)}):
         try:
-            found.extend(_matches(_releases(archive_year), code, digits, window, year, quarter, period_matches))
+            found.extend(_matches(_releases(archive_year), code, digits, window, year, quarter, period_matches, name))
         except (requests.RequestException, ValueError, OSError, zipfile.BadZipFile, csv.Error) as exc:
             logger.info("cvm_ipe_lookup year=%s outcome=unavailable reason=%s", archive_year, type(exc).__name__)
     # Releases naming the quarter first, then press-release filings, earliest delivery first (later ones are often re-filings).
     return [item for _, item in sorted(found, key=lambda pair: pair[0])]
 
 
-def _matches(rows, code, digits, window, year, quarter, period_matches):
+def _matches(rows, code, digits, window, year, quarter, period_matches, name=None):
     # Streams the year's filings (hundreds of thousands of rows) without holding them in memory.
     for row in rows:
         row_code = (row.get("Codigo_CVM") or "").strip()
         if not ((code and row_code.isdigit() and int(row_code) == code)
-                or (len(digits) == 14 and re.sub(r"\D", "", row.get("CNPJ_Companhia") or "") == digits)):
+                or (len(digits) == 14 and re.sub(r"\D", "", row.get("CNPJ_Companhia") or "") == digits)
+                or (name and re.search(name, row.get("Nome_Companhia") or "", re.I))):
             continue
         label = " ".join(row.get(k) or "" for k in ("Categoria", "Tipo", "Especie", "Assunto"))
         delivered = (row.get("Data_Entrega") or "")[:10]
