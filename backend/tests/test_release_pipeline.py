@@ -153,6 +153,7 @@ def test_prefetch_disables_web_model_and_respects_worker_lock(monkeypatch):
     monkeypatch.setattr(release_prefetch,'fetch_release',fetch)
     monkeypatch.setattr(release_prefetch,'stop',Mock(is_set=lambda:False,wait=lambda _:False))
     monkeypatch.setattr(release_prefetch,'b3_universe',lambda:[])
+    monkeypatch.setattr(release_prefetch,'BRAZIL_ABROAD',{})
     release_prefetch.refresh_once(lambda:conn)
     assert fetch.call_args.kwargs['allow_web'] is False and fetch.call_args.kwargs['refresh'] is True
     conn.close.assert_called_once()
