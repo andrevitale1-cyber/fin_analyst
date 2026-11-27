@@ -1,7 +1,9 @@
 """Refresh public releases in the background, without generating or charging analyses."""
 from datetime import datetime, timezone
+import json
 import logging
 import os
+from pathlib import Path
 from threading import Event, Thread
 
 from psycopg2 import Error as DatabaseError
@@ -12,6 +14,10 @@ from release_pipeline import BRAZIL_ABROAD, fetch_release, ReleaseError, issuer_
 
 stop = Event()
 logger = logging.getLogger('uvicorn.error')
+def sp500_batteries():
+    return json.loads((Path(__file__).parent / 'data' / 'sp500.json').read_text(encoding='utf-8'))['batteries']
+
+
 def b3_universe():
     return _load('b3')
 
@@ -53,9 +59,13 @@ def refresh_once(connection=get_db_connection):
             # Off-calendar issuers also need their latest labelled quarter, which the calendar seed never asks for.
             missing = [symbol for symbol in dict.fromkeys([*(item['ticker'] for item in b3_universe()), *BRAZIL_ABROAD])
                        if symbol not in known or (symbol in OFF_CALENDAR and (symbol, *latest_released(symbol, today.date())) not in pairs)][:8]
+            # S&P 500 coverage runs in ten batteries; each run adds the first battery that still has unchecked companies.
+            battery = next(([symbol for symbol in group if symbol.replace('.', '-') not in known and symbol not in known]
+                            for group in sp500_batteries() if any(s not in known and s.replace('.', '-') not in known for s in group)), [])
+            missing += battery
             if missing:
                 now = datetime.now(timezone.utc)
-                tasks = [(symbol, *seed_period(symbol, now)) for symbol in missing] + list(tasks)[:30 - len(missing)]
+                tasks = [(symbol, *seed_period(symbol, now)) for symbol in missing] + list(tasks)[:30 - min(len(missing), 30)]
         for symbol, year, quarter in tasks:
             if stop.is_set():
                 break

@@ -154,6 +154,7 @@ def test_prefetch_disables_web_model_and_respects_worker_lock(monkeypatch):
     monkeypatch.setattr(release_prefetch,'stop',Mock(is_set=lambda:False,wait=lambda _:False))
     monkeypatch.setattr(release_prefetch,'b3_universe',lambda:[])
     monkeypatch.setattr(release_prefetch,'BRAZIL_ABROAD',{})
+    monkeypatch.setattr(release_prefetch,'sp500_batteries',lambda:[])
     release_prefetch.refresh_once(lambda:conn)
     assert fetch.call_args.kwargs['allow_web'] is False and fetch.call_args.kwargs['refresh'] is True
     conn.close.assert_called_once()
@@ -169,6 +170,8 @@ def test_prefetch_adds_unchecked_b3_companies_before_rechecking_known_ones(monke
     monkeypatch.setattr(release_prefetch,'stop',Mock(is_set=lambda:False,wait=lambda _:False))
     monkeypatch.setattr(release_prefetch,'seed_period',lambda symbol,now:(2026,3))
     monkeypatch.setattr(release_prefetch,'b3_universe',lambda:[{'ticker':t} for t in ('PETR4','PRIO3','RADL3','PRIO3')])
+    monkeypatch.setattr(release_prefetch,'BRAZIL_ABROAD',{})
+    monkeypatch.setattr(release_prefetch,'sp500_batteries',lambda:[])
     assert release_prefetch.refresh_once(lambda:conn) is True
     symbols=[c.args[0] for c in fetch.call_args_list]
     assert symbols[:2]==['PRIO3','RADL3'] and len(symbols)==30 and 'PETR4' not in symbols
@@ -302,3 +305,22 @@ def test_brazilian_issuer_listed_abroad_is_matched_by_cvm_registrant_name(monkey
     monkeypatch.setattr(cvm_ipe, '_archive', lambda year: zipfile.ZipFile(path))
     found = cvm_ipe.release_candidates(None, None, 2026, 3, AutoFetcher()._period_matches, 'INTR', name=release_pipeline.BRAZIL_ABROAD['INTR'])
     assert [c['url'][-1] for c in found] == ['1']
+
+
+def test_sp500_runs_one_battery_at_a_time_and_skips_checked_companies(monkeypatch):
+    import release_prefetch
+    batteries = release_prefetch.sp500_batteries()
+    assert len(batteries) == 10 and sum(map(len, batteries)) >= 500 and 'AAPL' in sum(batteries, [])
+    conn=MagicMock();cur=conn.cursor.return_value.__enter__.return_value
+    cur.fetchone.return_value=(True,)
+    cur.fetchall.side_effect=[[],[('MMM',2026,3),('BRK-B',2026,3)]]
+    fetch=Mock()
+    monkeypatch.setattr(release_prefetch,'fetch_release',fetch)
+    monkeypatch.setattr(release_prefetch,'stop',Mock(is_set=lambda:False,wait=lambda _:False))
+    monkeypatch.setattr(release_prefetch,'seed_period',lambda symbol,now:(2026,3))
+    monkeypatch.setattr(release_prefetch,'b3_universe',lambda:[])
+    monkeypatch.setattr(release_prefetch,'BRAZIL_ABROAD',{})
+    monkeypatch.setattr(release_prefetch,'sp500_batteries',lambda:[['MMM','AOS'],['BRK.B','ZTS'],['AAPL']])
+    assert release_prefetch.refresh_once(lambda:conn) is True
+    assert [c.args[0] for c in fetch.call_args_list] == ['AOS']
+
