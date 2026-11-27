@@ -203,7 +203,10 @@ class SECFetcher:
         periods = []
         for match in re.finditer(r"\b(?:([1-4])[TQ]|[TQ]([1-4]))\s*(?:FY\s*)?(20\d{2})\b", head, re.I):
             periods.append((match.start(), int(match[3]), int(match[1] or match[2])))
-        for match in re.finditer(r"\b(first|second|third|fourth)\s+(?:fiscal\s+)?quarter\b.{0,80}?\b(20\d{2})\b", head, re.I):
+        for match in re.finditer(r"\bQ([1-4])\s*FY\s*'?(\d{2})\b", head, re.I):  # "Q3 FY27"
+            periods.append((match.start(), 2000 + int(match[2]), int(match[1])))
+        # "Second-Quarter 2026" (Dominion, NextEra, Duke) is as common as "second quarter 2026".
+        for match in re.finditer(r"\b(first|second|third|fourth)[\s-]+(?:fiscal\s+)?quarter\b.{0,80}?\b(20\d{2})\b", head, re.I):
             periods.append((match.start(), int(match[2]), ("first","second","third","fourth").index(match[1].lower()) + 1))
         return bool(periods and min(periods)[1:] == (year, quarter))
 

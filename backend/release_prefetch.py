@@ -48,9 +48,12 @@ def seed_period(symbol, now):
             _labels[symbol] = cached
         if cached[1]:
             fiscal_year, quarter, end = cached[1]
-            following = (fiscal_year, quarter + 1) if quarter < 4 else (fiscal_year + 1, 1)
-            # The next quarter's release is normally out about six weeks after that quarter ends.
-            return following if now.date() >= end + timedelta(days=92 + 42) else (fiscal_year, quarter)
+            # Step past the latest tagged filing while the following quarter's release (about six weeks after its
+            # end) should be out; XBRL tags can lag the releases by more than one quarter.
+            while now.date() >= end + timedelta(days=92 + 42):
+                fiscal_year, quarter = (fiscal_year, quarter + 1) if quarter < 4 else (fiscal_year + 1, 1)
+                end += timedelta(days=92)
+            return fiscal_year, quarter
     end = identity.get('fiscal_year_end') or '1231'
     month = int(end[:2]) if len(end) == 4 and end.isdigit() and 1 <= int(end[:2]) <= 12 else 12
     if month == 1 and int(end[2:]) <= 7:

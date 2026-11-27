@@ -132,14 +132,16 @@ def validate_document(document, fetcher, identity, year, quarter):
         isinstance(source, dict) and source.get('name') in ('CVM IPE', 'CVM ITR') and source.get('names_period')
         for source in document.sources or []))
     primary_period = fetcher._transcript_period(period_text)
+    # A title naming the requested quarter (dated in its release window) outranks outlook lines such as "fourth quarter 2026".
+    titled = re.search(rf"{('FIRST', 'SECOND', 'THIRD', 'FOURTH')[quarter - 1]}[\s-]+QUARTER", period_text[:400])
     if not fiscal_proof and (not fetcher._period_matches(period_text, year, quarter)
-                             or (primary_period and primary_period not in ((quarter, year), (quarter, year % 100)))):
+                             or (primary_period and not titled and primary_period not in ((quarter, year), (quarter, year % 100)))):
         # Logged so a release that is out but rejected can be fixed (the coverage test reads these lines).
         logger.info('release_period_rejected issuer=%s year=%s quarter=%s primary=%s url=%s head=%r', identity['symbol'], year,
                     quarter, primary_period, document.url, ' '.join(period_text[:300].split()))
         raise ReleaseError('period_mismatch')
     metrics = re.findall(r'net income|net earnings|operating income|revenues?|net sales|earnings per share|lucro|receita|margem|ebitda', text, re.I)
-    if len(metrics) < 2 or not re.search(r'\d', text):
+    if (len(metrics) < 2 and not (metrics and re.search(r'per (?:diluted )?share', text, re.I))) or not re.search(r'\d', text):
         logger.info('release_content_rejected issuer=%s url=%s chars=%s metrics=%s head=%r', identity['symbol'], document.url,
                     len(text), len(metrics), ' '.join(text[:200].split()))
         raise ReleaseError('financial_content_missing')

@@ -383,3 +383,20 @@ def test_latest_fiscal_period_reads_the_newest_quarterly_filing():
     fetcher = SECFetcher()
     fetcher._get = lambda url: Mock(json=lambda: facts)
     assert fetcher.latest_fiscal_period(935703) == (2026, 2, date(2026, 8, 1))
+
+
+def test_sec_release_titles_with_hyphenated_quarters_and_fiscal_shorthand():
+    from agents.sec_fetcher import SECFetcher
+    assert SECFetcher._mentions_quarter('Dominion Energy Announces Second-Quarter 2026 Results', 2026, 2)
+    assert SECFetcher._mentions_quarter('Walmart reports Q3 FY27 results', 2027, 3)
+    assert not SECFetcher._mentions_quarter('Dominion Energy Announces Second-Quarter 2025 Results', 2026, 2)
+
+
+def test_seed_steps_past_lagging_xbrl_tags(monkeypatch):
+    from datetime import date, datetime
+    import release_prefetch
+    monkeypatch.setattr(release_prefetch, 'issuer_identity', lambda symbol: {'market': 'US', 'cik': '1'})
+    monkeypatch.setattr(release_prefetch.SECFetcher, 'latest_fiscal_period', lambda self, cik: (2026, 1, date(2026, 3, 31)))
+    release_prefetch._labels.clear()
+    assert release_prefetch.seed_period('AEP', datetime(2026, 11, 27)) == (2026, 3)
+
