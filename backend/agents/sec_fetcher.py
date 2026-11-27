@@ -113,12 +113,15 @@ class SECFetcher:
                 candidates.sort(key=lambda row: row[0]["filingDate"][row[1]], reverse=True)
                 in_window.sort(key=lambda row: row[0]["filingDate"][row[1]])
                 tried = in_window[:12] + [row for row in candidates[:8] if row not in in_window[:12]]
+                heads = []
                 for batch, i in tried:
                     document = self._filing_document(batch, i, cik, exhibit=True)
                     if document and self._release_matches(document, year, quarter):
                         return document
-                logger.info("sec_release_not_matched cik=%s year=%s quarter=%s candidates=%s filed=%s", cik, year, quarter,
-                            len(tried), ",".join(batch["filingDate"][i] for batch, i in tried[:12]))
+                    if document and (batch, i) in in_window:
+                        heads.append(f'{batch["filingDate"][i]}:{" ".join((document.text or "")[:160].split())}')
+                logger.info("sec_release_not_matched cik=%s year=%s quarter=%s candidates=%s filed=%s heads=%r", cik, year, quarter,
+                            len(tried), ",".join(batch["filingDate"][i] for batch, i in tried[:12]), heads[:4])
                 return None
             # An annual filing is not a standalone fourth-quarter result; require an explicit release.
             for batch, index, report_date in matching:
