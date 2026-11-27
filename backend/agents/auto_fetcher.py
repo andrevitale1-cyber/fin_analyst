@@ -178,6 +178,13 @@ class AutoFetcher:
                  3: ("TERCEIRO", "THIRD", "SEPTEMBER", "SETEMBRO"),
                  4: ("QUARTO", "FOURTH", "DECEMBER", "DEZEMBRO")}
         pt, en, month_en, month_pt = names[quarter]
+        if re.search(rf"(?:THREE|3)\s+(?:AND\s+(?:SIX|NINE|TWELVE)\s+)?MONTHS\s+ENDED\s+{month_en}\s+\d{{1,2}},?\s+{year}", text):
+            return True  # Realty Income: "three and nine months ended September 30, 2026"
+        release_months = ("APRIL|MAY|JUNE", "JULY|AUGUST|SEPTEMBER", "OCTOBER|NOVEMBER|DECEMBER", "JANUARY|FEBRUARY|MARCH")[quarter - 1]
+        release_year = year + 1 if quarter == 4 else year
+        if re.search(rf"{en}[\s-]+QUARTER", text[:1500]) and not re.search(r"(?:FIRST|SECOND|THIRD|FOURTH)[\s-]+QUARTER.{0,30}(?:19|20)\d\d", text[:1500]) \
+                and re.search(rf"(?:{release_months})\s+\d{{1,2}},?\s+{release_year}", text[:1500]):
+            return True  # IDEX: "reports record third quarter results", dated in the following month, with no year in the title
         return bool(re.search(
             rf"(?:{quarter}\s*(?:º|°)?\s*TRIMESTRE|{pt}\s+TRIMESTRE|{en}[\s-]+QUARTER|"
             rf"(?:QUARTER|TRIMESTRE)\s+(?:ENDED?|ENCERRADO)?\s*(?:EM|DE)?\s*(?:{month_en}|{month_pt}))"
@@ -632,7 +639,9 @@ class AutoFetcher:
                 and len(headers) >= 4 and headers[0][1].upper() != expected
                 and all(match[1].upper() == expected for match in headers[1:])):
             text = text[:headers[0].start()] + text[headers[0].end():]
-        period_text = re.sub(r'(?<![A-Z0-9])([1-4])\s+([TQ])', r'\1\2', text[:4000].upper())
+        # SEC exhibit labels glue onto titles ("EXHIBIT 99.1Q3 2026"), hiding the quarter from the period pattern.
+        period_text = re.sub(r'\bEX(?:HIBIT)?[\s-]*\d{1,3}\.\d{1,2}', ' ', text[:4000].upper())
+        period_text = re.sub(r'(?<![A-Z0-9])([1-4])\s+([TQ])', r'\1\2', period_text)
         return re.sub(r'(?<![A-Z0-9])([1-4][TQ])\s*((?:\d\s+){1,3}\d)(?!\d)',
                       lambda match: match[1] + re.sub(r'\s+', '', match[2]), period_text)
 

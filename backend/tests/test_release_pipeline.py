@@ -345,3 +345,16 @@ def test_early_january_fiscal_year_end_seeds_the_calendar_year(monkeypatch):
     import release_prefetch
     monkeypatch.setattr(release_prefetch, 'issuer_identity', lambda symbol: {'fiscal_year_end': '0103'})
     assert release_prefetch.seed_period('DPZ', datetime(2026, 11, 26)) == (2026, 3)
+
+
+@pytest.mark.parametrize('text,expected', [
+    ('EX-99.1 EXHIBIT 99.1Q3 2026 UPSTATE NY CABIN', True),                                     # Airbnb
+    ('REALTY INCOME ANNOUNCES OPERATING RESULTS FOR THE THREE AND NINE MONTHS ENDED SEPTEMBER 30, 2026', True),
+    ('IDEX REPORTS RECORD THIRD QUARTER RESULTS NORTHBROOK, ILL., OCTOBER 28, 2026', True),
+    ('IDEX REPORTS RECORD THIRD QUARTER RESULTS NORTHBROOK, ILL., OCTOBER 28, 2025', False),
+])
+def test_release_headings_without_a_glued_or_explicit_year(text, expected):
+    from agents.auto_fetcher import AutoFetcher
+    period = AutoFetcher._release_period_text(text, 'https://www.sec.gov/x.htm', 2026, 3)
+    assert AutoFetcher._period_matches(period, 2026, 3) is expected
+

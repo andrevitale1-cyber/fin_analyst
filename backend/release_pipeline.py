@@ -138,7 +138,7 @@ def validate_document(document, fetcher, identity, year, quarter):
         logger.info('release_period_rejected issuer=%s year=%s quarter=%s primary=%s url=%s head=%r', identity['symbol'], year,
                     quarter, primary_period, document.url, ' '.join(period_text[:300].split()))
         raise ReleaseError('period_mismatch')
-    metrics = re.findall(r'net income|operating income|revenues?|net sales|lucro|receita|margem|ebitda', text, re.I)
+    metrics = re.findall(r'net income|net earnings|operating income|revenues?|net sales|earnings per share|lucro|receita|margem|ebitda', text, re.I)
     if len(metrics) < 2 or not re.search(r'\d', text):
         logger.info('release_content_rejected issuer=%s url=%s chars=%s metrics=%s head=%r', identity['symbol'], document.url,
                     len(text), len(metrics), ' '.join(text[:200].split()))
