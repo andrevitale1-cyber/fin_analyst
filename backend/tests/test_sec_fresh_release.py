@@ -53,3 +53,10 @@ def test_release_window_follows_the_issuers_fiscal_calendar():
     walmart_q3 = SECFetcher._quarter_ends(ends, 2027, 3)[0]
     assert date(2026, 10, 25) <= walmart_q3 <= date(2026, 11, 5)
     assert SECFetcher._quarter_ends({}, 2026, 3) == [date(2026, 9, 30)]
+
+
+def test_mentions_quarter_short_and_year_first_labels():
+    assert SECFetcher._mentions_quarter("Bank of America 3Q26 Financial Results", 2026, 3)
+    assert SECFetcher._mentions_quarter("Air Products Reports Fiscal 2026 Fourth Quarter Results", 2026, 4)
+    assert not SECFetcher._mentions_quarter("Air Products Reports Fiscal 2025 Fourth Quarter Results", 2026, 4)
+    assert SECFetcher.has_financial_results("AEP reported earnings of $1.85 per share for the quarter")

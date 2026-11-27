@@ -205,6 +205,11 @@ class SECFetcher:
             periods.append((match.start(), int(match[3]), int(match[1] or match[2])))
         for match in re.finditer(r"\bQ([1-4])\s*FY\s*'?(\d{2})\b", head, re.I):  # "Q3 FY27"
             periods.append((match.start(), 2000 + int(match[2]), int(match[1])))
+        for match in re.finditer(r"\b([1-4])[TQ](\d{2})\b", head):  # Bank of America's "3Q26"
+            periods.append((match.start(), 2000 + int(match[2]), int(match[1])))
+        # "Fiscal 2026 Fourth Quarter" (Air Products) puts the year first.
+        for match in re.finditer(r"\b(20\d{2})\s+(first|second|third|fourth)[\s-]+quarter\b", head, re.I):
+            periods.append((match.start(), int(match[1]), ("first","second","third","fourth").index(match[2].lower()) + 1))
         # "Second-Quarter 2026" (Dominion, NextEra, Duke) is as common as "second quarter 2026".
         for match in re.finditer(r"\b(first|second|third|fourth)[\s-]+(?:fiscal\s+)?quarter\b.{0,80}?\b(20\d{2})\b", head, re.I):
             periods.append((match.start(), int(match[2]), ("first","second","third","fourth").index(match[1].lower()) + 1))
@@ -229,7 +234,9 @@ class SECFetcher:
 
     @staticmethod
     def has_financial_results(text):
-        return bool(re.search(r"(?:net sales|total revenue|net revenue|revenues|net income|operating income)[\s\S]{0,150}\d", text, re.I))
+        # Utilities (AEP) lead with earnings per share and may not name revenue near a figure.
+        return bool(re.search(r"(?:net sales|total revenue|net revenue|revenues|net income|operating income)[\s\S]{0,150}\d"
+                              r"|\$\d+\.\d{2}\s+per\s+(?:diluted\s+)?share", text, re.I))
 
     def fetch_earnings_exhibit(self, url, soup):
         # An 8-K notice is not the earnings release; follow actual exhibit files, not TOC anchors.
