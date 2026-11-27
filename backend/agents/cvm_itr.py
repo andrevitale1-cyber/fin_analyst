@@ -62,19 +62,24 @@ def _money(value):
     return f"{value / 1e6:,.1f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
-def quarterly_statements(cnpj, quarter_end, label):
+def quarterly_statements(cnpj, quarter_end, label, cvm_code=None):
     """Return (link, text) for the issuer's latest ITR version of the quarter, or None."""
     digits = re.sub(r"\D", "", str(cnpj or ""))
-    if len(digits) != 14 or quarter_end.month == 12:
+    code = int(cvm_code) if str(cvm_code or "").strip().isdigit() else None
+    if (len(digits) != 14 and not code) or quarter_end.month == 12:
         return None  # The fourth quarter is reported in the annual DFP, not in an ITR.
     quarter_start = date(quarter_end.year, quarter_end.month - 2, 1)
     year_ago = (quarter_start.replace(year=quarter_start.year - 1), quarter_end.replace(year=quarter_end.year - 1))
     with _archive(quarter_end.year) as zipped:
+        # B3's catalogue may omit the CNPJ, so the CVM code identifies the issuer as well.
         filings = [row for row in _rows(zipped, f"itr_cia_aberta_{quarter_end.year}.csv")
-                   if re.sub(r"\D", "", row.get("CNPJ_CIA") or "") == digits and row.get("DT_REFER") == quarter_end.isoformat()]
+                   if row.get("DT_REFER") == quarter_end.isoformat()
+                   and ((len(digits) == 14 and re.sub(r"\D", "", row.get("CNPJ_CIA") or "") == digits)
+                        or (code and (row.get("CD_CVM") or "").strip().isdigit() and int(row["CD_CVM"]) == code))]
         if not filings:
             return None
         filing = max(filings, key=lambda row: int(row.get("VERSAO") or 0))
+        digits = re.sub(r"\D", "", filing.get("CNPJ_CIA") or "")
         link = (filing.get("LINK_DOC") or "").replace("http://", "https://", 1)
         if not link.startswith("https://www.rad.cvm.gov.br/"):
             return None

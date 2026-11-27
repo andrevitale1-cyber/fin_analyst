@@ -102,8 +102,13 @@ class SECFetcher:
                 candidates = [(batch, i) for batch in batches for i, form in enumerate(batch.get("form", []))
                               if (form == "6-K" or (form == "8-K" and "2.02" in batch.get("items", [""] * len(batch["form"]))[i]))
                               and year - 1 <= date.fromisoformat(batch["filingDate"][i]).year <= year + 1]
+                # Foreign filers send many 6-Ks per quarter; look first inside the release window of the requested quarter.
+                quarter_end = date(year, quarter * 3, 30 if quarter in (2, 3) else 31)
+                in_window = [row for row in candidates
+                             if quarter_end + timedelta(days=5) <= date.fromisoformat(row[0]["filingDate"][row[1]]) <= quarter_end + timedelta(days=120)]
                 candidates.sort(key=lambda row: row[0]["filingDate"][row[1]], reverse=True)
-                for batch, i in candidates[:8]:
+                in_window.sort(key=lambda row: row[0]["filingDate"][row[1]])
+                for batch, i in in_window[:12] + [row for row in candidates[:8] if row not in in_window[:12]]:
                     document = self._filing_document(batch, i, cik, exhibit=True)
                     if document and self._release_matches(document, year, quarter):
                         return document

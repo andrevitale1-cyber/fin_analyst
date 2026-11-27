@@ -30,3 +30,17 @@ def test_fresh_earnings_exhibit_is_found_before_xbrl_and_quarterly_filing(monkey
 ])
 def test_release_period_uses_own_heading_not_prior_year_comparison(text,year,quarter,expected):
     assert SECFetcher._mentions_quarter(text,year,quarter) is expected
+
+
+def test_foreign_filer_release_is_found_beyond_the_eight_latest_6ks(monkeypatch):
+    fetcher=SECFetcher()
+    monkeypatch.setattr(fetcher,'_catalog',lambda:[{'ticker':'NU','cik_str':1691493}])
+    dates=[f'2026-11-{d:02d}' for d in range(25,5,-1)] + ['2026-08-13']  # twenty newer 6-Ks, then the 2Q26 release
+    batch={'form':['6-K']*len(dates),'filingDate':dates,'reportDate':dates,
+           'accessionNumber':[f'a{i}' for i in range(len(dates))],'primaryDocument':['x.htm']*len(dates),'items':['']*len(dates)}
+    monkeypatch.setattr(fetcher,'_get',lambda url:Mock(json=lambda:
+        {'facts':{}} if 'companyfacts' in url else {'filings':{'recent':batch}}))
+    release=FetchedDocument('https://www.sec.gov/nu2q26.htm','SEC',text='Nu Holdings reports second quarter 2026 results')
+    other=FetchedDocument('https://www.sec.gov/other.htm','SEC',text='Notice of annual general meeting')
+    monkeypatch.setattr(fetcher,'_filing_document',lambda b,i,cik,exhibit=False: release if b['filingDate'][i]=='2026-08-13' else other)
+    assert fetcher.fetch('NU',2026,2)==release

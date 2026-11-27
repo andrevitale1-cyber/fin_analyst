@@ -524,7 +524,7 @@ class AutoFetcher:
     def _fetch_itr(self, ticker, year, quarter):
         # Holdings such as Bradespar file no earnings release; their ITR statements are the official quarterly report.
         try:
-            result = cvm_itr.quarterly_statements(self.cvm_issuer[1], cvm_ipe.period_end(ticker, year, quarter), f"{quarter}T{year % 100:02d}")
+            result = cvm_itr.quarterly_statements(self.cvm_issuer[1], cvm_ipe.period_end(ticker, year, quarter), f"{quarter}T{year % 100:02d}", self.cvm_issuer[0])
         except (requests.RequestException, ValueError, OSError, zipfile.BadZipFile, csv.Error) as exc:
             logger.info("release_lookup issuer=%s year=%s quarter=%s source=cvm_itr outcome=unavailable reason=%s", ticker, year, quarter, type(exc).__name__)
             return None

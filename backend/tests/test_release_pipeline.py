@@ -286,6 +286,7 @@ def test_itr_statements_become_an_official_quarterly_document(monkeypatch, tmp_p
     assert '3.11 Lucro/Prejuízo do Período | 173,1 | -' in text and '3.04.06 Resultado de Equivalência Patrimonial | 213,2 | 500,9' in text
     assert 'Lucro antigo' not in text and '900,0' not in text
     assert cvm_itr.quarterly_statements('03847461000192', date(2026, 12, 31), '4T26') is None
+    assert cvm_itr.quarterly_statements(None, date(2026, 9, 30), '3T26', '18724')[0].endswith('NumeroSequencialDocumento=10')
 
 
 def test_brazilian_issuer_listed_abroad_is_matched_by_cvm_registrant_name(monkeypatch, tmp_path):
