@@ -7,6 +7,7 @@ import unicodedata
 from urllib.parse import quote, urljoin, urlparse
 
 import requests
+import logging
 from bs4 import BeautifulSoup
 from openai_client import OpenAIClient, OpenAIError
 
@@ -21,6 +22,9 @@ class FetchedDocument:
     fiscal_year: int | None = None
     fiscal_quarter: int | None = None
     issuer_cik: str | None = None
+
+
+logger = logging.getLogger("uvicorn.error")
 
 
 class SECFetcher:
@@ -108,10 +112,13 @@ class SECFetcher:
                              if quarter_end + timedelta(days=5) <= date.fromisoformat(row[0]["filingDate"][row[1]]) <= quarter_end + timedelta(days=120)]
                 candidates.sort(key=lambda row: row[0]["filingDate"][row[1]], reverse=True)
                 in_window.sort(key=lambda row: row[0]["filingDate"][row[1]])
-                for batch, i in in_window[:12] + [row for row in candidates[:8] if row not in in_window[:12]]:
+                tried = in_window[:12] + [row for row in candidates[:8] if row not in in_window[:12]]
+                for batch, i in tried:
                     document = self._filing_document(batch, i, cik, exhibit=True)
                     if document and self._release_matches(document, year, quarter):
                         return document
+                logger.info("sec_release_not_matched cik=%s year=%s quarter=%s candidates=%s filed=%s", cik, year, quarter,
+                            len(tried), ",".join(batch["filingDate"][i] for batch, i in tried[:12]))
                 return None
             # An annual filing is not a standalone fourth-quarter result; require an explicit release.
             for batch, index, report_date in matching:
@@ -129,6 +136,7 @@ class SECFetcher:
                         document = self._filing_document(release_batch, i, cik, exhibit=True)
                         if document and self._release_matches(document, year, quarter):
                             return document
+                logger.info("sec_release_not_matched cik=%s year=%s quarter=%s periodic_report=%s", cik, year, quarter, report_date)
                 if quarter < 4:
                     document = self._filing_document(batch, index, cik)
                     if document:

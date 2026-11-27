@@ -108,9 +108,12 @@ def validate_document(document, fetcher, identity, year, quarter):
     sec_path = re.match(r'/Archives/edgar/data/(\d+)/', parsed.path)
     if parsed.hostname == 'www.sec.gov' and sec_path and identity.get('cik') and int(sec_path[1]) != int(identity['cik']):
         raise ReleaseError('issuer_mismatch')
-    verified = (parsed.hostname == 'www.rad.cvm.gov.br' and any(
-        isinstance(source, dict) and source.get('name') in ('CVM IPE', 'CVM ITR') for source in document.sources or [])
-    ) or fetcher._release_company_matches(document, identity['symbol'])
+    # A filing inside the issuer's own EDGAR folder (CIK checked above) or CVM filing identifies the company;
+    # trade names (Berkshire, Charter, Citizens) often differ from the ticker the text check looks for.
+    verified = (parsed.hostname == 'www.sec.gov' and sec_path and identity.get('cik') and int(sec_path[1]) == int(identity['cik'])) \
+        or (parsed.hostname == 'www.rad.cvm.gov.br' and any(
+            isinstance(source, dict) and source.get('name') in ('CVM IPE', 'CVM ITR') for source in document.sources or [])) \
+        or fetcher._release_company_matches(document, identity['symbol'])
     if not verified and name:
         normalized = SECFetcher._company_name(name)
         verified = bool(normalized and normalized in SECFetcher._company_name(text[:12000]))
@@ -128,13 +131,17 @@ def validate_document(document, fetcher, identity, year, quarter):
     fiscal_proof = fiscal_proof or (parsed.hostname == 'www.rad.cvm.gov.br' and any(
         isinstance(source, dict) and source.get('name') in ('CVM IPE', 'CVM ITR') and source.get('names_period')
         for source in document.sources or []))
-    if not fiscal_proof and not fetcher._period_matches(period_text, year, quarter):
-        raise ReleaseError('period_mismatch')
     primary_period = fetcher._transcript_period(period_text)
-    if not fiscal_proof and primary_period and primary_period not in ((quarter, year), (quarter, year % 100)):
+    if not fiscal_proof and (not fetcher._period_matches(period_text, year, quarter)
+                             or (primary_period and primary_period not in ((quarter, year), (quarter, year % 100)))):
+        # Logged so a release that is out but rejected can be fixed (the coverage test reads these lines).
+        logger.info('release_period_rejected issuer=%s year=%s quarter=%s primary=%s url=%s head=%r', identity['symbol'], year,
+                    quarter, primary_period, document.url, ' '.join(period_text[:300].split()))
         raise ReleaseError('period_mismatch')
     metrics = re.findall(r'net income|operating income|revenues?|net sales|lucro|receita|margem|ebitda', text, re.I)
     if len(metrics) < 2 or not re.search(r'\d', text):
+        logger.info('release_content_rejected issuer=%s url=%s chars=%s metrics=%s head=%r', identity['symbol'], document.url,
+                    len(text), len(metrics), ' '.join(text[:200].split()))
         raise ReleaseError('financial_content_missing')
     return text
 

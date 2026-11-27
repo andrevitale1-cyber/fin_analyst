@@ -325,3 +325,23 @@ def test_sp500_runs_one_battery_at_a_time_and_skips_checked_companies(monkeypatc
     assert release_prefetch.refresh_once(lambda:conn) is True
     assert [c.args[0] for c in fetch.call_args_list] == ['AOS']
 
+
+
+def test_sec_filing_in_issuers_edgar_folder_verifies_issuer_and_hyphenated_quarter(monkeypatch):
+    from types import SimpleNamespace
+    from agents.auto_fetcher import AutoFetcher
+    import release_pipeline
+    text = 'Charter Communications reports third-quarter 2026 results. Revenues and net income grew 5%. ' * 20
+    doc = SimpleNamespace(url='https://www.sec.gov/Archives/edgar/data/1091667/000109166726000099/ex991.htm', text=text,
+                          pdf_bytes=None, sources=[], fiscal_year=None, fiscal_quarter=None, issuer_cik=None)
+    identity = {'symbol': 'CHTR', 'name': 'CCO Holdings Parent', 'cik': '0001091667', 'market': 'US'}
+    assert release_pipeline.validate_document(doc, AutoFetcher(), identity, 2026, 3) == text
+    with pytest.raises(release_pipeline.ReleaseError):
+        release_pipeline.validate_document(doc, AutoFetcher(), {**identity, 'cik': '0000000001'}, 2026, 3)
+
+
+def test_early_january_fiscal_year_end_seeds_the_calendar_year(monkeypatch):
+    from datetime import datetime
+    import release_prefetch
+    monkeypatch.setattr(release_prefetch, 'issuer_identity', lambda symbol: {'fiscal_year_end': '0103'})
+    assert release_prefetch.seed_period('DPZ', datetime(2026, 11, 26)) == (2026, 3)

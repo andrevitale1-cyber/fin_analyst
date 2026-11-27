@@ -30,6 +30,8 @@ def seed_period(symbol, now):
         return latest_released(symbol, now.date())
     end = issuer_identity(symbol).get('fiscal_year_end') or '1231'
     month = int(end[:2]) if len(end) == 4 and end.isdigit() and 1 <= int(end[:2]) <= 12 else 12
+    if month == 1 and int(end[2:]) <= 7:
+        month = 12  # 52/53-week years ending in the first days of January (Domino's) belong to the prior year.
     fiscal_year = now.year + (now.month > month)
     current_quarter = ((now.month - month - 1) % 12) // 3 + 1
     return (fiscal_year, current_quarter - 1) if current_quarter > 1 else (fiscal_year - 1, 4)

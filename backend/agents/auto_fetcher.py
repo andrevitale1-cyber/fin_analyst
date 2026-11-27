@@ -179,7 +179,7 @@ class AutoFetcher:
                  4: ("QUARTO", "FOURTH", "DECEMBER", "DEZEMBRO")}
         pt, en, month_en, month_pt = names[quarter]
         return bool(re.search(
-            rf"(?:{quarter}\s*(?:º|°)?\s*TRIMESTRE|{pt}\s+TRIMESTRE|{en}\s+QUARTER|"
+            rf"(?:{quarter}\s*(?:º|°)?\s*TRIMESTRE|{pt}\s+TRIMESTRE|{en}[\s-]+QUARTER|"
             rf"(?:QUARTER|TRIMESTRE)\s+(?:ENDED?|ENCERRADO)?\s*(?:EM|DE)?\s*(?:{month_en}|{month_pt}))"
             rf".{{0,45}}{year}", text
         ))
