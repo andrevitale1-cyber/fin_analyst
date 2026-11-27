@@ -44,3 +44,12 @@ def test_foreign_filer_release_is_found_beyond_the_eight_latest_6ks(monkeypatch)
     other=FetchedDocument('https://www.sec.gov/other.htm','SEC',text='Notice of annual general meeting')
     monkeypatch.setattr(fetcher,'_filing_document',lambda b,i,cik,exhibit=False: release if b['filingDate'][i]=='2026-08-13' else other)
     assert fetcher.fetch('NU',2026,2)==release
+
+
+def test_release_window_follows_the_issuers_fiscal_calendar():
+    from datetime import date
+    ends = {(2027, 2): '2026-07-31', (2027, 1): '2026-04-30', (2026, 4): '2026-01-31'}
+    assert SECFetcher._quarter_ends(ends, 2027, 2) == [date(2026, 7, 31)]
+    walmart_q3 = SECFetcher._quarter_ends(ends, 2027, 3)[0]
+    assert date(2026, 10, 25) <= walmart_q3 <= date(2026, 11, 5)
+    assert SECFetcher._quarter_ends({}, 2026, 3) == [date(2026, 9, 30)]

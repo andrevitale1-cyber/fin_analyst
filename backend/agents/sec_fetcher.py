@@ -69,6 +69,16 @@ class SECFetcher:
         response.raise_for_status()
         return response
 
+    @staticmethod
+    def _quarter_ends(period_ends, year, quarter):
+        if (year, quarter) in period_ends:
+            return [date.fromisoformat(period_ends[(year, quarter)])]
+        if not period_ends:
+            return [date(year, quarter * 3, 30 if quarter in (2, 3) else 31)]
+        (known_year, known_quarter), known_end = max(period_ends.items(), key=lambda item: item[1])
+        estimate = date.fromisoformat(known_end) + timedelta(days=round(((year * 4 + quarter) - (known_year * 4 + known_quarter)) * 91.31))
+        return [estimate, estimate - timedelta(days=365)]
+
     def latest_fiscal_period(self, cik):
         """(fiscal year, quarter, period end) of the issuer's latest 10-Q/10-K, in the issuer's own XBRL labels."""
         facts = self._get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{int(cik):010d}.json").json().get("facts", {})
@@ -101,13 +111,18 @@ class SECFetcher:
                 facts = {}  # A delayed XBRL endpoint must not hide an already published 8-K.
             fiscal_period = f"Q{quarter}" if quarter < 4 else "FY"
             fiscal_filings = set()
+            period_ends = {}  # (fiscal year, quarter) -> period end, in the issuer's XBRL labels
             for taxonomy in facts.values():
                 for fact in taxonomy.values():
                     for entries in fact.get("units", {}).values():
                         for entry in entries:
-                            if (entry.get("fy") == year and entry.get("fp") == fiscal_period
-                                    and entry.get("form") in ("10-Q", "10-Q/A", "10-K", "10-K/A")):
+                            if entry.get("form") not in ("10-Q", "10-Q/A", "10-K", "10-K/A"):
+                                continue
+                            if entry.get("fy") == year and entry.get("fp") == fiscal_period:
                                 fiscal_filings.add((entry.get("accn"), entry.get("end")))
+                            if entry.get("fp") in ("Q1", "Q2", "Q3", "FY") and entry.get("fy") and entry.get("start") and entry.get("end"):
+                                label = (entry["fy"], 4 if entry["fp"] == "FY" else int(entry["fp"][1]))
+                                period_ends[label] = max(period_ends.get(label, ""), entry["end"])
             batches = [filings["recent"]]
             for archive in filings.get("files", []):
                 if archive["filingFrom"] <= f"{year + 1}-12-31" and archive["filingTo"] >= f"{year - 1}-01-01":
@@ -125,10 +140,13 @@ class SECFetcher:
                 candidates = [(batch, i) for batch in batches for i, form in enumerate(batch.get("form", []))
                               if (form == "6-K" or (form == "8-K" and "2.02" in batch.get("items", [""] * len(batch["form"]))[i]))
                               and year - 1 <= date.fromisoformat(batch["filingDate"][i]).year <= year + 1]
-                # Foreign filers send many 6-Ks per quarter; look first inside the release window of the requested quarter.
-                quarter_end = date(year, quarter * 3, 30 if quarter in (2, 3) else 31)
-                in_window = [row for row in candidates
-                             if quarter_end + timedelta(days=5) <= date.fromisoformat(row[0]["filingDate"][row[1]]) <= quarter_end + timedelta(days=120)]
+                # Look first inside the release window of the requested quarter. Its end comes from the issuer's own
+                # fiscal calendar (Walmart's Q3 FY2027 ends October 2026); a label one year ahead of the XBRL tags is
+                # also covered, and the release text must still name the quarter.
+                quarter_ends = self._quarter_ends(period_ends, year, quarter)
+                in_window = [row for row in candidates if any(
+                    end + timedelta(days=5) <= date.fromisoformat(row[0]["filingDate"][row[1]]) <= end + timedelta(days=120)
+                    for end in quarter_ends)]
                 candidates.sort(key=lambda row: row[0]["filingDate"][row[1]], reverse=True)
                 in_window.sort(key=lambda row: row[0]["filingDate"][row[1]])
                 tried = in_window[:12] + [row for row in candidates[:8] if row not in in_window[:12]]
