@@ -164,7 +164,7 @@ def test_prefetch_adds_unchecked_b3_companies_before_rechecking_known_ones(monke
     import release_prefetch
     conn=MagicMock();cur=conn.cursor.return_value.__enter__.return_value
     cur.fetchone.return_value=(True,)
-    cur.fetchall.side_effect=[[(f'OLD{i}',2026,3) for i in range(30)],[('PETR4',2026,3),('OLD0',2026,3)]]
+    cur.fetchall.side_effect=[[(f'OLD{i}',2026,3,'found') for i in range(30)],[('PETR4',2026,3),('OLD0',2026,3)]]
     fetch=Mock()
     monkeypatch.setattr(release_prefetch,'fetch_release',fetch)
     monkeypatch.setattr(release_prefetch,'stop',Mock(is_set=lambda:False,wait=lambda _:False))
@@ -358,3 +358,28 @@ def test_release_headings_without_a_glued_or_explicit_year(text, expected):
     period = AutoFetcher._release_period_text(text, 'https://www.sec.gov/x.htm', 2026, 3)
     assert AutoFetcher._period_matches(period, 2026, 3) is expected
 
+
+
+def test_sp500_seed_uses_the_issuers_own_fiscal_labels(monkeypatch):
+    from datetime import date, datetime
+    import release_prefetch
+    labels = {'DLTR': (2026, 2, date(2026, 8, 1)), 'WMT': (2027, 3, date(2026, 10, 31)), 'AAPL': (2026, 4, date(2026, 9, 26))}
+    monkeypatch.setattr(release_prefetch, 'issuer_identity', lambda symbol: {'market': 'US', 'cik': '1', 'symbol': symbol})
+    monkeypatch.setattr(release_prefetch.SECFetcher, 'latest_fiscal_period', lambda self, cik: labels[current])
+    release_prefetch._labels.clear()
+    now = datetime(2026, 12, 20)
+    for current, expected in (('DLTR', (2026, 3)), ('WMT', (2027, 3)), ('AAPL', (2026, 4))):
+        assert release_prefetch.seed_period(current, now) == expected
+
+
+def test_latest_fiscal_period_reads_the_newest_quarterly_filing():
+    from datetime import date
+    from agents.sec_fetcher import SECFetcher
+    facts = {'facts': {'us-gaap': {'Revenues': {'units': {'USD': [
+        {'form': '10-Q', 'fy': 2026, 'fp': 'Q2', 'filed': '2026-09-02', 'start': '2026-05-03', 'end': '2026-08-01'},
+        {'form': '10-Q', 'fy': 2026, 'fp': 'Q2', 'filed': '2026-09-02', 'start': '2026-02-01', 'end': '2026-08-01'},
+        {'form': '10-Q', 'fy': 2026, 'fp': 'Q1', 'filed': '2026-06-04', 'start': '2026-02-01', 'end': '2026-05-02'},
+        {'form': '8-K', 'fy': 2026, 'fp': 'Q3', 'filed': '2026-11-24', 'start': '2026-08-02', 'end': '2026-10-31'}]}}}}}
+    fetcher = SECFetcher()
+    fetcher._get = lambda url: Mock(json=lambda: facts)
+    assert fetcher.latest_fiscal_period(935703) == (2026, 2, date(2026, 8, 1))

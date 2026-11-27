@@ -69,6 +69,25 @@ class SECFetcher:
         response.raise_for_status()
         return response
 
+    def latest_fiscal_period(self, cik):
+        """(fiscal year, quarter, period end) of the issuer's latest 10-Q/10-K, in the issuer's own XBRL labels."""
+        facts = self._get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{int(cik):010d}.json").json().get("facts", {})
+        latest = {}
+        for taxonomy in facts.values():
+            for fact in taxonomy.values():
+                for entries in fact.get("units", {}).values():
+                    for entry in entries:
+                        if entry.get("form") in ("10-Q", "10-K") and entry.get("fp") in ("Q1", "Q2", "Q3", "FY") and entry.get("fy"):
+                            key = (entry.get("filed", ""), entry["fy"], entry["fp"])
+                            if entry.get("start") and key >= latest.get("key", ("",)):
+                                if key != latest.get("key"):
+                                    latest = {"key": key, "end": ""}
+                                latest["end"] = max(latest["end"], entry.get("end", ""))
+        if not latest:
+            return None
+        _, fy, fp = latest["key"]
+        return fy, 4 if fp == "FY" else int(fp[1]), date.fromisoformat(latest["end"])
+
     def fetch(self, ticker, year, quarter):
         try:
             company = next((c for c in self._catalog() if c.get("ticker") == ticker), None)
