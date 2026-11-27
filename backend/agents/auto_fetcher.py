@@ -103,8 +103,9 @@ class AutoFetcher:
             return company_aliases[normalized]
         if ticker in self.ir_urls:
             return ticker
-        if ticker.isalpha() and len(ticker) >= 3:
-            matches = [symbol for symbol in self.ir_urls if symbol.startswith(ticker) and re.search(r"\d", symbol)]
+        # Only a full 4-letter B3 issuer code expands (PETR -> PETR4); shorter inputs are US tickers (CMI is Cummins, not CMIG4).
+        if ticker.isalpha() and len(ticker) == 4:
+            matches = [symbol for symbol in self.ir_urls if symbol[:4] == ticker and re.search(r"\d", symbol)]
             if matches:
                 return sorted(matches, key=lambda symbol: (0 if symbol.endswith("4") else 1, len(symbol)))[0]
         return ticker

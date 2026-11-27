@@ -442,3 +442,10 @@ def test_taurus_release_on_its_ir_site_counts_as_official():
     except release_pipeline.ReleaseError as error:
         assert str(error) != 'source_unverified'
 
+
+def test_us_tickers_are_not_expanded_into_b3_tickers_that_share_a_prefix():
+    from agents.auto_fetcher import AutoFetcher
+    fetcher = AutoFetcher()
+    assert fetcher.resolve_ticker('CMI') == 'CMI' and fetcher.resolve_ticker('EQT') == 'EQT'
+    assert fetcher.resolve_ticker('PETR') == 'PETR4' and fetcher.resolve_ticker('VALE') == 'VALE3'
+
